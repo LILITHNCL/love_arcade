@@ -6,7 +6,8 @@
     <title>Love Arcade</title>
 
     <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <!-- Include credentials so protected deployments can serve the manifest without 401 -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
     <meta name="theme-color" content="#9b59ff">
 
     <!--
