@@ -1,62 +1,59 @@
 # Sistema de Skins UI/UX (Producción)
 
 ## Objetivo
-Sistema completo de skins para Love Arcade que permite cambiar identidad visual completa: tokens, tipografías, fondos, iconos, arte de cards y efectos.
+Sistema completo de skins para Love Arcade que permite cambiar identidad visual total: tokens, tipografías, fondos, iconos, arte de cards y efectos.
 
 ## Arquitectura
-- **`js/skin-manager.js`**: orquestador de skins (carga manifiesto, aplica capas, fallback).
+- **`js/skin-manager.js`**: orquestador de skins por capas.
 - **`assets/skins/manifest.json`**: catálogo versionado de skins.
-- **`js/app.js`**: integración con `GameCenter` (`setSkin/getSkin/listSkins`) y persistencia `store.skinId`.
-- **`styles.css`**: hooks de render visual + partículas por skin.
-- **`index.html`**: bootstrap del manager y atributos declarativos de skin.
+- **`js/app.js`**: integración con `GameCenter`, persistencia y render de selector.
+- **`styles.css`**: hooks visuales + partículas.
+- **`index.html`**: bootstrap y sección de skins en Tienda > Ajustes.
 
 ## Contrato `SkinDefinition`
-Campos principales:
 - `id`, `displayName`, `version`, `themeKey`
 - `tokens`: colores semánticos
 - `typography`: fuentes por rol
 - `backgrounds`: home/cards
-- `icons`: sprite por skin
-- `gameCards`: imagen por id de juego
-- `effects`: partículas y perfil
-- `meta`: metadata de licencias/autoría
+- `icons`: `{ sprite, aliases }`
+- `gameCards`
+- `effects`
+- `meta`
 
-## Pipeline de aplicación
-1. `applyTokenLayer` → CSS custom properties.
-2. `applyTypographyLayer` → variables tipográficas.
-3. `applyClassLayer` → `body.skin-*`, `html[data-skin]`, `html[data-skin-profile]`.
-4. `applyAssetLayer` → fondos e imágenes declarativas (`data-skin-bg`, `data-skin-card-image`).
-5. `applyEffectsLayer` → partículas/flags de efectos.
+## Sistema de iconos (Opción A)
+### Alias canónicos
+El sistema usa aliases (`check`, `palette`, `moon`, etc.) para desacoplar UI de IDs internos del sprite.
 
-## Persistencia y migración
-- Nuevo campo: `store.skinId`.
-- Migración automática desde `store.theme` legado:
-  - `crimson` → `hutao-ember`
-  - resto → `arcade-default`
+### Resolución
+1. Detecta alias por `data-skin-icon` (si existe).
+2. Si no existe, deriva alias desde `href="#icon-*"` actual.
+3. Busca en `icons.aliases` del skin.
+4. Si no encuentra mapping, intenta `icon-{alias}` dentro del sprite del skin.
+5. Fallback al icono base original (`data-base-href`).
 
-## API pública
-- `GameCenter.setSkin(skinId)`
-- `GameCenter.getSkin()`
-- `GameCenter.listSkins()`
+### Cobertura global
+`refreshSkinIcons()` recorre todos los `svg use` del DOM y reemplaza automáticamente los íconos de la plataforma completa.
+
+## Pipeline
+1. `applyTokenLayer`
+2. `applyTypographyLayer`
+3. `applyClassLayer`
+4. `applyAssetLayer`
+5. `applyEffectsLayer`
+6. `loadSkinSprite` + `refreshSkinIcons`
+
+## Persistencia
+- `store.skinId` en estado local.
+- Migración desde `theme` legado.
+
+## Ajustes en Tienda
+En **Tienda > Ajustes** existe la sección **Skin de interfaz** y se renderiza dinámicamente desde `SkinManager.listSkins()`.
 
 ## Rendimiento
-- Perfiles: `full`, `balanced`, `lite`.
-- `lite` se activa en reduce-motion y móviles compactos.
-- Partículas controladas por `data-skin-particles` y perfil.
+- Perfiles `full`, `balanced`, `lite`.
+- `lite` reduce coste visual en dispositivos modestos o `prefers-reduced-motion`.
 
-## Versionado y caché
-- `assets/skins/manifest.json` define versiones y costo estimado por skin.
-- Recomendación: conectar este manifiesto con `sw.js` para precache del skin activo.
-
-## Convenciones para nuevos skins
-1. Crear carpeta en `assets/skins/<skin-id>/`.
-2. Añadir fondos e imágenes optimizadas (`.webp`).
-3. Registrar skin en `manifest.json`.
-4. Si hay icon pack, usar IDs compatibles con sprite base.
-5. Probar en perfiles `full/balanced/lite`.
-
-## QA checklist
-- Cambio de skin persiste tras recarga.
-- Fallback correcto si faltan assets.
-- No hay CLS perceptible al cambiar fuentes.
-- FPS aceptable en perfil `lite`.
+## Pendientes recomendados (para hardening final)
+- Integrar precache selectivo de sprite/skins en `sw.js`.
+- Añadir validación CI para cobertura mínima de aliases por skin.
+- Versionar arte de cards por checksum para rollback seguro.

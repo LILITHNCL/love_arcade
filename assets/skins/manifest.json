@@ -1,12 +1,12 @@
 {
-  "manifestVersion": 1,
-  "minimumAppVersion": "15.0.0",
+  "manifestVersion": 2,
+  "minimumAppVersion": "15.1.0",
   "generatedAt": "2026-05-04",
   "skins": [
     {
       "id": "arcade-default",
       "displayName": "Arcade Default",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "themeKey": "violet",
       "tokens": {
         "accent": "#9b59ff",
@@ -14,13 +14,14 @@
         "textMed": "#b4b4c8",
         "textLow": "#6a6a82"
       },
+      "icons": { "sprite": "", "aliases": {} },
       "estimatedKB": 0,
       "gpuCost": "low"
     },
     {
       "id": "hutao-ember",
       "displayName": "Hu Tao Ember",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "themeKey": "crimson",
       "tokens": {
         "accent": "#e35a5a",
@@ -31,6 +32,15 @@
       "backgrounds": {
         "home": "assets/skins/hutao-ember/backgrounds/home-bg.webp",
         "cards": "assets/skins/hutao-ember/backgrounds/card-bg.webp"
+      },
+      "icons": {
+        "sprite": "assets/skins/hutao-ember/icons.svg",
+        "aliases": {
+          "check": "icon-check-hutao",
+          "palette": "icon-palette-hutao",
+          "moon": "icon-moon-hutao",
+          "coin": "icon-coin-hutao"
+        }
       },
       "gameCards": {
         "jungle-dash": "assets/skins/hutao-ember/cards/jungle-dash.webp",

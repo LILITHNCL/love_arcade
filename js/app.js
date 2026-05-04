@@ -1613,15 +1613,20 @@ window.GameCenter = {
     },
     getTheme: () => store.theme || 'violet',
 
-    setSkin: (skinId) => {
+    setSkin: async (skinId) => {
         if (!window.SkinManager) return;
-        const skin = window.SkinManager.applySkin(skinId);
+        const skin = await window.SkinManager.applySkin(skinId);
         store.skinId = skin.id;
         if (skin.themeKey && THEMES[skin.themeKey]) {
             store.theme = skin.themeKey;
             applyTheme(skin.themeKey);
         }
         saveState();
+        document.querySelectorAll('.skin-btn').forEach(btn => {
+            const active = btn.dataset.skin === skin.id;
+            btn.classList.toggle('theme-btn--active', active);
+            btn.setAttribute('aria-pressed', String(active));
+        });
     },
     getSkin: () => store.skinId || 'arcade-default',
     listSkins: () => window.SkinManager ? window.SkinManager.listSkins() : [],
@@ -1990,6 +1995,26 @@ function applyTheme(key) {
     });
 }
 
+
+function renderSkinOptions() {
+    const wrap = document.getElementById('skin-grid');
+    if (!wrap || !window.SkinManager) return;
+    const skins = window.SkinManager.listSkins();
+    wrap.innerHTML = skins.map(skin => `
+        <button class="theme-btn skin-btn" data-skin="${skin.id}" aria-pressed="false">
+            <span class="theme-swatch" style="background:${skin.tokens?.accent || '#9b59ff'};"></span>
+            <span class="theme-name">${skin.displayName || skin.id}</span>
+            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
+        </button>
+    `).join('');
+
+    wrap.querySelectorAll('.skin-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            await window.GameCenter?.setSkin?.(btn.dataset.skin);
+        });
+    });
+}
+
 function updateDailyButton() {
     const btn = document.getElementById('btn-daily');
     if (!btn) return;
@@ -2203,9 +2228,15 @@ window.revealUI = revealUI;
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 applyTheme(store.theme || 'violet');
 if (window.SkinManager) {
-    window.SkinManager.init().then(() => {
+    window.SkinManager.init().then(async () => {
+        renderSkinOptions();
         const selected = store.skinId || 'arcade-default';
-        window.SkinManager.applySkin(selected);
+        await window.SkinManager.applySkin(selected);
+        document.querySelectorAll('.skin-btn').forEach(btn => {
+            const active = btn.dataset.skin === selected;
+            btn.classList.toggle('theme-btn--active', active);
+            btn.setAttribute('aria-pressed', String(active));
+        });
     });
 }
 
