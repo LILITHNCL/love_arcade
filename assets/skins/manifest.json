@@ -14,7 +14,10 @@
         "textMed": "#b4b4c8",
         "textLow": "#6a6a82"
       },
-      "icons": { "sprite": "", "aliases": {} },
+      "icons": {
+        "sprite": "",
+        "aliases": {}
+      },
       "estimatedKB": 0,
       "gpuCost": "low"
     },
@@ -30,8 +33,8 @@
         "textLow": "#d6a6a6"
       },
       "backgrounds": {
-        "home": "assets/skins/hutao-ember/backgrounds/home-bg.webp",
-        "cards": "assets/skins/hutao-ember/backgrounds/card-bg.webp"
+        "home": "assets/skins/hutao-ember/backgrounds/home-bg.svg",
+        "cards": "assets/skins/hutao-ember/backgrounds/card-bg.svg"
       },
       "icons": {
         "sprite": "assets/skins/hutao-ember/icons.svg",
@@ -43,12 +46,21 @@
         }
       },
       "gameCards": {
-        "jungle-dash": "assets/skins/hutao-ember/cards/jungle-dash.webp",
-        "word-hunt": "assets/skins/hutao-ember/cards/word-hunt.webp"
+        "jungle-dash": "assets/skins/hutao-ember/cards/jungle-dash.svg",
+        "word-hunt": "assets/skins/hutao-ember/cards/word-hunt.svg"
       },
-      "effects": { "particles": "embers", "profile": "balanced" },
+      "effects": {
+        "particles": "embers",
+        "profile": "balanced"
+      },
       "estimatedKB": 480,
       "gpuCost": "medium"
     }
+  ],
+  "requiredIconAliases": [
+    "check",
+    "palette",
+    "moon",
+    "coin"
   ]
 }

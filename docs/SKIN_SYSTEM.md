@@ -57,3 +57,19 @@ En **Tienda > Ajustes** existe la sección **Skin de interfaz** y se renderiza d
 - Integrar precache selectivo de sprite/skins en `sw.js`.
 - Añadir validación CI para cobertura mínima de aliases por skin.
 - Versionar arte de cards por checksum para rollback seguro.
+
+
+## Validación pre-release
+Ejecutar:
+- `node tools/validate-skins.mjs`
+
+Este validador verifica existencia de assets declarados, cobertura de aliases obligatorios y consistencia básica del manifiesto antes de despliegue.
+
+## Observabilidad runtime
+El runtime emite eventos de analítica:
+- `skin_apply_success`
+- `missing_skin_asset`
+- `missing_skin_icon_alias`
+
+## Robustez SPA
+Se incluye `MutationObserver` para reaplicar iconos cuando la SPA inyecta nodos nuevos después del cambio de skin.

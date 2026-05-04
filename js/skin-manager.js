@@ -61,7 +61,8 @@
     skinMap: { ...BUILTIN_SKINS },
     profile: 'balanced',
     activeSkinId: FALLBACK_SKIN_ID,
-    iconAliasCache: new Map()
+    iconAliasCache: new Map(),
+    observer: null
   };
 
   function resolveProfile() {
@@ -85,6 +86,23 @@
   function setCssVar(name, value) {
     if (!value) return;
     document.documentElement.style.setProperty(name, value);
+  }
+
+
+  function track(event, payload = {}) {
+    try {
+      window.GhostAnalytics?.track?.(event, { component: 'skin_system', ...payload });
+    } catch (_) { /* noop */ }
+  }
+
+  function validateAliasCoverage(skin) {
+    const required = runtime.manifest?.requiredIconAliases || [];
+    if (!required.length) return;
+    const missing = required.filter(a => !resolveSkinIconId(a, skin));
+    if (missing.length) {
+      track('missing_skin_icon_alias', { skinId: skin.id, missing: missing.join(',') });
+      console.warn('[SkinManager] Missing icon aliases for skin', skin.id, missing);
+    }
   }
 
   function applyTokenLayer(skin) {
@@ -136,7 +154,8 @@
       if (!svg) return null;
       svg.querySelectorAll('symbol[id]').forEach(sym => runtime.iconAliasCache.set(sym.id, true));
       return svg;
-    } catch (_) {
+    } catch (err) {
+      track('missing_skin_asset', { type: 'icon_sprite', skinId: skin?.id || 'unknown', path: spritePath, error: String(err?.message || err) });
       return null;
     }
   }
@@ -213,6 +232,16 @@
   function getSkin(id) { return runtime.skinMap[id] || runtime.skinMap[FALLBACK_SKIN_ID]; }
   function listSkins() { return Object.values(runtime.skinMap); }
 
+
+  function ensureObserver() {
+    if (runtime.observer) return;
+    runtime.observer = new MutationObserver(() => {
+      const skin = getSkin(runtime.activeSkinId);
+      refreshSkinIcons(skin);
+    });
+    runtime.observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   async function applySkin(skinId) {
     const skin = getSkin(skinId);
     runtime.activeSkinId = skin.id;
@@ -221,8 +250,12 @@
     applyClassLayer(skin.id);
     applyAssetLayer(skin);
     applyEffectsLayer(skin);
-    await loadSkinSprite(skin);
+    const t0 = performance.now();
+    const sprite = await loadSkinSprite(skin);
     refreshSkinIcons(skin);
+    validateAliasCoverage(skin);
+    ensureObserver();
+    track('skin_apply_success', { skinId: skin.id, hasSprite: Boolean(sprite), ms: Math.round(performance.now() - t0) });
     return skin;
   }
 
