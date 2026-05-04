@@ -1,4 +1,5 @@
 const APP_URL = '/';
+const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -27,8 +28,8 @@ function normalizePayload(payload = {}) {
   return {
     title: payload.title || 'Love Arcade',
     body: payload.body || 'Tienes una nueva notificación.',
-    icon: payload.icon || '/assets/icon/icon.png',
-    badge: payload.badge || '/assets/icon/icon-notification.png',
+    icon: payload.icon || NOTIFICATION_ICON,
+    badge: payload.badge || NOTIFICATION_ICON,
     tag: payload.tag || 'love-arcade',
     data: {
       ...payloadJson,
