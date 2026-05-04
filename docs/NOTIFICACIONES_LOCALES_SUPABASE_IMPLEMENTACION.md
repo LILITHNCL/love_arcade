@@ -1,6 +1,6 @@
 # Notificaciones de Love Arcade (Producción)
 
-Última actualización: 2026-05-03
+Última actualización: 2026-05-04
 
 ## Objetivo
 Este documento centraliza la arquitectura y operación de notificaciones de Love Arcade en producción:
@@ -21,12 +21,8 @@ Archivos clave:
 Responsabilidades:
 1. Registrar Service Worker y suscripción Push Web.
 2. Guardar suscripción en `push_subscriptions`.
-3. Sincronizar estado de recordatorios en `user_notification_state`:
-   - preferencias por tipo,
-   - estado daily (`daily_can_claim`, `daily_last_claim_at`),
-   - offset de zona horaria,
-   - estado lunar/eventos,
-   - hash local de catálogo para trazabilidad.
+3. Sincronizar estado de recordatorios en `user_notification_state`.
+4. Fallar de forma explícita si no hay configuración VAPID pública disponible.
 
 ### Service Worker
 Archivo:
@@ -35,17 +31,19 @@ Archivo:
 Responsabilidades:
 - Mostrar notificaciones entrantes (`push`).
 - Resolver deep-link de apertura (`notificationclick`).
+- Usar estrategia de `tag` para evitar reemplazos involuntarios.
 
 ### Backend (Supabase Edge Function)
 Archivo:
 - `supabase/functions/push-dispatch/index.ts`
 
 Responsabilidades:
-1. Evaluar reglas de recordatorios por usuario.
+1. Evaluar reglas de recordatorios por usuario (con escaneo paginado por lotes).
 2. Encolar campañas en `push_campaigns`.
 3. Despachar campañas pendientes a `push_subscriptions` activas.
 4. Registrar entrega en `push_delivery_log`.
 5. Marcar suscripciones inválidas (`404/410`) como inactivas.
+6. Exponer métricas operativas por ejecución (`states_scanned`, `eval_errors`, etc.).
 
 ---
 
@@ -56,12 +54,16 @@ Aplicar estas migraciones (en orden):
 2. `supabase/migrations/20260502_shop_content_version.sql`
 3. `supabase/migrations/20260502_shop_notification_dedupe.sql`
 4. `supabase/migrations/20260502_daily_reminder_slots.sql`
+5. `supabase/migrations/20260504_daily_slots_constraint.sql`
 
-Tablas/funciones clave:
-- `user_notification_state`
-- `app_content_versions`
-- `bump_shop_version()`
-- `enqueue_local_shop_campaign(...)`
+---
+
+## Seguridad y configuración
+
+- `EDGE_SHARED_SECRET` es obligatorio en producción.
+- `REQUIRE_EDGE_AUTH=true` recomendado (default esperado).
+- La API pública `/api/push-public-config` retorna `500` si falta `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
+- El cron debe invocar la Edge Function con `Authorization: Bearer <EDGE_SHARED_SECRET>`.
 
 ---
 
@@ -69,13 +71,8 @@ Tablas/funciones clave:
 
 ### 1) Novedades de tienda
 - Se detectan por versión global `app_content_versions.shop_version`.
-- Al publicar cambios de `shop.json`, incrementar versión:
-
-```sql
-select public.bump_shop_version();
-```
-
 - Dedupe robusta por `user_id + shop_version` mediante `enqueue_local_shop_campaign(...)`.
+- `last_shop_version_sent` solo avanza cuando la campaña fue efectivamente encolada.
 
 ### 2) Bono diario
 - Se evalúa por hora local del usuario (offset sincronizado desde cliente).
@@ -84,27 +81,10 @@ select public.bump_shop_version();
   - día: 13:00–16:59
   - noche: 19:00–22:59
 - Máximo 3 notificaciones por día (1 por ventana).
-- Si el usuario reclama, `daily_can_claim=false` y se detienen envíos pendientes de ese día.
+- `daily_notified_slots` restringido a: `morning`, `day`, `night`.
 
 ### 3) Bendición lunar y eventos
 - Se evalúan por proximidad de expiración/fin según estado sincronizado.
-
----
-
-## Variables de entorno (Edge Function)
-
-Obligatorias:
-- `LA_CLOUD_URL`
-- `LA_CLOUD_SERVICE_ROLE_KEY`
-- `VAPID_PUBLIC_KEY`
-- `VAPID_PRIVATE_KEY`
-- `VAPID_SUBJECT`
-
-Recomendadas:
-- `EDGE_SHARED_SECRET`
-
-Opcional (fallback):
-- `SHOP_CONTENT_VERSION`
 
 ---
 
@@ -116,22 +96,11 @@ supabase functions deploy push-dispatch
 ```
 
 ### Cron
-- Ejecutar `push-dispatch` de forma periódica.
-- Frecuencia vigente: **cada 1 minuto** (válida con dedupe actual).
+- Ejecutar `push-dispatch` de forma periódica (vigente: cada 1 minuto).
 
 ### Health check sugerido
 Verificar periódicamente:
-- `push_campaigns` (`status`, `last_error`)
+- `push_campaigns` (`status`, `last_error`, `sent_count`, `failed_count`)
 - `push_delivery_log` (`status`)
 - `push_subscriptions` (`is_active`)
 - `user_notification_state` (coherencia de flags y timestamps)
-
----
-
-## Criterios de aceptación
-
-1. Campañas remotas llegan con navegador cerrado.
-2. Novedades de tienda envían solo 1 aviso por versión/usuario.
-3. Bono diario envía hasta 3 recordatorios por día en sus ventanas.
-4. Si se reclama daily tras la primera alerta, no se envían las restantes de ese día.
-5. Sin duplicados por ejecución frecuente del cron.
