@@ -15,7 +15,7 @@
  *  - [v9.6] Añadida llamada a window.ShopView.onLeave() / window.HomeView.onLeave()
  *           en _applyView() antes de activar la vista entrante, para que las vistas
  *           puedan liberar recursos (p. ej. IntersectionObserver de precarga).
- *  - Restaurar el scroll a 0,0 ANTES de la animación de entrada (instant),
+ *  - Restaurar el scroll a 0,0 ANTES de la animación de entrada (auto/fallback),
  *    garantizando que la vista nueva empieza desde arriba sin salto visual.
  *  - Manejar data-anchor para deep-links dentro de la vista Inicio (#games, #faq).
  *  - [v9.1] Integrar la History API: botón Atrás vuelve a vista anterior sin recargar.
@@ -199,7 +199,7 @@
      * Ruta interna: usada tanto por navigateTo() como por el handler popstate.
      *
      * Orden de operaciones (v9.2 — Anti-Golpe):
-     *  1. Scroll reset INSTANTÁNEO antes de mostrar la vista entrante.
+     *  1. Scroll reset inmediato antes de mostrar la vista entrante.
      *     Así la vista nueva siempre empieza desde arriba, y la animación CSS
      *     de entrada (opacity + translateY) parte de una posición limpia.
      *  2. Quitar .hidden de la vista destino → CSS dispara la transición de
@@ -214,10 +214,14 @@
         const previousView = currentView;
         
         // [v9.2] Scroll reset ANTES de la transición de entrada.
-        // behavior:'instant' garantiza que no hay scroll animado compitiendo
-        // con la animación de entrada de la vista.
+        // behavior:'auto' evita scroll animado y mantiene compatibilidad amplia.
+        // Fallback defensivo para entornos que no aceptan la firma con objeto.
         if (!anchor) {
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            try {
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            } catch (_) {
+                window.scrollTo(0, 0);
+            }
         }
         
         VIEWS.forEach(id => {
