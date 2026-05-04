@@ -5212,3 +5212,48 @@ html[data-skin-profile="lite"] [data-skin-particles="embers"] body::before {
 /* Skin applying UX */
 html[data-skin-loading="true"] body { transition: opacity 160ms ease; opacity: 0.92; }
 .skin-apply-toast { position: fixed; top: 12px; right: 12px; z-index: 9999; background: var(--solid-surface-hi); border:1px solid var(--accent-border); color: var(--text-high); padding:8px 12px; border-radius: 10px; font-size:12px; }
+
+/* Premium skin composition layer */
+:root {
+  --skin-scene-overlay: none;
+  --skin-vignette-opacity: 0;
+  --skin-grain-opacity: 0;
+}
+
+html[data-skin="hutao-ember"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--skin-scene-overlay), radial-gradient(circle at center, transparent 58%, rgba(0,0,0,var(--skin-vignette-opacity)) 100%);
+  background-size: cover;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+html[data-skin="hutao-ember"] .player-hud,
+html[data-skin="hutao-ember"] .game-card,
+html[data-skin="hutao-ember"] .bottom-nav,
+html[data-skin="hutao-ember"] .coin-badge {
+  border: 1px solid rgba(255, 179, 120, 0.25);
+  box-shadow: 0 0 0 1px rgba(255,110,84,0.15) inset, 0 14px 40px rgba(30,0,20,.45);
+}
+
+html[data-skin-layout-cards="hero"] .game-card .game-thumb {
+  min-height: 220px;
+  object-fit: cover;
+  filter: saturate(1.1) contrast(1.04);
+}
+
+html[data-skin-layout-hud="ornate"] .player-hud {
+  background: linear-gradient(135deg, rgba(36,16,30,.92), rgba(16,8,18,.92));
+  backdrop-filter: blur(1px);
+}
+
+html[data-skin-cta="glow"] .game-actions .btn-primary,
+html[data-skin-cta="glow"] .btn-primary {
+  background: linear-gradient(90deg, #7f3cff, #9f5bff);
+  box-shadow: 0 6px 24px rgba(127,60,255,.45);
+}
+
+html[data-skin-cta-radius="pill"] .btn-primary { border-radius: 999px; }

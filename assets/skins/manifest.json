@@ -54,7 +54,21 @@
         "profile": "balanced"
       },
       "estimatedKB": 480,
-      "gpuCost": "medium"
+      "gpuCost": "medium",
+      "layout": {
+        "hud": "ornate",
+        "cards": "hero",
+        "nav": "lantern"
+      },
+      "scene": {
+        "overlay": "assets/skins/hutao-ember/backgrounds/home-bg.svg",
+        "vignette": 0.35,
+        "grain": 0.08
+      },
+      "cta": {
+        "style": "glow",
+        "radius": "pill"
+      }
     }
   ],
   "requiredIconAliases": [

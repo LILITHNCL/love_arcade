@@ -253,6 +253,22 @@
     });
   }
 
+
+  function applyLayoutLayer(skin) {
+    document.documentElement.setAttribute('data-skin-layout-hud', skin.layout?.hud || 'default');
+    document.documentElement.setAttribute('data-skin-layout-cards', skin.layout?.cards || 'default');
+    document.documentElement.setAttribute('data-skin-layout-nav', skin.layout?.nav || 'default');
+    document.documentElement.setAttribute('data-skin-cta', skin.cta?.style || 'default');
+    document.documentElement.setAttribute('data-skin-cta-radius', skin.cta?.radius || 'default');
+  }
+
+  function applySceneLayer(skin) {
+    const scene = skin.scene || {};
+    setCssVar('--skin-scene-overlay', scene.overlay ? `url('${scene.overlay}')` : 'none');
+    setCssVar('--skin-vignette-opacity', typeof scene.vignette === 'number' ? String(scene.vignette) : '0');
+    setCssVar('--skin-grain-opacity', typeof scene.grain === 'number' ? String(scene.grain) : '0');
+  }
+
   function applyEffectsLayer(skin) {
     const effects = skin.effects || {};
     document.documentElement.setAttribute('data-skin-particles', effects.particles || 'off');
@@ -280,6 +296,8 @@
     applyTypographyLayer(skin);
     applyClassLayer(skin.id);
     applyAssetLayer(skin);
+    applyLayoutLayer(skin);
+    applySceneLayer(skin);
     applyEffectsLayer(skin);
     const t0 = performance.now();
     const sprite = await loadSkinSprite(skin);

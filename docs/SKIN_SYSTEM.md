@@ -83,3 +83,12 @@ Se incluye `MutationObserver` para reaplicar iconos cuando la SPA inyecta nodos 
 - Eventos de observabilidad (`skin_apply_success`, `missing_skin_asset`, `missing_skin_icon_alias`).
 - Robustez SPA vía `MutationObserver`.
 - Política de licencias por skin (`assets/skins/<id>/LICENSE.md`).
+
+
+## Premium UI Layer
+Se añadió una capa de composición premium: `layout`, `scene` y `cta` por skin.
+- `layout`: variantes de HUD/cards/nav.
+- `scene`: overlay de escena + viñeta + grano para atmósfera.
+- `cta`: estilo de botones de acción.
+
+Estos campos se aplican en runtime mediante atributos `data-skin-layout-*`, `data-skin-cta*` y variables CSS de escena.
