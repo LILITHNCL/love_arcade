@@ -267,7 +267,7 @@ Ahora (v9.3):          Script síncrono → applyTheme → init saldo → reveal
 
 **Archivo:** `styles.css`
 
-**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`assets/default_avatar.png`) antes de que JS aplicara la imagen guardada.
+**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.webp`) antes de que JS aplicara la imagen guardada.
 
 **Solución:**
 
@@ -1797,7 +1797,7 @@ love_arcade/
 │
 ├── wallpapers/             # Carpeta local legacy (reemplazada por Cloudinary CDN)
 ├── assets/
-│   └── default_avatar.png
+│   └── default_avatar.webp
 │
 │   # assets/product-thumbs/ → ELIMINADA en v9.5 (Cloudinary CDN Migration)
 │   # assets/cover/          → ELIMINADA en v9.5 (Cloudinary CDN Migration)
