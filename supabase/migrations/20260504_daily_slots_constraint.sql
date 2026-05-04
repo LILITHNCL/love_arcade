@@ -17,9 +17,5 @@ alter table public.user_notification_state
 alter table public.user_notification_state
   add constraint user_notification_state_daily_notified_slots_check
   check (
-    not exists (
-      select 1
-      from unnest(coalesce(daily_notified_slots, '{}')) as s
-      where s not in ('morning', 'day', 'night')
-    )
+    coalesce(daily_notified_slots, '{}') <@ array['morning', 'day', 'night']::text[]
   );
