@@ -1621,6 +1621,13 @@ window.GameCenter = {
             store.theme = skin.themeKey;
             applyTheme(skin.themeKey);
         }
+        const now = Date.now();
+        try {
+            const last = Number(localStorage.getItem('love_arcade_skin_last_change_ts') || '0');
+            if (last && (now - last) < 120000) window.GhostAnalytics?.track?.('skin_ux_rebound', { skinId: skin.id, deltaMs: now - last });
+            localStorage.setItem('love_arcade_skin_last_change_ts', String(now));
+            localStorage.setItem('love_arcade_skin_last_id', skin.id);
+        } catch (_) {}
         saveState();
         document.querySelectorAll('.skin-btn').forEach(btn => {
             const active = btn.dataset.skin === skin.id;
@@ -2232,6 +2239,13 @@ if (window.SkinManager) {
         renderSkinOptions();
         const selected = store.skinId || 'arcade-default';
         await window.SkinManager.applySkin(selected);
+        try {
+            const lastId = localStorage.getItem('love_arcade_skin_last_id');
+            const lastTs = Number(localStorage.getItem('love_arcade_skin_last_change_ts') || '0');
+            if (lastId === selected && lastTs && (Date.now() - lastTs) > 86400000) {
+                window.GhostAnalytics?.track?.('skin_ux_retention_24h', { skinId: selected, ageMs: Date.now() - lastTs });
+            }
+        } catch (_) {}
         document.querySelectorAll('.skin-btn').forEach(btn => {
             const active = btn.dataset.skin === selected;
             btn.classList.toggle('theme-btn--active', active);

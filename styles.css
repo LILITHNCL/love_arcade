@@ -5257,3 +5257,13 @@ html[data-skin-cta="glow"] .btn-primary {
 }
 
 html[data-skin-cta-radius="pill"] .btn-primary { border-radius: 999px; }
+
+/* Skin micro-motion transition lock */
+html[data-skin-transition="1"] body {
+  filter: blur(1.5px);
+  opacity: 0.9;
+  transition: filter 190ms ease, opacity 190ms ease;
+}
+html[data-skin-interaction-lock="1"] body {
+  pointer-events: none;
+}

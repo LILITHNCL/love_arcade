@@ -92,3 +92,9 @@ Se añadió una capa de composición premium: `layout`, `scene` y `cta` por skin
 - `cta`: estilo de botones de acción.
 
 Estos campos se aplican en runtime mediante atributos `data-skin-layout-*`, `data-skin-cta*` y variables CSS de escena.
+
+
+## Optimizaciones Premium UX
+- **Preload inteligente en primer paint**: script crítico en `index.html` precarga sprite, fondo principal y cards hero del skin activo.
+- **Micro-motion de skin swap**: transición corta (`data-skin-transition`) + bloqueo temporal de interacción (`data-skin-interaction-lock`) durante ~200ms para evitar saltos.
+- **Métricas UX/A-B**: se emiten `skin_ux_adoption`, `skin_ux_apply_time`, `skin_ux_rebound`, `skin_ux_retention_24h`.

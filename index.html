@@ -57,6 +57,34 @@
       } catch(e) { /* localStorage no disponible — continuar con tema por defecto */ }
     }();
     </script>
+    
+    <script>
+    !function(){
+      try {
+        var raw = localStorage.getItem('gamecenter_v6_promos');
+        if (!raw) return;
+        var st = JSON.parse(raw);
+        var skin = st.skinId || 'arcade-default';
+        var assets = {
+          'hutao-ember': [
+            'assets/skins/hutao-ember/icons.svg',
+            'assets/skins/hutao-ember/backgrounds/home-bg.svg',
+            'assets/skins/hutao-ember/cards/word-hunt.svg',
+            'assets/skins/hutao-ember/cards/jungle-dash.svg'
+          ]
+        }[skin] || [];
+        assets.forEach(function(href){
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = href.endsWith('.svg') ? 'image' : 'fetch';
+          l.href = href;
+          if (href.endsWith('.svg') && href.indexOf('icons.svg')>-1) l.as='fetch';
+          document.head.appendChild(l);
+        });
+      } catch(e) {}
+    }();
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
 </head>

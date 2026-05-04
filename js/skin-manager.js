@@ -4,6 +4,7 @@
   const SKIN_MANIFEST_PATH = 'assets/skins/manifest.json';
   const FALLBACK_SKIN_ID = 'arcade-default';
   const ICON_SPRITE_MOUNT_ID = 'skin-icon-sprite-mount';
+  const SKIN_METRIC_KEY = 'love_arcade_skin_metric_v1';
 
   const BUILTIN_SKINS = {
     'arcade-default': {
@@ -105,6 +106,26 @@
     }
   }
 
+
+
+  function markTransition(active) {
+    document.documentElement.setAttribute('data-skin-transition', active ? '1' : '0');
+  }
+
+  function lockInteraction(active) {
+    document.documentElement.setAttribute('data-skin-interaction-lock', active ? '1' : '0');
+  }
+
+  function trackUXMetric(type, payload = {}) {
+    track('skin_ux_' + type, payload);
+    try {
+      const now = Date.now();
+      const raw = localStorage.getItem(SKIN_METRIC_KEY);
+      const prev = raw ? JSON.parse(raw) : {};
+      const data = { ...prev, ...payload, type, ts: now };
+      localStorage.setItem(SKIN_METRIC_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
 
   function setLoading(isLoading) {
     document.documentElement.setAttribute('data-skin-loading', String(Boolean(isLoading)));
@@ -289,7 +310,10 @@
 
   async function applySkin(skinId) {
     const skin = getSkin(skinId);
+    const startTs = performance.now();
     setLoading(true);
+    markTransition(true);
+    lockInteraction(true);
     runtime.activeSkinId = skin.id;
     applyTokenLayer(skin);
     await loadSkinFonts(skin);
@@ -307,7 +331,10 @@
     const elapsed = Math.round(performance.now() - t0);
     track('skin_apply_success', { skinId: skin.id, hasSprite: Boolean(sprite), ms: elapsed });
     notify(`Skin aplicada: ${skin.displayName || skin.id}`);
+    setTimeout(() => { markTransition(false); lockInteraction(false); }, 200);
     setLoading(false);
+    trackUXMetric('apply_time', { skinId: skin.id, durationMs: Math.round(performance.now() - startTs) });
+    trackUXMetric('adoption', { skinId: skin.id });
     return skin;
   }
 
