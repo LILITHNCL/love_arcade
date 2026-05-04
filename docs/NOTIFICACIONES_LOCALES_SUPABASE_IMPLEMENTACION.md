@@ -104,3 +104,36 @@ Verificar periódicamente:
 - `push_delivery_log` (`status`)
 - `push_subscriptions` (`is_active`)
 - `user_notification_state` (coherencia de flags y timestamps)
+
+---
+
+## Checklist de despliegue y configuración
+
+### Supabase (migraciones y función)
+1. Aplicar migraciones, incluyendo:
+   - `supabase/migrations/20260504_daily_slots_constraint.sql`
+2. Deploy de función:
+   ```bash
+   supabase functions deploy push-dispatch
+   ```
+3. Variables de entorno requeridas/recomendadas:
+   - `LA_CLOUD_URL`
+   - `LA_CLOUD_SERVICE_ROLE_KEY`
+   - `VAPID_PUBLIC_KEY`
+   - `VAPID_PRIVATE_KEY`
+   - `VAPID_SUBJECT`
+   - `EDGE_SHARED_SECRET` (obligatoria en producción)
+   - `REQUIRE_EDGE_AUTH=true`
+   - `APP_ENV=production`
+   - `EVAL_BATCH_SIZE=500` (ajustable)
+   - `EVAL_MAX_BATCHES=10` (ajustable)
+4. Cron/scheduler debe enviar:
+   - `Authorization: Bearer <EDGE_SHARED_SECRET>`
+
+### Vercel (frontend/API)
+1. Configurar:
+   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+2. Redeploy para propagar:
+   - `api/push-public-config.js`
+   - `js/push-notifications.js`
+   - `sw.js`
