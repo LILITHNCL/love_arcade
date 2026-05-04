@@ -251,6 +251,8 @@
 
     await swReg.showNotification(payload.title || 'Love Arcade', {
       body: payload.body || '',
+      icon: payload.icon || '/assets/icon/icon-notification.png',
+      badge: payload.badge || '/assets/icon/icon-notification.png',
       tag: payload.tag || 'love-arcade-local',
       data: payload
     });
