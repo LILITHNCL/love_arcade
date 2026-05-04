@@ -1460,11 +1460,89 @@
         //                    título/botón de edición, NO llama revealUI()
         //                    (el HUD ya está visible).
         //
+        const identityModalState = {
+            mode: 'welcome',
+            selectedGender: '@'
+        };
+
+        function setActiveGenderChip(gender) {
+            const identityModal = document.getElementById('identity-modal');
+            if (!identityModal) return;
+            const chips = identityModal.querySelectorAll('.identity-chip');
+            chips.forEach((chip) => {
+                chip.classList.toggle('identity-chip--active', chip.dataset.gender === gender);
+            });
+        }
+
+        function confirmIdentityFromModal() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const errorEl = document.getElementById('identity-input-error');
+            const nickname = nicknameInput?.value.trim() || '';
+
+            if (!nickname) {
+                errorEl?.classList.remove('hidden');
+                nicknameInput?.focus();
+                return;
+            }
+
+            window.GameCenter?.setIdentity?.(nickname, identityModalState.selectedGender);
+            identityModal?.classList.add('hidden');
+            if (identityModalState.mode !== 'edit') {
+                window.revealUI?.();
+            }
+        }
+
+        function initIdentityModalListeners() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const charCount = document.getElementById('identity-char-count');
+            const errorEl = document.getElementById('identity-input-error');
+            const confirmBtn = document.getElementById('identity-confirm-btn');
+
+            if (!identityModal) return;
+
+            identityModal.addEventListener('click', (e) => {
+                const chip = e.target.closest('.identity-chip');
+                if (chip && identityModal.contains(chip)) {
+                    identityModalState.selectedGender = chip.dataset.gender || '@';
+                    setActiveGenderChip(identityModalState.selectedGender);
+                    return;
+                }
+
+                if (identityModalState.mode === 'edit' && e.target === identityModal) {
+                    identityModal.classList.add('hidden');
+                }
+            });
+
+            nicknameInput?.addEventListener('input', () => {
+                if (charCount) charCount.textContent = `${nicknameInput.value.length}/15`;
+                if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
+            });
+
+            nicknameInput?.addEventListener('focus', () => {
+                setTimeout(() => {
+                    document.getElementById('identity-confirm-btn')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 350);
+            });
+
+            nicknameInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmIdentityFromModal();
+                }
+            });
+
+            confirmBtn?.addEventListener('click', confirmIdentityFromModal);
+        }
+
         function openIdentityModal(mode) {
             const identityModal = document.getElementById('identity-modal');
             if (!identityModal) { if (mode === 'welcome') window.revealUI?.(); return; }
 
             const isEdit = (mode === 'edit');
+            identityModalState.mode = isEdit ? 'edit' : 'welcome';
 
             // ── Adaptar textos según modo ───────────────────────────────────
             const titleEl   = document.getElementById('identity-modal-title-text');
@@ -1479,7 +1557,7 @@
 
             // ── Pre-rellenar valores actuales en modo edición ───────────────
             const currentIdentity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
-            let selectedGender = isEdit ? currentIdentity.gender : '@';
+            identityModalState.selectedGender = isEdit ? currentIdentity.gender : '@';
 
             const nicknameInput = document.getElementById('identity-nickname-input');
             const charCount     = document.getElementById('identity-char-count');
@@ -1491,78 +1569,14 @@
             }
 
             // ── Chips: marcar la selección actual ──────────────────────────
-            const chips = identityModal.querySelectorAll('.identity-chip');
-            chips.forEach(chip => {
-                chip.classList.toggle('identity-chip--active', chip.dataset.gender === selectedGender);
-            });
+            setActiveGenderChip(identityModalState.selectedGender);
 
             // ── Mostrar modal ──────────────────────────────────────────────
             identityModal.classList.remove('hidden');
             errorEl?.classList.add('hidden');
 
-            // ── Listeners (se registran con {once:true} para evitar duplicados)
-            chips.forEach(chip => {
-                chip.addEventListener('click', () => {
-                    selectedGender = chip.dataset.gender;
-                    chips.forEach(c => c.classList.toggle('identity-chip--active', c === chip));
-                }, { once: false }); // chips pueden ser clicados varias veces en el mismo modal
-            });
-
-            if (nicknameInput && charCount) {
-                nicknameInput.addEventListener('input', () => {
-                    charCount.textContent = `${nicknameInput.value.length}/15`;
-                    if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
-                });
-            }
-
             // ── Focus automático ───────────────────────────────────────────
             setTimeout(() => nicknameInput?.focus(), 280);
-
-            // ── Scroll para teclado móvil ──────────────────────────────────
-            nicknameInput?.addEventListener('focus', () => {
-                setTimeout(() => {
-                    document.getElementById('identity-confirm-btn')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 350);
-            });
-
-            // ── Confirmar ──────────────────────────────────────────────────
-            function confirmIdentity() {
-                const nickname = nicknameInput?.value.trim() || '';
-                if (!nickname) {
-                    errorEl?.classList.remove('hidden');
-                    nicknameInput?.focus();
-                    return;
-                }
-                window.GameCenter?.setIdentity?.(nickname, selectedGender);
-                identityModal.classList.add('hidden');
-                if (!isEdit) {
-                    window.revealUI?.();
-                }
-                // En modo edición el HUD ya es visible; applyIdentity() ya fue
-                // llamado por setIdentity() → el DOM se actualiza al instante.
-            }
-
-            document.getElementById('identity-confirm-btn')
-                ?.addEventListener('click', confirmIdentity, { once: true });
-
-            nicknameInput?.addEventListener('keydown', function onEnter(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    nicknameInput.removeEventListener('keydown', onEnter);
-                    confirmIdentity();
-                }
-            });
-
-            // ── Cerrar al hacer clic en el overlay (solo en modo edición) ──
-            if (isEdit) {
-                identityModal.addEventListener('click', function onOverlayClick(e) {
-                    if (e.target === identityModal) {
-                        identityModal.classList.add('hidden');
-                        identityModal.removeEventListener('click', onOverlayClick);
-                    }
-                });
-            }
         }
 
         // ── Identity Flow — v9.4 ────────────────────────────────────────────
@@ -1574,6 +1588,8 @@
         // ── Botón de edición en el HUD ──────────────────────────────────────
         document.getElementById('btn-edit-identity')
             ?.addEventListener('click', () => openIdentityModal('edit'));
+
+        initIdentityModalListeners();
 
         // ── Post-claim UI refresh ────────────────────────────────────────────
         // El handler principal de #btn-daily (reclamo, validación, mensaje)
