@@ -35,8 +35,8 @@
         mono: "'JetBrains Mono', 'Courier New', monospace"
       },
       backgrounds: {
-        home: 'assets/skins/hutao-ember/backgrounds/home-bg.webp',
-        cards: 'assets/skins/hutao-ember/backgrounds/card-bg.webp'
+        home: 'assets/skins/hutao-ember/backgrounds/home-bg.svg',
+        cards: 'assets/skins/hutao-ember/backgrounds/card-bg.svg'
       },
       icons: {
         sprite: 'assets/skins/hutao-ember/icons.svg',
@@ -48,8 +48,8 @@
         }
       },
       gameCards: {
-        'jungle-dash': 'assets/skins/hutao-ember/cards/jungle-dash.webp',
-        'word-hunt': 'assets/skins/hutao-ember/cards/word-hunt.webp'
+        'jungle-dash': 'assets/skins/hutao-ember/cards/jungle-dash.svg',
+        'word-hunt': 'assets/skins/hutao-ember/cards/word-hunt.svg'
       },
       effects: { particles: 'embers', profile: 'balanced' },
       meta: { author: 'Love Arcade', license: 'fan-art-placeholder' }
@@ -103,6 +103,35 @@
       track('missing_skin_icon_alias', { skinId: skin.id, missing: missing.join(',') });
       console.warn('[SkinManager] Missing icon aliases for skin', skin.id, missing);
     }
+  }
+
+
+  function setLoading(isLoading) {
+    document.documentElement.setAttribute('data-skin-loading', String(Boolean(isLoading)));
+  }
+
+  function notify(message) {
+    const old = document.querySelector('.skin-apply-toast');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.className = 'skin-apply-toast';
+    el.textContent = message;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+
+  async function loadSkinFonts(skin) {
+    const fonts = skin?.typography?.fontAssets || [];
+    if (!fonts.length || !('FontFace' in window)) return;
+    await Promise.all(fonts.map(async (f) => {
+      try {
+        const ff = new FontFace(f.family, `url(${f.url})`, { weight: f.weight || '400', style: f.style || 'normal', display: 'swap' });
+        await ff.load();
+        document.fonts.add(ff);
+      } catch (err) {
+        track('missing_skin_asset', { type: 'font', skinId: skin.id, path: f.url, error: String(err?.message || err) });
+      }
+    }));
   }
 
   function applyTokenLayer(skin) {
@@ -244,8 +273,10 @@
 
   async function applySkin(skinId) {
     const skin = getSkin(skinId);
+    setLoading(true);
     runtime.activeSkinId = skin.id;
     applyTokenLayer(skin);
+    await loadSkinFonts(skin);
     applyTypographyLayer(skin);
     applyClassLayer(skin.id);
     applyAssetLayer(skin);
@@ -255,7 +286,10 @@
     refreshSkinIcons(skin);
     validateAliasCoverage(skin);
     ensureObserver();
-    track('skin_apply_success', { skinId: skin.id, hasSprite: Boolean(sprite), ms: Math.round(performance.now() - t0) });
+    const elapsed = Math.round(performance.now() - t0);
+    track('skin_apply_success', { skinId: skin.id, hasSprite: Boolean(sprite), ms: elapsed });
+    notify(`Skin aplicada: ${skin.displayName || skin.id}`);
+    setLoading(false);
     return skin;
   }
 

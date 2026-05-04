@@ -73,3 +73,13 @@ El runtime emite eventos de analítica:
 
 ## Robustez SPA
 Se incluye `MutationObserver` para reaplicar iconos cuando la SPA inyecta nodos nuevos después del cambio de skin.
+
+
+## Checklist de release (producción)
+- SW con precache de assets de skins e invalidación por versión.
+- Estado de carga visual durante skin swap (`data-skin-loading`).
+- Carga opcional de fuentes por skin (`typography.fontAssets`).
+- Validador de aliases basado en uso real de iconos (`#icon-*`).
+- Eventos de observabilidad (`skin_apply_success`, `missing_skin_asset`, `missing_skin_icon_alias`).
+- Robustez SPA vía `MutationObserver`.
+- Política de licencias por skin (`assets/skins/<id>/LICENSE.md`).

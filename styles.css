@@ -5208,3 +5208,7 @@ body.skin-hutao-ember {
 html[data-skin-profile="lite"] [data-skin-particles="embers"] body::before {
     display: none;
 }
+
+/* Skin applying UX */
+html[data-skin-loading="true"] body { transition: opacity 160ms ease; opacity: 0.92; }
+.skin-apply-toast { position: fixed; top: 12px; right: 12px; z-index: 9999; background: var(--solid-surface-hi); border:1px solid var(--accent-border); color: var(--text-high); padding:8px 12px; border-radius: 10px; font-size:12px; }
