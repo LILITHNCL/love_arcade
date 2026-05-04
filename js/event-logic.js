@@ -854,6 +854,15 @@
         return EVENT_META[type] || EVENT_META.coin_multiplier;
     }
 
+    function _escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // ════════════════════════════════════════════════════════════════════════════
     // RENDERING — TARJETAS POR TIPO
     // ════════════════════════════════════════════════════════════════════════════
@@ -866,9 +875,14 @@
         const timeLeft   = _formatTimeLeft(event.endDate);
         const color      = meta.color;
 
+        const safeTitle = _escapeHTML(event.ui?.title || 'Cacería de Tesoros');
+        const safeDescription = _escapeHTML(event.ui?.description || '');
+        const safeId = _escapeHTML(event.id);
+        const safeType = _escapeHTML(event.type);
+        const safeTimeLeft = _escapeHTML(timeLeft);
         return `
         <article class="lte-card lte-card--interactive"
-                 data-event-id="${event.id}" data-event-type="${event.type}"
+                 data-event-id="${safeId}" data-event-type="${safeType}"
                  style="background:${meta.gradientBg}; --ev-color:${color}; --ev-glow:${meta.colorGlow}; --ev-border:${meta.colorBorder};">
             <div class="lte-art" aria-hidden="true">
                 ${meta.artEmojis.map((e,i) => `<span class="lte-art__deco lte-art__deco--${i+1}">${e}</span>`).join('')}
@@ -883,15 +897,15 @@
                            <span class="lte-live-dot" style="--dot-color:${color};"></span>EN VIVO
                        </span>`}
                 <span class="lte-timer-pill" style="color:${color};border-color:${meta.colorBorder};background:${meta.colorDim};">
-                    ${_icon('clock', 11)}&thinsp;${timeLeft}
+                    ${_icon('clock', 11)}&thinsp;${safeTimeLeft}
                 </span>
             </div>
             <div class="lte-card__hero-wrap">
                 <span class="lte-hero-value" style="color:${color};">${foundCount}/${total}</span>
             </div>
             <div class="lte-card__info">
-                <h3 class="lte-card__name">${event.ui?.title || 'Cacería de Tesoros'}</h3>
-                <p class="lte-card__desc">${event.ui?.description || ''}</p>
+                <h3 class="lte-card__name">${safeTitle}</h3>
+                <p class="lte-card__desc">${safeDescription}</p>
             </div>
             <div class="lte-progress-wrap">
                 <div class="lte-progress-bar" role="progressbar"
@@ -922,9 +936,14 @@
             ? `${_icon('check', 11)}&thinsp;×${mult} ACTIVO &middot; ${Math.ceil(bonusStatus.remainingMs / 60_000)} min restantes`
             : null;
 
+        const safeTitle = _escapeHTML(event.ui?.title || 'Hito Personal');
+        const safeDescription = _escapeHTML(event.ui?.description || '');
+        const safeId = _escapeHTML(event.id);
+        const safeType = _escapeHTML(event.type);
+        const safeTimeLeft = _escapeHTML(timeLeft);
         return `
         <article class="lte-card lte-card--interactive"
-                 data-event-id="${event.id}" data-event-type="${event.type}"
+                 data-event-id="${safeId}" data-event-type="${safeType}"
                  style="background:${meta.gradientBg}; --ev-color:${color}; --ev-glow:${meta.colorGlow}; --ev-border:${meta.colorBorder};">
             <div class="lte-art" aria-hidden="true">
                 ${meta.artEmojis.map((e,i) => `<span class="lte-art__deco lte-art__deco--${i+1}">${e}</span>`).join('')}
@@ -941,15 +960,15 @@
                            <span class="lte-live-dot" style="--dot-color:${color};"></span>EN VIVO
                        </span>`}
                 <span class="lte-timer-pill" style="color:${color};border-color:${meta.colorBorder};background:${meta.colorDim};">
-                    ${_icon('clock', 11)}&thinsp;${timeLeft}
+                    ${_icon('clock', 11)}&thinsp;${safeTimeLeft}
                 </span>
             </div>
             <div class="lte-card__hero-wrap">
                 <span class="lte-hero-value" style="color:${color};">×${mult}</span>
             </div>
             <div class="lte-card__info">
-                <h3 class="lte-card__name">${event.ui?.title || 'Hito Personal'}</h3>
-                <p class="lte-card__desc">${event.ui?.description || ''}</p>
+                <h3 class="lte-card__name">${safeTitle}</h3>
+                <p class="lte-card__desc">${safeDescription}</p>
             </div>
             ${bonusLabel ? `
             <div class="lte-bonus-active-pill" style="color:${color};border-color:${meta.colorBorder};background:${meta.colorDim};">
@@ -999,9 +1018,14 @@
                    ${_icon('slot', 13)}&thinsp;${spinsLeft} de ${GACHA_DAILY_MAX} tiradas disponibles hoy
                </span>`;
 
+        const safeTitle = _escapeHTML(event.ui?.title || 'Gachapón Relámpago');
+        const safeDescription = _escapeHTML(event.ui?.description || '');
+        const safeId = _escapeHTML(event.id);
+        const safeType = _escapeHTML(event.type);
+        const safeTimeLeft = _escapeHTML(timeLeft);
         return `
         <article class="lte-card lte-card--interactive"
-                 data-event-id="${event.id}" data-event-type="${event.type}"
+                 data-event-id="${safeId}" data-event-type="${safeType}"
                  style="background:${meta.gradientBg}; --ev-color:${color}; --ev-glow:${meta.colorGlow}; --ev-border:${meta.colorBorder};">
             <div class="lte-art" aria-hidden="true">
                 ${meta.artEmojis.map((e,i) => `<span class="lte-art__deco lte-art__deco--${i+1}">${e}</span>`).join('')}
@@ -1012,15 +1036,15 @@
                     <span class="lte-live-dot" style="--dot-color:${color};"></span>EN VIVO
                 </span>
                 <span class="lte-timer-pill" style="color:${color};border-color:${meta.colorBorder};background:${meta.colorDim};">
-                    ${_icon('clock', 11)}&thinsp;${timeLeft}
+                    ${_icon('clock', 11)}&thinsp;${safeTimeLeft}
                 </span>
             </div>
             <div class="lte-card__hero-wrap">
                 <span class="lte-hero-value" style="color:${color};">${minRew}–${maxRew}</span>
             </div>
             <div class="lte-card__info">
-                <h3 class="lte-card__name">${event.ui?.title || 'Gachapón Relámpago'}</h3>
-                <p class="lte-card__desc">${event.ui?.description || ''}</p>
+                <h3 class="lte-card__name">${safeTitle}</h3>
+                <p class="lte-card__desc">${safeDescription}</p>
             </div>
             <div class="lte-gacha-action">
                 <button class="lte-gacha-btn${canSpin ? '' : ' lte-gacha-btn--disabled'}"
@@ -1038,7 +1062,6 @@
 
     function _renderDailyMissionsCard(event, meta) {
         const missions = event.config?.missions || [];
-        const timeLeft = _formatTimeLeft(event.endDate);
         const color    = meta.color;
 
         if (!window.GameCenter) return '';
@@ -1064,7 +1087,7 @@
             return `
             <div class="lte-mission-item${isClaimed ? ' lte-mission-item--claimed' : ''}">
                 <div class="lte-mission-header">
-                    <span class="lte-mission-label">${m.label}</span>
+                    <span class="lte-mission-label">${_escapeHTML(m.label)}</span>
                     <span class="lte-mission-reward" style="color:${color};">
                         ${_icon('coin', 13)}&thinsp;+${m.reward}
                     </span>
@@ -1082,7 +1105,7 @@
                     </span>
                     ${isDone && !isClaimed
                         ? `<button class="lte-claim-btn" style="--claim-color:${color};"
-                                   data-mission-id="${m.id}" data-mission-reward="${m.reward}">
+                                   data-mission-id="${_escapeHTML(m.id)}" data-mission-reward="${m.reward}">
                                Reclamar
                            </button>`
                         : ''}
@@ -1090,9 +1113,13 @@
             </div>`;
         }).join('');
 
+        const safeId = _escapeHTML(event.id);
+        const safeType = _escapeHTML(event.type);
+        const safeTitle = _escapeHTML(event.ui?.title || 'Misiones del Día');
+        const safeDescription = _escapeHTML(event.ui?.description || '');
         return `
         <article class="lte-card lte-card--interactive lte-card--missions"
-                 data-event-id="${event.id}" data-event-type="${event.type}"
+                 data-event-id="${safeId}" data-event-type="${safeType}"
                  style="background:${meta.gradientBg}; --ev-color:${color}; --ev-glow:${meta.colorGlow}; --ev-border:${meta.colorBorder};">
             <div class="lte-art" aria-hidden="true">
                 ${meta.artEmojis.map((e,i) => `<span class="lte-art__deco lte-art__deco--${i+1}">${e}</span>`).join('')}
@@ -1107,8 +1134,8 @@
                 </span>
             </div>
             <div class="lte-card__info" style="margin-bottom:12px;">
-                <h3 class="lte-card__name">${event.ui?.title || 'Misiones del Día'}</h3>
-                <p class="lte-card__desc">${event.ui?.description || ''}</p>
+                <h3 class="lte-card__name">${safeTitle}</h3>
+                <p class="lte-card__desc">${safeDescription}</p>
             </div>
             <div class="lte-missions-list">${missionItems}</div>
         </article>`;
@@ -1122,8 +1149,14 @@
         const shortDesc = meta.getShortDesc(event);
         const color     = meta.color;
 
+        const safeId = _escapeHTML(event.id);
+        const safeType = _escapeHTML(event.type);
+        const safeTimeLeft = _escapeHTML(timeLeft);
+        const safeHeroValue = _escapeHTML(heroValue);
+        const safeShortDesc = _escapeHTML(shortDesc);
+        const safeTitle = _escapeHTML(event.title || event.ui?.title || '');
         const artHTML = meta.artEmojis.map((emoji, i) =>
-            `<span class="lte-art__deco lte-art__deco--${i+1}" aria-hidden="true">${emoji}</span>`
+            `<span class="lte-art__deco lte-art__deco--${i+1}" aria-hidden="true">${_escapeHTML(emoji)}</span>`
         ).join('');
 
         const statusBadge = isExpired
@@ -1135,23 +1168,23 @@
         const timerBadge = isExpired ? '' : `
             <span class="lte-timer-pill"
                   style="color:${color}; border-color:${meta.colorBorder}; background:${meta.colorDim};">
-                ${_icon('clock', 11)}&thinsp;${timeLeft}
+                ${_icon('clock', 11)}&thinsp;${safeTimeLeft}
             </span>`;
 
         return `
         <article class="lte-card${isExpired ? ' lte-card--expired' : ''}"
-                 data-event-id="${event.id}" data-event-type="${event.type}"
+                 data-event-id="${safeId}" data-event-type="${safeType}"
                  style="background:${meta.gradientBg}; --ev-color:${color}; --ev-glow:${meta.colorGlow}; --ev-border:${meta.colorBorder};"
                  ${isExpired ? 'aria-disabled="true"' : ''}>
             <div class="lte-art" aria-hidden="true">${artHTML}</div>
             <div class="lte-card__accent-bar" style="background:linear-gradient(90deg,${color} 0%,transparent 100%);"></div>
             <div class="lte-card__head">${statusBadge}${timerBadge}</div>
-            <div class="lte-card__hero-wrap" aria-label="Efecto del evento: ${heroValue}">
-                <span class="lte-hero-value" style="color:${color};">${heroValue}</span>
+            <div class="lte-card__hero-wrap" aria-label="Efecto del evento: ${safeHeroValue}">
+                <span class="lte-hero-value" style="color:${color};">${safeHeroValue}</span>
             </div>
             <div class="lte-card__info">
-                <h3 class="lte-card__name">${event.title || event.ui?.title || ''}</h3>
-                <p class="lte-card__desc">${shortDesc}</p>
+                <h3 class="lte-card__name">${safeTitle}</h3>
+                <p class="lte-card__desc">${safeShortDesc}</p>
             </div>
         </article>`;
     }
