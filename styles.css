@@ -5170,3 +5170,41 @@ svg { stroke-width: 2; }
 @media (max-width: 640px) {
     .push-rules-grid { grid-template-columns: 1fr; }
 }
+
+/* ================================================================
+   SKIN SYSTEM v1.0
+   ================================================================ */
+:root {
+    --skin-bg-home: none;
+    --skin-bg-cards: none;
+}
+
+body[data-skin-bg="home"],
+body.skin-hutao-ember {
+    background-image: var(--skin-bg-home),
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(155, 89, 255, 0.06), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0, 100, 200, 0.04), transparent);
+    background-size: cover, auto, auto;
+    background-attachment: fixed, scroll, scroll;
+}
+
+[data-skin-particles="embers"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: radial-gradient(circle at 20% 30%, #ffce8a 0 1px, transparent 2px),
+                      radial-gradient(circle at 70% 60%, #ff9a6b 0 1px, transparent 2px);
+    background-size: 180px 180px, 230px 230px;
+    animation: skin-embers-drift 18s linear infinite;
+}
+
+@keyframes skin-embers-drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(-180px); }
+}
+
+html[data-skin-profile="lite"] [data-skin-particles="embers"] body::before {
+    display: none;
+}

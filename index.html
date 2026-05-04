@@ -66,7 +66,7 @@
   • app.js (al final del body) añade la clase theme-{key} síncronamente al cargar.
   De este modo el body nunca se pinta con el tema incorrecto.
 -->
-<body>
+<body data-skin-bg="home">
 
     <!-- ══════════════════════════════════════════════════════════
          SVG SPRITE — Love Arcade v9.6
@@ -1331,6 +1331,7 @@
     <script src="js/analytics.js"></script>     
     <script src="js/supabase-loader.js"></script>
     <script src="js/milestones-config.js"></script>
+    <script src="js/skin-manager.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/push-notifications.js"></script>

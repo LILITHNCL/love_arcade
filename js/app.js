@@ -464,6 +464,7 @@ function migrateState(loadedStore) {
         history:        [],
         userAvatar:     null,
         theme:          'violet',
+        skinId:         'arcade-default',
         daily:          { lastClaim: 0, streak: 0 },
         buffs:          { moonBlessingExpiry: 0 },
         claimed_milestones: [],
@@ -503,6 +504,12 @@ function migrateState(loadedStore) {
     // v9.4 — Validación de identidad (migración silenciosa)
     if (typeof merged.nickname !== 'string')           merged.nickname = '';
     if (!['o', 'a', '@'].includes(merged.gender))      merged.gender   = '@';
+
+    // v15.0 — Skin system migration
+    if (typeof merged.skinId !== 'string' || !merged.skinId) {
+        const legacyMap = { violet: 'arcade-default', pink: 'arcade-default', cyan: 'arcade-default', gold: 'arcade-default', crimson: 'hutao-ember' };
+        merged.skinId = legacyMap[merged.theme] || 'arcade-default';
+    }
 
     // v11.0 — Multiplicador de bonificación
     if (typeof merged.bonus_multiplier !== 'number' || merged.bonus_multiplier < 1) {
@@ -1606,6 +1613,19 @@ window.GameCenter = {
     },
     getTheme: () => store.theme || 'violet',
 
+    setSkin: (skinId) => {
+        if (!window.SkinManager) return;
+        const skin = window.SkinManager.applySkin(skinId);
+        store.skinId = skin.id;
+        if (skin.themeKey && THEMES[skin.themeKey]) {
+            store.theme = skin.themeKey;
+            applyTheme(skin.themeKey);
+        }
+        saveState();
+    },
+    getSkin: () => store.skinId || 'arcade-default',
+    listSkins: () => window.SkinManager ? window.SkinManager.listSkins() : [],
+
     // ── IDENTIDAD — v9.4 ─────────────────────────────────────────────────────
 
     /**
@@ -2182,6 +2202,12 @@ window.revealUI = revealUI;
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 applyTheme(store.theme || 'violet');
+if (window.SkinManager) {
+    window.SkinManager.init().then(() => {
+        const selected = store.skinId || 'arcade-default';
+        window.SkinManager.applySkin(selected);
+    });
+}
 
 if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
     store.userAvatar = null;

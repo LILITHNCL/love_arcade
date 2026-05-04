@@ -1,0 +1,44 @@
+{
+  "manifestVersion": 1,
+  "minimumAppVersion": "15.0.0",
+  "generatedAt": "2026-05-04",
+  "skins": [
+    {
+      "id": "arcade-default",
+      "displayName": "Arcade Default",
+      "version": "1.0.0",
+      "themeKey": "violet",
+      "tokens": {
+        "accent": "#9b59ff",
+        "accentGlow": "rgba(155,89,255,0.4)",
+        "textMed": "#b4b4c8",
+        "textLow": "#6a6a82"
+      },
+      "estimatedKB": 0,
+      "gpuCost": "low"
+    },
+    {
+      "id": "hutao-ember",
+      "displayName": "Hu Tao Ember",
+      "version": "1.0.0",
+      "themeKey": "crimson",
+      "tokens": {
+        "accent": "#e35a5a",
+        "accentGlow": "rgba(227,90,90,0.45)",
+        "textMed": "#f3d9d9",
+        "textLow": "#d6a6a6"
+      },
+      "backgrounds": {
+        "home": "assets/skins/hutao-ember/backgrounds/home-bg.webp",
+        "cards": "assets/skins/hutao-ember/backgrounds/card-bg.webp"
+      },
+      "gameCards": {
+        "jungle-dash": "assets/skins/hutao-ember/cards/jungle-dash.webp",
+        "word-hunt": "assets/skins/hutao-ember/cards/word-hunt.webp"
+      },
+      "effects": { "particles": "embers", "profile": "balanced" },
+      "estimatedKB": 480,
+      "gpuCost": "medium"
+    }
+  ]
+}
