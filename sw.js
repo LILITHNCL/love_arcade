@@ -1,6 +1,6 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
-const SW_VERSION = 'pwa-v2';
+const SW_VERSION = 'pwa-v3';
 
 const CACHES = {
   APP_SHELL: `app-shell-${SW_VERSION}`,
@@ -59,7 +59,7 @@ self.addEventListener('fetch', (event) => {
 
   const isCloudinary = url.hostname === 'res.cloudinary.com' && url.pathname.includes('/image/upload/');
   if (isCloudinary) {
-    event.respondWith(cacheFirst(req, CACHES.CLOUDINARY_MEDIA, { cors: true }));
+    event.respondWith(cacheFirst(req, CACHES.CLOUDINARY_MEDIA));
     event.waitUntil(cleanupCache(CACHES.CLOUDINARY_MEDIA));
     return;
   }
@@ -87,21 +87,21 @@ async function handleDocument(req) {
   }
 }
 
-async function cacheFirst(req, cacheName, options = {}) {
+async function cacheFirst(req, cacheName) {
   const cached = await caches.open(cacheName).then((c) => c.match(req));
   if (cached && !(await isExpired(cacheName, req.url))) {
     emitMetric('cache_hit', { cache: cacheName, url: req.url });
     return cached;
   }
   try {
-    const net = await fetch(req, options.cors ? { mode: 'cors' } : undefined);
+    const net = await fetch(req);
     await putWithMeta(cacheName, req, net.clone());
     emitMetric('cache_miss_fill', { cache: cacheName, url: req.url });
     return net;
   } catch (err) {
     if (cached) return cached;
     emitMetric('cache_miss_error', { cache: cacheName, url: req.url, error: String(err?.message || err) });
-    return new Response('Resource unavailable offline', { status: 503, statusText: 'Offline' });
+    return new Response('', { status: 504, statusText: 'Upstream fetch failed' });
   }
 }
 
@@ -179,7 +179,7 @@ async function warmCloudinary(urls = []) {
   const cache = await caches.open(CACHES.CLOUDINARY_MEDIA);
   await Promise.all(urls.map(async (url) => {
     try {
-      const req = new Request(url, { mode: 'cors' });
+      const req = new Request(url, { mode: 'no-cors', credentials: 'omit' });
       const hit = await cache.match(req);
       if (hit) return;
       const res = await fetch(req);

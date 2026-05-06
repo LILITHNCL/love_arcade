@@ -2063,7 +2063,7 @@ function initServiceWorkerUpdateFlow() {
         controllerReloading = true;
         sessionStorage.setItem(RELOAD_FLAG, '1');
         sessionStorage.setItem('la_sw_last_controllerchange_ts', String(Date.now()));
-        sessionStorage.setItem('la_sw_version', 'pwa-v2');
+        sessionStorage.setItem('la_sw_version', 'pwa-v3');
         window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_controllerchange', ts: Date.now() } }));
         window.dispatchEvent(new CustomEvent('la:sw-controllerchange'));
         window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_reload', ts: Date.now(), reason: 'controllerchange_safe' } }));
@@ -2359,18 +2359,36 @@ applyIdentity();
 document.addEventListener('DOMContentLoaded', () => {
     initModalBackstack();
     const swMetrics = [];
+    let telemetryInFlight = false;
+    let lastTelemetryAt = 0;
+    const flushTelemetry = async () => {
+        if (telemetryInFlight) return;
+        if (Date.now() - lastTelemetryAt < 15000) return;
+        telemetryInFlight = true;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3500);
+        try {
+            await fetch('/api/telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'pwa_client', metrics: swMetrics.slice(-25) }),
+                signal: controller.signal
+            });
+            lastTelemetryAt = Date.now();
+        } catch (_) {
+            // no-op: métricas best-effort
+        } finally {
+            clearTimeout(timeout);
+            telemetryInFlight = false;
+        }
+    };
+
     const logSwMetric = (payload) => {
         swMetrics.push(payload);
         if (swMetrics.length > 120) swMetrics.shift();
         try { localStorage.setItem('la_sw_metrics', JSON.stringify(swMetrics)); } catch (_) {}
         console.info('[PWA_METRIC]', payload);
-        if (swMetrics.length % 10 === 0) {
-            fetch('/api/telemetry', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ source: 'pwa_client', metrics: swMetrics.slice(-20) })
-            }).catch(() => {});
-        }
+        if (swMetrics.length % 12 === 0) flushTelemetry();
     };
     window.addEventListener('la:sw-metric', (e) => logSwMetric(e.detail || {}));
     window.addEventListener('la:share-fallback', (e) => logSwMetric({ type: 'share_fallback', ...(e.detail || {}) }));
