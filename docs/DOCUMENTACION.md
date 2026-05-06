@@ -267,7 +267,7 @@ Ahora (v9.3):          Script síncrono → applyTheme → init saldo → reveal
 
 **Archivo:** `styles.css`
 
-**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`assets/default_avatar.png`) antes de que JS aplicara la imagen guardada.
+**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.webp`) antes de que JS aplicara la imagen guardada.
 
 **Solución:**
 
@@ -1797,7 +1797,7 @@ love_arcade/
 │
 ├── wallpapers/             # Carpeta local legacy (reemplazada por Cloudinary CDN)
 ├── assets/
-│   └── default_avatar.png
+│   └── default_avatar.webp
 │
 │   # assets/product-thumbs/ → ELIMINADA en v9.5 (Cloudinary CDN Migration)
 │   # assets/cover/          → ELIMINADA en v9.5 (Cloudinary CDN Migration)
@@ -4763,8 +4763,8 @@ El Sentinel vive **exclusivamente en `js/app.js`** como una IIFE (`SentinelCloud
 
 | Variable | Descripción |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto en Supabase (ej: `https://abc.supabase.co`) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Llave API pública (Anon). Segura en cliente gracias a RLS. |
+| `NEXT_PUBLIC_LA_CLOUD_URL` | URL del proyecto en Supabase (ej: `https://abc.supabase.co`) |
+| `NEXT_PUBLIC_LA_CLOUD_ANON_KEY` | Llave API pública (Anon). Segura en cliente gracias a RLS. |
 
 > **Nota de seguridad:** El Anon Key de Supabase está diseñado para ser público. La seguridad real la provee la política de Row Level Security (RLS) de la base de datos, que garantiza que cada usuario solo pueda leer y escribir su propio perfil.
 
@@ -4900,7 +4900,7 @@ window.Sentinel.getSession()
 |---|---|---|
 | `index.html` | **Modificado** | CDN de `@supabase/supabase-js@2` en `<head>`. Card "Sincronización en la Nube" en `#tab-sync`. Panel de login (email + Magic Link) y panel de sesión (estado, sync manual, cerrar sesión). Comentario de orden de scripts actualizado. |
 | `js/app.js` | **Modificado** | IIFE `SentinelCloudSync` añadida al final. Incluye: `SENTINEL_WATCHED_KEYS`, `StorageInterceptor`, `_buildSnapshot()`, `_applySnapshot()`, `_sentinelSync()`, `_sentinelLoad()`, `_sentinelScheduleSync()`, `_handleSignIn()`, `_handleSignOut()`, listeners de UI, `_sentinelInit()`, `window.Sentinel` API pública. |
-| `api/client-config.js` | **Nuevo** | Función serverless Vercel. Expone `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` al cliente. Cache-Control: no-store. Bodyparser desactivado (GET-only). |
+| `api/client-config.js` | **Nuevo** | Función serverless Vercel. Expone `NEXT_PUBLIC_LA_CLOUD_URL` y `NEXT_PUBLIC_LA_CLOUD_ANON_KEY` al cliente. Cache-Control: no-store. Bodyparser desactivado (GET-only). |
 | `vercel.json` | **Modificado** | Header `Content-Type: application/json` y `Cache-Control: no-store` para rutas `/api/*`. Sin cambios en rewrites (la regla `/api/(.*)` existente cubre el nuevo endpoint). |
 | `DOCUMENTACION.md` | **Modificado** | Sección §2ad añadida. ToC actualizado. Header actualizado a v13.0. |
 

@@ -6,6 +6,9 @@
     <title>Love Arcade</title>
 
     <link rel="stylesheet" href="styles.css">
+    <!-- Include credentials so protected deployments can serve the manifest without 401 -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
+    <meta name="theme-color" content="#07070D">
 
     <!--
       ╔══════════════════════════════════════════════════════════════╗
@@ -221,6 +224,9 @@
         <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </symbol>
+        <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </symbol>
     </svg>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -256,7 +262,7 @@
                 <span class="visually-hidden">monedas</span>
             </div>
             <label for="avatar-upload" class="avatar-container" aria-label="Cambiar foto de perfil">
-                <div class="avatar" id="user-avatar-display" style="background-image: url('assets/default_avatar.png');">
+                <div class="avatar" id="user-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.webp');">
                     <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                 </div>
                 <div class="avatar-edit-icon" aria-hidden="true"><svg class="icon" width="10" height="10"><use href="#icon-plus"></use></svg></div>
@@ -306,7 +312,7 @@
                 <div class="hud-top">
                     <div class="hud-avatar-wrap">
                     <label for="avatar-upload-hud" aria-label="Cambiar foto de perfil" class="avatar-label">
-                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('assets/default_avatar.png');">
+                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.webp');">
                                 <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
                             </div>
                         <input type="file" id="avatar-upload-hud" class="visually-hidden" accept="image/*">
@@ -776,6 +782,45 @@
                     </div>
                     <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
                     <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
+                </div>
+
+                <div class="memory-card" id="push-notifications-card" style="border-color:rgba(155,89,255,0.45); margin-top:8px;">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(102,57,166,0.2)); border:1px solid rgba(155,89,255,0.5);">
+                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:var(--accent);"><use href="#icon-bell"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Activa tus recordatorios</h3>
+                            <p class="memory-card__sub">Recibe avisos útiles para no perder recompensas ni eventos</p>
+                        </div>
+                    </div>
+
+                    <p id="push-support-state" class="push-support-state"></p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                        <button id="btn-push-enable" class="btn-primary push-enable-btn" style="justify-content:center;">
+                            <svg class="icon push-enable-btn__icon" width="14" height="14" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                            <span class="push-enable-btn__label">Recibir novedades</span>
+                        </button>
+                        <button id="btn-push-disable" class="btn-ghost" style="font-size:0.8rem;">Pausar</button>
+                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar aviso</button>
+                    </div>
+                    <p id="push-status-msg" class="feedback-msg" style="min-height:18px;"></p>
+                    <div id="push-recovery-card" class="push-recovery-card hidden" role="status" aria-live="polite">
+                        <p class="push-recovery-title">¡Casi listo! Solo falta un paso:</p>
+                        <p class="push-recovery-copy">Para recibir actualizaciones, tu navegador necesita un permiso manual:</p>
+                        <ol class="push-recovery-steps">
+                            <li>Toca el <strong>candado o escudo</strong> junto a la URL.</li>
+                            <li>Entra en <strong>Configuración del sitio</strong>.</li>
+                            <li>Ve a <strong>Permisos</strong> y activa <strong>Notificaciones</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <div class="push-rules-grid">
+                        <label class="push-rule-item"><input type="checkbox" id="push-rule-daily"> Recordarme el bono diario</label>
+                        <label class="push-rule-item"><input type="checkbox" id="push-rule-moon"> Avisarme si la Bendición Lunar expira pronto</label>
+                        <label class="push-rule-item"><input type="checkbox" id="push-rule-shop"> Avisarme cuando haya novedades en tienda</label>
+                        <label class="push-rule-item"><input type="checkbox" id="push-rule-events"> Avisarme si un evento está por terminar</label>
+                    </div>
                 </div>
             </section>
 
@@ -1288,6 +1333,7 @@
     <script src="js/milestones-config.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
+    <script src="js/push-notifications.js"></script>
     <script src="js/shop-logic.js"></script>
     <script src="js/spa-router.js"></script>
     <script src="js/event-logic.js"></script>
@@ -1414,11 +1460,89 @@
         //                    título/botón de edición, NO llama revealUI()
         //                    (el HUD ya está visible).
         //
+        const identityModalState = {
+            mode: 'welcome',
+            selectedGender: '@'
+        };
+
+        function setActiveGenderChip(gender) {
+            const identityModal = document.getElementById('identity-modal');
+            if (!identityModal) return;
+            const chips = identityModal.querySelectorAll('.identity-chip');
+            chips.forEach((chip) => {
+                chip.classList.toggle('identity-chip--active', chip.dataset.gender === gender);
+            });
+        }
+
+        function confirmIdentityFromModal() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const errorEl = document.getElementById('identity-input-error');
+            const nickname = nicknameInput?.value.trim() || '';
+
+            if (!nickname) {
+                errorEl?.classList.remove('hidden');
+                nicknameInput?.focus();
+                return;
+            }
+
+            window.GameCenter?.setIdentity?.(nickname, identityModalState.selectedGender);
+            identityModal?.classList.add('hidden');
+            if (identityModalState.mode !== 'edit') {
+                window.revealUI?.();
+            }
+        }
+
+        function initIdentityModalListeners() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const charCount = document.getElementById('identity-char-count');
+            const errorEl = document.getElementById('identity-input-error');
+            const confirmBtn = document.getElementById('identity-confirm-btn');
+
+            if (!identityModal) return;
+
+            identityModal.addEventListener('click', (e) => {
+                const chip = e.target.closest('.identity-chip');
+                if (chip && identityModal.contains(chip)) {
+                    identityModalState.selectedGender = chip.dataset.gender || '@';
+                    setActiveGenderChip(identityModalState.selectedGender);
+                    return;
+                }
+
+                if (identityModalState.mode === 'edit' && e.target === identityModal) {
+                    identityModal.classList.add('hidden');
+                }
+            });
+
+            nicknameInput?.addEventListener('input', () => {
+                if (charCount) charCount.textContent = `${nicknameInput.value.length}/15`;
+                if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
+            });
+
+            nicknameInput?.addEventListener('focus', () => {
+                setTimeout(() => {
+                    document.getElementById('identity-confirm-btn')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 350);
+            });
+
+            nicknameInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmIdentityFromModal();
+                }
+            });
+
+            confirmBtn?.addEventListener('click', confirmIdentityFromModal);
+        }
+
         function openIdentityModal(mode) {
             const identityModal = document.getElementById('identity-modal');
             if (!identityModal) { if (mode === 'welcome') window.revealUI?.(); return; }
 
             const isEdit = (mode === 'edit');
+            identityModalState.mode = isEdit ? 'edit' : 'welcome';
 
             // ── Adaptar textos según modo ───────────────────────────────────
             const titleEl   = document.getElementById('identity-modal-title-text');
@@ -1433,7 +1557,7 @@
 
             // ── Pre-rellenar valores actuales en modo edición ───────────────
             const currentIdentity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
-            let selectedGender = isEdit ? currentIdentity.gender : '@';
+            identityModalState.selectedGender = isEdit ? currentIdentity.gender : '@';
 
             const nicknameInput = document.getElementById('identity-nickname-input');
             const charCount     = document.getElementById('identity-char-count');
@@ -1445,78 +1569,14 @@
             }
 
             // ── Chips: marcar la selección actual ──────────────────────────
-            const chips = identityModal.querySelectorAll('.identity-chip');
-            chips.forEach(chip => {
-                chip.classList.toggle('identity-chip--active', chip.dataset.gender === selectedGender);
-            });
+            setActiveGenderChip(identityModalState.selectedGender);
 
             // ── Mostrar modal ──────────────────────────────────────────────
             identityModal.classList.remove('hidden');
             errorEl?.classList.add('hidden');
 
-            // ── Listeners (se registran con {once:true} para evitar duplicados)
-            chips.forEach(chip => {
-                chip.addEventListener('click', () => {
-                    selectedGender = chip.dataset.gender;
-                    chips.forEach(c => c.classList.toggle('identity-chip--active', c === chip));
-                }, { once: false }); // chips pueden ser clicados varias veces en el mismo modal
-            });
-
-            if (nicknameInput && charCount) {
-                nicknameInput.addEventListener('input', () => {
-                    charCount.textContent = `${nicknameInput.value.length}/15`;
-                    if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
-                });
-            }
-
             // ── Focus automático ───────────────────────────────────────────
             setTimeout(() => nicknameInput?.focus(), 280);
-
-            // ── Scroll para teclado móvil ──────────────────────────────────
-            nicknameInput?.addEventListener('focus', () => {
-                setTimeout(() => {
-                    document.getElementById('identity-confirm-btn')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 350);
-            });
-
-            // ── Confirmar ──────────────────────────────────────────────────
-            function confirmIdentity() {
-                const nickname = nicknameInput?.value.trim() || '';
-                if (!nickname) {
-                    errorEl?.classList.remove('hidden');
-                    nicknameInput?.focus();
-                    return;
-                }
-                window.GameCenter?.setIdentity?.(nickname, selectedGender);
-                identityModal.classList.add('hidden');
-                if (!isEdit) {
-                    window.revealUI?.();
-                }
-                // En modo edición el HUD ya es visible; applyIdentity() ya fue
-                // llamado por setIdentity() → el DOM se actualiza al instante.
-            }
-
-            document.getElementById('identity-confirm-btn')
-                ?.addEventListener('click', confirmIdentity, { once: true });
-
-            nicknameInput?.addEventListener('keydown', function onEnter(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    nicknameInput.removeEventListener('keydown', onEnter);
-                    confirmIdentity();
-                }
-            });
-
-            // ── Cerrar al hacer clic en el overlay (solo en modo edición) ──
-            if (isEdit) {
-                identityModal.addEventListener('click', function onOverlayClick(e) {
-                    if (e.target === identityModal) {
-                        identityModal.classList.add('hidden');
-                        identityModal.removeEventListener('click', onOverlayClick);
-                    }
-                });
-            }
         }
 
         // ── Identity Flow — v9.4 ────────────────────────────────────────────
@@ -1528,6 +1588,8 @@
         // ── Botón de edición en el HUD ──────────────────────────────────────
         document.getElementById('btn-edit-identity')
             ?.addEventListener('click', () => openIdentityModal('edit'));
+
+        initIdentityModalListeners();
 
         // ── Post-claim UI refresh ────────────────────────────────────────────
         // El handler principal de #btn-daily (reclamo, validación, mensaje)

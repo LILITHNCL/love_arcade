@@ -1162,5 +1162,15 @@
       "value": 1,
       "description": "Completa 1 partida para desbloquear"
     }
+  },
+  {
+    "id": 109,
+    "name": "Columbina",
+    "price": 1000,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/columbina_test",
+    "file": "columbina_test.png",
+    "tags": [
+      "Mobile"
+    ]
   }
 ]

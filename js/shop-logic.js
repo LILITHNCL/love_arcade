@@ -2294,6 +2294,10 @@ function loadCatalog() {
             .catch(() => [])
     ])
         .then(([items, gifts]) => {
+            try {
+                const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
+                localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
+            } catch (_) {}
             const baseCatalog = items.filter(item => !_isGiftItem(item));
             const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
             allItems = [...baseCatalog, ...giftCatalog];

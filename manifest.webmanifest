@@ -1,0 +1,23 @@
+{
+  "name": "Love Arcade",
+  "short_name": "LoveArcade",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070D",
+  "theme_color": "#07070D",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "/assets/icon/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon/icon-notification.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ]
+}
