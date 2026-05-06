@@ -28,6 +28,8 @@
     if (caps.webShare) return navigator.share(data);
     const text = data?.url || data?.text || window.location.href;
     if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+    window.dispatchEvent(new CustomEvent('la:share-fallback', { detail: { ts: Date.now() } }));
+    if (typeof window.showToast === 'function') window.showToast('Enlace copiado al portapapeles', 'success');
     return false;
   }
 
@@ -35,5 +37,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     initPeriodicSync();
     requestPersistentStorage();
+    const panel = document.getElementById('native-capabilities-status');
+    if (panel) {
+      panel.innerHTML = `Share: ${caps.webShare ? 'ok' : 'fallback'} · PeriodicSync: ${caps.periodicSync ? 'ok' : 'no'} · Persist: ${caps.persistentStorage ? 'ok' : 'no'}`;
+    }
   });
 })();

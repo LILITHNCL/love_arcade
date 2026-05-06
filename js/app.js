@@ -701,6 +701,7 @@ function _showStorageToast(message, type = 'warning') {
         setTimeout(() => toast.remove(), 400);
     }, 5200);
 }
+window.showToast = _showStorageToast;
 
 function initInteractiveMicroFX() {
     const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
@@ -779,13 +780,18 @@ function initLoadingStateObserver() {
 }
 
 function initModalBackstack() {
-    const overlays = Array.from(document.querySelectorAll('.modal-overlay'));
+    const overlays = Array.from(document.querySelectorAll('.modal-overlay, .promo-section, .cloud-password-form, .tab-panel'));
     if (!overlays.length) return;
     const stack = [];
     let suppressObserver = false;
 
     const getVisibleModals = () =>
-        overlays.filter((el) => !el.classList.contains('hidden'));
+        overlays.filter((el) => {
+            if (el.classList.contains('modal-overlay')) return !el.classList.contains('hidden');
+            if (el.classList.contains('promo-section')) return !el.classList.contains('promo-section--collapsed');
+            if (el.classList.contains('tab-panel')) return !el.classList.contains('hidden') && el.id !== 'tab-catalog';
+            return !el.classList.contains('hidden');
+        });
 
     const closeTopModal = () => {
         const top = stack.pop();
@@ -802,6 +808,7 @@ function initModalBackstack() {
         const visible = getVisibleModals();
         visible.forEach((el) => {
             if (stack.includes(el)) return;
+            if (stack[stack.length - 1] === el) return;
             stack.push(el);
             history.pushState({ ...(history.state || {}), modalBackstack: true, modalId: el.id }, '');
         });
@@ -2023,12 +2030,24 @@ function initServiceWorkerUpdateFlow() {
     const RELOAD_FLAG = 'la_sw_controller_reload_once';
     let controllerReloading = false;
 
+    const isSafeReloadState = () => {
+        const criticalModalOpen = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'))
+            .some((el) => !el.id.includes('preview'));
+        const isCloudSyncing = document.getElementById('cloud-sync-indicator')?.classList.contains('is-active');
+        return !criticalModalOpen && !isCloudSyncing;
+    };
+
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (controllerReloading) return;
         if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
+        if (!isSafeReloadState()) return;
         controllerReloading = true;
         sessionStorage.setItem(RELOAD_FLAG, '1');
+        sessionStorage.setItem('la_sw_last_controllerchange_ts', String(Date.now()));
+        sessionStorage.setItem('la_sw_version', 'pwa-v2');
+        window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_controllerchange', ts: Date.now() } }));
         window.dispatchEvent(new CustomEvent('la:sw-controllerchange'));
+        window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_reload', ts: Date.now() } }));
         window.location.reload();
     });
 
@@ -2037,9 +2056,18 @@ function initServiceWorkerUpdateFlow() {
         reg.update().catch(() => {});
     }).catch(() => {});
 
+    let updateDebounce = null;
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState !== 'visible') return;
-        navigator.serviceWorker.getRegistration?.().then((reg) => reg?.update?.().catch(() => {})).catch(() => {});
+        clearTimeout(updateDebounce);
+        updateDebounce = setTimeout(() => {
+            navigator.serviceWorker.getRegistration?.().then((reg) => reg?.update?.().catch(() => {})).catch(() => {});
+        }, 900);
+    });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type !== 'LA_SW_METRIC') return;
+        window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: event.data }));
     });
 }
 
@@ -2311,6 +2339,25 @@ applyIdentity();
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
     initModalBackstack();
+    const swMetrics = [];
+    const logSwMetric = (payload) => {
+        swMetrics.push(payload);
+        if (swMetrics.length > 120) swMetrics.shift();
+        try { localStorage.setItem('la_sw_metrics', JSON.stringify(swMetrics)); } catch (_) {}
+        console.info('[PWA_METRIC]', payload);
+    };
+    window.addEventListener('la:sw-metric', (e) => logSwMetric(e.detail || {}));
+    window.addEventListener('la:share-fallback', (e) => logSwMetric({ type: 'share_fallback', ...(e.detail || {}) }));
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+            const coverUrls = Array.from(document.querySelectorAll('.card-cover'))
+                .map((el) => (el.style.backgroundImage || '').match(/url\\(\"?(.+?)\"?\\)/)?.[1])
+                .filter(Boolean)
+                .slice(0, 8);
+            reg.active?.postMessage({ type: 'LA_WARM_CLOUDINARY', urls: coverUrls });
+        }).catch(() => {});
+    }
     initInteractiveMicroFX();
     initLoadingStateObserver();
 

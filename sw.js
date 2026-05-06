@@ -1,28 +1,50 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
-const CACHE_VERSION = 'v1';
-const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
-const RUNTIME_STATIC_CACHE = `runtime-static-${CACHE_VERSION}`;
-const CLOUDINARY_CACHE = `cloudinary-media-${CACHE_VERSION}`;
-const APP_SHELL_ASSETS = ['/', '/index.html', '/styles.css', '/js/app.js', '/manifest.webmanifest', '/assets/icon/icon.png', '/assets/icon/icon-notification.png'];
+const SW_VERSION = 'pwa-v2';
+
+const CACHES = {
+  APP_SHELL: `app-shell-${SW_VERSION}`,
+  RUNTIME_STATIC: `runtime-static-${SW_VERSION}`,
+  CLOUDINARY_MEDIA: `cloudinary-media-${SW_VERSION}`,
+  DOCUMENTS: `documents-${SW_VERSION}`,
+  META: `cache-meta-${SW_VERSION}`
+};
+
+const LIMITS = {
+  [CACHES.RUNTIME_STATIC]: { maxEntries: 80, maxAgeMs: 7 * 24 * 60 * 60 * 1000 },
+  [CACHES.CLOUDINARY_MEDIA]: { maxEntries: 140, maxAgeMs: 14 * 24 * 60 * 60 * 1000 },
+  [CACHES.DOCUMENTS]: { maxEntries: 40, maxAgeMs: 3 * 24 * 60 * 60 * 1000 }
+};
+
+const APP_SHELL_ASSETS = ['/', '/index.html', '/styles.css', '/js/app.js', '/js/native-capabilities.js', '/manifest.webmanifest', '/assets/icon/icon.png', '/assets/icon/icon-notification.png'];
+
+const OFFLINE_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sin conexión</title><style>body{font-family:system-ui;background:#07070d;color:#f0f0f8;display:grid;place-items:center;min-height:100vh;padding:24px}main{max-width:420px;text-align:center}h1{font-size:1.25rem}p{opacity:.85}</style></head><body><main><h1>Sin conexión</h1><p>No se pudo cargar este recurso. Revisa tu conexión e inténtalo de nuevo.</p></main></body></html>`;
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(APP_SHELL_CACHE);
-    await cache.addAll(APP_SHELL_ASSETS);
+    const shell = await caches.open(CACHES.APP_SHELL);
+    await shell.addAll(APP_SHELL_ASSETS);
+    const docs = await caches.open(CACHES.DOCUMENTS);
+    await docs.put('/offline.html', new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
     await self.skipWaiting();
+    await emitMetric('sw_install', { version: SW_VERSION });
   })());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.map((key) => {
-      if ([APP_SHELL_CACHE, RUNTIME_STATIC_CACHE, CLOUDINARY_CACHE].includes(key)) return Promise.resolve();
-      return caches.delete(key);
-    }));
+    await Promise.all(keys.map((key) => Object.values(CACHES).includes(key) ? Promise.resolve() : caches.delete(key)));
     await self.clients.claim();
+    await emitMetric('sw_activate', { version: SW_VERSION });
   })());
+});
+
+self.addEventListener('message', (event) => {
+  const msg = event.data || {};
+  if (msg.type === 'LA_WARM_CLOUDINARY' && Array.isArray(msg.urls)) {
+    event.waitUntil(warmCloudinary(msg.urls));
+  }
 });
 
 self.addEventListener('fetch', (event) => {
@@ -31,131 +53,134 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   if (url.origin === self.location.origin && req.destination === 'document') {
-    event.respondWith((async () => {
-      try {
-        const net = await fetch(req);
-        const cache = await caches.open(APP_SHELL_CACHE);
-        cache.put(req, net.clone());
-        return net;
-      } catch (_) {
-        return (await caches.match(req)) || (await caches.match('/index.html'));
-      }
-    })());
+    event.respondWith(handleDocument(req));
     return;
   }
 
   const isCloudinary = url.hostname === 'res.cloudinary.com' && url.pathname.includes('/image/upload/');
   if (isCloudinary) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CLOUDINARY_CACHE);
-      const hit = await cache.match(req);
-      if (hit) return hit;
-      const net = await fetch(req, { mode: 'cors' });
-      cache.put(req, net.clone());
-      return net;
-    })());
+    event.respondWith(cacheFirst(req, CACHES.CLOUDINARY_MEDIA, { cors: true }));
     return;
   }
 
-  const isRuntimeStatic = ['style', 'script'].includes(req.destination);
-  if (isRuntimeStatic) {
-    event.respondWith((async () => {
-      const cache = await caches.open(RUNTIME_STATIC_CACHE);
-      const cached = await cache.match(req);
-      const netPromise = fetch(req).then((res) => {
-        cache.put(req, res.clone());
-        return res;
-      }).catch(() => null);
-      return cached || (await netPromise) || fetch(req);
-    })());
+  if (['style', 'script'].includes(req.destination)) {
+    event.respondWith(staleWhileRevalidate(req, CACHES.RUNTIME_STATIC));
+    return;
   }
 });
 
-function resolveUrlFromPayload(data = {}) {
-  const explicit = data?.url || data?.click_action || data?.link;
-  if (typeof explicit === 'string' && explicit.trim()) return explicit;
-  const view = data?.view;
-  if (view === 'shop') return '/#view=shop';
-  if (view === 'events') return '/#view=events';
-  return APP_URL;
-}
-
-function normalizePayload(payload = {}) {
-  const payloadJson = payload.payload_json && typeof payload.payload_json === 'object'
-    ? payload.payload_json
-    : {};
-
-  const url = resolveUrlFromPayload({ ...payloadJson, ...payload });
-
-  return {
-    title: payload.title || 'Love Arcade',
-    body: payload.body || 'Tienes una nueva notificación.',
-    icon: payload.icon || NOTIFICATION_ICON,
-    badge: payload.badge || NOTIFICATION_ICON,
-    tag: payload.tag || `love-arcade-${Date.now()}`,
-    data: {
-      ...payloadJson,
-      ...payload,
-      url,
-      ts: Date.now()
-    }
-  };
-}
-
-self.addEventListener('push', (event) => {
-  let payload = {};
+async function handleDocument(req) {
   try {
-    payload = event.data ? event.data.json() : {};
-  } catch (_) {
-    payload = { title: 'Love Arcade', body: event.data?.text?.() || 'Tienes una notificación nueva.' };
+    const net = await fetch(req);
+    await putWithMeta(CACHES.DOCUMENTS, req, net.clone());
+    await cleanupCache(CACHES.DOCUMENTS);
+    return net;
+  } catch (err) {
+    const cached = await caches.match(req);
+    if (cached) {
+      emitMetric('offline_fallback_document_cache_hit', { url: req.url });
+      return cached;
+    }
+    emitMetric('offline_fallback_document_miss', { url: req.url });
+    return (await caches.match('/offline.html')) || new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+async function cacheFirst(req, cacheName, options = {}) {
+  const cached = await caches.open(cacheName).then((c) => c.match(req));
+  if (cached && !(await isExpired(cacheName, req.url))) {
+    emitMetric('cache_hit', { cache: cacheName, url: req.url });
+    return cached;
+  }
+  try {
+    const net = await fetch(req, options.cors ? { mode: 'cors' } : undefined);
+    await putWithMeta(cacheName, req, net.clone());
+    await cleanupCache(cacheName);
+    emitMetric('cache_miss_fill', { cache: cacheName, url: req.url });
+    return net;
+  } catch (err) {
+    if (cached) return cached;
+    emitMetric('cache_miss_error', { cache: cacheName, url: req.url, error: String(err?.message || err) });
+    return new Response('Resource unavailable offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+async function staleWhileRevalidate(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
+  const networkPromise = fetch(req).then(async (res) => {
+    await putWithMeta(cacheName, req, res.clone());
+    await cleanupCache(cacheName);
+    return res;
+  }).catch(async (err) => {
+    emitMetric('runtime_fetch_error', { cache: cacheName, url: req.url, error: String(err?.message || err) });
+    return null;
+  });
+  return cached || (await networkPromise) || new Response('Resource unavailable offline', { status: 503, statusText: 'Offline' });
+}
+
+async function putWithMeta(cacheName, req, res) {
+  const cache = await caches.open(cacheName);
+  await cache.put(req, res);
+  const meta = await caches.open(CACHES.META);
+  await meta.put(new Request(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`), new Response(JSON.stringify({ ts: Date.now() })));
+}
+
+async function isExpired(cacheName, url) {
+  const rule = LIMITS[cacheName];
+  if (!rule?.maxAgeMs) return false;
+  const meta = await caches.open(CACHES.META);
+  const res = await meta.match(`https://meta.local/${cacheName}/${encodeURIComponent(url)}`);
+  if (!res) return false;
+  const data = await res.json().catch(() => null);
+  if (!data?.ts) return false;
+  return (Date.now() - data.ts) > rule.maxAgeMs;
+}
+
+async function cleanupCache(cacheName) {
+  const rule = LIMITS[cacheName];
+  if (!rule) return;
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  const meta = await caches.open(CACHES.META);
+
+  const enriched = [];
+  for (const req of keys) {
+    const m = await meta.match(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`);
+    const ts = m ? ((await m.json().catch(() => ({ ts: 0 }))).ts || 0) : 0;
+    if (rule.maxAgeMs && Date.now() - ts > rule.maxAgeMs) {
+      await cache.delete(req);
+      await meta.delete(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`);
+      continue;
+    }
+    enriched.push({ req, ts });
   }
 
-  const normalized = normalizePayload(payload);
-  event.waitUntil(
-    self.registration.showNotification(normalized.title, {
-      body: normalized.body,
-      icon: normalized.icon,
-      badge: normalized.badge,
-      tag: normalized.tag,
-      renotify: false,
-      data: normalized.data
-    })
-  );
-});
+  if (enriched.length > rule.maxEntries) {
+    enriched.sort((a, b) => a.ts - b.ts);
+    const toDelete = enriched.slice(0, enriched.length - rule.maxEntries);
+    await Promise.all(toDelete.map(async ({ req }) => {
+      await cache.delete(req);
+      await meta.delete(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`);
+    }));
+  }
+}
 
-self.addEventListener('message', (event) => {
-  const msg = event.data || {};
-  if (msg.type !== 'SHOW_NOTIFICATION') return;
-  const payload = normalizePayload(msg.payload || {});
-  event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      icon: payload.icon,
-      badge: payload.badge,
-      tag: payload.tag,
-      renotify: false,
-      data: payload.data
-    })
-  );
-});
+async function warmCloudinary(urls = []) {
+  const cache = await caches.open(CACHES.CLOUDINARY_MEDIA);
+  await Promise.all(urls.slice(0, 12).map(async (url) => {
+    try {
+      const req = new Request(url, { mode: 'cors' });
+      const hit = await cache.match(req);
+      if (hit) return;
+      const res = await fetch(req);
+      await putWithMeta(CACHES.CLOUDINARY_MEDIA, req, res.clone());
+    } catch (_) {}
+  }));
+  await cleanupCache(CACHES.CLOUDINARY_MEDIA);
+}
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const targetUrl = event.notification?.data?.url || APP_URL;
-
-  event.waitUntil((async () => {
-    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const existing = allClients.find((client) => client.url.includes(self.location.origin));
-
-    if (existing) {
-      try {
-        await existing.focus();
-        existing.postMessage({ type: 'LA_NOTIFICATION_OPEN', url: targetUrl });
-        return;
-      } catch (_) {
-        // fallback create new window
-      }
-    }
-    await self.clients.openWindow(targetUrl);
-  })());
-});
+async function emitMetric(type, detail = {}) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  clients.forEach((c) => c.postMessage({ type: 'LA_SW_METRIC', metricType: type, detail: { ...detail, ts: Date.now() } }));
+}
