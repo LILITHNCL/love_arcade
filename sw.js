@@ -60,11 +60,13 @@ self.addEventListener('fetch', (event) => {
   const isCloudinary = url.hostname === 'res.cloudinary.com' && url.pathname.includes('/image/upload/');
   if (isCloudinary) {
     event.respondWith(cacheFirst(req, CACHES.CLOUDINARY_MEDIA, { cors: true }));
+    event.waitUntil(cleanupCache(CACHES.CLOUDINARY_MEDIA));
     return;
   }
 
   if (['style', 'script'].includes(req.destination)) {
     event.respondWith(staleWhileRevalidate(req, CACHES.RUNTIME_STATIC));
+    event.waitUntil(cleanupCache(CACHES.RUNTIME_STATIC));
     return;
   }
 });
@@ -73,7 +75,6 @@ async function handleDocument(req) {
   try {
     const net = await fetch(req);
     await putWithMeta(CACHES.DOCUMENTS, req, net.clone());
-    await cleanupCache(CACHES.DOCUMENTS);
     return net;
   } catch (err) {
     const cached = await caches.match(req);
@@ -95,7 +96,6 @@ async function cacheFirst(req, cacheName, options = {}) {
   try {
     const net = await fetch(req, options.cors ? { mode: 'cors' } : undefined);
     await putWithMeta(cacheName, req, net.clone());
-    await cleanupCache(cacheName);
     emitMetric('cache_miss_fill', { cache: cacheName, url: req.url });
     return net;
   } catch (err) {
@@ -110,7 +110,6 @@ async function staleWhileRevalidate(req, cacheName) {
   const cached = await cache.match(req);
   const networkPromise = fetch(req).then(async (res) => {
     await putWithMeta(cacheName, req, res.clone());
-    await cleanupCache(cacheName);
     return res;
   }).catch(async (err) => {
     emitMetric('runtime_fetch_error', { cache: cacheName, url: req.url, error: String(err?.message || err) });
@@ -120,10 +119,19 @@ async function staleWhileRevalidate(req, cacheName) {
 }
 
 async function putWithMeta(cacheName, req, res) {
-  const cache = await caches.open(cacheName);
-  await cache.put(req, res);
-  const meta = await caches.open(CACHES.META);
-  await meta.put(new Request(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`), new Response(JSON.stringify({ ts: Date.now() })));
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(req, res);
+    const meta = await caches.open(CACHES.META);
+    await meta.put(new Request(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`), new Response(JSON.stringify({ ts: Date.now() })));
+  } catch (err) {
+    const msg = String(err?.message || err || '');
+    const isQuota = /quota|storage|exceeded/i.test(msg);
+    await emitMetric(isQuota ? 'cache_quota_exceeded' : 'cache_put_error', { cache: cacheName, url: req.url, error: msg });
+    if (isQuota) {
+      await cleanupCache(cacheName, { aggressive: true });
+    }
+  }
 }
 
 async function isExpired(cacheName, url) {
@@ -137,7 +145,7 @@ async function isExpired(cacheName, url) {
   return (Date.now() - data.ts) > rule.maxAgeMs;
 }
 
-async function cleanupCache(cacheName) {
+async function cleanupCache(cacheName, options = {}) {
   const rule = LIMITS[cacheName];
   if (!rule) return;
   const cache = await caches.open(cacheName);
@@ -156,9 +164,10 @@ async function cleanupCache(cacheName) {
     enriched.push({ req, ts });
   }
 
-  if (enriched.length > rule.maxEntries) {
+  const maxEntries = options.aggressive ? Math.max(10, Math.floor(rule.maxEntries * 0.75)) : rule.maxEntries;
+  if (enriched.length > maxEntries) {
     enriched.sort((a, b) => a.ts - b.ts);
-    const toDelete = enriched.slice(0, enriched.length - rule.maxEntries);
+    const toDelete = enriched.slice(0, enriched.length - maxEntries);
     await Promise.all(toDelete.map(async ({ req }) => {
       await cache.delete(req);
       await meta.delete(`https://meta.local/${cacheName}/${encodeURIComponent(req.url)}`);
@@ -168,7 +177,7 @@ async function cleanupCache(cacheName) {
 
 async function warmCloudinary(urls = []) {
   const cache = await caches.open(CACHES.CLOUDINARY_MEDIA);
-  await Promise.all(urls.slice(0, 12).map(async (url) => {
+  await Promise.all(urls.map(async (url) => {
     try {
       const req = new Request(url, { mode: 'cors' });
       const hit = await cache.match(req);

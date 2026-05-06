@@ -797,8 +797,19 @@ function initModalBackstack() {
         const top = stack.pop();
         if (!top) return false;
         suppressObserver = true;
-        top.classList.add('hidden');
-        top.classList.remove('streak-milestone-overlay--visible');
+        if (top.classList.contains('modal-overlay')) {
+            top.classList.add('hidden');
+            top.classList.remove('streak-milestone-overlay--visible');
+        } else if (top.classList.contains('promo-section')) {
+            top.classList.add('promo-section--collapsed');
+            top.setAttribute('aria-hidden', 'true');
+        } else if (top.classList.contains('tab-panel')) {
+            top.classList.add('hidden');
+            const catalog = document.getElementById('tab-catalog');
+            catalog?.classList.remove('hidden');
+        } else {
+            top.classList.add('hidden');
+        }
         requestAnimationFrame(() => { suppressObserver = false; });
         return true;
     };
@@ -2034,20 +2045,28 @@ function initServiceWorkerUpdateFlow() {
         const criticalModalOpen = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'))
             .some((el) => !el.id.includes('preview'));
         const isCloudSyncing = document.getElementById('cloud-sync-indicator')?.classList.contains('is-active');
-        return !criticalModalOpen && !isCloudSyncing;
+        const isSubmittingCritical = Array.from(document.querySelectorAll('form button[type="submit"][disabled], button[data-loading="true"]')).length > 0;
+        return !criticalModalOpen && !isCloudSyncing && !isSubmittingCritical;
     };
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (controllerReloading) return;
         if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
-        if (!isSafeReloadState()) return;
+        if (!isSafeReloadState()) {
+            sessionStorage.setItem('la_sw_reload_postponed', String(Date.now()));
+            window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_reload_postponed', ts: Date.now(), reason: 'unsafe_state' } }));
+            setTimeout(() => {
+                if (!controllerReloading && isSafeReloadState()) window.location.reload();
+            }, 4000);
+            return;
+        }
         controllerReloading = true;
         sessionStorage.setItem(RELOAD_FLAG, '1');
         sessionStorage.setItem('la_sw_last_controllerchange_ts', String(Date.now()));
         sessionStorage.setItem('la_sw_version', 'pwa-v2');
         window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_controllerchange', ts: Date.now() } }));
         window.dispatchEvent(new CustomEvent('la:sw-controllerchange'));
-        window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_reload', ts: Date.now() } }));
+        window.dispatchEvent(new CustomEvent('la:sw-metric', { detail: { type: 'sw_reload', ts: Date.now(), reason: 'controllerchange_safe' } }));
         window.location.reload();
     });
 
@@ -2345,17 +2364,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (swMetrics.length > 120) swMetrics.shift();
         try { localStorage.setItem('la_sw_metrics', JSON.stringify(swMetrics)); } catch (_) {}
         console.info('[PWA_METRIC]', payload);
+        if (swMetrics.length % 10 === 0) {
+            fetch('/api/telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'pwa_client', metrics: swMetrics.slice(-20) })
+            }).catch(() => {});
+        }
     };
     window.addEventListener('la:sw-metric', (e) => logSwMetric(e.detail || {}));
     window.addEventListener('la:share-fallback', (e) => logSwMetric({ type: 'share_fallback', ...(e.detail || {}) }));
+    window.addEventListener('la:native-metric', (e) => logSwMetric(e.detail || {}));
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((reg) => {
             const coverUrls = Array.from(document.querySelectorAll('.card-cover'))
                 .map((el) => (el.style.backgroundImage || '').match(/url\\(\"?(.+?)\"?\\)/)?.[1])
-                .filter(Boolean)
-                .slice(0, 8);
-            reg.active?.postMessage({ type: 'LA_WARM_CLOUDINARY', urls: coverUrls });
+                .filter(Boolean);
+            fetch('data/shop.json').then((r) => r.json()).then((rows) => {
+                const shopUrls = Array.isArray(rows) ? rows.map((x) => x.image).filter(Boolean) : [];
+                reg.active?.postMessage({ type: 'LA_WARM_CLOUDINARY', urls: [...new Set([...coverUrls, ...shopUrls])] });
+            }).catch(() => {
+                reg.active?.postMessage({ type: 'LA_WARM_CLOUDINARY', urls: coverUrls });
+            });
         }).catch(() => {});
     }
     initInteractiveMicroFX();

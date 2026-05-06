@@ -16,16 +16,22 @@
           await reg.periodicSync.register('la-content-refresh', { minInterval: 24 * 60 * 60 * 1000 });
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      window.dispatchEvent(new CustomEvent('la:native-metric', { detail: { type: 'periodic_sync_fail', ts: Date.now() } }));
+    }
   }
 
   async function requestPersistentStorage() {
     if (!caps.persistentStorage) return false;
-    try { return await navigator.storage.persist(); } catch (_) { return false; }
+    try {
+      const ok = await navigator.storage.persist();
+      window.dispatchEvent(new CustomEvent('la:native-metric', { detail: { type: ok ? 'persist_granted' : 'persist_denied', ts: Date.now() } }));
+      return ok;
+    } catch (_) { return false; }
   }
 
   async function share(data) {
-    if (caps.webShare) return navigator.share(data);
+    if (caps.webShare) return navigator.share(data).catch(() => false);
     const text = data?.url || data?.text || window.location.href;
     if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
     window.dispatchEvent(new CustomEvent('la:share-fallback', { detail: { ts: Date.now() } }));
@@ -36,10 +42,10 @@
   window.NativeCapabilities = { caps, initPeriodicSync, requestPersistentStorage, share };
   document.addEventListener('DOMContentLoaded', () => {
     initPeriodicSync();
-    requestPersistentStorage();
+    window.addEventListener('la:onboarding-complete', () => requestPersistentStorage(), { once: true });
     const panel = document.getElementById('native-capabilities-status');
     if (panel) {
-      panel.innerHTML = `Share: ${caps.webShare ? 'ok' : 'fallback'} · PeriodicSync: ${caps.periodicSync ? 'ok' : 'no'} · Persist: ${caps.persistentStorage ? 'ok' : 'no'}`;
+      panel.innerHTML = `Share: ${caps.webShare ? 'soportado' : 'fallback'} · PeriodicSync: ${caps.periodicSync ? 'activo' : 'no'} · Persist: ${caps.persistentStorage ? 'soportado' : 'no'}`;
     }
   });
 })();
