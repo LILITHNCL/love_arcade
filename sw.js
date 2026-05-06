@@ -1,12 +1,74 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
+const CACHE_VERSION = 'v1';
+const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
+const RUNTIME_STATIC_CACHE = `runtime-static-${CACHE_VERSION}`;
+const CLOUDINARY_CACHE = `cloudinary-media-${CACHE_VERSION}`;
+const APP_SHELL_ASSETS = ['/', '/index.html', '/styles.css', '/js/app.js', '/manifest.webmanifest', '/assets/icon/icon.png', '/assets/icon/icon-notification.png'];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(APP_SHELL_CACHE);
+    await cache.addAll(APP_SHELL_ASSETS);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => {
+      if ([APP_SHELL_CACHE, RUNTIME_STATIC_CACHE, CLOUDINARY_CACHE].includes(key)) return Promise.resolve();
+      return caches.delete(key);
+    }));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  if (url.origin === self.location.origin && req.destination === 'document') {
+    event.respondWith((async () => {
+      try {
+        const net = await fetch(req);
+        const cache = await caches.open(APP_SHELL_CACHE);
+        cache.put(req, net.clone());
+        return net;
+      } catch (_) {
+        return (await caches.match(req)) || (await caches.match('/index.html'));
+      }
+    })());
+    return;
+  }
+
+  const isCloudinary = url.hostname === 'res.cloudinary.com' && url.pathname.includes('/image/upload/');
+  if (isCloudinary) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CLOUDINARY_CACHE);
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const net = await fetch(req, { mode: 'cors' });
+      cache.put(req, net.clone());
+      return net;
+    })());
+    return;
+  }
+
+  const isRuntimeStatic = ['style', 'script'].includes(req.destination);
+  if (isRuntimeStatic) {
+    event.respondWith((async () => {
+      const cache = await caches.open(RUNTIME_STATIC_CACHE);
+      const cached = await cache.match(req);
+      const netPromise = fetch(req).then((res) => {
+        cache.put(req, res.clone());
+        return res;
+      }).catch(() => null);
+      return cached || (await netPromise) || fetch(req);
+    })());
+  }
 });
 
 function resolveUrlFromPayload(data = {}) {

@@ -778,6 +778,46 @@ function initLoadingStateObserver() {
     });
 }
 
+function initModalBackstack() {
+    const overlays = Array.from(document.querySelectorAll('.modal-overlay'));
+    if (!overlays.length) return;
+    const stack = [];
+    let suppressObserver = false;
+
+    const getVisibleModals = () =>
+        overlays.filter((el) => !el.classList.contains('hidden'));
+
+    const closeTopModal = () => {
+        const top = stack.pop();
+        if (!top) return false;
+        suppressObserver = true;
+        top.classList.add('hidden');
+        top.classList.remove('streak-milestone-overlay--visible');
+        requestAnimationFrame(() => { suppressObserver = false; });
+        return true;
+    };
+
+    const observer = new MutationObserver(() => {
+        if (suppressObserver) return;
+        const visible = getVisibleModals();
+        visible.forEach((el) => {
+            if (stack.includes(el)) return;
+            stack.push(el);
+            history.pushState({ ...(history.state || {}), modalBackstack: true, modalId: el.id }, '');
+        });
+    });
+
+    overlays.forEach((el) => observer.observe(el, { attributes: true, attributeFilter: ['class'] }));
+
+    window.ModalBackstack = {
+        consumePopstate() {
+            if (!stack.length) return false;
+            return closeTopModal();
+        },
+        hasOpenModal() { return stack.length > 0; }
+    };
+}
+
 function emergencyCleanup() {
     let changed = false;
 
@@ -1960,6 +2000,7 @@ function applyTheme(key) {
 
     // ── data-theme en <html> (retrocompatibilidad con atributo CSS selector) ──
     document.documentElement.setAttribute('data-theme', key);
+    syncThemeColorMeta();
 
     // ── Actualizar estado visual de los botones de tema ───────────────────────
     document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -1967,6 +2008,38 @@ function applyTheme(key) {
         btn.classList.toggle('theme-btn--active', isActive);
         // aria-pressed comunica el estado seleccionado a lectores de pantalla (WCAG 4.1.2)
         btn.setAttribute('aria-pressed', String(isActive));
+    });
+}
+
+function syncThemeColorMeta() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    // Requisito producto: mantener theme-color negro para Android UI chrome.
+    meta.setAttribute('content', '#000000');
+}
+
+function initServiceWorkerUpdateFlow() {
+    if (!('serviceWorker' in navigator)) return;
+    const RELOAD_FLAG = 'la_sw_controller_reload_once';
+    let controllerReloading = false;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (controllerReloading) return;
+        if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
+        controllerReloading = true;
+        sessionStorage.setItem(RELOAD_FLAG, '1');
+        window.dispatchEvent(new CustomEvent('la:sw-controllerchange'));
+        window.location.reload();
+    });
+
+    navigator.serviceWorker.getRegistration?.().then((reg) => {
+        if (!reg) return;
+        reg.update().catch(() => {});
+    }).catch(() => {});
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        navigator.serviceWorker.getRegistration?.().then((reg) => reg?.update?.().catch(() => {})).catch(() => {});
     });
 }
 
@@ -2182,6 +2255,8 @@ window.revealUI = revealUI;
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 applyTheme(store.theme || 'violet');
+syncThemeColorMeta();
+initServiceWorkerUpdateFlow();
 
 if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
     store.userAvatar = null;
@@ -2235,6 +2310,7 @@ applyIdentity();
 // Los listeners no afectan al primer paint; se registran aquí por claridad.
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
+    initModalBackstack();
     initInteractiveMicroFX();
     initLoadingStateObserver();
 

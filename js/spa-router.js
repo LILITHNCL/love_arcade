@@ -350,6 +350,7 @@
         // El navegador restaura el state y dispara 'popstate'. Usamos _applyView
         // directamente para NO generar una nueva entrada (evita bucle infinito).
         window.addEventListener('popstate', (e) => {
+            if (window.ModalBackstack?.consumePopstate?.()) return;
             const state = e.state;
             const viewId = VIEWS.includes(state?.viewId) ? state.viewId : 'home';
             const anchor = state?.anchor || null;

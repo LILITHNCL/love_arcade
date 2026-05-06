@@ -117,6 +117,10 @@ span + .icon,
 }
 
 :root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
     /* ── Backgrounds ── */
     --bg-main:       #07070d;
     --bg-surface:    #0f1018;
@@ -177,8 +181,8 @@ span + .icon,
     --radius-md:  14px;
     --radius-lg:  20px;
     --radius-xl:  28px;
-    --nav-height: 68px;
-    --bottom-nav-height: 62px;
+    --nav-height: calc(68px + var(--safe-area-top));
+    --bottom-nav-height: calc(62px + var(--safe-area-bottom));
 
     /* ── Typography ── */
     --font-display: 'Exo 2', Arial, system-ui, sans-serif;
@@ -222,6 +226,8 @@ body {
     position: relative;
     padding-top: var(--nav-height);
     padding-bottom: var(--bottom-nav-height);
+    padding-left: max(0px, var(--safe-area-left));
+    padding-right: max(0px, var(--safe-area-right));
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -243,6 +249,9 @@ ul { list-style: none; }
     border: 0 !important;
 }
 button { font-family: var(--font-body); }
+button, a, .nav-link, .b-nav-item, .btn-primary, .btn-ghost {
+    touch-action: manipulation;
+}
 
 /* ================================================================
    MICRO-INTERACTIONS SYSTEM — Android-first polish (v10.6)
@@ -551,7 +560,7 @@ body::before {
     position: fixed; top: 0; left: 0; width: 100%;
     height: var(--nav-height);
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 18px;
+    padding: var(--safe-area-top) calc(18px + var(--safe-area-right)) 0 calc(18px + var(--safe-area-left));
     z-index: 1000;
     /* Solid 3.0: no backdrop-filter, deep solid panel with hard-edge border */
     background: #0d0e15;
@@ -693,7 +702,9 @@ body::before {
     box-shadow: 0 -1px 0 rgba(255,255,255,0.04), 0 -4px 20px rgba(0,0,0,0.7);
     z-index: 1000;
     justify-content: space-around; align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
 }
 
 .bottom-nav::before {
