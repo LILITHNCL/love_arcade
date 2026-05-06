@@ -8,7 +8,11 @@ const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY');
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@example.com';
 const EDGE_SHARED_SECRET = Deno.env.get('EDGE_SHARED_SECRET') || '';
+const APP_ENV = (Deno.env.get('APP_ENV') || Deno.env.get('NODE_ENV') || 'production').toLowerCase();
+const REQUIRE_EDGE_AUTH = (Deno.env.get('REQUIRE_EDGE_AUTH') || 'true').toLowerCase() !== 'false';
 const SHOP_CONTENT_VERSION = Number(Deno.env.get('SHOP_CONTENT_VERSION') || '0');
+const EVAL_BATCH_SIZE = Math.max(1, Number(Deno.env.get('EVAL_BATCH_SIZE') || '500'));
+const EVAL_MAX_BATCHES = Math.max(1, Number(Deno.env.get('EVAL_MAX_BATCHES') || '10'));
 
 if (!LA_CLOUD_URL || !LA_CLOUD_SERVICE_ROLE_KEY) {
   throw new Error('Missing LA_CLOUD_URL or LA_CLOUD_SERVICE_ROLE_KEY env vars');
@@ -31,7 +35,10 @@ function unauthorized(): Response {
 }
 
 function isAuthValid(req: Request): boolean {
-  if (!EDGE_SHARED_SECRET) return true;
+  if (!EDGE_SHARED_SECRET) {
+    if (REQUIRE_EDGE_AUTH || APP_ENV === 'production') return false;
+    return true;
+  }
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   return token.length > 0 && token === EDGE_SHARED_SECRET;
@@ -66,12 +73,29 @@ Deno.serve(async (req) => {
     globalShopVersion = Number(versionRow.shop_version || 0);
   }
 
-  const { data: reminderStates } = await sb
-    .from('user_notification_state')
-    .select('*')
-    .limit(500);
+  let statesScanned = 0;
+  let statesProcessed = 0;
+  let evalErrors = 0;
+  let enqueueErrors = 0;
+  let enqueueDedupeSkipped = 0;
 
-  for (const st of reminderStates || []) {
+  for (let batch = 0; batch < EVAL_MAX_BATCHES; batch += 1) {
+    const from = batch * EVAL_BATCH_SIZE;
+    const to = from + EVAL_BATCH_SIZE - 1;
+    const { data: reminderStates, error: statesErr } = await sb
+      .from('user_notification_state')
+      .select('*')
+      .order('updated_at', { ascending: true })
+      .range(from, to);
+
+    if (statesErr) {
+      return jsonResponse({ ok: false, error: `user_notification_state fetch: ${statesErr.message}` }, 500);
+    }
+    if (!reminderStates?.length) break;
+    statesScanned += reminderStates.length;
+
+    for (const st of reminderStates || []) {
+      statesProcessed += 1;
     const { localDate, slot } = getDailySlot(new Date(), Number(st.daily_timezone_offset_minutes || 0));
     const alreadyNotifiedToday = String(st.daily_last_notified_on || '') === localDate
       ? (st.daily_notified_slots || [])
@@ -97,7 +121,7 @@ Deno.serve(async (req) => {
       inserts.push({
         title: '🎁 Bono diario disponible',
         body: 'Tu bono diario ya está listo. Reclámalo ahora en Love Arcade.',
-        payload_json: { url: '/#view=home', tag: `local-daily-${st.user_id}`, view: 'home', type: 'local_daily' },
+        payload_json: { url: '/#view=home', tag: `local-daily-${st.user_id}-${localDate}-${slot}`, view: 'home', type: 'local_daily' },
         target_filter_json: { target: 'user_id', user_id: st.user_id },
         scheduled_for: nowIso,
         status: 'pending'
@@ -110,7 +134,7 @@ Deno.serve(async (req) => {
       inserts.push({
         title: '🌙 Bendición Lunar por expirar',
         body: 'Tu Bendición Lunar está por terminar. Extiéndela para conservar el bonus.',
-        payload_json: { url: '/#view=shop', tag: `local-moon-${st.user_id}`, view: 'shop', type: 'local_moon' },
+        payload_json: { url: '/#view=shop', tag: `local-moon-${st.user_id}-${new Date().getTime()}`, view: 'shop', type: 'local_moon' },
         target_filter_json: { target: 'user_id', user_id: st.user_id },
         scheduled_for: nowIso,
         status: 'pending'
@@ -125,18 +149,22 @@ Deno.serve(async (req) => {
       });
 
       if (enqueueErr) {
+        enqueueErrors += 1;
         console.error('[push-dispatch] enqueue_local_shop_campaign error', enqueueErr.message);
+      } else if (enqueued === true) {
+        updates.last_shop_sent_at = nowIso;
+        updates.last_shop_catalog_hash_sent = st.shop_catalog_hash || null;
+        updates.last_shop_version_sent = globalShopVersion;
+      } else {
+        enqueueDedupeSkipped += 1;
+        console.info(`[push-dispatch] local_shop dedupe skip user:${st.user_id} version:${globalShopVersion}`);
       }
-
-      updates.last_shop_sent_at = nowIso;
-      updates.last_shop_catalog_hash_sent = st.shop_catalog_hash || null;
-      updates.last_shop_version_sent = globalShopVersion;
     }
     if (dueEvent) {
       inserts.push({
         title: '⏳ Evento por terminar',
         body: 'Un evento está por finalizar. Aprovecha las recompensas antes de que termine.',
-        payload_json: { url: '/#view=events', tag: `local-event-${st.user_id}`, view: 'events', type: 'local_event' },
+        payload_json: { url: '/#view=events', tag: `local-event-${st.user_id}-${new Date().getTime()}`, view: 'events', type: 'local_event' },
         target_filter_json: { target: 'user_id', user_id: st.user_id },
         scheduled_for: nowIso,
         status: 'pending'
@@ -145,9 +173,21 @@ Deno.serve(async (req) => {
       updates.last_event_ids_sent = st.active_event_ids || [];
     }
 
-    if (inserts.length) {
-      await sb.from('push_campaigns').insert(inserts);
-      await sb.from('user_notification_state').update(updates).eq('user_id', st.user_id);
+      if (inserts.length) {
+        const { error: insertErr } = await sb.from('push_campaigns').insert(inserts);
+        if (insertErr) {
+          evalErrors += 1;
+          console.error(`[push-dispatch] campaign insert error user:${st.user_id} err:${insertErr.message}`);
+          continue;
+        }
+      }
+      if (Object.keys(updates).length) {
+        const { error: updErr } = await sb.from('user_notification_state').update(updates).eq('user_id', st.user_id);
+        if (updErr) {
+          evalErrors += 1;
+          console.error(`[push-dispatch] user_notification_state update error user:${st.user_id} err:${updErr.message}`);
+        }
+      }
     }
   }
 
@@ -166,7 +206,11 @@ Deno.serve(async (req) => {
   }
 
   if (!campaigns?.length) {
-    return jsonResponse({ ok: true, requeued, processed: 0, message: 'No campaigns pending' }, 200);
+    return jsonResponse({
+      ok: true, requeued, processed: 0, message: 'No campaigns pending',
+      states_scanned: statesScanned, states_processed: statesProcessed,
+      eval_errors: evalErrors, enqueue_errors: enqueueErrors, enqueue_dedupe_skipped: enqueueDedupeSkipped
+    }, 200);
   }
 
   for (const campaign of campaigns) {
@@ -269,5 +313,14 @@ Deno.serve(async (req) => {
       .eq('id', campaign.id);
   }
 
-  return jsonResponse({ ok: true, requeued, processed: campaigns.length }, 200);
+  return jsonResponse({
+    ok: true,
+    requeued,
+    processed: campaigns.length,
+    states_scanned: statesScanned,
+    states_processed: statesProcessed,
+    eval_errors: evalErrors,
+    enqueue_errors: enqueueErrors,
+    enqueue_dedupe_skipped: enqueueDedupeSkipped
+  }, 200);
 });

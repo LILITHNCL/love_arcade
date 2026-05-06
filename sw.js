@@ -30,7 +30,7 @@ function normalizePayload(payload = {}) {
     body: payload.body || 'Tienes una nueva notificación.',
     icon: payload.icon || NOTIFICATION_ICON,
     badge: payload.badge || NOTIFICATION_ICON,
-    tag: payload.tag || 'love-arcade',
+    tag: payload.tag || `love-arcade-${Date.now()}`,
     data: {
       ...payloadJson,
       ...payload,
@@ -55,7 +55,7 @@ self.addEventListener('push', (event) => {
       icon: normalized.icon,
       badge: normalized.badge,
       tag: normalized.tag,
-      renotify: true,
+      renotify: false,
       data: normalized.data
     })
   );
@@ -71,7 +71,7 @@ self.addEventListener('message', (event) => {
       icon: payload.icon,
       badge: payload.badge,
       tag: payload.tag,
-      renotify: true,
+      renotify: false,
       data: payload.data
     })
   );

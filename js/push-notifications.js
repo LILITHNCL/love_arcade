@@ -48,8 +48,9 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       vapidPublicKey = String(data?.vapidPublicKey || '');
+      if (!vapidPublicKey) throw new Error('VAPID key missing');
     } catch (_) {
-      vapidPublicKey = 'BMxdhgSVCuO4Vad8c_Wj8a-nAC3AgUBqjDhGKJb6Fm1ZvJ1ZFvNd1VzeF1KZsl2kvJYMbC6hBjaK93dH9jeGFqg';
+      vapidPublicKey = '';
     }
   }
 
@@ -221,6 +222,9 @@
     }
 
     if (!vapidPublicKey) await fetchPushConfig();
+    if (!vapidPublicKey) {
+      throw new Error('Configuración push no disponible. Intenta más tarde.');
+    }
 
     const sub = await swReg.pushManager.subscribe({
       userVisibleOnly: true,
