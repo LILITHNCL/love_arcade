@@ -15,6 +15,9 @@
 
   let swReg = null;
   let vapidPublicKey = '';
+  let permissionStatusRef = null;
+  let permissionPollTimer = null;
+  let lastPermissionSeen = (typeof Notification !== 'undefined' ? Notification.permission : 'default');
   function _$(id) { return document.getElementById(id); }
 
   function loadPrefs() {
@@ -70,6 +73,96 @@
     const el = _$('push-recovery-card');
     if (!el) return;
     el.classList.toggle('hidden', !show);
+  }
+
+  function stopPermissionPolling() {
+    if (!permissionPollTimer) return;
+    window.clearInterval(permissionPollTimer);
+    permissionPollTimer = null;
+  }
+
+  async function hasActiveSubscription() {
+    try {
+      if (!swReg) await registerServiceWorker();
+      const sub = await swReg?.pushManager?.getSubscription?.();
+      return Boolean(sub);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function startPermissionPollingIfNeeded(permission) {
+    const shouldPoll = isOperaAndroid() && permission !== 'granted';
+    if (!shouldPoll) {
+      stopPermissionPolling();
+      return;
+    }
+    if (permissionPollTimer) return;
+
+    lastPermissionSeen = permission;
+    permissionPollTimer = window.setInterval(async () => {
+      const current = Notification.permission;
+      if (current === lastPermissionSeen) return;
+      lastPermissionSeen = current;
+      stopPermissionPolling();
+      await refreshPushUiState();
+      syncReminderStateToSupabase().catch(() => {});
+    }, 1500);
+  }
+
+  async function refreshPushUiState() {
+    const permission = Notification.permission;
+    lastPermissionSeen = permission;
+
+    renderEnableButtonState();
+    const shouldShowRecovery = isOperaAndroid() && permission !== 'granted';
+    toggleRecoveryCard(shouldShowRecovery);
+
+    if (permission === 'granted') {
+      const isSubscribed = await hasActiveSubscription();
+      if (isSubscribed) {
+        setStatus('Recordatorios activos. Te avisaremos cuando haya algo importante.');
+      } else {
+        setStatus('Permiso activo. Termina la activación para recibir recordatorios.');
+      }
+    } else if (permission === 'denied') {
+      setStatus('Notificaciones bloqueadas. Actívalas en la configuración del navegador para continuar.', true);
+    } else {
+      setStatus('Activa los recordatorios para no perder bonos, tienda y eventos.');
+    }
+
+    startPermissionPollingIfNeeded(permission);
+  }
+
+  function bindPermissionLifecycleEvents() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        stopPermissionPolling();
+        return;
+      }
+      refreshPushUiState().catch(() => {});
+    });
+
+    window.addEventListener('focus', () => {
+      refreshPushUiState().catch(() => {});
+    });
+
+    window.addEventListener('pageshow', () => {
+      refreshPushUiState().catch(() => {});
+    });
+  }
+
+  async function bindPermissionWatcher() {
+    if (!navigator.permissions?.query) return;
+    try {
+      permissionStatusRef = await navigator.permissions.query({ name: 'notifications' });
+      permissionStatusRef.onchange = () => {
+        refreshPushUiState().catch(() => {});
+      };
+      await refreshPushUiState();
+    } catch (_) {
+      permissionStatusRef = null;
+    }
   }
 
   function renderEnableButtonState() {
@@ -218,6 +311,7 @@
     const existing = await swReg.pushManager.getSubscription();
     if (existing) {
       await upsertSubscriptionOnSupabase(existing, true);
+      await refreshPushUiState();
       return existing;
     }
 
@@ -232,6 +326,7 @@
     });
 
     await upsertSubscriptionOnSupabase(sub, true);
+    await refreshPushUiState();
     return sub;
   }
 
@@ -241,6 +336,7 @@
     if (!sub) return;
     await upsertSubscriptionOnSupabase(sub, false);
     await sub.unsubscribe();
+    await refreshPushUiState();
   }
 
   async function showLocalNotification(payload) {
@@ -290,7 +386,7 @@
         toggleRecoveryCard(false);
         setStatus('Preparando recordatorios…');
         await subscribePush();
-        renderEnableButtonState();
+        await refreshPushUiState();
         const prefs = loadPrefs();
         prefs.enabled = true;
         savePrefs(prefs);
@@ -312,7 +408,7 @@
         savePrefs(prefs);
         await syncReminderStateToSupabase();
         setStatus('Recordatorios pausados. Puedes activarlos cuando quieras.');
-        renderEnableButtonState();
+        await refreshPushUiState();
       } catch (err) {
         setStatus(err?.message || 'No pudimos pausar los recordatorios.', true);
       }
@@ -337,6 +433,10 @@
   function bindServiceWorkerDeepLinkBridge() {
     navigator.serviceWorker?.addEventListener?.('message', (event) => {
       const msg = event.data || {};
+      if (msg.type === 'LA_PUSH_STATE_UPDATED') {
+        refreshPushUiState().catch(() => {});
+        return;
+      }
       if (msg.type !== 'LA_NOTIFICATION_OPEN') return;
       const url = String(msg.url || '');
       if (url.includes('#view=shop')) window.SpaRouter?.navigateTo?.('shop');
@@ -347,9 +447,10 @@
 
   async function init() {
     updateUiSupportState();
-    renderEnableButtonState();
+    await refreshPushUiState();
     bindButtons();
     bindToggles();
+    bindPermissionLifecycleEvents();
 
     if (!('serviceWorker' in navigator) || !('Notification' in window) || !('PushManager' in window)) {
       return;
@@ -358,12 +459,11 @@
     await fetchPushConfig();
     await registerServiceWorker();
     bindServiceWorkerDeepLinkBridge();
+    await bindPermissionWatcher();
     await syncReminderStateToSupabase();
     window.setInterval(() => { syncReminderStateToSupabase().catch(() => {}); }, 5 * 60 * 1000);
 
-    if (Notification.permission === 'granted') {
-      setStatus('Recordatorios activos. Te avisaremos cuando haya algo importante.');
-    }
+    await refreshPushUiState();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
