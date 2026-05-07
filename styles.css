@@ -1652,8 +1652,8 @@ body::before {
 .gift-carousel-track {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-behavior: auto;
     overscroll-behavior-x: contain;
 }
 
@@ -1664,7 +1664,7 @@ body::before {
     border: 0;
     overflow: hidden;
     scroll-snap-align: start;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
     contain: content;
     content-visibility: auto;
     contain-intrinsic-size: 260px;

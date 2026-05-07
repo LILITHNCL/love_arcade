@@ -161,6 +161,8 @@ let _giftAutoplayTimer = null;
 let _giftPauseUntil = 0;
 let _giftCurrentIndex = 0;
 let _giftSnapTimer = null;
+const _shopPrefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const _shopCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
 if (typeof window.__laSessionGameCompleted === 'undefined') {
     let fromSession = false;
     try { fromSession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
@@ -1305,7 +1307,11 @@ function _advanceGiftCarousel(step = 1) {
         return;
     }
     _giftCurrentIndex = Math.max(0, next);
-    cards[_giftCurrentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    cards[_giftCurrentIndex].scrollIntoView({
+        behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'start'
+    });
 }
 
 function _initGiftAutoplay() {
@@ -1365,7 +1371,11 @@ function _renderGiftCarousel(items) {
 
     requestAnimationFrame(() => {
         const cards = track.querySelectorAll('.gift-card');
-        cards[_giftCurrentIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        cards[_giftCurrentIndex]?.scrollIntoView({
+            behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+            block: 'nearest',
+            inline: 'start'
+        });
     });
 
     if (!track.dataset.boundScrollPause) {
@@ -1383,7 +1393,11 @@ function _renderGiftCarousel(items) {
                     if (dist < minDist) { minDist = dist; nearest = idx; }
                 });
                 _giftCurrentIndex = nearest;
-                cards[nearest]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                cards[nearest]?.scrollIntoView({
+                    behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+                    block: 'nearest',
+                    inline: 'start'
+                });
             }, 120);
         }, { passive: true });
     }
