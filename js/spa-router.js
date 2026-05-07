@@ -17,7 +17,6 @@
  *           puedan liberar recursos (p. ej. IntersectionObserver de precarga).
  *  - Restaurar el scroll a 0,0 ANTES de la animación de entrada (auto/fallback),
  *    garantizando que la vista nueva empieza desde arriba sin salto visual.
- *  - Manejar data-anchor para deep-links dentro de la vista Inicio (#games, #faq).
  *  - [v9.1] Integrar la History API: botón Atrás vuelve a vista anterior sin recargar.
  *  - [v9.2] Añadir clase .view-section a las vistas para activar la transición
  *           anti-golpe CSS (opacity + translateY, GPU-only, 250ms).
