@@ -1203,6 +1203,12 @@ function switchTab(tab) {
         renderMoonBlessingStatus();
         renderStreakCalendar();
     }
+    if (tab !== 'catalog') {
+        _stopGiftAutoplay();
+        _teardownShopLazyRender();
+    } else if (activeFilter !== 'Regalos') {
+        filterItems();
+    }
     // Scope al panel activo: evita re-escanear vistas ocultas de la SPA.
     refreshIcons(panel);
 }
@@ -1414,6 +1420,7 @@ function filterItems() {
         giftEl?.classList.remove('hidden');
         _renderGiftCarousel(filtered);
     } else {
+        _stopGiftAutoplay();
         giftEl?.classList.add('hidden');
         renderShop(filtered);
     }

@@ -1469,6 +1469,9 @@ body::before {
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     position: relative;
     width: 100%;
+    contain: content;
+    content-visibility: auto;
+    contain-intrinsic-size: 280px;
     /* will-change is NOT set here — it is activated only on hover via CSS
        to avoid promoting dozens of compositor layers while the grid is idle.
        See :hover rule below. On pointer:coarse devices (mobile) the :hover
@@ -1542,8 +1545,9 @@ body::before {
     font-size: 0.78rem;
     font-weight: 600;
     display: flex; align-items: center; gap: 5px;
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
     white-space: nowrap;
+    contain: paint;
 }
 .shop-tab:hover { border-color: var(--accent-border); color: var(--text-high); }
 .shop-tab.active {
@@ -1611,10 +1615,11 @@ body::before {
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.18s;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
     display: flex; align-items: center; gap: 4px;
     font-family: var(--font-body);
     white-space: nowrap;
+    contain: paint;
 }
 .pill:hover { border-color: var(--accent-border); color: var(--text-high); }
 .pill.active {
@@ -1624,9 +1629,8 @@ body::before {
 }
 
 @keyframes pulse-gift {
-    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    0%, 100% { transform: translateZ(0) scale(1); opacity: 1; }
+    50% { transform: translateZ(0) scale(1.03); opacity: 0.94; }
 }
 
 .filter-btn-gift.has-unclaimed {
@@ -1661,6 +1665,9 @@ body::before {
     overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    contain: content;
+    content-visibility: auto;
+    contain-intrinsic-size: 260px;
 }
 
 @media (min-width: 640px) {
@@ -1917,13 +1924,14 @@ body::before {
 .promo-toggle-btn {
     width: 100%; justify-content: flex-start; gap: 8px;
     padding: 9px 14px; font-size: 0.82rem; border-radius: var(--radius-sm);
+    contain: paint;
 }
 .promo-chevron { margin-left: auto; transition: transform 0.22s; flex-shrink: 0; }
 .promo-toggle-btn[aria-expanded="true"] .promo-chevron { transform: rotate(180deg); }
 .promo-section--collapsed { display: none; }
 .promo-section--open {
     display: block; margin-top: 8px;
-    animation: promoFadeIn 0.22s ease;
+    animation: promoFadeIn 0.16s ease;
 }
 @keyframes promoFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -3175,9 +3183,10 @@ svg { stroke-width: 2; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition: background 0.18s, border-color 0.18s;
+    contain: paint;
 }
 .preview-close-btn:hover {
     background: rgba(155, 89, 255, 0.35);
