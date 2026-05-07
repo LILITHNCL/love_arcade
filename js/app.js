@@ -704,6 +704,8 @@ function _showStorageToast(message, type = 'warning') {
 
 function initInteractiveMicroFX() {
     const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isAndroid = /Android/i.test(navigator.userAgent || '');
     let activePressEl = null;
 
@@ -722,24 +724,38 @@ function initInteractiveMicroFX() {
         if (!el) return;
         releasePress();
         activePressEl = el;
-        const rect = el.getBoundingClientRect();
         if (!el.classList.contains('interactive-ripple')) {
             el.classList.add('interactive-ripple');
         }
-        el.style.setProperty('--tap-x', `${event.clientX - rect.left}px`);
-        el.style.setProperty('--tap-y', `${event.clientY - rect.top}px`);
+        el.classList.add('ripple-active');
         el.classList.add('is-pressing');
-        el.classList.remove('is-rippling');
-        requestAnimationFrame(() => el.classList.add('is-rippling'));
-        setTimeout(() => el.classList.remove('is-rippling'), 430);
+        if (!reducedMotion && !coarsePointer) {
+            const rect = el.getBoundingClientRect();
+            el.style.setProperty('--tap-x', `${event.clientX - rect.left}px`);
+            el.style.setProperty('--tap-y', `${event.clientY - rect.top}px`);
+            el.classList.remove('is-rippling');
+            requestAnimationFrame(() => el.classList.add('is-rippling'));
+            setTimeout(() => {
+                el.classList.remove('is-rippling');
+                el.classList.remove('ripple-active');
+            }, 430);
+        } else {
+            setTimeout(() => el.classList.remove('ripple-active'), 90);
+        }
         if (isAndroid && _canUseVibration()) {
             navigator.vibrate(8);
         }
     }, { passive: true });
 
-    document.addEventListener('pointerup', releasePress, { passive: true });
-    document.addEventListener('pointercancel', releasePress, { passive: true });
-    document.addEventListener('scroll', releasePress, { passive: true });
+    document.addEventListener('pointerup', () => {
+        releasePress();
+    }, { passive: true });
+    document.addEventListener('pointercancel', () => {
+        releasePress();
+    }, { passive: true });
+    document.addEventListener('scroll', () => {
+        releasePress();
+    }, { passive: true });
 }
 
 function initLoadingStateObserver() {
@@ -1955,19 +1971,33 @@ function applyTheme(key) {
     // Este es el mecanismo principal para que CSS pueda usar
     // body.theme-violet .selector { ... } sin variables dinámicas.
     const bodyClasses = document.body.classList;
-    Object.keys(THEMES).forEach(k => bodyClasses.remove(`theme-${k}`));
-    bodyClasses.add(`theme-${key}`);
+    const nextThemeClass = `theme-${key}`;
+    const prevThemeClass = document.body.dataset.activeThemeClass;
+    if (prevThemeClass && prevThemeClass !== nextThemeClass) {
+        bodyClasses.remove(prevThemeClass);
+    }
+    if (!bodyClasses.contains(nextThemeClass)) {
+        bodyClasses.add(nextThemeClass);
+    }
+    document.body.dataset.activeThemeClass = nextThemeClass;
 
     // ── data-theme en <html> (retrocompatibilidad con atributo CSS selector) ──
     document.documentElement.setAttribute('data-theme', key);
 
     // ── Actualizar estado visual de los botones de tema ───────────────────────
-    document.querySelectorAll('.theme-btn').forEach(btn => {
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const activeButton = document.querySelector(`.theme-btn[data-theme="${key}"]`);
+    themeButtons.forEach(btn => {
         const isActive = btn.dataset.theme === key;
-        btn.classList.toggle('theme-btn--active', isActive);
-        // aria-pressed comunica el estado seleccionado a lectores de pantalla (WCAG 4.1.2)
-        btn.setAttribute('aria-pressed', String(isActive));
+        if (!isActive && btn.classList.contains('theme-btn--active')) {
+            btn.classList.remove('theme-btn--active');
+            btn.setAttribute('aria-pressed', 'false');
+        }
     });
+    if (activeButton) {
+        activeButton.classList.add('theme-btn--active');
+        activeButton.setAttribute('aria-pressed', 'true');
+    }
 }
 
 function updateDailyButton() {
