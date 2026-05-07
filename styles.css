@@ -582,6 +582,14 @@ body::before {
     gap: 9px;
     color: var(--text-high);
 }
+.nav-brand-icon {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    display: block;
+    shape-rendering: crispEdges;
+}
+
 .nav-brand span {
     color: var(--accent);
     display: inline;
