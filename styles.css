@@ -1471,11 +1471,14 @@ body::before {
     width: 100%;
     contain: content;
     content-visibility: auto;
-    contain-intrinsic-size: 280px;
+    contain-intrinsic-size: 300px;
     /* will-change is NOT set here — it is activated only on hover via CSS
        to avoid promoting dozens of compositor layers while the grid is idle.
        See :hover rule below. On pointer:coarse devices (mobile) the :hover
        rule is also effectively never triggered, so no GPU memory is wasted. */
+}
+.shop-grid .shop-card:nth-child(-n+6) {
+    content-visibility: visible;
 }
 /* Solid 3.0: border illumination on hover, no bg change */
 .shop-card:hover {
@@ -1667,12 +1670,16 @@ body::before {
     scroll-snap-stop: normal;
     contain: content;
     content-visibility: auto;
-    contain-intrinsic-size: 260px;
+    contain-intrinsic-size: 280px;
+}
+.gift-carousel-track .gift-card:nth-child(-n+2) {
+    content-visibility: visible;
 }
 
 @media (min-width: 640px) {
     .gift-card {
         aspect-ratio: 4 / 3;
+        contain-intrinsic-size: 260px;
     }
 }
 
@@ -2791,6 +2798,7 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Shop */
     .shop-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
     .shop-card { padding: 16px; }
+    .shop-card { contain-intrinsic-size: 340px; }
     .shop-card .card-name { font-size: 0.95rem; }
     .shop-img { height: 160px; }
 

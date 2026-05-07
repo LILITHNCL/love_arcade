@@ -161,8 +161,17 @@ let _giftAutoplayTimer = null;
 let _giftPauseUntil = 0;
 let _giftCurrentIndex = 0;
 let _giftSnapTimer = null;
-const _shopPrefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const _shopCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+const _shopReducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+const _shopCoarsePointerMql = window.matchMedia('(pointer: coarse)');
+let _shopPrefersReducedMotion = _shopReducedMotionMql.matches;
+let _shopCoarsePointer = _shopCoarsePointerMql.matches;
+let _giftCardSnapOffsets = [];
+const _bindMqlChange = (mql, handler) => {
+    if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
+    else if (typeof mql.addListener === 'function') mql.addListener(handler);
+};
+_bindMqlChange(_shopReducedMotionMql, (e) => { _shopPrefersReducedMotion = e.matches; });
+_bindMqlChange(_shopCoarsePointerMql, (e) => { _shopCoarsePointer = e.matches; });
 if (typeof window.__laSessionGameCompleted === 'undefined') {
     let fromSession = false;
     try { fromSession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
@@ -1354,6 +1363,7 @@ function _renderGiftCarousel(items) {
     }).join('');
 
     track.innerHTML = html;
+    _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
     if (collectionToggle) {
         collectionToggle.textContent = `Ver mi colección completa (${ownedTotal} totales)`;
         collectionToggle.classList.toggle('hidden', collection.length === 0);
@@ -1380,25 +1390,42 @@ function _renderGiftCarousel(items) {
 
     if (!track.dataset.boundScrollPause) {
         track.dataset.boundScrollPause = '1';
+        let rafId = null;
+        let lastScrollTs = 0;
+        const SNAP_DEBOUNCE_MS = 160;
+        const SNAP_THRESHOLD_PX = 14;
+        const runSnap = () => {
+            rafId = null;
+            const idleFor = performance.now() - lastScrollTs;
+            if (idleFor < SNAP_DEBOUNCE_MS) {
+                rafId = requestAnimationFrame(runSnap);
+                return;
+            }
+            if (_shopCoarsePointer) return;
+            if (!_giftCardSnapOffsets.length) return;
+            let nearest = 0;
+            let minDist = Number.POSITIVE_INFINITY;
+            _giftCardSnapOffsets.forEach((left, idx) => {
+                const dist = Math.abs(left - track.scrollLeft);
+                if (dist < minDist) { minDist = dist; nearest = idx; }
+            });
+            _giftCurrentIndex = nearest;
+            if (minDist <= SNAP_THRESHOLD_PX) return;
+            const targetCard = track.querySelectorAll('.gift-card')[nearest];
+            targetCard?.scrollIntoView({
+                behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+                block: 'nearest',
+                inline: 'start'
+            });
+        };
         track.addEventListener('scroll', () => {
             _giftPauseUntil = Date.now() + 10000;
-            if (_giftSnapTimer) clearTimeout(_giftSnapTimer);
-            _giftSnapTimer = setTimeout(() => {
-                const cards = Array.from(track.querySelectorAll('.gift-card'));
-                if (!cards.length) return;
-                let nearest = 0;
-                let minDist = Number.POSITIVE_INFINITY;
-                cards.forEach((card, idx) => {
-                    const dist = Math.abs(card.offsetLeft - track.scrollLeft);
-                    if (dist < minDist) { minDist = dist; nearest = idx; }
-                });
-                _giftCurrentIndex = nearest;
-                cards[nearest]?.scrollIntoView({
-                    behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
-                    block: 'nearest',
-                    inline: 'start'
-                });
-            }, 120);
+            lastScrollTs = performance.now();
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(runSnap);
+        }, { passive: true });
+        window.addEventListener('resize', () => {
+            _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
         }, { passive: true });
     }
 

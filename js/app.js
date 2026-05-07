@@ -704,8 +704,16 @@ function _showStorageToast(message, type = 'warning') {
 
 function initInteractiveMicroFX() {
     const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
-    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointerMql = window.matchMedia('(pointer: coarse)');
+    const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let coarsePointer = coarsePointerMql.matches;
+    let reducedMotion = reducedMotionMql.matches;
+    const _bindMediaChange = (mql, handler) => {
+        if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
+        else if (typeof mql.addListener === 'function') mql.addListener(handler);
+    };
+    _bindMediaChange(coarsePointerMql, (e) => { coarsePointer = e.matches; });
+    _bindMediaChange(reducedMotionMql, (e) => { reducedMotion = e.matches; });
     const isAndroid = /Android/i.test(navigator.userAgent || '');
     let activePressEl = null;
 
@@ -1973,7 +1981,13 @@ function applyTheme(key) {
     const bodyClasses = document.body.classList;
     const nextThemeClass = `theme-${key}`;
     const prevThemeClass = document.body.dataset.activeThemeClass;
-    if (prevThemeClass && prevThemeClass !== nextThemeClass) {
+    if (!prevThemeClass) {
+        Array.from(bodyClasses).forEach((className) => {
+            if (className.startsWith('theme-') && className !== nextThemeClass) {
+                bodyClasses.remove(className);
+            }
+        });
+    } else if (prevThemeClass !== nextThemeClass) {
         bodyClasses.remove(prevThemeClass);
     }
     if (!bodyClasses.contains(nextThemeClass)) {
