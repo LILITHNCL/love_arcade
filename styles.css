@@ -293,6 +293,8 @@ button { font-family: var(--font-body); }
     position: relative;
     overflow: hidden;
     isolation: isolate;
+    contain: paint;
+    transform: translateZ(0);
 }
 
 :where(
@@ -314,11 +316,12 @@ button { font-family: var(--font-body); }
     left: var(--tap-x, 50%);
     top: var(--tap-y, 50%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 26%, transparent);
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
     pointer-events: none;
     z-index: 0;
+    will-change: transform, opacity;
 }
 
 :where(
@@ -335,6 +338,7 @@ button { font-family: var(--font-body); }
 ).interactive-ripple.is-rippling::after {
     animation: tapRipple 420ms cubic-bezier(.2,.8,.2,1);
 }
+.interactive-ripple:not(.ripple-active)::after { will-change: auto; }
 
 @keyframes tapRipple {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0.42; }
@@ -1465,10 +1469,16 @@ body::before {
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     position: relative;
     width: 100%;
+    contain: content;
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
     /* will-change is NOT set here — it is activated only on hover via CSS
        to avoid promoting dozens of compositor layers while the grid is idle.
        See :hover rule below. On pointer:coarse devices (mobile) the :hover
        rule is also effectively never triggered, so no GPU memory is wasted. */
+}
+.shop-grid .shop-card:nth-child(-n+6) {
+    content-visibility: visible;
 }
 /* Solid 3.0: border illumination on hover, no bg change */
 .shop-card:hover {
@@ -1494,7 +1504,8 @@ body::before {
     object-fit: cover;
     border-radius: var(--radius-sm);
     margin-bottom: 8px;
-    transition: transform 0.25s;
+    transition: transform 0.2s;
+    contain: paint;
 }
 .shop-card:hover .shop-img { transform: scale(1.02); }
 
@@ -1537,8 +1548,9 @@ body::before {
     font-size: 0.78rem;
     font-weight: 600;
     display: flex; align-items: center; gap: 5px;
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
     white-space: nowrap;
+    contain: paint;
 }
 .shop-tab:hover { border-color: var(--accent-border); color: var(--text-high); }
 .shop-tab.active {
@@ -1606,10 +1618,11 @@ body::before {
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.18s;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
     display: flex; align-items: center; gap: 4px;
     font-family: var(--font-body);
     white-space: nowrap;
+    contain: paint;
 }
 .pill:hover { border-color: var(--accent-border); color: var(--text-high); }
 .pill.active {
@@ -1619,9 +1632,8 @@ body::before {
 }
 
 @keyframes pulse-gift {
-    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    0%, 100% { transform: translateZ(0) scale(1); opacity: 1; }
+    50% { transform: translateZ(0) scale(1.03); opacity: 0.94; }
 }
 
 .filter-btn-gift.has-unclaimed {
@@ -1643,8 +1655,8 @@ body::before {
 .gift-carousel-track {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-behavior: auto;
     overscroll-behavior-x: contain;
 }
 
@@ -1655,12 +1667,19 @@ body::before {
     border: 0;
     overflow: hidden;
     scroll-snap-align: start;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
+    contain: content;
+    content-visibility: auto;
+    contain-intrinsic-size: 280px;
+}
+.gift-carousel-track .gift-card:nth-child(-n+2) {
+    content-visibility: visible;
 }
 
 @media (min-width: 640px) {
     .gift-card {
         aspect-ratio: 4 / 3;
+        contain-intrinsic-size: 260px;
     }
 }
 
@@ -1912,13 +1931,14 @@ body::before {
 .promo-toggle-btn {
     width: 100%; justify-content: flex-start; gap: 8px;
     padding: 9px 14px; font-size: 0.82rem; border-radius: var(--radius-sm);
+    contain: paint;
 }
 .promo-chevron { margin-left: auto; transition: transform 0.22s; flex-shrink: 0; }
 .promo-toggle-btn[aria-expanded="true"] .promo-chevron { transform: rotate(180deg); }
 .promo-section--collapsed { display: none; }
 .promo-section--open {
     display: block; margin-top: 8px;
-    animation: promoFadeIn 0.22s ease;
+    animation: promoFadeIn 0.16s ease;
 }
 @keyframes promoFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -2113,7 +2133,8 @@ body::before {
     color: var(--text-low);
     font-family: var(--font-body);
     font-size: 0.82rem; font-weight: 600;
-    cursor: pointer; transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease; position: relative;
+    cursor: pointer; transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease; position: relative;
+    contain: paint;
 }
 .theme-btn:hover { border-color: var(--accent-border); color: var(--text-high); background: var(--solid-surface-float); }
 .theme-btn--active { border-color: var(--accent-border); background: var(--accent-soft); color: var(--text-high); }
@@ -2777,6 +2798,7 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Shop */
     .shop-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
     .shop-card { padding: 16px; }
+    .shop-card { contain-intrinsic-size: 340px; }
     .shop-card .card-name { font-size: 0.95rem; }
     .shop-img { height: 160px; }
 
@@ -3169,9 +3191,10 @@ svg { stroke-width: 2; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition: background 0.18s, border-color 0.18s;
+    contain: paint;
 }
 .preview-close-btn:hover {
     background: rgba(155, 89, 255, 0.35);
@@ -3883,6 +3906,21 @@ svg { stroke-width: 2; }
    sin alterar el diseño visual en pantallas con cursor (pointer:fine).
    ================================================================ */
 @media (pointer: coarse) {
+    :where(
+        button,
+        [role="button"],
+        a[href],
+        summary,
+        .game-card,
+        .shop-card,
+        .gift-card,
+        .lte-card--interactive,
+        .b-nav-item,
+        .nav-link
+    ).interactive-ripple::after {
+        animation: none !important;
+        opacity: 0 !important;
+    }
     .shop-buy-btn,
     .shop-preview-btn {
         min-height: 44px;

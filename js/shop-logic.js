@@ -161,6 +161,17 @@ let _giftAutoplayTimer = null;
 let _giftPauseUntil = 0;
 let _giftCurrentIndex = 0;
 let _giftSnapTimer = null;
+const _shopReducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+const _shopCoarsePointerMql = window.matchMedia('(pointer: coarse)');
+let _shopPrefersReducedMotion = _shopReducedMotionMql.matches;
+let _shopCoarsePointer = _shopCoarsePointerMql.matches;
+let _giftCardSnapOffsets = [];
+const _bindMqlChange = (mql, handler) => {
+    if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
+    else if (typeof mql.addListener === 'function') mql.addListener(handler);
+};
+_bindMqlChange(_shopReducedMotionMql, (e) => { _shopPrefersReducedMotion = e.matches; });
+_bindMqlChange(_shopCoarsePointerMql, (e) => { _shopCoarsePointer = e.matches; });
 if (typeof window.__laSessionGameCompleted === 'undefined') {
     let fromSession = false;
     try { fromSession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
@@ -1203,6 +1214,12 @@ function switchTab(tab) {
         renderMoonBlessingStatus();
         renderStreakCalendar();
     }
+    if (tab !== 'catalog') {
+        _stopGiftAutoplay();
+        _teardownShopLazyRender();
+    } else if (activeFilter !== 'Regalos') {
+        filterItems();
+    }
     // Scope al panel activo: evita re-escanear vistas ocultas de la SPA.
     refreshIcons(panel);
 }
@@ -1299,7 +1316,11 @@ function _advanceGiftCarousel(step = 1) {
         return;
     }
     _giftCurrentIndex = Math.max(0, next);
-    cards[_giftCurrentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    cards[_giftCurrentIndex].scrollIntoView({
+        behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'start'
+    });
 }
 
 function _initGiftAutoplay() {
@@ -1342,6 +1363,7 @@ function _renderGiftCarousel(items) {
     }).join('');
 
     track.innerHTML = html;
+    _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
     if (collectionToggle) {
         collectionToggle.textContent = `Ver mi colección completa (${ownedTotal} totales)`;
         collectionToggle.classList.toggle('hidden', collection.length === 0);
@@ -1359,26 +1381,51 @@ function _renderGiftCarousel(items) {
 
     requestAnimationFrame(() => {
         const cards = track.querySelectorAll('.gift-card');
-        cards[_giftCurrentIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        cards[_giftCurrentIndex]?.scrollIntoView({
+            behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+            block: 'nearest',
+            inline: 'start'
+        });
     });
 
     if (!track.dataset.boundScrollPause) {
         track.dataset.boundScrollPause = '1';
+        let rafId = null;
+        let lastScrollTs = 0;
+        const SNAP_DEBOUNCE_MS = 160;
+        const SNAP_THRESHOLD_PX = 14;
+        const runSnap = () => {
+            rafId = null;
+            const idleFor = performance.now() - lastScrollTs;
+            if (idleFor < SNAP_DEBOUNCE_MS) {
+                rafId = requestAnimationFrame(runSnap);
+                return;
+            }
+            if (_shopCoarsePointer) return;
+            if (!_giftCardSnapOffsets.length) return;
+            let nearest = 0;
+            let minDist = Number.POSITIVE_INFINITY;
+            _giftCardSnapOffsets.forEach((left, idx) => {
+                const dist = Math.abs(left - track.scrollLeft);
+                if (dist < minDist) { minDist = dist; nearest = idx; }
+            });
+            _giftCurrentIndex = nearest;
+            if (minDist <= SNAP_THRESHOLD_PX) return;
+            const targetCard = track.querySelectorAll('.gift-card')[nearest];
+            targetCard?.scrollIntoView({
+                behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+                block: 'nearest',
+                inline: 'start'
+            });
+        };
         track.addEventListener('scroll', () => {
             _giftPauseUntil = Date.now() + 10000;
-            if (_giftSnapTimer) clearTimeout(_giftSnapTimer);
-            _giftSnapTimer = setTimeout(() => {
-                const cards = Array.from(track.querySelectorAll('.gift-card'));
-                if (!cards.length) return;
-                let nearest = 0;
-                let minDist = Number.POSITIVE_INFINITY;
-                cards.forEach((card, idx) => {
-                    const dist = Math.abs(card.offsetLeft - track.scrollLeft);
-                    if (dist < minDist) { minDist = dist; nearest = idx; }
-                });
-                _giftCurrentIndex = nearest;
-                cards[nearest]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-            }, 120);
+            lastScrollTs = performance.now();
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(runSnap);
+        }, { passive: true });
+        window.addEventListener('resize', () => {
+            _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
         }, { passive: true });
     }
 
@@ -1414,6 +1461,7 @@ function filterItems() {
         giftEl?.classList.remove('hidden');
         _renderGiftCarousel(filtered);
     } else {
+        _stopGiftAutoplay();
         giftEl?.classList.add('hidden');
         renderShop(filtered);
     }
