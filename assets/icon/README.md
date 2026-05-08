@@ -10,11 +10,11 @@ El degradado fue generado en **IbisPaint X** utilizando el filtro **"Graduación
 
 | Parámetro | Valor |
 | :--- | :--- |
-| **Color Inicial (Superior Izquierda)** | `#4A0404` |
-| **Color Central (Intermedio)** | `#8B0000` |
-| **Color Final (Inferior Derecha)** | `#BC0000` |
-| **Ángulo** | 135° |
-| **Longitud de onda** | 1024 px |
+| **Color Inicial (Inferior Izquierda)** | `B1060F` |
+| **Color Central (Intermedio)** | `E50914` |
+| **Color Final (Superior Derecha)** | `#B1060F` |
+| **Ángulo** | 53° |
+| **Longitud de onda** | 768 px |
 | **Fase** | 0% |
 | **Intermedio** | 50% |
 | **Contraste** | 0% |
