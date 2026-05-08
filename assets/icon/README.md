@@ -41,4 +41,4 @@ Para garantizar la compatibilidad con el sistema de notificaciones de Android, s
 ## Flujo de trabajo para actualizaciones
 1. **Para cambios en el fondo:** Abrir IbisPaint X, crear un lienzo de 1024x1024 y aplicar el filtro "Graduación paralela" con los parámetros arriba descritos.
 2. **Para cambios en el logo:** Importar `icon_main.piskel` en [PiskelApp](https://www.piskelapp.com/).
-3. **Exportación:** Al exportar desde Piskel para el Splash Screen, asegurar que el tamaño de salida sea consistente con el definido en el `manifest.json` (mínimo 512px).
+3. **Exportación:** Al exportar desde Piskel para el Splash Screen, asegurar que el tamaño de salida sea consistente con el definido en el `manifest.webmanifest` y con los nombres de salida actuales (`icon-192-any.png`, `icon-192-maskable.png`, `icon-512-any.png`, `icon-512-maskable.png`, además de `favicon.ico` y `apple-touch-icon.png`).
