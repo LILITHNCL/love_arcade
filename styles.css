@@ -117,21 +117,62 @@ span + .icon,
 }
 
 :root {
+    /* =========================================================
+       SURFACES (dark theme — fondos base del proyecto)
+       ========================================================= */
+    --surface-0: #050508;
+    --surface-1: #0d0e15;
+    --surface-2: #10121a;
+    --surface-3: #181b29;
+
+    /* =========================================================
+       TEXT TOKENS — WCAG AA: texto normal >= 4.5:1
+       ========================================================= */
+    --text-primary-aa:   #e8edf8;
+    --text-secondary-aa: #c6d0e3;
+    --text-tertiary-aa:  #aebbd3;
+    --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
+
+    --text-on-accent-aa:  var(--text-primary-aa);
+    --text-on-warning-aa: #1b1200;
+    --text-on-success-aa: #04190b;
+    --text-on-danger-aa:  #ffffff;
+
+    --price-current-aa:  #f6c453;
+    --price-sale-aa:     #7ee2a8;
+    --price-original-aa: #b6c1d6;
+
+    /* Non-text contrast / focus */
+    --border-subtle-aa: #2a3040;
+    --border-strong-aa: #3a4358;
+    --accent-500: #8b5cf6;
+    --accent-400: #a78bfa;
+    --accent-300: #c4b5fd;
+    --accent-soft-aa:   color-mix(in srgb, var(--accent) 28%, #0b0d14 72%);
+    --accent-border-aa: color-mix(in srgb, var(--accent) 62%, #20263a 38%);
+    --accent-glow-aa:   color-mix(in srgb, var(--accent) 34%, #0a0d18 66%);
+    --success-500: #22d07a;
+    --warning-500: #f6b93b;
+    --danger-500:  #ff5c7a;
+    --info-500:    #63b3ed;
+    --focus-ring-aa: #c4b5fd;
+    --focus-ring-offset-aa: #0d0e15;
+
     /* ── Backgrounds ── */
-    --bg-main:       #07070d;
-    --bg-surface:    #0f1018;
-    --bg-elevated:   #161924;
+    --bg-main:       var(--surface-0);
+    --bg-surface:    var(--surface-2);
+    --bg-elevated:   var(--surface-2);
     --bg-overlay:    rgba(7, 7, 13, 0.95);
 
     /* ── Solid Surface System (Arcade Solid 3.0) ── */
     /* Base: subtle panels — solid dark */
-    --solid-surface-base:    #0f1018;
+    --solid-surface-base:    var(--surface-2);
     --solid-surface-float:   #141620;
     --solid-surface-hi:      #1a1d2e;
-    --solid-surface-deep:    #0a0b12;
+    --solid-surface-deep:    var(--surface-1);
 
     /* Hard-Edge borders — replaces glass borders */
-    --border-subtle:   rgba(255, 255, 255, 0.06);
+    --border-subtle:   var(--border-subtle-aa);
     --border-mid:      rgba(255, 255, 255, 0.1);
     --border-bright:   rgba(255, 255, 255, 0.18);
 
@@ -140,34 +181,34 @@ span + .icon,
     --glass-base-border:  rgba(255, 255, 255, 0.06);
     --glass-base-blur:    none;
     --glass-float-bg:     #141620;
-    --glass-float-border: rgba(255, 255, 255, 0.1);
+    --glass-float-border: var(--border-strong-aa);
     --glass-float-blur:   none;
     --glass-hi-bg:        #1a1d2e;
     --glass-hi-border:    rgba(255, 255, 255, 0.18);
     --glass-hi-blur:      none;
 
     /* ── Accent (overridden by applyTheme) ── */
-    --accent:       #9b59ff;
+    --accent:       var(--accent-500);
     --accent-dim:   rgba(155, 89, 255, 0.55);
-    --accent-glow:  rgba(155, 89, 255, 0.35);
-    --accent-soft:  rgba(155, 89, 255, 0.12);
-    --accent-border: rgba(155, 89, 255, 0.35);
+    --accent-glow:  var(--accent-glow-aa);
+    --accent-soft:  var(--accent-soft-aa);
+    --accent-border: var(--accent-border-aa);
 
     /* ── Text Scale ── */
-    --text-high: #f0f0f8;
-    --text-med:  #b4b4c8;
-    --text-low:  #6a6a82;
-    --text-mute: #3d3d52;
+    --text-high: var(--text-primary-aa);
+    --text-med:  var(--text-secondary-aa);
+    --text-low:  var(--text-tertiary-aa);
+    --text-mute: var(--text-muted-aa);
 
     /* ── Semantic ── */
-    --success:        #22d07a;
+    --success:        var(--success-500);
     --success-glow:   rgba(34, 208, 122, 0.3);
-    --success-soft:   rgba(34, 208, 122, 0.1);
-    --error:          #ff4266;
-    --error-soft:     rgba(255, 66, 102, 0.1);
-    --gold:           #fbbf24;
-    --gold-glow:      rgba(251, 191, 36, 0.3);
-    --gold-soft:      rgba(251, 191, 36, 0.1);
+    --success-soft:   color-mix(in srgb, var(--success) 24%, #0b1510 76%);
+    --error:          var(--danger-500);
+    --error-soft:     color-mix(in srgb, var(--error) 24%, #170c12 76%);
+    --gold:           var(--price-current-aa);
+    --gold-glow:      rgba(246, 196, 83, 0.38);
+    --gold-soft:      color-mix(in srgb, var(--gold) 26%, #181209 74%);
     --moon:           #c084fc;
     --moon-soft:      rgba(192, 132, 252, 0.12);
 
@@ -369,8 +410,13 @@ button { font-family: var(--font-body); }
     .lte-card--interactive,
     .avatar-container
 ):focus-visible {
-    outline: 2px solid var(--focus-ring);
+    outline: 2px solid var(--focus-ring-aa);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring-aa) 20%, transparent);
+}
+
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus:not(:focus-visible) {
+    outline: 2px solid transparent;
 }
 
 :where(button, [role="button"])[data-loading="true"] {
@@ -595,7 +641,7 @@ body::before {
 
 .nav-links { display: none; gap: 28px; }
 .nav-link {
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     font-weight: 500;
     font-size: 0.9rem;
     transition: color var(--motion-small), opacity var(--motion-small), transform var(--motion-micro);
@@ -614,7 +660,8 @@ body::before {
     transform-origin: left center;
     transition: transform var(--motion-small), opacity var(--motion-small);
 }
-.nav-link:hover, .nav-link.active { color: var(--text-high); }
+.nav-link:hover { color: var(--text-secondary-aa); }
+.nav-link.active { color: var(--text-primary-aa); }
 .nav-link:hover::before,
 .nav-link:focus-visible::before,
 .nav-link.active::before {
@@ -923,7 +970,7 @@ body::before {
     font-family: var(--font-display);
     font-size: 0.7rem;
     font-weight: 600;
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 2px;
@@ -1002,7 +1049,7 @@ body::before {
 }
 .hud-status {
     font-size: 0.72rem;
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     margin-top: 3px;
     display: flex;
     align-items: center;
@@ -1049,7 +1096,7 @@ body::before {
 .hud-balance-label {
     font-size: 0.62rem;
     font-weight: 600;
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -1154,7 +1201,7 @@ body::before {
 .streak-label {
     font-size: 0.68rem;
     font-weight: 700;
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     text-transform: uppercase;
     letter-spacing: 0.07em;
     flex-shrink: 0;
@@ -1440,7 +1487,7 @@ body::before {
 }
 .card-desc {
     font-size: 0.82rem;
-    color: var(--text-low);
+    color: var(--text-tertiary-aa);
     margin-bottom: 12px;
     line-height: 1.4;
     flex: 1;
@@ -1562,7 +1609,7 @@ body::before {
 .shop-tab {
     background: var(--solid-surface-base);
     border: 1px solid var(--border-subtle);
-    color: var(--text-low);
+    color: var(--text-secondary-aa);
     padding: 8px 12px;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -1574,11 +1621,12 @@ body::before {
     white-space: nowrap;
     contain: paint;
 }
-.shop-tab:hover { border-color: var(--accent-border); color: var(--text-high); }
+.shop-tab:hover { border-color: var(--accent-border-aa); color: var(--text-primary-aa); }
 .shop-tab.active {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
+    background: var(--accent-soft-aa);
+    border-color: var(--accent-border-aa);
+    color: var(--text-on-accent-aa);
+    font-weight: 700;
     box-shadow: 0 0 12px var(--accent-glow);
 }
 
@@ -1600,7 +1648,7 @@ body::before {
     font-family: var(--font-body);
     font-size: 0.88rem;
     padding: 10px 36px 10px 38px;
-    outline: none;
+    outline: 2px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 .search-input:focus {
@@ -1636,7 +1684,7 @@ body::before {
     border-radius: 20px;
     border: 1px solid var(--border-subtle);
     background: var(--solid-surface-base);
-    color: var(--text-low);
+    color: var(--text-secondary-aa);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
@@ -1646,11 +1694,12 @@ body::before {
     white-space: nowrap;
     contain: paint;
 }
-.pill:hover { border-color: var(--accent-border); color: var(--text-high); }
+.pill:hover { border-color: var(--accent-border-aa); color: var(--text-primary-aa); }
 .pill.active {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
+    background: var(--accent-soft-aa);
+    border-color: var(--accent-border-aa);
+    color: var(--text-on-accent-aa);
+    font-weight: 700;
 }
 
 @keyframes pulse-gift {
@@ -1984,7 +2033,7 @@ body::before {
     font-family: var(--font-mono);
     font-size: 0.88rem;
     padding: 10px 16px;
-    outline: none;
+    outline: 2px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -2020,10 +2069,10 @@ body::before {
 .shop-price {
     display: flex; align-items: center; justify-content: center;
     gap: 4px; font-family: var(--font-display); font-size: 0.9rem;
-    font-weight: 800; color: var(--gold); margin: 5px 0;
+    font-weight: 800; color: var(--price-current-aa); margin: 5px 0;
 }
-.price-original { text-decoration: line-through; color: var(--text-mute); font-size: 0.72rem; font-weight: 400; }
-.price-sale { color: var(--success); font-size: 1rem; font-weight: 900; }
+.price-original { text-decoration: line-through; color: var(--price-original-aa); font-size: 0.72rem; font-weight: 400; }
+.price-sale { color: var(--price-sale-aa); font-size: 1rem; font-weight: 900; }
 .sale-pill {
     background: var(--success-soft);
     border: 1px solid rgba(34,208,122,0.3);
@@ -2117,7 +2166,7 @@ body::before {
     padding: 10px 12px;
     resize: vertical;
     min-height: 72px;
-    outline: none;
+    outline: 2px solid transparent;
     margin-top: 8px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -2640,7 +2689,7 @@ body::before {
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: -0.2px;
-    outline: none;
+    outline: 2px solid transparent;
     transition: border-color 0.18s, box-shadow 0.18s;
     -webkit-appearance: none;
 }
@@ -2928,7 +2977,7 @@ svg { stroke-width: 2; }
     font-family: var(--font-body);
     font-size: 0.9rem;
     padding: 11px 14px 11px 40px;
-    outline: none;
+    outline: 2px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s;
     caret-color: var(--accent);
 }
@@ -4637,7 +4686,7 @@ svg { stroke-width: 2; }
     transform: scale(1.25);
     border-color: rgba(124, 58, 237, 0.9);
     box-shadow: 0 0 24px rgba(124, 58, 237, 0.7);
-    outline: none;
+    outline: 2px solid transparent;
 }
 
 .treasure-item--collected {
