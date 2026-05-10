@@ -60,7 +60,7 @@ import { Storage } from '../systems/Storage.js';
 //  CAMBIOS RESPECTO A v5.0 (heredados de v6.x, sin modificación)
 //  ──────────────────────────────────────────────────────────────
 //  • Eliminados _fullW / getFullImageWidth(). Resolución nativa 1600×1600.
-//  • Parámetros de imagen: f_webp,q_100 (sin escalado en servidor).
+//  • Parámetros de imagen: f_avif,q_100 (sin escalado en servidor).
 // ─────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────
@@ -109,14 +109,13 @@ const _thumbW = getThumbnailWidth();
 // ─────────────────────────────────────────────────────────────
 
 /**
- * URL de imagen completa — resolución nativa 1600×1600, WebP calidad máxima.
+ * URL de imagen completa — resolución nativa 1600×1600, AVIF calidad máxima.
  *
  * Parámetros Cloudinary:
- *   f_webp  : Fuerza formato WebP (soporte universal en navegadores
- *             modernos). El navegador no realiza ninguna conversión
+ *   f_avif  : Fuerza formato AVIF para los assets originales en Cloudinary.
  *             adicional en el hilo de renderizado.
- *   q_100   : Calidad máxima del codificador WebP (100/100).
- *             A este nivel de calidad, el codificador WebP de Cloudinary
+ *   q_100   : Calidad máxima del codificador AVIF (100/100).
+ *             A este nivel de calidad, el codificador AVIF de Cloudinary
  *             activa automáticamente el modo sin pérdida (VP8L):
  *               - Sin submuestreo de croma (4:4:4 full).
  *               - Sin artefactos de compresión DCT.
@@ -130,10 +129,10 @@ const _thumbW = getThumbnailWidth();
  *   textura en cliente mediante step-down scaling de alta fidelidad.
  *
  * @param {string} publicId  — ID del asset en Cloudinary (ej. "Nivel01").
- * @returns {string}         — URL completa del asset WebP q_100 nativo 1600px.
+ * @returns {string}         — URL completa del asset AVIF q_100 nativo 1600px.
  */
 function buildImageUrl(publicId) {
-    return `${CLOUDINARY_BASE}/f_webp,q_100/v1/${publicId}`;
+    return `${CLOUDINARY_BASE}/f_avif,q_100/v1/${publicId}`;
 }
 
 /**
