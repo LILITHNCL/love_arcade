@@ -1362,7 +1362,7 @@ body::before {
 }
 
 .card-cover {
-    height: 150px;
+    aspect-ratio: 1920 / 804;
     width: 100%;
     background-size: cover;
     background-position: center;
@@ -2814,7 +2814,6 @@ details[open] summary::after { transform: rotate(45deg); }
 
     /* Game cards */
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
-    .card-cover { height: 155px; }
     .card-info { padding: 18px; }
 
     /* Shop */

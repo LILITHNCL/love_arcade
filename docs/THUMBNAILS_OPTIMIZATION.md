@@ -1,31 +1,26 @@
-# Optimización de thumbnails de juegos (Cloudinary responsive + `<img srcset>`)
+# Optimización de thumbnails de juegos (AVIF 1920x804 directo)
 
 Fecha: 2026-05-10
 
 ## Cambios implementados
 
-Se migraron las portadas del catálogo principal (`section#games`) desde `background-image` inline hacia imágenes reales `<img>` dentro de `.card-cover`.
+- Se eliminaron transformaciones automáticas de Cloudinary (`f_auto,q_auto,w_*`).
+- Todas las cards del catálogo principal (`section#games`) ahora consumen imagen directa AVIF a resolución base `1920x804`.
+- Se eliminaron `srcset` y `sizes` porque no se usarán variantes por densidad.
+- Se mantienen atributos de rendimiento:
+  - Primer thumbnail con `fetchpriority="high"` (candidato LCP).
+  - Resto con `loading="lazy"`.
+  - Todas con `decoding="async"`.
+- Se actualizaron dimensiones intrínsecas en HTML a `width="1920"` y `height="804"`.
+- En CSS, `.card-cover` migró de altura fija a `aspect-ratio: 1920 / 804` para evitar layout shift.
 
-### Antes
-- `div.card-cover` con `style="background-image: ..."`.
-- URL fija con estrategia no responsive en iteraciones previas.
+## Riesgo y mitigación de rendimiento
 
-### Ahora
-- Cada card usa `<img class="card-cover-img">` con:
-  - `srcset` Cloudinary manteniendo proporción original optimizada: `w_371`, `w_742`.
-  - `sizes="(max-width: 767px) 370px, 371px"`.
-  - Transformaciones conservadas: `f_auto,q_auto` (sin forzar `ar_16:9`).
-- Primer thumbnail marcado con `fetchpriority="high"` (candidato a LCP).
-- Resto de thumbnails con `loading="lazy"`.
-- Se agregó `.card-cover-img` en CSS con `object-fit: cover; width: 100%; height: 100%; display: block;` para mantener el recorte y composición visual.
-- El overlay visual (`.card-cover::after`) se mantiene sin cambios funcionales para ocultar microartefactos y preservar la estética.
-
-## Beneficio esperado
-
-- Selección de recurso más precisa por viewport/DPR.
-- Menor transferencia promedio en móviles y tablets.
-- Mejor equilibrio nitidez/peso sin alterar el encuadre original 742x310.
-- Menor riesgo de degradar LCP por thumbnails sobredimensionadas.
+- Riesgo: imágenes más pesadas pueden aumentar LCP en redes lentas.
+- Mitigación aplicada:
+  - solo la primera card va con prioridad alta;
+  - lazy loading en tarjetas no críticas;
+  - reserva de espacio con dimensión intrínseca + `aspect-ratio` para evitar CLS.
 
 ## Cobertura
 
