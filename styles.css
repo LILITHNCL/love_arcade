@@ -148,9 +148,9 @@ span + .icon,
     --accent-500: #8b5cf6;
     --accent-400: #a78bfa;
     --accent-300: #c4b5fd;
-    --accent-soft-aa:   color-mix(in srgb, var(--accent) 42%, transparent);
-    --accent-border-aa: color-mix(in srgb, var(--accent) 72%, #ffffff 8%);
-    --accent-glow-aa:   color-mix(in srgb, var(--accent) 50%, transparent);
+    --accent-soft-aa:   color-mix(in srgb, var(--accent) 28%, #0b0d14 72%);
+    --accent-border-aa: color-mix(in srgb, var(--accent) 62%, #20263a 38%);
+    --accent-glow-aa:   color-mix(in srgb, var(--accent) 34%, #0a0d18 66%);
     --success-500: #22d07a;
     --warning-500: #f6b93b;
     --danger-500:  #ff5c7a;
@@ -203,12 +203,12 @@ span + .icon,
     /* ── Semantic ── */
     --success:        var(--success-500);
     --success-glow:   rgba(34, 208, 122, 0.3);
-    --success-soft:   rgba(34, 208, 122, 0.1);
+    --success-soft:   color-mix(in srgb, var(--success) 24%, #0b1510 76%);
     --error:          var(--danger-500);
-    --error-soft:     rgba(255, 66, 102, 0.1);
+    --error-soft:     color-mix(in srgb, var(--error) 24%, #170c12 76%);
     --gold:           var(--price-current-aa);
     --gold-glow:      rgba(246, 196, 83, 0.38);
-    --gold-soft:      rgba(246, 196, 83, 0.14);
+    --gold-soft:      color-mix(in srgb, var(--gold) 26%, #181209 74%);
     --moon:           #c084fc;
     --moon-soft:      rgba(192, 132, 252, 0.12);
 
