@@ -12,9 +12,9 @@ Se migraron las portadas del catálogo principal (`section#games`) desde `backgr
 
 ### Ahora
 - Cada card usa `<img class="card-cover-img">` con:
-  - `srcset` Cloudinary: `w_370`, `w_740`, `w_1080`.
+  - `srcset` Cloudinary manteniendo proporción original optimizada: `w_371`, `w_742`.
   - `sizes="(max-width: 767px) 370px, 371px"`.
-  - Transformaciones conservadas: `f_auto,q_auto,ar_16:9,c_fill,g_auto`.
+  - Transformaciones conservadas: `f_auto,q_auto` (sin forzar `ar_16:9`).
 - Primer thumbnail marcado con `fetchpriority="high"` (candidato a LCP).
 - Resto de thumbnails con `loading="lazy"`.
 - Se agregó `.card-cover-img` en CSS con `object-fit: cover; width: 100%; height: 100%; display: block;` para mantener el recorte y composición visual.
@@ -24,7 +24,7 @@ Se migraron las portadas del catálogo principal (`section#games`) desde `backgr
 
 - Selección de recurso más precisa por viewport/DPR.
 - Menor transferencia promedio en móviles y tablets.
-- Mejor equilibrio nitidez/peso sin perder calidad percibida.
+- Mejor equilibrio nitidez/peso sin alterar el encuadre original 742x310.
 - Menor riesgo de degradar LCP por thumbnails sobredimensionadas.
 
 ## Cobertura
