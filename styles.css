@@ -133,7 +133,7 @@ span + .icon,
     --text-tertiary-aa:  #aebbd3;
     --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
 
-    --text-on-accent-aa:  #07101f;
+    --text-on-accent-aa:  var(--text-primary-aa);
     --text-on-warning-aa: #1b1200;
     --text-on-success-aa: #04190b;
     --text-on-danger-aa:  #ffffff;
@@ -148,9 +148,9 @@ span + .icon,
     --accent-500: #8b5cf6;
     --accent-400: #a78bfa;
     --accent-300: #c4b5fd;
-    --accent-soft-aa:   rgba(139, 92, 246, 0.42);
-    --accent-border-aa: rgba(167, 139, 250, 0.72);
-    --accent-glow-aa:   rgba(139, 92, 246, 0.5);
+    --accent-soft-aa:   color-mix(in srgb, var(--accent) 42%, transparent);
+    --accent-border-aa: color-mix(in srgb, var(--accent) 72%, #ffffff 8%);
+    --accent-glow-aa:   color-mix(in srgb, var(--accent) 50%, transparent);
     --success-500: #22d07a;
     --warning-500: #f6b93b;
     --danger-500:  #ff5c7a;
