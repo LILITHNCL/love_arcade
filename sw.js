@@ -148,7 +148,11 @@ const PRECACHE_URLS = [...APP_SHELL_FILES, ...GAMES_FILES];
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(PRECACHE_URLS);
+    await cache.addAll(APP_SHELL_FILES);
+
+    // Carga de juegos en segundo plano para instalación inicial más rápida.
+    event.waitUntil(cache.addAll(GAMES_FILES));
+
     await self.skipWaiting();
   })());
 });
@@ -164,6 +168,22 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  const isCloudinary = url.hostname === 'res.cloudinary.com';
+
+  if (isCloudinary) {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(event.request, response.clone());
+        return response;
+      } catch (_) {
+        return (await caches.match(event.request)) || (await caches.match('/assets/icon/icon-192-any.png'));
+      }
+    })());
+    return;
+  }
+
   if (url.origin !== self.location.origin) return;
 
   event.respondWith((async () => {
@@ -177,59 +197,12 @@ self.addEventListener('fetch', (event) => {
   })());
 });
 
-function resolveUrlFromPayload(data = {}) {
-  const explicit = data?.url || data?.click_action || data?.link;
-  if (typeof explicit === 'string' && explicit.trim()) return explicit;
-  const view = data?.view;
-  if (view === 'shop') return '/#view=shop';
-  if (view === 'events') return '/#view=events';
-  return APP_URL;
-}
-
-function normalizePayload(payload = {}) {
-  const payloadJson = payload.payload_json && typeof payload.payload_json === 'object'
-    ? payload.payload_json
-    : {};
-
-  const url = resolveUrlFromPayload({ ...payloadJson, ...payload });
-
-  return {
-    title: payload.title || 'Love Arcade',
-    body: payload.body || 'Tienes una nueva notificación.',
-    icon: payload.icon || NOTIFICATION_ICON,
-    badge: payload.badge || NOTIFICATION_ICON,
-    tag: payload.tag || `love-arcade-${Date.now()}`,
-    data: {
-      ...payloadJson,
-      ...payload,
-      url,
-      ts: Date.now()
-    }
-  };
-}
-
-self.addEventListener('push', (event) => {
-  let payload = {};
-  try {
-    payload = event.data ? event.data.json() : {};
-  } catch (_) {
-    payload = { title: 'Love Arcade', body: event.data?.text?.() || 'Tienes una notificación nueva.' };
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
   }
 
-  const normalized = normalizePayload(payload);
-  event.waitUntil(
-    self.registration.showNotification(normalized.title, {
-      body: normalized.body,
-      icon: normalized.icon,
-      badge: normalized.badge,
-      tag: normalized.tag,
-      renotify: false,
-      data: normalized.data
-    })
-  );
-});
-
-self.addEventListener('message', (event) => {
   const msg = event.data || {};
   if (msg.type !== 'SHOW_NOTIFICATION') return;
   const payload = normalizePayload(msg.payload || {});

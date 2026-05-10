@@ -1353,7 +1353,7 @@ function _renderGiftCarousel(items) {
         const disabled = !owned && !unlocked ? 'disabled' : '';
         const opacity = !owned && !unlocked ? ' style="opacity:.5"' : '';
         return `<article class="gift-card" data-gift-id="${item.id}">
-            <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async"
+            <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
                  onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
             ${owned ? `<span class="gift-owned-badge">${_icon('check', 11)} Obtenido</span>` : ''}
             <h3 class="gift-card-name">${item.name}</h3>
@@ -1373,7 +1373,7 @@ function _renderGiftCarousel(items) {
         collectionGrid.classList.add('hidden');
         collectionGrid.innerHTML = collection.map(item =>
             `<article class="gift-collection-item" title="${item.name}">
-                <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async"
+                <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
                      onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
             </article>`
         ).join('');
@@ -1574,7 +1574,7 @@ function _buildShopCard(item) {
     const card = document.createElement('article');
     card.className = 'glass-panel shop-card';
     card.innerHTML =
-        `        <img src="${item.image}" alt="${item.name}" class="shop-img" loading="lazy" decoding="async"
+        `        <img src="${item.image}" alt="${item.name}" class="shop-img" loading="lazy" decoding="async" crossorigin="anonymous"
              onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
         ${isOwned ? '<div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>' : ''}
         ${eco.isSaleActive && !isOwned
