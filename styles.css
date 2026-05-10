@@ -138,7 +138,7 @@ span + .icon,
     --text-on-success-aa: #04190b;
     --text-on-danger-aa:  #ffffff;
 
-    --price-current-aa:  #ffd166;
+    --price-current-aa:  #f6c453;
     --price-sale-aa:     #7ee2a8;
     --price-original-aa: #b6c1d6;
 
@@ -207,8 +207,8 @@ span + .icon,
     --error:          var(--danger-500);
     --error-soft:     rgba(255, 66, 102, 0.1);
     --gold:           var(--price-current-aa);
-    --gold-glow:      rgba(251, 191, 36, 0.3);
-    --gold-soft:      rgba(251, 191, 36, 0.1);
+    --gold-glow:      rgba(246, 196, 83, 0.38);
+    --gold-soft:      rgba(246, 196, 83, 0.14);
     --moon:           #c084fc;
     --moon-soft:      rgba(192, 132, 252, 0.12);
 
