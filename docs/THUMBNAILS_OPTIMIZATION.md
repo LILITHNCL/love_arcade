@@ -1,30 +1,39 @@
-# Optimización de thumbnails de juegos (Cloudinary AVIF 742x310)
+# Optimización de thumbnails de juegos (Cloudinary responsive + `<img srcset>`)
 
 Fecha: 2026-05-10
 
 ## Cambios implementados
 
-Se actualizaron las portadas del catálogo de juegos en `index.html` para consumir assets optimizados nativos en Cloudinary:
+Se migraron las portadas del catálogo principal (`section#games`) desde `background-image` inline hacia imágenes reales `<img>` dentro de `.card-cover`.
 
-- Antes: URLs con transformación en runtime (`f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080`).
-- Ahora: URLs directas a archivos `.avif` ya preprocesados en **742x310**.
+### Antes
+- `div.card-cover` con `style="background-image: ..."`.
+- URL fija con estrategia no responsive en iteraciones previas.
 
-Esto elimina sobre-dimensionamiento (1080px de ancho) para un contenedor visual aproximado de ~371x155 CSS px y alinea la entrega con una estrategia efectiva de ~2x DPR.
+### Ahora
+- Cada card usa `<img class="card-cover-img">` con:
+  - `srcset` Cloudinary: `w_370`, `w_740`, `w_1080`.
+  - `sizes="(max-width: 767px) 370px, 371px"`.
+  - Transformaciones conservadas: `f_auto,q_auto,ar_16:9,c_fill,g_auto`.
+- Primer thumbnail marcado con `fetchpriority="high"` (candidato a LCP).
+- Resto de thumbnails con `loading="lazy"`.
+- Se agregó `.card-cover-img` en CSS con `object-fit: cover; width: 100%; height: 100%; display: block;` para mantener el recorte y composición visual.
+- El overlay visual (`.card-cover::after`) se mantiene sin cambios funcionales para ocultar microartefactos y preservar la estética.
 
 ## Beneficio esperado
 
-- Menor transferencia por imagen.
-- Mejor tiempo de carga percibido en la sección de juegos.
-- Reducción de riesgo de LCP degradado por thumbnails oversized.
+- Selección de recurso más precisa por viewport/DPR.
+- Menor transferencia promedio en móviles y tablets.
+- Mejor equilibrio nitidez/peso sin perder calidad percibida.
+- Menor riesgo de degradar LCP por thumbnails sobredimensionadas.
 
 ## Cobertura
 
-Se aplicó a todas las portadas del grid principal:
-
-- `rompecabezas_cover_art.avif`
-- `wordhunt_cover_art.avif`
-- `ollin_smash_cover_art.avif`
-- `space_shooter_cover_art.avif`
-- `2048_cover_art.avif`
-- `jungle_dash_cover_art.avif`
-- `dodger_cover_art.avif`
+Aplicado a todas las portadas del grid principal:
+- `rompecabezas_cover_art`
+- `wordhunt_cover_art`
+- `ollin_smash_cover_art`
+- `space_shooter_cover_art`
+- `2048_cover_art`
+- `jungle_dash_cover_art`
+- `dodger_cover_art`
