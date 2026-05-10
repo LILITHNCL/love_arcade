@@ -5229,3 +5229,65 @@ svg { stroke-width: 2; }
 @media (max-width: 640px) {
     .push-rules-grid { grid-template-columns: 1fr; }
 }
+
+/* ================================================================
+   WCAG 2.1 AA CONTRAST HOTFIX (texto normal >= 4.5:1)
+   ================================================================ */
+
+/* Header / HUD */
+.nav-link[data-anchor="games"][data-view="home"],
+.nav-link[data-view="shop"][href="#"],
+.nav-link[data-view="events"][href="#"],
+.nav-link[data-anchor="faq"][data-view="home"],
+li:nth-child(2) > .nav-link[data-view="home"][href="#"],
+.hud-greeting,
+.hud-status > span:nth-child(4),
+.hud-balance-label,
+.streak-label {
+    color: #c7d2e3;
+}
+
+/* Botones y filtros */
+button[data-tab="library"],
+button[data-tab="sync"],
+button[data-tab="settings"],
+button[data-filter="NoObtenidos"],
+.filter-btn-gift,
+button[data-filter="Avatar"],
+button[data-filter="PC"],
+button[data-filter="Todos"] {
+    color: #d7e1f2;
+}
+
+/* Tarjetas de juego */
+.game-card:nth-child(2) > .card-info > .card-desc,
+.game-card:nth-child(4) > .card-info > .card-desc,
+.game-card:nth-child(6) > .card-info > .card-desc,
+.game-card:nth-child(8) > .card-info > .card-desc,
+.game-card:nth-child(10) > .card-info > .card-desc,
+.game-card:nth-child(12) > .card-info > .card-desc,
+.game-card:nth-child(14) > .card-info > .card-desc {
+    color: #cfd8e8;
+}
+
+/* Shop cards (precio original tachado) */
+.shop-card[data-preloaded="true"]:nth-child(1) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(2) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(3) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(4) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(5) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(6) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(7) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(8) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(9) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(10) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(11) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card[data-preloaded="true"]:nth-child(12) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(13) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(14) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(15) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(16) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(17) > div:nth-child(6) > .shop-price > .price-original,
+.shop-card:nth-child(18) > div:nth-child(6) > .shop-price > .price-original {
+    color: #b6c1d6;
+}
