@@ -128,10 +128,10 @@ span + .icon,
     /* =========================================================
        TEXT TOKENS — WCAG AA: texto normal >= 4.5:1
        ========================================================= */
-    --text-primary-aa:   #f3f6ff;
-    --text-secondary-aa: #d7e1f2;
-    --text-tertiary-aa:  #c7d2e3;
-    --text-muted-aa:     #b6c1d6; /* Solo contenido auxiliar no crítico */
+    --text-primary-aa:   #e8edf8;
+    --text-secondary-aa: #c6d0e3;
+    --text-tertiary-aa:  #aebbd3;
+    --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
 
     --text-on-accent-aa:  #07101f;
     --text-on-warning-aa: #1b1200;
@@ -148,9 +148,9 @@ span + .icon,
     --accent-500: #8b5cf6;
     --accent-400: #a78bfa;
     --accent-300: #c4b5fd;
-    --accent-soft-aa:   rgba(139, 92, 246, 0.18);
-    --accent-border-aa: rgba(167, 139, 250, 0.55);
-    --accent-glow-aa:   rgba(139, 92, 246, 0.42);
+    --accent-soft-aa:   rgba(139, 92, 246, 0.42);
+    --accent-border-aa: rgba(167, 139, 250, 0.72);
+    --accent-glow-aa:   rgba(139, 92, 246, 0.5);
     --success-500: #22d07a;
     --warning-500: #f6b93b;
     --danger-500:  #ff5c7a;
@@ -1625,7 +1625,8 @@ body::before {
 .shop-tab.active {
     background: var(--accent-soft-aa);
     border-color: var(--accent-border-aa);
-    color: var(--text-primary-aa);
+    color: var(--text-on-accent-aa);
+    font-weight: 700;
     box-shadow: 0 0 12px var(--accent-glow);
 }
 
@@ -1697,7 +1698,8 @@ body::before {
 .pill.active {
     background: var(--accent-soft-aa);
     border-color: var(--accent-border-aa);
-    color: var(--text-primary-aa);
+    color: var(--text-on-accent-aa);
+    font-weight: 700;
 }
 
 @keyframes pulse-gift {
