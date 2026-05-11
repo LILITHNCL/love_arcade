@@ -380,7 +380,7 @@ function setupNavigation() {
 
     document.getElementById('btn-levels').onclick   = () => { refreshLevelsScreen(); UI.showScreen('levels'); };
     document.getElementById('btn-settings').onclick = () => UI.showScreen('settings');
-    document.getElementById('btn-exit').onclick     = () => { window.location.href = '../../index.html'; };
+    document.getElementById('btn-exit').onclick     = () => { window.location.href = '../../'; };
 
     document.getElementById('btn-pause').onclick = () => togglePause(true);
 
