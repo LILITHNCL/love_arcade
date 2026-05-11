@@ -28,7 +28,14 @@ const APP_SHELL_FILES = [
   '/assets/icon/favicon.ico',
   '/assets/icon/icon-192-any.png',
   '/assets/icon/apple-touch-icon.png',
-  '/assets/icon/icon-192-maskable.png'
+  '/assets/icon/icon-192-maskable.png',
+  '/assets/images/games/cover/2048-cover-art.avif',
+  '/assets/images/games/cover/word-hunt-cover-art.avif',
+  '/assets/images/games/cover/space-shooter-cover-art.avif',
+  '/assets/images/games/cover/rompecabezas-cover-art.avif',
+  '/assets/images/games/cover/ollin-smash-cover-art.avif',
+  '/assets/images/games/cover/jungle-dash-cover-art.avif',
+  '/assets/images/games/cover/dodger-cover-art.avif'
 ];
 
 const GAMES_FILES = [
