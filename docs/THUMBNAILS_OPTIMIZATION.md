@@ -4,7 +4,7 @@ Fecha: 2026-05-10
 
 ## Cambios implementados
 
-- Se eliminaron transformaciones automáticas de Cloudinary (`f_auto,q_auto,w_*`).
+- Las thumbnails del catálogo principal dejaron de usar Cloudinary y ahora se cargan desde rutas locales del repositorio (`assets/images/games/cover/*.avif`).
 - Todas las cards del catálogo principal (`section#games`) ahora consumen imagen directa AVIF a resolución base `1920x804`.
 - Se eliminaron `srcset` y `sizes` porque no se usarán variantes por densidad.
 - Se mantienen atributos de rendimiento:
@@ -25,10 +25,10 @@ Fecha: 2026-05-10
 ## Cobertura
 
 Aplicado a todas las portadas del grid principal:
-- `rompecabezas_cover_art`
-- `wordhunt_cover_art`
-- `ollin_smash_cover_art`
-- `space_shooter_cover_art`
-- `2048_cover_art`
-- `jungle_dash_cover_art`
-- `dodger_cover_art`
+- `assets/images/games/cover/rompecabezas-cover-art.avif`
+- `assets/images/games/cover/word-hunt-cover-art.avif`
+- `assets/images/games/cover/ollin-smash-cover-art.avif`
+- `assets/images/games/cover/space-shooter-cover-art.avif`
+- `assets/images/games/cover/2048-cover-art.avif`
+- `assets/images/games/cover/jungle-dash-cover-art.avif`
+- `assets/images/games/cover/dodger-cover-art.avif`
