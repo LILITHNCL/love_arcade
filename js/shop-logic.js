@@ -1527,11 +1527,12 @@ function renderStreakCalendar() {
     }).join('');
 }
 
-function _buildShopCard(item) {
+function _buildShopCard(item, loading = 'lazy') {
     const bought     = GameCenter.getBoughtCount(item.id);
     const isOwned    = bought > 0;
     const eco        = window.ECONOMY;
     const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
+    const isEager    = loading === 'eager';
 
     const priceHTML = eco.isSaleActive && !isOwned
         ? `<div class="shop-price">
@@ -1574,7 +1575,10 @@ function _buildShopCard(item) {
     const card = document.createElement('article');
     card.className = 'glass-panel shop-card';
     card.innerHTML =
-        `        <img src="${item.image}" alt="${item.name}" class="shop-img" loading="lazy" decoding="async" crossorigin="anonymous"
+        `        <img src="${item.image}" alt="${item.name}" class="shop-img"
+             loading="${loading}"
+             ${isEager ? 'fetchpriority="high"' : ''}
+             decoding="async" crossorigin="anonymous"
              onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
         ${isOwned ? '<div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>' : ''}
         ${eco.isSaleActive && !isOwned
@@ -1605,7 +1609,12 @@ function _appendShopBatch(container) {
     if (start >= end) return false;
 
     const frag = document.createDocumentFragment();
-    for (let i = start; i < end; i += 1) frag.appendChild(_buildShopCard(_shopRenderState.items[i]));
+    for (let i = start; i < end; i += 1) {
+        // Mark first 6 items of the entire catalog to load eagerly.
+        // i is the global index in _shopRenderState.items.
+        const loading = i < 6 ? 'eager' : 'lazy';
+        frag.appendChild(_buildShopCard(_shopRenderState.items[i], loading));
+    }
     if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
         container.insertBefore(frag, _shopLazySentinel);
     } else {
