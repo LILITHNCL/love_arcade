@@ -152,6 +152,21 @@ const GAMES_FILES = [
 
 const PRECACHE_URLS = [...APP_SHELL_FILES, ...GAMES_FILES];
 
+function normalizePayload(payload = {}) {
+  const safePayload = payload && typeof payload === 'object' ? payload : {};
+  const data = safePayload.data && typeof safePayload.data === 'object' ? safePayload.data : {};
+  const resolvedUrl = typeof data.url === 'string' && data.url.trim() ? data.url : APP_URL;
+
+  return {
+    title: typeof safePayload.title === 'string' && safePayload.title.trim() ? safePayload.title : 'Love Arcade',
+    body: typeof safePayload.body === 'string' ? safePayload.body : '',
+    icon: typeof safePayload.icon === 'string' && safePayload.icon.trim() ? safePayload.icon : NOTIFICATION_ICON,
+    badge: typeof safePayload.badge === 'string' && safePayload.badge.trim() ? safePayload.badge : NOTIFICATION_ICON,
+    tag: typeof safePayload.tag === 'string' && safePayload.tag.trim() ? safePayload.tag : 'love-arcade',
+    data: { ...data, url: resolvedUrl }
+  };
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
