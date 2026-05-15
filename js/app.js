@@ -2357,12 +2357,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const startPlaytimeTicker = () => {
         if (_playtimeTicker) return;
         _visibleStartedAt = Date.now();
-        _playtimeTicker = setInterval(flushVisiblePlaytime, 15_000);
+        _playtimeTicker = window.AppScheduler?.registerInterval('sync', 'playtime-flush', flushVisiblePlaytime, 15_000) || setInterval(flushVisiblePlaytime, 15_000);
     };
 
     const stopPlaytimeTicker = () => {
         flushVisiblePlaytime();
-        clearInterval(_playtimeTicker);
+if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
+            window.AppScheduler.clearIntervalTask(_playtimeTicker);
+        } else {
+            clearInterval(_playtimeTicker);
+        }
         _playtimeTicker = null;
         _visibleStartedAt = 0;
     };
@@ -2386,7 +2390,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Refresco periódico cada 30 min por si la app permanece abierta mucho tiempo
-    setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
+    window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
+        || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
 
     // Avatar upload — delegado único
     document.addEventListener('change', async (e) => {

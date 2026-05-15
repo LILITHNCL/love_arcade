@@ -1243,6 +1243,7 @@
     <script src="js/analytics.js"></script>     
     <script src="js/supabase-loader.js"></script>
     <script src="js/milestones-config.js"></script>
+    <script src="js/lifecycle-scheduler.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/push-notifications.js"></script>
@@ -1297,7 +1298,7 @@
         }
 
         // ── Countdown (vista Inicio) ─────────────────────────────────────────
-        let _countdownInterval = null;
+        let _countdownLastSecond = null;
 
         function updateCountdownDisplay() {
             const canClaim    = window.GameCenter?.canClaimDaily?.();
@@ -1309,36 +1310,34 @@
             if (canClaim) {
                 countdownEl.classList.add('hidden');
                 if (dailyBtn) dailyBtn.disabled = false;
-                if (_countdownInterval) { clearInterval(_countdownInterval); _countdownInterval = null; }
                 return;
             }
 
             countdownEl.classList.remove('hidden');
             if (dailyBtn) dailyBtn.disabled = true;
 
-            function tick() {
-                const now      = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setHours(24, 0, 0, 0);
-                let diff = Math.max(0, tomorrow - now);
-                const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
-                diff %= 3_600_000;
-                const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');
-                diff %= 60_000;
-                const ss = String(Math.floor(diff / 1_000)).padStart(2, '0');
-                if (displayEl) displayEl.textContent = `${hh}:${mm}:${ss}`;
+            const now = Date.now();
+            const secBucket = Math.floor(now / 1000);
+            if (_countdownLastSecond === secBucket && !displayEl.textContent) return;
+            _countdownLastSecond = secBucket;
 
-                if (window.GameCenter?.canClaimDaily?.()) {
-                    countdownEl.classList.add('hidden');
-                    if (dailyBtn) dailyBtn.disabled = false;
-                    clearInterval(_countdownInterval);
-                    _countdownInterval = null;
-                }
-            }
-
-            tick();
-            if (!_countdownInterval) _countdownInterval = setInterval(tick, 1000);
+            const tomorrow = new Date(now);
+            tomorrow.setHours(24, 0, 0, 0);
+            let diff = Math.max(0, tomorrow.getTime() - now);
+            const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
+            diff %= 3_600_000;
+            const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');
+            diff %= 60_000;
+            const ss = String(Math.floor(diff / 1_000)).padStart(2, '0');
+            if (displayEl) displayEl.textContent = `${hh}:${mm}:${ss}`;
         }
+
+        const _homeCountdownTask = window.AppScheduler?.registerInterval(
+            'countdown',
+            'home-daily-countdown',
+            updateCountdownDisplay,
+            250
+        );
 
         // ── API pública para la vista Inicio (usada por spa-router.js) ────────
         window.HomeView = {
@@ -1353,7 +1352,11 @@
              * silenciosamente cuando se añadan recursos que requieran cleanup.
              */
             onLeave() {
-                // placeholder — listo para futuros IntersectionObservers o timers
+                window.AppScheduler?.pauseGroup?.('countdown');
+            },
+            onEnter() {
+                window.AppScheduler?.resumeGroup?.('countdown');
+                updateCountdownDisplay();
             }
         };
 
