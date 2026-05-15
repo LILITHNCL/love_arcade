@@ -5166,12 +5166,6 @@ svg { stroke-width: 2; }
 /* ──────────────────────────────────────────────────────────
    Push notifications UI
    ────────────────────────────────────────────────────────── */
-.push-rules-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 8px;
-    margin: 12px 0;
-}
 
 .push-benefits {
     background: linear-gradient(135deg, rgba(155, 89, 255, 0.10), rgba(79, 53, 160, 0.14));
@@ -5206,21 +5200,6 @@ svg { stroke-width: 2; }
     border: 1px solid rgba(155, 89, 255, 0.25);
 }
 
-.push-rule-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.78rem;
-    color: var(--text-med);
-    background: rgba(155, 89, 255, 0.08);
-    border: 1px solid rgba(155, 89, 255, 0.22);
-    border-radius: 10px;
-    padding: 8px 10px;
-}
-
-.push-rule-item input {
-    accent-color: var(--accent);
-}
 
 .push-enable-btn {
     transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
