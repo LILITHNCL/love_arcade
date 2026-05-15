@@ -20,6 +20,15 @@
   let lastPermissionSeen = (typeof Notification !== 'undefined' ? Notification.permission : 'default');
   function _$(id) { return document.getElementById(id); }
 
+  /**
+   * Carga preferencias de recordatorios con recuperación tolerante a corrupción.
+   *
+   * Precondiciones: `localStorage` disponible en el contexto actual.
+   * Efectos secundarios: lectura de `localStorage`.
+   * Coste esperado: O(1) CPU y una lectura síncrona de storage.
+   * Diseño (por qué): se fusiona con `DEFAULT_PREFS` para que nuevas flags
+   * queden habilitadas con defaults seguros aunque el usuario tenga un schema viejo.
+   */
   function loadPrefs() {
     try {
       const raw = localStorage.getItem(STORAGE.prefs);
@@ -30,6 +39,15 @@
     }
   }
 
+  /**
+   * Persiste preferencias asegurando schema completo en cada escritura.
+   *
+   * Precondiciones: `prefs` es objeto parcial de flags booleanas.
+   * Efectos secundarios: escritura síncrona en `localStorage`.
+   * Coste esperado: O(k) donde k=campos de preferencias (pequeño y estable).
+   * Diseño (por qué): guardar snapshot normalizado simplifica lecturas futuras
+   * y evita ramas de migración en cada consumidor.
+   */
   function savePrefs(prefs) {
     localStorage.setItem(STORAGE.prefs, JSON.stringify({ ...DEFAULT_PREFS, ...prefs }));
   }
@@ -45,6 +63,15 @@
     return outputArray;
   }
 
+  /**
+   * Obtiene la clave pública VAPID usada para el alta de suscripciones web push.
+   *
+   * Precondiciones: endpoint `/api/push-public-config` accesible desde mismo origen.
+   * Efectos secundarios: red (fetch) y mutación de `vapidPublicKey` en memoria.
+   * Coste esperado: 1 request HTTP + parseo JSON.
+   * Diseño (por qué): falla cerrada (`vapidPublicKey=''`) para impedir intentos
+   * de suscripción inconsistentes cuando el backend no responde.
+   */
   async function fetchPushConfig() {
     try {
       const res = await fetch('/api/push-public-config', { cache: 'no-store' });
@@ -91,6 +118,16 @@
     }
   }
 
+  /**
+   * Activa polling temporal de permisos en Opera Android cuando la API estándar
+   * de cambios no es fiable en background/return-to-app.
+   *
+   * Precondiciones: `Notification` disponible y `permission` válido.
+   * Efectos secundarios: crea/limpia `setInterval`, potencial refresco de UI y sync remota.
+   * Coste esperado: O(1) por tick; intervalo 1500 ms mientras dure el recovery.
+   * Diseño (por qué): se prefiere polling acotado sobre listeners permanentes para
+   * limitar trabajo continuo y cubrir edge-cases del navegador.
+   */
   function startPermissionPollingIfNeeded(permission) {
     const shouldPoll = isOperaAndroid() && permission !== 'granted';
     if (!shouldPoll) {
@@ -110,6 +147,15 @@
     }, 1500);
   }
 
+  /**
+   * Recalcula estado visual y de onboarding push según permiso + suscripción real.
+   *
+   * Precondiciones: elementos del panel push ya montados en DOM.
+   * Efectos secundarios: escrituras DOM, lectura de permisos y posible consulta a SW.
+   * Coste esperado: O(1) DOM + hasta 1 consulta async a PushManager.
+   * Diseño (por qué): centralizar aquí evita drift entre handlers (focus, pageshow,
+   * permissions.onchange) y mantiene una única fuente de verdad de UI.
+   */
   async function refreshPushUiState() {
     const permission = Notification.permission;
     lastPermissionSeen = permission;
@@ -134,6 +180,15 @@
     startPermissionPollingIfNeeded(permission);
   }
 
+  /**
+   * Registra listeners de ciclo de vida para rehidratar UI al volver a la pestaña.
+   *
+   * Precondiciones: módulo inicializado una sola vez por sesión.
+   * Efectos secundarios: alta de listeners globales en `document` y `window`.
+   * Coste esperado: O(1) setup; ejecución diferida por eventos del navegador.
+   * Diseño (por qué): se evita actualizar en cada frame y se reacciona sólo a
+   * hitos de visibilidad/foco, que son los momentos con mayor probabilidad de cambio.
+   */
   function bindPermissionLifecycleEvents() {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {

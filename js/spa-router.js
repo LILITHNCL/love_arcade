@@ -79,6 +79,15 @@
         }
     }
 
+    /**
+     * Ejecuta callbacks de ciclo de vida en lotes cooperativos (rAF + idle).
+     *
+     * Precondiciones: `tasks` contiene funciones puras o tolerantes a reintento.
+     * Efectos secundarios: callbacks pueden mutar DOM/estado según cada vista.
+     * Coste esperado: O(n) sobre cantidad de tareas; distribución temporal en frames.
+     * Diseño (por qué): separar trabajo evita picos de main-thread tras navegación
+     * y protege la transición visual inicial de bloqueos.
+     */
     function _drainLifecycleQueue(tasks) {
         if (!tasks.length) return;
 
@@ -208,6 +217,15 @@
      * @param {'home'|'shop'} viewId
      * @param {string|null}   [anchor]
      */
+    /**
+     * Aplica transición SPA sin mutar History API (núcleo de enrutado).
+     *
+     * Precondiciones: `viewId` existe en `VIEWS` y sus nodos están cacheados.
+     * Efectos secundarios: escrituras DOM (hidden/nav), scroll, callbacks de vistas.
+     * Coste esperado: O(v) para alternar vistas + O(t) tareas lifecycle diferidas.
+     * Diseño (por qué): pipeline en fases (scroll inmediato, rAF, idle queue) para
+     * priorizar Time-to-Visual-Response y desacoplar trabajo no crítico del primer frame.
+     */
     function _applyView(viewId, anchor) {
         if (!viewEls[viewId]) return;
         const previousView = currentView;
@@ -273,6 +291,15 @@
      * @param {'home'|'shop'} viewId
      * @param {string|null}   [anchor]   ID del elemento al que hacer scroll (sin #).
      * @param {boolean}       [replace]  Si true, usa replaceState (para estado inicial).
+     */
+    /**
+     * Navega a una vista y sincroniza History API para back/forward nativo.
+     *
+     * Precondiciones: llamada desde interacción UI o restauración controlada.
+     * Efectos secundarios: `_applyView`, `history.pushState/replaceState`.
+     * Coste esperado: O(1) sobre historial + coste de `_applyView`.
+     * Diseño (por qué): mantener `navigateTo` como frontera pública reduce
+     * acoplamiento: cualquier caller obtiene transición + URL state consistentes.
      */
     function navigateTo(viewId, anchor, replace) {
         const state = { viewId, anchor: anchor || null };
