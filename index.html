@@ -1094,44 +1094,10 @@
                 <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-x"></use></svg>
             </button>
 
-            <h3 id="cloud-gatekeeper-title" class="modal-title cloud-gatekeeper-title">Elige cómo quieres continuar</h3>
-            <p class="cloud-gatekeeper-sub">Guarda tu avance con cuenta o sigue como invitado.</p>
-
-            <div class="cloud-gatekeeper-tabs" role="tablist" aria-label="Opciones de acceso">
-                <button id="gate-tab-register" class="cloud-gatekeeper-tab is-active" role="tab" aria-selected="true" data-gate-tab="register">Crear cuenta</button>
-                <button id="gate-tab-login" class="cloud-gatekeeper-tab" role="tab" aria-selected="false" data-gate-tab="login">Iniciar sesión</button>
-            </div>
-
+            <h3 id="cloud-gatekeeper-title" class="modal-title cloud-gatekeeper-title">Inicia sesión para continuar</h3>
+            
             <div class="cloud-gatekeeper-panels">
-                <form id="cloud-register-form" class="cloud-gatekeeper-panel is-active" data-gate-panel="register">
-                    <label class="identity-label" for="cloud-register-nickname">Nombre de jugador</label>
-                    <input id="cloud-register-nickname" class="identity-input cloud-gatekeeper-input" type="text" maxlength="15" autocomplete="nickname" placeholder="ArcadeMaster" required>
-
-                    <label class="identity-label" for="cloud-register-email">Correo</label>
-                    <input id="cloud-register-email" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="tu@correo.com" required>
-
-                    <label class="identity-label" for="cloud-register-password">Contraseña</label>
-                    <div class="cloud-password-input-wrap">
-                        <input id="cloud-register-password" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="new-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                        <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-register-password" aria-label="Mostrar u ocultar password">
-                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                        </button>
-                    </div>
-                    <div class="cloud-password-strength" aria-hidden="true">
-                        <div id="cloud-register-password-strength" class="cloud-password-strength-bar"></div>
-                    </div>
-                    <p class="cloud-password-hint">Usa una frase larga y memorable. Estado óptimo: 16+ caracteres.</p>
-                    <button id="btn-generate-register-password" class="btn-ghost cloud-password-generate-btn" type="button">
-                        Generar contraseña segura
-                    </button>
-
-                    <button id="btn-cloud-register" class="btn-primary cloud-gatekeeper-submit" type="submit">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-plus"></use></svg>
-                        Crear cuenta
-                    </button>
-                </form>
-
-                <form id="cloud-login-form" class="cloud-gatekeeper-panel" data-gate-panel="login" aria-hidden="true">
+                <form id="cloud-login-form" class="cloud-gatekeeper-panel is-active" data-gate-panel="login">
                     <label class="identity-label" for="cloud-login-email">Correo</label>
                     <input id="cloud-login-email" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="tu@correo.com" required>
 
@@ -1148,14 +1114,6 @@
                         Iniciar sesión
                     </button>
                 </form>
-            </div>
-
-            <div class="cloud-guest-block">
-                <p class="cloud-guest-note">Como invitado, tu avance se guarda en este dispositivo.</p>
-                <button id="btn-cloud-guest" class="btn-ghost" type="button">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-monitor"></use></svg>
-                    Continuar como invitado
-                </button>
             </div>
 
             <p id="cloud-gatekeeper-msg" class="feedback-msg cloud-gatekeeper-msg" aria-live="polite"></p>

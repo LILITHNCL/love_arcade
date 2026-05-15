@@ -4919,7 +4919,7 @@ La v14.0 mueve el acceso cloud desde la zona de tienda a un **flujo de entrada a
 | Área | Cambio |
 |---|---|
 | **Entrada automática** | Al cargar (`DOMContentLoaded`), si no hay sesión cloud y no hay identidad local, se abre automáticamente el **Modal de Acceso Unificado** y se bloquea el acceso hasta elegir registro/login o entrar como invitad@. |
-| **Modo Invitado** | El botón "Invitado" activa estado guest, permite entrar al hub y deja mensaje explícito de progreso volátil. |
+| **Modo Invitado** | Eliminado en v14.2. El acceso requiere sesión Supabase válida. |
 | **Dashboard en Tienda** | La tarjeta de nube pasa a ser un panel de cuenta: estado (`En línea` / `Invitado`), última sincronización (`updated_at`) y acciones de gestión (`Cambiar Contraseña`, `Cerrar Sesión`). |
 | **Contraseñas reforzadas** | Registro y cambio de contraseña exigen: mínimo 20 caracteres, mayúscula, minúscula, dígito y símbolo (`@$!%*?&`). |
 | **Validación en vivo** | Reglas visuales bajo el input cambian de rojo a verde en tiempo real y bloquean submit hasta cumplir el 100% de requisitos. |
@@ -4948,8 +4948,8 @@ public.user_profiles (
 
 1. `DOMContentLoaded` evalúa identidad local y sesión cloud.
 2. Si falta ambas, se abre Gatekeeper en modo bloqueado.
-3. Registro/Login habilitan sesión cloud (con `nickname` en `signUp.options.data`).
-4. Invitado desbloquea acceso local y mantiene estado volátil.
+3. Solo `Login` habilita sesión cloud para usuarios ya provisionados por administración en Supabase.
+4. Si no hay sesión activa, el middleware de acceso mantiene el gatekeeper bloqueado.
 5. Sentinel sincroniza con debounce de 1 s y actualiza `updated_at` para dashboard.
 *Arquitectura: vanilla JS + Vercel Serverless + Supabase (Auth + PostgreSQL JSONB) · Compatible con GitHub Pages (frontend) + Vercel (proxy + serverless)*
 
@@ -4960,6 +4960,10 @@ Esta versión endurece la persistencia local para evitar `QuotaExceededError` y 
 ### Cambios clave
 
 ### Registro de mantenimiento
+
+- **Fecha:** 2026-05-15  
+  **Cambio:** Se eliminó del Gatekeeper el registro (`signUp`) y el acceso "Continuar como invitado"; el modal quedó centrado únicamente en `Iniciar sesión` con Supabase.  
+  **Razón técnica:** *Control administrativo estricto de usuarios desde Supabase y simplificación del flujo de autenticación*.
 
 - **Fecha:** 2026-05-15  
   **Cambio:** Se retiraron de la interfaz de "Sincronización en la Nube" las acciones de `Cambiar Contraseña`, `Cambiar Correo` y `Cerrar Sesión`, junto con su lógica cliente asociada.  

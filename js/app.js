@@ -2520,7 +2520,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Clave del registro de marca de tiempo local (para Last Write Wins)
     const SENTINEL_TS_KEY = 'love_arcade_sentinel_ts';
-    const SENTINEL_GUEST_KEY = 'love_arcade_guest_mode';
 
     // Tabla de Supabase
     const SUPABASE_TABLE = 'user_profiles';
@@ -2612,22 +2611,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function _setAccountStateLabel(isOnline) {
         const el = document.getElementById('cloud-account-state');
         if (!el) return;
-        el.textContent = isOnline ? 'Estado: En línea' : 'Estado: Invitado';
+        el.textContent = isOnline ? 'Estado: En línea' : 'Estado: Sin sesión';
         el.style.color = isOnline ? '#68d391' : 'var(--text-low)';
     }
 
     function _setSessionEmail(email) {
         const el = document.getElementById('cloud-session-email');
         if (el) el.textContent = email || '';
-    }
-
-    function _setGuestMode(active) {
-        if (active) _originalSetItem(SENTINEL_GUEST_KEY, '1');
-        else localStorage.removeItem(SENTINEL_GUEST_KEY);
-    }
-
-    function _isGuestMode() {
-        return localStorage.getItem(SENTINEL_GUEST_KEY) === '1';
     }
 
     // ── Snapshot — lectura/escritura del estado vigilado ─────────────────────
@@ -2806,38 +2796,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Carga/merge desde la nube — Sentinel v14.0 ──────────────────────────
 
-    async function _migrateGuestData(cloudData = {}) {
-        if (!_sbClient || !_sbSession) return cloudData || {};
-
-        const localGuestData = _buildSnapshot();
-        const hasGuestProgress = Object.keys(localGuestData).length > 0;
-        if (!hasGuestProgress) {
-            _setGuestMode(false);
-            return cloudData || {};
-        }
-
-        const mergedData = { ...(cloudData || {}), ...localGuestData };
-        const now = new Date().toISOString();
-        const userId = _sbSession.user.id;
-        const nickname = window.GameCenter?.getIdentity?.()?.nickname || '';
-        const avatar_url = _getCloudAvatarUrl();
-        const { error } = await _sbClient
-            .from(SUPABASE_TABLE)
-            .upsert({ id: userId, game_data: mergedData, nickname, avatar_url, updated_at: now }, { onConflict: 'id' });
-        if (error) throw error;
-
-        _originalSetItem(SENTINEL_TS_KEY, now);
-        _setGuestMode(false);
-        _hasUnsyncedChanges = false;
-        _setSyncMsg('Progreso de invitad@ migrado a la nube ✓');
-        _setLastSyncLabel(now);
-        document.dispatchEvent(new CustomEvent('la:synced', {
-            detail: { at: now, source: 'guest-migration' }
-        }));
-
-        return mergedData;
-    }
-
     async function _handleAuthChange(event, session) {
         if (!_sbClient) return;
 
@@ -2874,10 +2832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            let effectiveData = data?.game_data || {};
-            if (_isGuestMode() && event === 'SIGNED_IN') {
-                effectiveData = await _migrateGuestData(effectiveData);
-            }
+            const effectiveData = data?.game_data || {};
 
             const localRawTs = localStorage.getItem(SENTINEL_TS_KEY);
             const _safeTs = (iso) => {
@@ -3027,61 +2982,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const gateModal = document.getElementById('cloud-gatekeeper-modal');
         const gateBox = gateModal?.querySelector('.cloud-gatekeeper-modal-box');
         const gateMsgEl = document.getElementById('cloud-gatekeeper-msg');
-        const gateTabs = Array.from(document.querySelectorAll('[data-gate-tab]'));
         const gatePanels = Array.from(document.querySelectorAll('[data-gate-panel]'));
-        const gateTabsWrap = gateModal?.querySelector('.cloud-gatekeeper-tabs');
-        const registerForm = document.getElementById('cloud-register-form');
         const loginForm = document.getElementById('cloud-login-form');
-        const registerSubmitBtn = document.getElementById('btn-cloud-register');
         let gateLocked = false;
 
-        const PASSPHRASE_MIN_LENGTH = 16;
-        const secureChars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789-_.!@#$%^&*+=';
-        const createPassphraseStrengthUpdater = (inputId, barId, submitBtn) => {
-            const input = document.getElementById(inputId);
-            const bar = document.getElementById(barId);
-            if (!input || !bar || !submitBtn) return () => false;
-
-            const refresh = () => {
-                const length = (input.value || '').length;
-                const ratio = Math.max(0, Math.min(1, length / PASSPHRASE_MIN_LENGTH));
-                bar.style.width = `${Math.round(ratio * 100)}%`;
-                if (ratio < 0.5) bar.style.background = 'linear-gradient(90deg, #f56565, #ed8936)';
-                else if (ratio < 1) bar.style.background = 'linear-gradient(90deg, #ed8936, #f6e05e)';
-                else bar.style.background = 'linear-gradient(90deg, #84f08f, #39ff88)';
-                submitBtn.disabled = length < PASSPHRASE_MIN_LENGTH;
-                return length >= PASSPHRASE_MIN_LENGTH;
-            };
-
-            input.addEventListener('input', refresh);
-            refresh();
-            return refresh;
-        };
-        const generateSecurePassword = (length = 24) => {
-            const values = new Uint32Array(length);
-            window.crypto.getRandomValues(values);
-            return Array.from(values, (value) => secureChars[value % secureChars.length]).join('');
-        };
-        const bindPasswordGenerator = (buttonId, inputId, refreshFn) => {
-            const button = document.getElementById(buttonId);
-            const input = document.getElementById(inputId);
-            if (!button || !input) return;
-            button.addEventListener('click', async () => {
-                const generated = generateSecurePassword();
-                input.type = 'text';
-                input.value = generated;
-                refreshFn?.();
-                window.setTimeout(() => {
-                    if (input.value === generated) input.type = 'password';
-                }, 10000);
-                try {
-                    await navigator.clipboard.writeText(generated);
-                    _showStorageToast('Contraseña copiada. Por favor, asegúrate de guardarla en un lugar seguro (como un gestor de contraseñas).', 'warning');
-                } catch (_) {
-                    _showStorageToast('Se generó una contraseña segura, pero no se pudo copiar automáticamente al portapapeles.', 'warning');
-                }
-            });
-        };
         const bindPasswordToggle = () => {
             document.querySelectorAll('[data-password-toggle]').forEach((btn) => {
                 btn.addEventListener('click', () => {
@@ -3098,8 +3002,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!msg) return 'No se pudo completar la acción. Inténtalo de nuevo.';
             if (msg.includes('invalid login credentials')) return 'Correo o contraseña incorrectos.';
             if (msg.includes('email not confirmed')) return 'Revisa tu correo y confirma tu cuenta para continuar.';
-            if (msg.includes('user already registered')) return 'Ese correo ya tiene una cuenta.';
-            if (msg.includes('password should be at least')) return 'Tu contraseña es demasiado corta.';
             if (msg.includes('network') || msg.includes('fetch')) return 'Sin conexión. Revisa internet e inténtalo de nuevo.';
             if (msg.includes('rate limit') || msg.includes('too many requests')) return 'Demasiados intentos. Espera un momento y vuelve a intentar.';
             return 'No se pudo completar la acción. Inténtalo de nuevo.';
@@ -3124,24 +3026,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         /**
-         * Controla los paneles del Gatekeeper para registro/login.
-         * El resto de la gestión de credenciales se realiza en Supabase Console.
-         * @param {'register'|'login'} mode - Modo activo del modal.
+         * Controla el panel de login del Gatekeeper.
+         * @param {'login'} mode - Modo activo del modal.
          * @returns {void}
          */
         const renderGateMode = (mode) => {
-            const selectedMode = mode || 'register';
-            const isRegister = selectedMode === 'register';
-            const isLogin = selectedMode === 'login';
-            const hasTabMode = isRegister || isLogin;
-
+            const selectedMode = mode || 'login';
             resetGateFeedback();
-            gateTabsWrap?.classList.toggle('hidden', !hasTabMode);
-            gateTabs.forEach(tab => {
-                const active = hasTabMode && tab.dataset.gateTab === selectedMode;
-                tab.classList.toggle('is-active', active);
-                tab.setAttribute('aria-selected', String(active));
-            });
             gatePanels.forEach(panel => {
                 const active = panel.dataset.gatePanel === selectedMode;
                 panel.classList.toggle('is-active', active);
@@ -3150,13 +3041,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
-        const switchGateTab = (name) => {
-            renderGateMode(name);
-        };
-
-        gateTabs.forEach(tab => tab.addEventListener('click', () => switchGateTab(tab.dataset.gateTab)));
-
-        const openGate = ({ mode = 'register', locked = false } = {}) => {
+        const openGate = ({ mode = 'login', locked = false } = {}) => {
             gateLocked = locked;
             gateModal?.classList.remove('hidden');
             gateBox?.classList.toggle('is-locked', gateLocked);
@@ -3165,46 +3050,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnOpenGate = document.getElementById('btn-cloud-open-gatekeeper');
         btnOpenGate?.addEventListener('click', () => {
-            openGate({ mode: _sbSession ? 'login' : 'register' });
+            openGate({ mode: 'login' });
         });
 
         const closeGate = () => {
             if (gateLocked) return;
             gateModal?.classList.add('hidden');
-            renderGateMode('register');
+            renderGateMode('login');
         };
         document.getElementById('cloud-gatekeeper-close')?.addEventListener('click', closeGate);
         gateModal?.addEventListener('click', (e) => {
             if (e.target === gateModal && !gateLocked) closeGate();
-        });
-
-        const validateRegisterPassword = createPassphraseStrengthUpdater('cloud-register-password', 'cloud-register-password-strength', registerSubmitBtn);
-        bindPasswordGenerator('btn-generate-register-password', 'cloud-register-password', validateRegisterPassword);
-
-        registerForm?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
-
-            const email = document.getElementById('cloud-register-email')?.value?.trim();
-            const password = document.getElementById('cloud-register-password')?.value || '';
-            const nickname = document.getElementById('cloud-register-nickname')?.value?.trim();
-            if (!email || !password || !nickname) return setGateMsg('Completa nombre, correo y contraseña.', true);
-            if (!validateRegisterPassword()) return setGateMsg('Tu contraseña es demasiado corta.', true);
-
-            setGateMsg('Creando tu cuenta…');
-            try {
-                const { error } = await _sbClient.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { nickname } }
-                });
-                if (error) throw error;
-                _setGuestMode(false);
-                setGateMsg('Cuenta creada. Revisa tu correo para confirmarla.');
-                _setLoginMsg('Cuenta creada correctamente.');
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
         });
 
         loginForm?.addEventListener('submit', async (e) => {
@@ -3225,20 +3081,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
                 setGateMsg(err?.message, true);
             }
-        });
-
-
-        document.getElementById('btn-cloud-guest')?.addEventListener('click', () => {
-            _setGuestMode(true);
-            if (!window.GameCenter?.hasIdentity?.()) {
-                window.GameCenter?.setIdentity?.('Invitad@', '@');
-            }
-            _setAccountStateLabel(false);
-            setGateMsg('Estás jugando como invitado.');
-            _setLoginMsg('Jugando como invitado.');
-            gateLocked = false;
-            gateBox?.classList.remove('is-locked');
-            closeGate();
         });
 
         const cloudIndicator = document.getElementById('cloud-sync-indicator')
@@ -3279,7 +3121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasLocalIdentity = window.GameCenter?.hasIdentity?.();
         if (!hasLocalIdentity && !_sbSession) {
-            openGate({ locked: true, mode: 'register' });
+            openGate({ locked: true, mode: 'login' });
         }
     });
 
