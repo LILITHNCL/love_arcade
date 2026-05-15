@@ -464,8 +464,6 @@ button { font-family: var(--font-body); }
     transition: opacity 0.25s ease-out, transform 0.25s ease-out;
     will-change: opacity, transform;
     contain: paint;
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 1000px;
 }
 .view-section:not(.hidden) {
     opacity: 1;

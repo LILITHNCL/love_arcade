@@ -12,6 +12,12 @@
     <link rel="icon" href="/assets/icon/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/assets/icon/apple-touch-icon.png">
 
+    <!-- Preload critical above-the-fold game card images -->
+    <link rel="preload" as="image" href="assets/images/games/cover/rompecabezas-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/word-hunt-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/ollin-smash-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/space-shooter-cover-art.avif" fetchpriority="high">
+
     <!--
       ╔══════════════════════════════════════════════════════════════╗
       ║  CRITICAL INIT SCRIPT — Zero-Flicker v9.3                   ║
@@ -390,12 +396,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/rompecabezas_cover_art.avif"
+                            src="assets/images/games/cover/rompecabezas-cover-art.avif"
                             alt="Portada de Rompecabezas"
                             width="1920"
                             height="804"
+                            loading="eager"
                             fetchpriority="high"
-                            decoding="async"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -411,12 +418,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/wordhunt_cover_art.avif"
+                            src="assets/images/games/cover/word-hunt-cover-art.avif"
                             alt="Portada de Word Hunt"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -432,12 +440,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/ollin_smash_cover_art.avif"
+                            src="assets/images/games/cover/ollin-smash-cover-art.avif"
                             alt="Portada de Ollin Smash"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -453,12 +462,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/space_shooter_cover_art.avif"
+                            src="assets/images/games/cover/space-shooter-cover-art.avif"
                             alt="Portada de Vortex"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -474,12 +484,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/2048_cover_art.avif"
+                            src="assets/images/games/cover/2048-cover-art.avif"
                             alt="Portada de 2048"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -495,12 +506,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/jungle_dash_cover_art.avif"
+                            src="assets/images/games/cover/jungle-dash-cover-art.avif"
                             alt="Portada de Jungle Dash"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">
@@ -516,12 +528,13 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="https://res.cloudinary.com/dyspgn0sw/image/upload/dodger_cover_art.avif"
+                            src="assets/images/games/cover/dodger-cover-art.avif"
                             alt="Portada de Dodger"
                             width="1920"
                             height="804"
-                            loading="lazy"
-                            decoding="async"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
                         >
                     </div>
                     <div class="card-info">

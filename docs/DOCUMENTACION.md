@@ -417,7 +417,7 @@ Se eliminan las carpetas locales `assets/product-thumbs/` y `assets/cover/` del 
 | Archivo | Cambio |
 |---|---|
 | `data/shop.json` | El campo `image` de cada producto ya no apunta a `assets/product-thumbs/`. Ahora es una URL Cloudinary con `ar_16:9,c_fill,g_auto,w_640`. |
-| `index.html` | Las 9 carátulas de juegos (`card-cover`) usan URLs Cloudinary `ar_16:9,c_fill,g_auto,w_1080` en lugar de `assets/cover/`. |
+| `index.html` | Las carátulas de juegos (`card-cover`) del catálogo principal ahora usan rutas locales en `assets/images/games/cover/*.avif` (sin Cloudinary). |
 | `js/app.js` | `getDownloadUrl()` ahora devuelve la URL maestra de Cloudinary sin extensión ni transformaciones: `https://res.cloudinary.com/dyspgn0sw/image/upload/{public_id}`. |
 | `js/shop-logic.js` | Nueva función privada `_getMockupUrl(item)`. `openPreviewModal()` usa `_getMockupUrl()` en lugar de `CONFIG.wallpapersPath + item.file`. |
 
