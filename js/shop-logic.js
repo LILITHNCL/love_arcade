@@ -252,12 +252,15 @@ function openConfirmModal({ title, bodyHTML, confirmText = 'Confirmar' }) {
     _lastFocusedElement = document.activeElement;
     const overlay = document.getElementById('confirm-modal');
     overlay.classList.remove('hidden');
+    window.ModalA11y?.open?.(overlay, _lastFocusedElement);
     requestAnimationFrame(() => document.getElementById('modal-confirm').focus());
     return new Promise(resolve => { _modalResolve = resolve; });
 }
 
 function _closeModal(value) {
-    document.getElementById('confirm-modal').classList.add('hidden');
+    const confirmModal = document.getElementById('confirm-modal');
+    confirmModal.classList.add('hidden');
+    window.ModalA11y?.close?.(confirmModal);
     if (_modalResolve) { _modalResolve(value); _modalResolve = null; }
     // Restaurar foco al elemento que abrió el modal para no desorientar al usuario
     // de teclado (WCAG 2.4.3 — Focus Order).
@@ -997,6 +1000,7 @@ function openPreviewModal(itemOrId) {
     // Registrar foco y abrir modal ANTES del trabajo pesado (v9.8).
     _lastFocusedElement = document.activeElement;
     modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement);
 
     // Analítica — view_preview: se dispara en fase síncrona, antes del rAF,
     // para garantizar el registro incluso si el usuario cierra rápidamente.
@@ -1174,7 +1178,7 @@ function closePreviewModal(modal, stage) {
     // .hidden aplica display:none, lo que destruye la capa GPU creada por
     // will-change:opacity,transform declarado en .modal-box (CSS). No es
     // necesario m.style.willChange = 'auto'.
-    if (m) { m.classList.add('hidden'); }
+    if (m) { m.classList.add('hidden'); window.ModalA11y?.close?.(m); }
 
     // ── Clock interval ────────────────────────────────────────────────────────
     if (_mockupClockInterval) { clearInterval(_mockupClockInterval); _mockupClockInterval = null; }
@@ -2188,15 +2192,18 @@ function openEmailModal(item, absoluteUrl) {
     if (fallbackEl) fallbackEl.classList.remove('visible');
 
     const modal = document.getElementById('email-modal');
-    modal.classList.remove('hidden');
     // Guardar foco activo para restaurarlo al cerrar el modal (WCAG 2.4.3).
     _lastFocusedElement = document.activeElement;
+    modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement);
     refreshIcons(modal);
     requestAnimationFrame(() => { if (inputEl) inputEl.focus(); });
 }
 
 function _closeEmailModal() {
-    document.getElementById('email-modal').classList.add('hidden');
+    const emailModal = document.getElementById('email-modal');
+    emailModal.classList.add('hidden');
+    window.ModalA11y?.close?.(emailModal);
     _emailItem        = null;
     _emailAbsoluteUrl = '';
     // Restaurar foco al botón de envío que abrió el modal (WCAG 2.4.3).
@@ -2450,7 +2457,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escape global cierra todos los modales
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            document.getElementById('confirm-modal').classList.add('hidden');
+            const confirmModal = document.getElementById('confirm-modal');
+            confirmModal.classList.add('hidden');
+            window.ModalA11y?.close?.(confirmModal);
             closePreviewModal();
             _closeEmailModal();
         }

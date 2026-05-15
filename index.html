@@ -1364,6 +1364,87 @@
         updateStreakBar();
         updateCountdownDisplay();
 
+
+        const modalA11yState = {
+            activeModal: null,
+            modalTriggerMap: new WeakMap(),
+            focusTrapHandler: null,
+            hiddenSiblings: []
+        };
+
+        function getFocusableElements(container) {
+            if (!container) return [];
+            return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                .filter((el) => !el.disabled && !el.hidden && el.offsetParent !== null && !el.getAttribute('aria-hidden'));
+        }
+
+        function setBackgroundInteractivity(modalEl, blocked) {
+            const siblings = Array.from(document.body.children).filter((el) => el !== modalEl);
+            if (blocked) {
+                modalA11yState.hiddenSiblings = siblings;
+                siblings.forEach((el) => {
+                    el.setAttribute('aria-hidden', 'true');
+                    el.inert = true;
+                });
+                return;
+            }
+
+            (modalA11yState.hiddenSiblings || []).forEach((el) => {
+                el.removeAttribute('aria-hidden');
+                el.inert = false;
+            });
+            modalA11yState.hiddenSiblings = [];
+        }
+
+        function trapModalFocus(modalEl) {
+            if (!modalEl) return;
+            if (modalA11yState.focusTrapHandler) {
+                document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
+            }
+
+            modalA11yState.focusTrapHandler = (e) => {
+                if (e.key !== 'Tab' || modalA11yState.activeModal !== modalEl) return;
+                const focusables = getFocusableElements(modalEl);
+                if (!focusables.length) return;
+
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                const current = document.activeElement;
+
+                if (e.shiftKey && current === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && current === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            };
+
+            document.addEventListener('keydown', modalA11yState.focusTrapHandler, true);
+        }
+
+        window.ModalA11y = {
+            open(modalEl, triggerEl) {
+                if (!modalEl) return;
+                const opener = triggerEl || document.activeElement;
+                if (opener) modalA11yState.modalTriggerMap.set(modalEl, opener);
+                modalA11yState.activeModal = modalEl;
+                setBackgroundInteractivity(modalEl, true);
+                trapModalFocus(modalEl);
+            },
+            close(modalEl) {
+                if (!modalEl) return;
+                setBackgroundInteractivity(modalEl, false);
+                if (modalA11yState.focusTrapHandler) {
+                    document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
+                    modalA11yState.focusTrapHandler = null;
+                }
+                modalA11yState.activeModal = null;
+                const trigger = modalA11yState.modalTriggerMap.get(modalEl);
+                trigger?.focus?.();
+            }
+        };
+
         // ── Identity Modal — función reutilizable (bienvenida + edición) ────
         //
         // mode = 'welcome' → primer acceso: título/botón de bienvenida, sin
@@ -1400,6 +1481,7 @@
 
             window.GameCenter?.setIdentity?.(nickname, identityModalState.selectedGender);
             identityModal?.classList.add('hidden');
+            window.ModalA11y?.close?.(identityModal);
             if (identityModalState.mode !== 'edit') {
                 window.revealUI?.();
             }
@@ -1424,6 +1506,7 @@
 
                 if (identityModalState.mode === 'edit' && e.target === identityModal) {
                     identityModal.classList.add('hidden');
+                    window.ModalA11y?.close?.(identityModal);
                 }
             });
 
@@ -1485,6 +1568,7 @@
 
             // ── Mostrar modal ──────────────────────────────────────────────
             identityModal.classList.remove('hidden');
+            window.ModalA11y?.open?.(identityModal, document.activeElement);
             errorEl?.classList.add('hidden');
 
             // ── Focus automático ───────────────────────────────────────────

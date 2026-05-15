@@ -3044,6 +3044,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const openGate = ({ mode = 'login', locked = false } = {}) => {
             gateLocked = locked;
             gateModal?.classList.remove('hidden');
+            window.ModalA11y?.open?.(gateModal, document.activeElement);
             gateBox?.classList.toggle('is-locked', gateLocked);
             renderGateMode(mode);
         };
@@ -3056,6 +3057,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const closeGate = () => {
             if (gateLocked) return;
             gateModal?.classList.add('hidden');
+            window.ModalA11y?.close?.(gateModal);
             renderGateMode('login');
         };
         document.getElementById('cloud-gatekeeper-close')?.addEventListener('click', closeGate);
