@@ -4959,6 +4959,12 @@ Esta versión endurece la persistencia local para evitar `QuotaExceededError` y 
 
 ### Cambios clave
 
+### Registro de mantenimiento
+
+- **Fecha:** 2026-05-15  
+  **Cambio:** Se retiraron de la interfaz de "Sincronización en la Nube" las acciones de `Cambiar Contraseña`, `Cambiar Correo` y `Cerrar Sesión`, junto con su lógica cliente asociada.  
+  **Razón técnica:** *Gestión de credenciales delegada nativamente a Supabase para simplificar la lógica del cliente*.
+
 | Área | Cambio |
 |---|---|
 | **Avatares** | `GameCenter.setAvatar()` ahora es asíncrona. Comprime imágenes con canvas (`200x200`, calidad `0.7`) antes de guardar/subir. |
