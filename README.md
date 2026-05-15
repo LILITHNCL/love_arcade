@@ -8,7 +8,15 @@
 
 Love Arcade es un Game Hub web donde cada partida genera **Monedas** que se acumulan en un saldo persistente. Con ese saldo las usuarias pueden canjear wallpapers exclusivos en la tienda integrada, activar el buff de Bendición Lunar y participar en eventos especiales con descuentos y cashback.
 
-Todo corre en el navegador. Sin backend, sin cuentas, sin instalación.
+La experiencia **prioriza ejecución local en navegador** (estado principal en `localStorage`) y añade un **backend serverless opcional** para funcionalidades concretas: telemetría/proxy API en Vercel y sincronización cloud con Supabase cuando la sesión está activa.
+
+```
+Flujo local (default):
+Cliente (SPA) ──► localStorage
+
+Flujo cloud (cuando aplica):
+Cliente (SPA) ──► API Vercel (serverless) ──► Supabase
+```
 
 ---
 
@@ -18,10 +26,16 @@ Todo corre en el navegador. Sin backend, sin cuentas, sin instalación.
 |---|---|
 | UI / Vistas | HTML5 · CSS3 (custom properties, Grid, transitions GPU) |
 | Lógica de negocio | Vanilla JavaScript ES2020+ (módulos sin bundler) |
-| Persistencia | `localStorage` con checksum SHA-256 (integridad de partida) |
-| Encoding asíncrono | Web Worker (`sync-worker.js`) con `TextEncoder` / `TextDecoder` |
+| Persistencia local | `localStorage` con checksum SHA-256 (integridad de partida) |
+| Sync/Encoding local | Web Worker (`sync-worker.js`) con `TextEncoder` / `TextDecoder` |
+| Backend opcional | Vercel Serverless Functions (`/api/*`) para proxy/telemetría/config segura |
+| Sincronización cloud opcional | Supabase (Auth + PostgreSQL JSONB + Storage) vía Sentinel Cloud Sync |
 | Imágenes | Cloudinary CDN (transformaciones `f_auto`, `q_auto`, `c_fill`) |
 | Routing | SPA custom (`spa-router.js`) con History API |
+
+**Impacto en rendimiento móvil (resumen):**
+- **Permanece local/offline:** navegación SPA, render UI, economía base, tienda local, inventario local, eventos cacheados y progreso en `localStorage`.
+- **Depende de red:** login/sesión cloud, subida/descarga de snapshot cloud (Supabase), funciones serverless de Vercel (proxy/telemetría), verificación de tiempo de red para anti-manipulación cuando hay conectividad.
 
 ---
 
@@ -32,11 +46,12 @@ love_arcade/
 ├── index.html          — SPA unificada (única página HTML)
 ├── styles.css          — Sistema de diseño completo
 ├── js/
-│   ├── app.js          — Motor principal: GameCenter API, store, economía
+│   ├── app.js          — Motor principal + Sentinel Cloud Sync (Supabase opcional)
 │   ├── shop-logic.js   — Módulo de Tienda (catálogo, compras, sync)
 │   ├── event-logic.js  — Sistema LTE: Gachapón, eventos activos, pity
 │   ├── spa-router.js   — Router SPA con History API
 │   └── sync-worker.js  — Web Worker: Base64 + SHA-256
+├── api/                — Endpoints serverless de Vercel (proxy/config/reportes)
 ├── data/
 │   ├── shop.json       — Catálogo de wallpapers
 │   └── events.json     — Eventos activos (LTE, Gachapón)
