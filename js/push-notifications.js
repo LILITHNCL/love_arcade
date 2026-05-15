@@ -121,14 +121,14 @@
     if (permission === 'granted') {
       const isSubscribed = await hasActiveSubscription();
       if (isSubscribed) {
-        setStatus('Recordatorios activos. Te avisaremos cuando haya algo importante.');
+        setStatus('Recordatorios activos.');
       } else {
         setStatus('Permiso activo. Termina la activación para recibir recordatorios.');
       }
     } else if (permission === 'denied') {
       setStatus('Notificaciones bloqueadas. Actívalas en la configuración del navegador para continuar.', true);
     } else {
-      setStatus('Activa los recordatorios para no perder bonos, tienda y eventos.');
+      setStatus('Activa los recordatorios.');
     }
 
     startPermissionPollingIfNeeded(permission);
@@ -184,7 +184,7 @@
 
     const supported = ('serviceWorker' in navigator) && ('Notification' in window) && ('PushManager' in window);
     supportEl.textContent = supported
-      ? 'Activa los recordatorios para no perder bonos, tienda y eventos.'
+      ? 'Recordatorios activos al habilitar permisos.'
       : 'Este navegador no permite recordatorios automáticos.';
     supportEl.style.color = supported ? 'var(--success, #68d391)' : 'var(--error, #fc8181)';
 
@@ -273,14 +273,13 @@
     const session = sentinel?.getSession?.();
     if (!sb || !session?.user?.id) return { ok: false, reason: 'no-session' };
 
-    const prefs = loadPrefs();
     const st = readLocalReminderState();
     const payload = {
       user_id: session.user.id,
-      daily_enabled: Boolean(prefs.dailyClaim),
-      moon_enabled: Boolean(prefs.moonExpiry),
-      shop_enabled: Boolean(prefs.newShop),
-      events_enabled: Boolean(prefs.eventUrgent),
+      daily_enabled: true,
+      moon_enabled: true,
+      shop_enabled: true,
+      events_enabled: true,
       next_daily_claim_at: new Date(st.next_daily_claim_at).toISOString(),
       daily_can_claim: Boolean(st.can_claim_daily),
       daily_last_claim_at: st.daily_last_claim_at ? new Date(st.daily_last_claim_at).toISOString() : null,
@@ -358,28 +357,6 @@
     });
   }
 
-  function bindToggles() {
-    const prefs = loadPrefs();
-    const map = {
-      'push-rule-daily': 'dailyClaim',
-      'push-rule-moon': 'moonExpiry',
-      'push-rule-shop': 'newShop',
-      'push-rule-events': 'eventUrgent'
-    };
-
-    Object.entries(map).forEach(([id, key]) => {
-      const el = _$(id);
-      if (!el) return;
-      el.checked = Boolean(prefs[key]);
-      el.addEventListener('change', () => {
-        const next = loadPrefs();
-        next[key] = Boolean(el.checked);
-        savePrefs(next);
-        syncReminderStateToSupabase().catch(() => {});
-      });
-    });
-  }
-
   function bindButtons() {
     _$( 'btn-push-enable')?.addEventListener('click', async () => {
       try {
@@ -399,20 +376,6 @@
       }
     });
 
-    _$( 'btn-push-disable')?.addEventListener('click', async () => {
-      try {
-        toggleRecoveryCard(false);
-        await unsubscribePush();
-        const prefs = loadPrefs();
-        prefs.enabled = false;
-        savePrefs(prefs);
-        await syncReminderStateToSupabase();
-        setStatus('Recordatorios pausados. Puedes activarlos cuando quieras.');
-        await refreshPushUiState();
-      } catch (err) {
-        setStatus(err?.message || 'No pudimos pausar los recordatorios.', true);
-      }
-    });
 
     _$( 'btn-push-test')?.addEventListener('click', async () => {
       try {
@@ -449,7 +412,6 @@
     updateUiSupportState();
     await refreshPushUiState();
     bindButtons();
-    bindToggles();
     bindPermissionLifecycleEvents();
 
     if (!('serviceWorker' in navigator) || !('Notification' in window) || !('PushManager' in window)) {
