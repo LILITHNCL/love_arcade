@@ -2380,6 +2380,21 @@ body::before {
     perspective: 1000;
 }
 .modal-overlay.hidden { display: none !important; }
+
+
+/* Bloqueo de scroll de fondo cuando cualquier modal/overlay está abierto */
+html:has(.modal-overlay:not(.hidden)),
+html:has(.gacha-roulette-overlay),
+body:has(.modal-overlay:not(.hidden)),
+body:has(.gacha-roulette-overlay) {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body:has(.modal-overlay:not(.hidden)),
+body:has(.gacha-roulette-overlay) {
+    touch-action: none;
+}
 @keyframes modalFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
