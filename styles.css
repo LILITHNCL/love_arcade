@@ -4479,26 +4479,6 @@ svg { stroke-width: 2; }
     font-weight: 800;
 }
 
-.cloud-guest-block {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-mid);
-}
-
-.cloud-guest-note {
-    margin: 0 0 10px;
-    color: var(--text-low);
-    font-size: 0.72rem;
-    line-height: 1.45;
-}
-
-#btn-cloud-guest {
-    width: 100%;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-weight: 700;
-}
-
 .cloud-gatekeeper-msg {
     min-height: 18px;
     margin-top: 12px;
