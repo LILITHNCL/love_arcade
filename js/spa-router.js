@@ -230,7 +230,8 @@
         });
         
         currentView = viewId;
-        
+        window.AppScheduler?.setActiveView?.(viewId);
+
         _syncNavHighlight(viewId);
 
         // Fase 2 (next frame): operaciones no críticas del primer frame.
@@ -255,6 +256,7 @@
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
+                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));

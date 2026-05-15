@@ -17,6 +17,7 @@
   let vapidPublicKey = '';
   let permissionStatusRef = null;
   let permissionPollTimer = null;
+  let reminderSyncTimer = null;
   let lastPermissionSeen = (typeof Notification !== 'undefined' ? Notification.permission : 'default');
   function _$(id) { return document.getElementById(id); }
 
@@ -77,7 +78,11 @@
 
   function stopPermissionPolling() {
     if (!permissionPollTimer) return;
-    window.clearInterval(permissionPollTimer);
+    if (window.AppScheduler?.clearIntervalTask && permissionPollTimer?.group) {
+      window.AppScheduler.clearIntervalTask(permissionPollTimer);
+    } else {
+      window.clearInterval(permissionPollTimer);
+    }
     permissionPollTimer = null;
   }
 
@@ -100,7 +105,14 @@
     if (permissionPollTimer) return;
 
     lastPermissionSeen = permission;
-    permissionPollTimer = window.setInterval(async () => {
+    permissionPollTimer = window.AppScheduler?.registerInterval('poll', 'push-permission-poll', async () => {
+      const current = Notification.permission;
+      if (current === lastPermissionSeen) return;
+      lastPermissionSeen = current;
+      stopPermissionPolling();
+      await refreshPushUiState();
+      syncReminderStateToSupabase().catch(() => {});
+    }, 1500) || window.setInterval(async () => {
       const current = Notification.permission;
       if (current === lastPermissionSeen) return;
       lastPermissionSeen = current;
@@ -423,7 +435,8 @@
     bindServiceWorkerDeepLinkBridge();
     await bindPermissionWatcher();
     await syncReminderStateToSupabase();
-    window.setInterval(() => { syncReminderStateToSupabase().catch(() => {}); }, 5 * 60 * 1000);
+    reminderSyncTimer = window.AppScheduler?.registerInterval('sync', 'push-reminder-sync', () => { syncReminderStateToSupabase().catch(() => {}); }, 5 * 60 * 1000)
+      || window.setInterval(() => { syncReminderStateToSupabase().catch(() => {}); }, 5 * 60 * 1000);
 
     await refreshPushUiState();
   }
