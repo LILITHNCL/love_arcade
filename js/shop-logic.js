@@ -128,7 +128,7 @@
  * DEPENDENCIAS (deben estar cargadas ANTES en el DOM):
  *  - js/app.js          → window.GameCenter, window.ECONOMY, window.debounce, window.MailHelper
  *  - [v9.6] lucide eliminado. _icon() helper genera referencias al SVG Sprite.
- *  - canvas-confetti    → window.confetti
+ *  - canvas-confetti    → lazy-load on demand (no bloquea ruta crítica)
  *
  * OPTIMIZACIONES DE RENDIMIENTO:
  *  - fetch('data/shop.json') se ejecuta UNA SOLA VEZ en DOMContentLoaded y
@@ -1955,15 +1955,35 @@ function shakeElement(el) {
 }
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
-function fireConfetti() {
+let _confettiLoaderPromise = null;
+function _getConfetti() {
+    if (typeof window.confetti === 'function') return Promise.resolve(window.confetti);
+    if (_confettiLoaderPromise) return _confettiLoaderPromise;
+
+    _confettiLoaderPromise = new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js';
+        script.async = true;
+        script.onload = () => resolve(typeof window.confetti === 'function' ? window.confetti : null);
+        script.onerror = () => resolve(null); // fallback silencioso
+        document.head.appendChild(script);
+    }).catch(() => null);
+
+    return _confettiLoaderPromise;
+}
+
+async function fireConfetti() {
     // No disparar si la pestaña está inactiva (performance)
     if (document.hidden) return;
     // Verificar que estamos en la vista de Tienda
     if (window.SpaRouter?.getCurrentView?.() !== 'shop') return;
 
+    const confettiFn = await _getConfetti();
+    if (typeof confettiFn !== 'function') return; // fallback silencioso
+
     const colors = ['#9b59ff', '#ff59b4', '#fbbf24', '#22d07a', '#00d4ff'];
-    confetti({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
-    confetti({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
+    confettiFn({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
+    confettiFn({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -2012,7 +2032,8 @@ async function handleRedeem() {
             });
             document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
             if (!document.hidden) {
-                confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
+                const confettiFn = await _getConfetti();
+                confettiFn?.({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
             }
             // [v9.9.2] Fuente ÚNICA de track('redeem_code'): aquí, al final de la cadena
             // de éxito de UI. El disparo en app.js/redeemPromoCode() fue eliminado para
