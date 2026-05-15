@@ -2696,8 +2696,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Sincronización hacia la nube ──────────────────────────────────────────
 
     /**
-     * Sube el snapshot actual a Supabase (upsert).
-     * Guarda la marca de tiempo local del envío para Last Write Wins.
+     * Sincroniza el snapshot local hacia Supabase cuando existe sesión activa.
+     * Flujo: snapshot local -> upsert en user_profiles -> marca de tiempo local -> refresco UI.
+     * @returns {Promise<void>}
      */
     async function _sentinelSync() {
         if (!_sbClient || !_sbSession || _isRestoringSession) return;
@@ -3029,13 +3030,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const gateTabs = Array.from(document.querySelectorAll('[data-gate-tab]'));
         const gatePanels = Array.from(document.querySelectorAll('[data-gate-panel]'));
         const gateTabsWrap = gateModal?.querySelector('.cloud-gatekeeper-tabs');
-        const emailForm = document.getElementById('cloud-email-form');
-        const passwordForm = document.getElementById('cloud-password-form');
         const registerForm = document.getElementById('cloud-register-form');
         const loginForm = document.getElementById('cloud-login-form');
         const registerSubmitBtn = document.getElementById('btn-cloud-register');
-        const changePasswordSubmitBtn = document.getElementById('btn-cloud-change-password-submit');
-        const emailBanner = document.getElementById('cloud-email-change-banner');
         let gateLocked = false;
 
         const PASSPHRASE_MIN_LENGTH = 16;
@@ -3124,15 +3121,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const resetGateFeedback = () => {
             setGateMsg('');
-            emailBanner?.classList.add('hidden');
         };
 
+        /**
+         * Controla los paneles del Gatekeeper para registro/login.
+         * El resto de la gestión de credenciales se realiza en Supabase Console.
+         * @param {'register'|'login'} mode - Modo activo del modal.
+         * @returns {void}
+         */
         const renderGateMode = (mode) => {
             const selectedMode = mode || 'register';
             const isRegister = selectedMode === 'register';
             const isLogin = selectedMode === 'login';
-            const isChangeEmail = selectedMode === 'change-email';
-            const isChangePassword = selectedMode === 'change-password';
             const hasTabMode = isRegister || isLogin;
 
             resetGateFeedback();
@@ -3148,10 +3148,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 panel.setAttribute('aria-hidden', String(!active));
                 setFormEnabled(panel, active);
             });
-            emailForm?.classList.toggle('hidden', !isChangeEmail);
-            passwordForm?.classList.toggle('hidden', !isChangePassword);
-            setFormEnabled(emailForm, isChangeEmail);
-            setFormEnabled(passwordForm, isChangePassword);
         };
 
         const switchGateTab = (name) => {
@@ -3183,9 +3179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const validateRegisterPassword = createPassphraseStrengthUpdater('cloud-register-password', 'cloud-register-password-strength', registerSubmitBtn);
-        const validateChangePassword = createPassphraseStrengthUpdater('cloud-change-password-input', 'cloud-change-password-strength', changePasswordSubmitBtn);
         bindPasswordGenerator('btn-generate-register-password', 'cloud-register-password', validateRegisterPassword);
-        bindPasswordGenerator('btn-generate-change-password', 'cloud-change-password-input', validateChangePassword);
 
         registerForm?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -3233,43 +3227,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        document.getElementById('btn-cloud-change-email-submit')?.addEventListener('click', async () => {
-            if (!_sbClient || !_sbSession) return setGateMsg('Debes iniciar sesión para cambiar tu correo.', true);
-            const newEmail = document.getElementById('cloud-change-email-input')?.value?.trim();
-            if (!newEmail) return setGateMsg('Ingresa un nuevo correo para continuar.', true);
-            try {
-                const { error } = await _sbClient.auth.updateUser({ email: newEmail });
-                if (error) throw error;
-                emailBanner?.classList.remove('hidden');
-                setGateMsg('Solicitud enviada. Revisa ambos correos para confirmar el cambio.');
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
-        });
-
-        passwordForm?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!_sbClient || !_sbSession) return setGateMsg('Debes iniciar sesión para cambiar tu contraseña.', true);
-            if (!validateChangePassword()) return setGateMsg('Tu contraseña es demasiado corta.', true);
-
-            const currentPassword = document.getElementById('cloud-current-password-input')?.value || '';
-            const password = document.getElementById('cloud-change-password-input')?.value || '';
-            if (!currentPassword) return setGateMsg('Debes ingresar tu contraseña actual.', true);
-            try {
-                const email = _sbSession.user?.email || '';
-                const { error: authError } = await _sbClient.auth.signInWithPassword({ email, password: currentPassword });
-                if (authError) {
-                    setGateMsg('La contraseña actual es incorrecta. Verifícala antes de continuar.', true);
-                    return;
-                }
-                const { error } = await _sbClient.auth.updateUser({ password });
-                if (error) throw error;
-                setGateMsg('Contraseña actualizada.');
-                setTimeout(() => closeGate(), 700);
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
-        });
 
         document.getElementById('btn-cloud-guest')?.addEventListener('click', () => {
             _setGuestMode(true);
@@ -3283,34 +3240,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gateBox?.classList.remove('is-locked');
             closeGate();
         });
-
-        document.getElementById('btn-cloud-change-password')?.addEventListener('click', () => {
-            if (!_sbSession) {
-                openGate({ mode: 'login' });
-                setGateMsg('Inicia sesión para poder cambiar tu contraseña.', true);
-                return;
-            }
-            openGate({ mode: 'change-password' });
-        });
-
-        document.getElementById('btn-cloud-change-email')?.addEventListener('click', () => {
-            if (!_sbSession) {
-                openGate({ mode: 'login' });
-                setGateMsg('Inicia sesión para poder cambiar tu correo.', true);
-                return;
-            }
-            openGate({ mode: 'change-email' });
-        });
-
-        // ── Cerrar sesión ────────────────────────────────────────────────────
-        const btnSignOut = document.getElementById('btn-cloud-signout');
-        if (btnSignOut) {
-            btnSignOut.addEventListener('click', async () => {
-                if (!_sbClient) return;
-                await _sbClient.auth.signOut();
-                // _handleSignOut() es llamado por onAuthStateChange
-            });
-        }
 
         const cloudIndicator = document.getElementById('cloud-sync-indicator')
             || document.getElementById('hud-cloud-sync-indicator');

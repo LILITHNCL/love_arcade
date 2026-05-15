@@ -779,15 +779,6 @@
                             <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-lock"></use></svg>
                             Gestionar Cuenta
                         </button>
-                        <button id="btn-cloud-change-email" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cambiar correo
-                        </button>
-                        <button id="btn-cloud-change-password" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cambiar contraseña
-                        </button>
-                        <button id="btn-cloud-signout" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cerrar sesión
-                        </button>
                     </div>
                     <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
                     <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
@@ -1164,46 +1155,6 @@
                     </button>
                 </form>
             </div>
-
-            <form id="cloud-email-form" class="cloud-password-form hidden">
-                <label class="identity-label" for="cloud-change-email-input">Nuevo correo electrónico</label>
-                <input id="cloud-change-email-input" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="nuevo@correo.com">
-                <button id="btn-cloud-change-email-submit" class="btn-ghost cloud-gatekeeper-submit" type="button">
-                    Solicitar cambio de correo
-                </button>
-                <p id="cloud-email-change-banner" class="cloud-email-change-banner hidden" role="status" aria-live="polite">
-                    <strong>Cambio pendiente:</strong> Hemos enviado un enlace de confirmación a tu correo actual y otro al nuevo. Debes confirmar ambos para finalizar el proceso.
-                </p>
-            </form>
-
-            <form id="cloud-password-form" class="cloud-password-form hidden">
-                <label class="identity-label" for="cloud-current-password-input">Contraseña actual</label>
-                <div class="cloud-password-input-wrap">
-                    <input id="cloud-current-password-input" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="current-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                    <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-current-password-input" aria-label="Mostrar u ocultar password">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                    </button>
-                </div>
-                <label class="identity-label" for="cloud-change-password-input">Nueva contraseña</label>
-                <div class="cloud-password-input-wrap">
-                    <input id="cloud-change-password-input" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="new-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                    <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-change-password-input" aria-label="Mostrar u ocultar password">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                    </button>
-                </div>
-                <div class="cloud-password-strength" aria-hidden="true">
-                    <div id="cloud-change-password-strength" class="cloud-password-strength-bar"></div>
-                </div>
-                <p class="cloud-password-hint">Usa una frase larga y memorable. Estado óptimo: 16+ caracteres.</p>
-                <button id="btn-generate-change-password" class="btn-ghost cloud-password-generate-btn" type="button">
-                    Generar contraseña segura
-                </button>
-
-                <button id="btn-cloud-change-password-submit" class="btn-primary cloud-gatekeeper-submit" type="submit" disabled>
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-shield-check"></use></svg>
-                    Actualizar contraseña
-                </button>
-            </form>
 
             <div class="cloud-guest-block">
                 <p class="cloud-guest-note">Como invitado, tu avance se guarda en este dispositivo.</p>
