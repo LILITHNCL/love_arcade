@@ -189,6 +189,15 @@ const _shopRenderState = {
     batchSize: 18
 };
 
+/**
+ * Agenda el filtrado de catálogo en el siguiente frame para colapsar ráfagas de input.
+ *
+ * Precondiciones: `filterItems` disponible y estado de filtros ya actualizado.
+ * Efectos secundarios: cancela/crea `requestAnimationFrame` y luego muta DOM vía `filterItems`.
+ * Coste esperado: O(1) en scheduling; coste real delegado al render posterior.
+ * Diseño (por qué): usar rAF evita ejecutar múltiples renders síncronos durante tecleo,
+ * taps rápidos o cambios consecutivos de chip, reduciendo jank perceptible.
+ */
 function scheduleFilterItems() {
     if (_pendingFilterFrame !== null) cancelAnimationFrame(_pendingFilterFrame);
     _pendingFilterFrame = requestAnimationFrame(() => {
@@ -1437,6 +1446,15 @@ function _renderGiftCarousel(items) {
 }
 
 // ── Filtros ───────────────────────────────────────────────────────────────────
+/**
+ * Calcula subconjunto visible del catálogo y reinicia render incremental por lotes.
+ *
+ * Precondiciones: `allItems` cargado (o vacío válido), `activeFilter`/`searchQuery` consistentes.
+ * Efectos secundarios: lectura de GameCenter state, escrituras DOM del grid/estados vacíos.
+ * Coste esperado: O(n) filtrado sobre items + coste de pintar primer lote.
+ * Diseño (por qué): mantener filtrado centralizado facilita evolucionar reglas de negocio
+ * sin duplicar lógica entre búsqueda, tabs y reseteos de filtros.
+ */
 function filterItems() {
     if (!allItems.length) return;
     const gridEl      = document.getElementById('shop-container');

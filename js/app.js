@@ -455,6 +455,15 @@ window.workerTask = workerTask;
 // Garantiza retrocompatibilidad con stores de versiones anteriores.
 // Nunca sobrescribe datos existentes; solo rellena campos faltantes.
 // =====================================================
+/**
+ * Normaliza estado persistido y aplica migraciones backward-compatible.
+ *
+ * Precondiciones: `loadedStore` puede venir incompleto o con schema legado.
+ * Efectos secundarios: ninguno fuera del objeto retornado (función pura).
+ * Coste esperado: O(p) sobre cantidad de propiedades/colecciones migradas.
+ * Diseño (por qué): centralizar migración en un único punto reduce riesgo de
+ * corrupción al agregar features y evita condicionales de versión dispersos.
+ */
 function migrateState(loadedStore) {
     const defaults = {
         coins:          CONFIG.initialCoins,
@@ -2178,10 +2187,13 @@ function showStreakMilestoneModal() {
 // REVEAL UI — v9.3 Zero-Flicker
 // =====================================================
 /**
- * Añade la clase .is-ready a los contenedores de datos críticos,
- * disparando su transición de opacidad (0 → 1) en el siguiente frame.
- * Se llama DESPUÉS de escribir los valores correctos en el DOM para que
- * el usuario nunca vea el estado "vacío" o con datos por defecto del HTML.
+ * Revela bloques críticos de UI en el primer frame seguro tras hidratación.
+ *
+ * Precondiciones: saldo/avatar/hud ya escritos con valores reales.
+ * Efectos secundarios: escrituras DOM de clases CSS; dispara transiciones visuales.
+ * Coste esperado: O(n) sobre nodos HUD (pequeño y acotado).
+ * Diseño (por qué): usar `requestAnimationFrame` separa "hidratar datos" de
+ * "mostrar UI", evitando flicker del estado placeholder y layout-shift temprano.
  */
 function revealUI() {
     requestAnimationFrame(() => {
