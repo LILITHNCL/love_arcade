@@ -328,9 +328,16 @@
         navLinks.forEach(link => {
             link.classList.toggle('active', link.dataset.view === viewId && !link.dataset.anchor);
         });
+        let activeIndex = 0;
         bottomNavItems.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === viewId && !item.dataset.anchor);
+            const isActive = item.dataset.view === viewId && !item.dataset.anchor;
+            item.classList.toggle('active', isActive);
+            if (isActive) {
+                activeIndex = Number(item.dataset.navIndex || 0);
+            }
         });
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (bottomNav) bottomNav.style.setProperty('--active-index', String(activeIndex));
     }
     
     function _bindNavItem(el) {

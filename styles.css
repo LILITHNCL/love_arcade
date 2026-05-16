@@ -660,42 +660,38 @@ body::before {
     text-shadow: 0 0 20px var(--accent-glow);
 }
 
-.nav-links { display: none; gap: 28px; }
+.nav-links {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 999px;
+    background: #121421;
+    border: 1px solid rgba(255,255,255,0.07);
+}
 .nav-link {
-    color: var(--text-tertiary-aa);
-    font-weight: 500;
+    color: #b9bdd3;
+    font-weight: 600;
     font-size: 0.9rem;
-    transition: color var(--motion-small), opacity var(--motion-small), transform var(--motion-micro);
-    position: relative;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+    border-radius: 999px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
-.nav-link::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -3px;
-    width: 100%;
-    height: 2px;
-    background: currentColor;
-    opacity: 0.9;
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform var(--motion-small), opacity var(--motion-small);
+.nav-link:hover {
+    background: rgba(255,255,255,0.06);
+    color: #d8ddf4;
+    transform: translateY(-1px);
 }
-.nav-link:hover { color: var(--text-secondary-aa); }
-.nav-link.active { color: var(--text-primary-aa); }
-.nav-link:hover::before,
-.nav-link:focus-visible::before,
-.nav-link.active::before {
-    transform: scaleX(1);
+.nav-link.active {
+    background: #20243a;
+    color: #f7f8ff;
 }
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -26px; left: 0;
-    width: 100%; height: 2px;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-    border-radius: 2px;
+.nav-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 .nav-user { display: flex; align-items: center; gap: 12px; }
 
@@ -761,47 +757,102 @@ body::before {
    BOTTOM NAV (mobile)
    ================================================================ */
 .bottom-nav {
+    --nav-items: 3;
     display: flex;
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    height: var(--bottom-nav-height);
-    /* Solid 3.0: deepest surface layer, no blur */
-    background: #050508;
-    border-top: 1px solid var(--border-subtle);
-    box-shadow: 0 -1px 0 rgba(255,255,255,0.04), 0 -4px 20px rgba(0,0,0,0.7);
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, calc(100% - 32px));
+    height: 72px;
+    background: #111320;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 999px;
+    box-shadow: 0 12px 28px rgba(4, 5, 12, 0.42);
     z-index: 1000;
-    justify-content: space-around; align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
 }
-
-.bottom-nav::before {
-    content: '';
+.bottom-nav-bubble {
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
-    opacity: 0.5;
+    left: 8px;
+    top: 8px;
+    width: calc((100% - 16px) / var(--nav-items));
+    height: calc(100% - 16px);
+    border-radius: 999px;
+    background: #252b47;
+    transform: translateX(calc(var(--active-index) * 100%));
+    transition: transform 480ms cubic-bezier(.22, 1.35, .36, 1);
+    pointer-events: none;
 }
 
 .b-nav-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
     color: var(--text-mute);
-    font-size: 0.65rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    gap: 4px;
+    gap: 8px;
     flex: 1; height: 100%;
-    transition: color var(--motion-small), transform var(--motion-micro), opacity var(--motion-small);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    border-radius: 999px;
+    z-index: 1;
+    transition: color 200ms ease, transform 140ms ease;
 }
-.b-nav-item.active { color: var(--accent); }
+.b-nav-item__icon-wrap { display: inline-flex; }
+.b-nav-item.active { color: #fff; }
 .b-nav-item:active,
 .b-nav-item.is-pressing {
     transform: scale(0.96) translateY(1px);
 }
-.b-nav-item i { transition: 0.2s; }
-.b-nav-item.active i {
-    transform: translateY(-2px);
-    filter: drop-shadow(0 0 6px var(--accent-glow));
+.b-nav-item .icon {
+    transition: transform 300ms ease;
+}
+.b-nav-item.active .icon {
+    animation: bNavIconPop 500ms cubic-bezier(.22,.85,.27,1.2);
+}
+.b-nav-item__label {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    white-space: nowrap;
+    overflow: hidden;
+    transition: max-width 280ms ease, opacity 220ms ease, transform 260ms ease;
+}
+.b-nav-item.active .b-nav-item__label {
+    max-width: 84px;
+    opacity: 1;
+    transform: translateX(0);
+}
+.b-nav-item::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.32);
+    opacity: 0;
+    transform: scale(0.2);
+}
+.b-nav-item.is-pressing::after {
+    animation: bNavRipple 420ms ease-out;
+}
+.b-nav-item:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+@keyframes bNavIconPop {
+    0% { transform: scale(0.86) rotate(-8deg); }
+    35% { transform: scale(1.18) rotate(7deg); }
+    62% { transform: scale(0.98) rotate(-3deg); }
+    100% { transform: scale(1.04) rotate(0deg); }
+}
+@keyframes bNavRipple {
+    0% { opacity: 0.42; transform: scale(0.1); }
+    100% { opacity: 0; transform: scale(7); }
 }
 
 /* ================================================================
@@ -2945,6 +2996,17 @@ details[open] summary::after { transform: rotate(45deg); }
 
     /* Sale banner */
     .sale-banner__ticket { padding: 16px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-nav-bubble,
+    .b-nav-item .icon,
+    .b-nav-item__label,
+    .nav-link,
+    .b-nav-item {
+        transition-duration: 0.01ms !important;
+        animation: none !important;
+    }
 }
 
 @media (min-width: 1024px) {

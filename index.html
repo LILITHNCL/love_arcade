@@ -249,10 +249,10 @@
             Love<span>Arcade</span>
         </div>
 
-        <ul class="nav-links">
-            <li><a href="#" class="nav-link active" data-view="home">Inicio</a></li>
-            <li><a href="#" class="nav-link" data-view="shop">Tienda</a></li>
-            <li><a href="#" class="nav-link" data-view="events">Eventos</a></li>
+        <ul class="nav-links" role="list">
+            <li><a href="#" class="nav-link active" data-view="home"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-home"></use></svg><span>Inicio</span></a></li>
+            <li><a href="#" class="nav-link" data-view="shop"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg><span>Tienda</span></a></li>
+            <li><a href="#" class="nav-link" data-view="events"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-sparkles"></use></svg><span>Eventos</span></a></li>
         </ul>
 
         <div class="nav-user">
@@ -278,18 +278,19 @@
     </nav>
 
     <!-- ── BOTTOM NAV (mobile) ── -->
-    <nav class="bottom-nav" aria-label="Navegación rápida móvil">
-        <a href="#" class="b-nav-item active" data-view="home">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg>
-            <span>Inicio</span>
+    <nav class="bottom-nav" aria-label="Navegación rápida móvil" style="--active-index:0;">
+        <span class="bottom-nav-bubble" aria-hidden="true"></span>
+        <a href="#" class="b-nav-item active" data-view="home" data-nav-index="0" aria-label="Inicio">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg></span>
+            <span class="b-nav-item__label">Inicio</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="shop">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg>
-            <span>Tienda</span>
+        <a href="#" class="b-nav-item" data-view="shop" data-nav-index="1" aria-label="Tienda">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg></span>
+            <span class="b-nav-item__label">Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-            <span>Eventos</span>
+        <a href="#" class="b-nav-item" data-view="events" data-nav-index="2" aria-label="Eventos">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg></span>
+            <span class="b-nav-item__label">Eventos</span>
         </a>
     </nav>
 
