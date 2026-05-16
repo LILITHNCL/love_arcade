@@ -1455,118 +1455,42 @@ body::before {
 }
 
 /* ================================================================
-   GAME CARDS — Mobile: 1 col, Desktop: auto-fill
+   GAME CARDS — Carruseles horizontales
    ================================================================ */
-.games-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-}
+.games-sections { display: grid; gap: 18px; }
+.games-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.games-carousel-nav { display: none; gap: 8px; }
+.games-carousel-btn { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--border-subtle); background: var(--solid-surface-raised); color: var(--text-primary); cursor: pointer; }
+.games-carousel-track { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+.games-carousel-track::-webkit-scrollbar { display: none; }
 
 .game-card {
     background: #141620;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    overflow: visible;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s, border-color 0.3s;
+    overflow: hidden;
     position: relative;
-    display: flex;
-    flex-direction: column;
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+    width: min(72vw, 340px);
 }
-/* Solid 3.0: hover brightens border with intense glow, no bg change */
-.game-card:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 10px var(--accent-glow);
-    border-color: var(--accent-border);
-    z-index: 2;
-}
+.game-card--popular { aspect-ratio: 3 / 2; }
+.game-card--more { aspect-ratio: 4 / 5; width: min(46vw, 250px); }
 
 .card-cover {
-    aspect-ratio: 1920 / 804;
-    width: 100%;
-    background-size: cover;
-    background-position: center;
-    position: relative;
-    overflow: hidden;
-    border-top-left-radius: calc(var(--radius-lg) - 1px);
-    border-top-right-radius: calc(var(--radius-lg) - 1px);
+    position: absolute;
+    inset: 0;
 }
-/* Gradient overlay on cover */
-
 .card-cover-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
-
-.card-cover::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to bottom,
-        transparent 40%,
-        rgba(22, 25, 36, 0.85) 100%
-    );
-}
-
-.card-badge {
-    position: absolute;
-    top: 10px; left: 10px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-family: var(--font-display);
-    font-size: 0.62rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: white;
-    /* Solid 3.0: no backdrop-filter */
-    z-index: 2;
-}
-.badge-new { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-.badge-hot { background: var(--error); box-shadow: 0 0 10px rgba(255,66,102,0.4); }
-
-/* Reward indicator on cover */
-.card-reward {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    background: rgba(0,0,0,0.8);
-    border: 1px solid rgba(251,191,36,0.4);
-    border-radius: var(--radius-sm);
-    padding: 3px 8px;
-    font-family: var(--font-display);
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: var(--gold);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    /* Solid 3.0: no backdrop-filter */
-    z-index: 2;
-}
-
-.card-info {
-    padding: 14px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-.card-title {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 800;
-    margin-bottom: 4px;
-    letter-spacing: -0.2px;
-}
-.card-desc {
-    font-size: 0.82rem;
-    color: var(--text-tertiary-aa);
-    margin-bottom: 12px;
-    line-height: 1.4;
-    flex: 1;
-}
+.card-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,7,13,0.62); opacity: 0; transition: opacity .25s ease; }
+.game-card:is(:hover, :focus-within, :focus-visible) .card-overlay,
+.game-card.is-active .card-overlay { opacity: 1; }
+.game-play-btn { min-width: 120px; justify-content: center; }
 
 /* ================================================================
    SHOP HERO
@@ -2957,9 +2881,10 @@ details[open] summary::after { transform: rotate(45deg); }
     .hud-balance-row { flex: 1; min-width: 240px; }
     .hud-streak { width: 100%; }
 
-    /* Game cards */
-    .games-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
-    .card-info { padding: 18px; }
+    .games-carousel-nav { display: flex; }
+    .games-carousel-track { gap: 16px; }
+    .game-card--popular { width: min(40vw, 420px); }
+    .game-card--more { width: min(24vw, 280px); }
 
     /* Shop */
     .shop-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
@@ -3012,7 +2937,8 @@ details[open] summary::after { transform: rotate(45deg); }
 @media (min-width: 1024px) {
     .shop-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
     .nav-user { gap: 18px; }
-    .games-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .game-card--popular { width: min(34vw, 480px); }
+    .game-card--more { width: min(20vw, 300px); }
 }
 
 /* ================================================================

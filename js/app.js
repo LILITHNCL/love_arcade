@@ -811,6 +811,33 @@ function initLoadingStateObserver() {
     });
 }
 
+function initGamesCarousels() {
+    const tracks = document.querySelectorAll('[data-carousel-track]');
+    if (!tracks.length) return;
+
+    tracks.forEach((track) => {
+        const section = track.closest('.games-section');
+        const prevBtn = section?.querySelector('[data-carousel-prev]');
+        const nextBtn = section?.querySelector('[data-carousel-next]');
+        const scrollStep = () => Math.max(track.clientWidth * 0.85, 220);
+
+        prevBtn?.addEventListener('click', () => {
+            track.scrollBy({ left: -scrollStep(), behavior: 'smooth' });
+        });
+        nextBtn?.addEventListener('click', () => {
+            track.scrollBy({ left: scrollStep(), behavior: 'smooth' });
+        });
+    });
+
+    document.querySelectorAll('.game-card').forEach((card) => {
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('.game-play-btn')) return;
+            card.classList.toggle('is-active');
+        });
+        card.addEventListener('blur', () => card.classList.remove('is-active'), true);
+    });
+}
+
 function emergencyCleanup() {
     let changed = false;
 
@@ -2293,6 +2320,7 @@ applyIdentity();
 document.addEventListener('DOMContentLoaded', () => {
     initInteractiveMicroFX();
     initLoadingStateObserver();
+    initGamesCarousels();
 
     // Re-sincronizar UI por si algún sub-módulo modificó el DOM
     updateUI();

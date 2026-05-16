@@ -384,14 +384,17 @@
             </section>
 
             <!-- ── GAME CARDS ── -->
-            <div style="margin-bottom: 20px;">
-                <h2 class="section-title" style="margin-bottom: 4px;">¿Qué vamos a jugar?</h2>
-                <p class="section-subtitle">Gana monedas en cada partida</p>
-            </div>
-
-            <section id="games" class="games-grid">
-
-                <article class="game-card">
+            <section id="games" class="games-sections">
+                <div class="games-section">
+                    <div class="games-section-head">
+                        <h2 class="section-title">Juegos Populares</h2>
+                        <div class="games-carousel-nav" aria-hidden="true">
+                            <button type="button" class="games-carousel-btn" data-carousel-prev aria-label="Ver juegos populares anteriores">‹</button>
+                            <button type="button" class="games-carousel-btn" data-carousel-next aria-label="Ver más juegos populares">›</button>
+                        </div>
+                    </div>
+                    <div class="games-carousel-track games-carousel-track--popular" data-carousel-track>
+                        <article class="game-card game-card--popular" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -404,16 +407,11 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Rompecabezas</h3>
-                        <p class="card-desc">Une las piezas para completar la imagen y ganar monedas.</p>
-                        <a href="games/rompecabezas" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/rompecabezas" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
-                
-                <article class="game-card">
+                        <article class="game-card game-card--popular" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -426,16 +424,12 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Word Hunt</h3>
-                        <p class="card-desc">Encuentra todas las palabras ocultas en el tablero.</p>
-                        <a href="games/word-hunt" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/word-hunt" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
 
-                <article class="game-card">
+                        <article class="game-card game-card--popular" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -448,16 +442,23 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Ollin Smash</h3>
-                        <p class="card-desc">Destruye todos los bloques antes de que la pelota caiga.</p>
-                        <a href="games/ollin-smash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/ollin-smash" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
+                    </div>
+                </div>
 
-                <article class="game-card">
+                <div class="games-section">
+                    <div class="games-section-head">
+                        <h2 class="section-title">Más Juegos</h2>
+                        <div class="games-carousel-nav" aria-hidden="true">
+                            <button type="button" class="games-carousel-btn" data-carousel-prev aria-label="Ver juegos anteriores">‹</button>
+                            <button type="button" class="games-carousel-btn" data-carousel-next aria-label="Ver más juegos">›</button>
+                        </div>
+                    </div>
+                    <div class="games-carousel-track games-carousel-track--more" data-carousel-track>
+                        <article class="game-card game-card--more" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -470,16 +471,12 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Vortex</h3>
-                        <p class="card-desc">Elimina todas las naves enemigas en este frenético shooter espacial.</p>
-                        <a href="games/Shooter" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/Shooter" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
 
-                <article class="game-card">
+                        <article class="game-card game-card--more" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -492,16 +489,12 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">2048</h3>
-                        <p class="card-desc">Desliza las fichas y combina números iguales para sumarlos.</p>
-                        <a href="games/2048" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/2048" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
 
-                <article class="game-card">
+                        <article class="game-card game-card--more" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -514,16 +507,12 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Jungle Dash</h3>
-                        <p class="card-desc">Controla a un jaguar en la selva y salta para esquivar obstáculos. ¿Cuánto puedes resistir?</p>
-                        <a href="games/jungle-dash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/jungle-dash" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
 
-                <article class="game-card">
+                        <article class="game-card game-card--more" tabindex="0">
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
@@ -536,15 +525,12 @@
                             decoding="sync"
                         >
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Dodger</h3>
-                        <p class="card-desc">Sobrevive el mayor tiempo posible a la lluvia de asteroides.</p>
-                        <a href="games/Dodger" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="card-overlay">
+                        <a href="games/Dodger" class="btn-primary game-play-btn">Jugar</a>
                     </div>
                 </article>
-
+                    </div>
+                </div>
             </section>
 
 
