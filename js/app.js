@@ -830,10 +830,36 @@ function initGamesCarousels() {
     });
 
     document.querySelectorAll('.game-card').forEach((card) => {
+        let pointerDownX = null;
+        let pointerDownY = null;
+        let moved = false;
+
+        card.addEventListener('pointerdown', (event) => {
+            pointerDownX = event.clientX;
+            pointerDownY = event.clientY;
+            moved = false;
+        }, { passive: true });
+
+        card.addEventListener('pointermove', (event) => {
+            if (pointerDownX == null || pointerDownY == null) return;
+            const dx = Math.abs(event.clientX - pointerDownX);
+            const dy = Math.abs(event.clientY - pointerDownY);
+            if (dx > 8 || dy > 8) moved = true;
+        }, { passive: true });
+
         card.addEventListener('click', (event) => {
             if (event.target.closest('.game-play-btn')) return;
+            if (moved) return;
             card.classList.toggle('is-active');
         });
+        card.addEventListener('pointerup', () => {
+            pointerDownX = null;
+            pointerDownY = null;
+        }, { passive: true });
+        card.addEventListener('pointercancel', () => {
+            pointerDownX = null;
+            pointerDownY = null;
+        }, { passive: true });
         card.addEventListener('blur', () => card.classList.remove('is-active'), true);
     });
 }
