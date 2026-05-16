@@ -1167,8 +1167,8 @@
     "id": 109,
     "name": "Columbina",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/columbina_0e69d178",
-    "file": "columbina_0e69d178.avif",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_columbina_0e69d178",
+    "file": "pfp_columbina_0e69d178.avif",
     "tags": [
       "Avatar"
     ]
@@ -1177,8 +1177,8 @@
     "id": 110,
     "name": "Furina",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/furina_280a2068",
-    "file": "furina_280a2068.avif",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_furina_280a2068",
+    "file": "pfp_furina_280a2068.avif",
     "tags": [
       "Avatar"
     ]
@@ -1187,8 +1187,8 @@
     "id": 111,
     "name": "Mavuika",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/mavuika_9785a191",
-    "file": "mavuika_9785a191.avif",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_mavuika_9785a191",
+    "file": "pfp_mavuika_9785a191.avif",
     "tags": [
       "Avatar"
     ]
@@ -1217,8 +1217,8 @@
     "id": 114,
     "name": "Varesa",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/varesa_4cac5208",
-    "file": "varesa_4cac5208.avif",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_varesa_4cac5208",
+    "file": "pfp_varesa_4cac5208.avif",
     "tags": [
       "Avatar"
     ]
