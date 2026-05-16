@@ -3,8 +3,8 @@
     "id": 3,
     "name": "Shadow the Hedgehog",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_6ff623c4",
-    "file": "shadow_the_hedgehog_6ff623c4.webp",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_6ff623c4",
+    "file": "shadow_the_hedgehog_6ff623c4.avif",
     "tags": [
       "PC",
       "regalo"
@@ -20,8 +20,8 @@
     "id": 4,
     "name": "Shadow the Hedgehog",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_2_18b617f7",
-    "file": "shadow_the_hedgehog_2_18b617f7.webp",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_2_18b617f7",
+    "file": "shadow_the_hedgehog_2_18b617f7.avif",
     "tags": [
       "PC",
       "regalo"
@@ -37,8 +37,8 @@
     "id": 8,
     "name": "Blaze the Cat",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/blaze_the_cat_3ca68b7d",
-    "file": "blaze_the_cat_3ca68b7d.webp",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/blaze_the_cat_3ca68b7d",
+    "file": "blaze_the_cat_3ca68b7d.avif",
     "tags": [
       "PC",
       "regalo"
@@ -54,8 +54,8 @@
     "id": 10,
     "name": "Metal Sonic",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/metal_sonic_f76ecb8c",
-    "file": "metal_sonic_f76ecb8c.webp",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/metal_sonic_f76ecb8c",
+    "file": "metal_sonic_f76ecb8c.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -71,8 +71,8 @@
     "id": 21,
     "name": "Astra Yao",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/astra_yao_ec9bcd48",
-    "file": "astra_yao_ec9bcd48.webp",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/astra_yao_ec9bcd48",
+    "file": "astra_yao_ec9bcd48.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -88,8 +88,8 @@
     "id": 64,
     "name": "Jane Doe Chibi",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/jane_doe_chibi_2825e27f",
-    "file": "jane_doe_chibi_2825e27f.jpeg",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/jane_doe_chibi_2825e27f",
+    "file": "jane_doe_chibi_2825e27f.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -105,8 +105,8 @@
     "id": 65,
     "name": "Mitsuri",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/mitsuri_c03d99bc",
-    "file": "mitsuri_c03d99bc.jpg",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mitsuri_c03d99bc",
+    "file": "mitsuri_c03d99bc.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -122,8 +122,8 @@
     "id": 66,
     "name": "Furina",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_2d5569da",
-    "file": "furina_2d5569da.jpg",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_2d5569da",
+    "file": "furina_2d5569da.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -139,8 +139,8 @@
     "id": 67,
     "name": "Hielaguisantes",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/hielaguisantes_dfe630b4",
-    "file": "hielaguisantes_dfe630b4.jpg",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hielaguisantes_dfe630b4",
+    "file": "hielaguisantes_dfe630b4.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -156,8 +156,8 @@
     "id": 68,
     "name": "Hu Tao",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/hu_tao_11bb943c",
-    "file": "hu_tao_11bb943c.jpg",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hu_tao_11bb943c",
+    "file": "hu_tao_11bb943c.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -173,8 +173,8 @@
     "id": 75,
     "name": "Varesa",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/varesa_bjwn7cw5",
-    "file": "varesa_bjwn7cw5.png",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/varesa_bjwn7cw5",
+    "file": "varesa_bjwn7cw5.avif",
     "tags": [
       "Mobile",
       "regalo"
@@ -190,8 +190,8 @@
     "id": 108,
     "name": "Columbina",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/columbina_e0740cc9",
-    "file": "columbina_e0740cc9",
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/columbina_e0740cc9",
+    "file": "columbina_e0740cc9.avif",
     "tags": [
       "Mobile",
       "regalo"

@@ -97,8 +97,8 @@
  *    usan Cloudinary con la transformación ar_16:9,c_fill,g_auto,w_1080.
  *  - _getMockupUrl(item): nueva función privada que construye la URL Cloudinary
  *    con la transformación correcta según el tag del producto:
- *      · Mobile → f_auto,q_auto,ar_9:20,c_fill,w_500
- *      · PC     → f_auto,q_auto,ar_16:9,c_fill,w_1200
+ *      · Mobile → f_avif,q_auto,ar_9:20,c_fill,w_500
+ *      · PC     → f_avif,q_auto,ar_16:9,c_fill,w_1200
  *  - openPreviewModal(): Phase 2 ahora usa _getMockupUrl() en lugar de
  *    CONFIG.wallpapersPath + item.file, garantizando que el mockup siempre
  *    recibe la versión optimizada para el marco del dispositivo.
@@ -570,10 +570,10 @@ function _getMockupUrl(item) {
     const tags     = Array.isArray(item.tags) ? item.tags : [];
     const base     = item.file.replace(/\.[^.]+$/, ''); // strip extension → public ID
 
-    if (tags.includes('Mobile')) return `${CDN_BASE}f_auto,q_auto,ar_9:20,c_fill,w_500/${base}`;
-    if (tags.includes('Avatar')) return `${CDN_BASE}f_auto,q_auto,ar_1:1,c_fill,w_800/${base}`;
+    if (tags.includes('Mobile')) return `${CDN_BASE}f_avif,q_auto,ar_9:20,c_fill,w_500/${base}`;
+    if (tags.includes('Avatar')) return `${CDN_BASE}f_avif,q_auto,ar_1:1,c_fill,w_800/${base}`;
     // PC o no etiquetado — 16:9 widescreen
-    return `${CDN_BASE}f_auto,q_auto,ar_16:9,c_fill,w_1200/${base}`;
+    return `${CDN_BASE}f_avif,q_auto,ar_16:9,c_fill,w_1200/${base}`;
 }
 
 /**
