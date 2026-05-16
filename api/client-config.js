@@ -6,7 +6,7 @@
  *
  * Diseño:
  *  · Las credenciales se leen de variables de entorno declaradas en el
- *    dashboard de Vercel (NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY).
+ *    dashboard de Vercel (NEXT_PUBLIC_LA_CLOUD_URL y NEXT_PUBLIC_LA_CLOUD_ANON_KEY).
  *  · El Anon Key de Supabase es SEGURO para exponer al cliente:
  *    está protegido por Row Level Security (RLS) en la base de datos.
  *    Este endpoint solo evita hardcodear los valores en el repositorio.
@@ -14,8 +14,8 @@
  *  · Cache-Control: no-store para evitar que CDNs cacheen credenciales.
  *
  * Configurado en Vercel Dashboard → Settings → Environment Variables:
- *   NEXT_PUBLIC_SUPABASE_URL       URL del proyecto (ej: https://abc.supabase.co)
- *   NEXT_PUBLIC_SUPABASE_ANON_KEY  Llave API pública del proyecto
+ *   NEXT_PUBLIC_LA_CLOUD_URL       URL del proyecto (ej: https://abc.supabase.co)
+ *   NEXT_PUBLIC_LA_CLOUD_ANON_KEY  Llave API pública del proyecto
  */
 
 export const config = {
@@ -35,8 +35,8 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.NEXT_PUBLIC_LA_CLOUD_URL || '';
+  const supabaseKey = process.env.NEXT_PUBLIC_LA_CLOUD_ANON_KEY || '';
   
   if (!supabaseUrl || !supabaseKey) {
     // Variables no configuradas en Vercel → responder vacío (degradación elegante)

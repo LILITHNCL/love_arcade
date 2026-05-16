@@ -39,8 +39,8 @@ Cada entrada del array en `levels.json` debe contener exactamente los siguientes
 
 ### 2.2 `image` y `thumbnail`
 
-- **CA-IMG-01:** La imagen principal debe existir físicamente en `./assets/` con el formato `NivelN.webp`.
-- **CA-IMG-02:** La miniatura debe existir físicamente en `./assets/thumbnails/` con el formato `NivelN_thumb.webp`.
+- **CA-IMG-01:** La imagen principal debe existir físicamente en `./assets/` con el formato `NivelN.avif`.
+- **CA-IMG-02:** La miniatura debe existir físicamente en `./assets/thumbnails/` con el formato `NivelN_thumb.avif`.
 - **CA-IMG-03:** Ambas rutas deben ser accesibles desde el contexto raíz del proyecto; una ruta rota causará que `PuzzleEngine` no pueda cargar el nivel.
 
 ---
@@ -111,7 +111,7 @@ Los umbrales concretos según los valores de `pieces` válidos son:
 Antes de hacer `merge` de un nuevo nivel al repositorio, verificar todos los puntos:
 
 - [ ] **CA-NEW-01 · ID Único y Correlativo:** El campo `id` sigue la secuencia (`lvl_36`, `lvl_37`, ...) sin saltos ni duplicados.
-- [ ] **CA-NEW-02 · Activos Visuales Presentes:** La imagen `./assets/NivelN.webp` y su miniatura `./assets/thumbnails/NivelN_thumb.webp` existen en el repositorio antes del despliegue.
+- [ ] **CA-NEW-02 · Activos Visuales Presentes:** La imagen `./assets/NivelN.avif` y su miniatura `./assets/thumbnails/NivelN_thumb.avif` existen en el repositorio antes del despliegue.
 - [ ] **CA-NEW-03 · Piezas Válidas:** El valor de `pieces` es `16` o `25`. No se usan otros valores sin aprobación técnica.
 - [ ] **CA-NEW-04 · Validación de Economía:** `rewardCoins` es un entero positivo dentro del rango 150–270. Se verifica que `Economy.js` no lanzará error al recibir el valor.
 - [ ] **CA-NEW-05 · Tiempo Estándar:** `timeLimit` está configurado a `350`.
@@ -126,8 +126,8 @@ Antes de hacer `merge` de un nuevo nivel al repositorio, verificar todos los pun
 ```json
 {
   "id": "lvl_36",
-  "image": "./assets/Nivel36.webp",
-  "thumbnail": "./assets/thumbnails/Nivel36_thumb.webp",
+  "image": "./assets/Nivel36.avif",
+  "thumbnail": "./assets/thumbnails/Nivel36_thumb.avif",
   "pieces": 25,
   "rewardCoins": 270,
   "description": "El desafío definitivo",

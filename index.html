@@ -6,6 +6,17 @@
     <title>Love Arcade</title>
 
     <link rel="stylesheet" href="styles.css">
+    <!-- Include credentials so protected deployments can serve the manifest without 401 -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
+    <meta name="theme-color" content="#07070D">
+    <link rel="icon" href="/assets/icon/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/assets/icon/apple-touch-icon.png">
+
+    <!-- Preload critical above-the-fold game card images -->
+    <link rel="preload" as="image" href="assets/images/games/cover/rompecabezas-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/word-hunt-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/ollin-smash-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/images/games/cover/space-shooter-cover-art.avif" fetchpriority="high">
 
     <!--
       ╔══════════════════════════════════════════════════════════════╗
@@ -54,8 +65,6 @@
       } catch(e) { /* localStorage no disponible — continuar con tema por defecto */ }
     }();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-
 </head>
 <!--
   La clase theme-* ya NO va hardcodeada aquí.
@@ -221,6 +230,9 @@
         <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </symbol>
+        <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </symbol>
     </svg>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -231,16 +243,16 @@
     <!-- ── TOP NAVBAR ── -->
     <nav class="navbar glass-panel" aria-label="Navegación principal">
         <div class="nav-brand">
-            <svg class="icon" width="26" height="26" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg>
+            <svg class="nav-brand-icon" width="28" height="26" viewBox="0 0 13 12" preserveAspectRatio="xMidYMid meet" fill="none" aria-hidden="true" focusable="false">
+                <path d="M6,10 7,10 7,11 6,11 M7,9 8,9 8,10 7,10 M8,8 9,8 9,9 8,9 M9,7 10,7 10,8 9,8 M10,6 11,6 11,7 10,7 M11,5 12,5 12,6 11,6 M11,4 12,4 12,5 11,5 M11,3 12,3 12,4 11,4 M5,9 6,9 6,10 5,10 M4,8 5,8 5,9 4,9 M2,6 3,6 3,7 2,7 M1,5 2,5 2,6 1,6 M1,4 2,4 2,5 1,5 M1,3 2,3 2,4 1,4 M2,2 3,2 3,3 2,3 M3,1 4,1 4,2 3,2 M10,2 11,2 11,3 10,3 M9,1 10,1 10,2 9,2 M4,1 5,1 5,2 4,2 M8,1 9,1 9,2 8,2 M5,2 6,2 6,3 5,3 M7,2 8,2 8,3 7,3 M6,3 7,3 7,4 6,4 M6,9 7,9 7,10 6,10 M6,8 7,8 7,9 6,9 M7,8 8,8 8,9 7,9 M5,8 6,8 6,9 5,9 M7,7 8,7 8,8 7,8 M8,7 9,7 9,8 8,8 M6,7 7,7 7,8 6,8 M5,7 6,7 6,8 5,8 M4,7 5,7 5,8 4,8 M2,5 3,5 3,6 2,6 M2,3 3,3 3,4 2,4 M4,3 5,3 5,4 4,4 M3,2 4,2 4,3 3,3 M4,2 5,2 5,3 4,3 M3,7 4,7 4,8 3,8 M3,5 4,5 4,6 3,6 M3,6 4,6 4,7 3,7 M4,6 5,6 5,7 4,7 M4,5 5,5 5,6 4,6 M3,4 4,4 4,5 3,5 M4,4 5,4 5,5 4,5 M5,3 6,3 6,4 5,4 M5,6 6,6 6,7 5,7 M5,5 6,5 6,6 5,6 M5,4 6,4 6,5 5,5 M6,6 7,6 7,7 6,7 M6,5 7,5 7,6 6,6 M6,4 7,4 7,5 6,5 M7,6 8,6 8,7 7,7 M7,5 8,5 8,6 7,6 M7,4 8,4 8,5 7,5 M7,3 8,3 8,4 7,4 M8,2 9,2 9,3 8,3 M8,3 9,3 9,4 8,4 M9,3 10,3 10,4 9,4 M9,4 10,4 10,5 9,5 M8,6 9,6 9,7 8,7 M8,5 9,5 9,6 8,6 M8,4 9,4 9,5 8,5 M9,6 10,6 10,7 9,7 M9,5 10,5 10,6 9,6 M10,4 11,4 11,5 10,5 M10,3 11,3 11,4 10,4 M10,5 11,5 11,6 10,6 M9,2 10,2 10,3 9,3" fill="currentColor"></path>
+            </svg>
             Love<span>Arcade</span>
         </div>
 
         <ul class="nav-links">
             <li><a href="#" class="nav-link active" data-view="home">Inicio</a></li>
-            <li><a href="#" class="nav-link" data-view="home" data-anchor="games">Juegos</a></li>
             <li><a href="#" class="nav-link" data-view="shop">Tienda</a></li>
             <li><a href="#" class="nav-link" data-view="events">Eventos</a></li>
-            <li><a href="#" class="nav-link" data-view="home" data-anchor="faq">Ayuda</a></li>
         </ul>
 
         <div class="nav-user">
@@ -256,7 +268,7 @@
                 <span class="visually-hidden">monedas</span>
             </div>
             <label for="avatar-upload" class="avatar-container" aria-label="Cambiar foto de perfil">
-                <div class="avatar" id="user-avatar-display" style="background-image: url('assets/default_avatar.png');">
+                <div class="avatar" id="user-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                     <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                 </div>
                 <div class="avatar-edit-icon" aria-hidden="true"><svg class="icon" width="10" height="10"><use href="#icon-plus"></use></svg></div>
@@ -271,10 +283,6 @@
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg>
             <span>Inicio</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="home" data-anchor="games">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg>
-            <span>Juegos</span>
-        </a>
         <a href="#" class="b-nav-item" data-view="shop">
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg>
             <span>Tienda</span>
@@ -282,10 +290,6 @@
         <a href="#" class="b-nav-item" data-view="events">
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
             <span>Eventos</span>
-        </a>
-        <a href="#" class="b-nav-item" data-view="home" data-anchor="faq">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-help-circle"></use></svg>
-            <span>Ayuda</span>
         </a>
     </nav>
 
@@ -306,7 +310,7 @@
                 <div class="hud-top">
                     <div class="hud-avatar-wrap">
                     <label for="avatar-upload-hud" aria-label="Cambiar foto de perfil" class="avatar-label">
-                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('assets/default_avatar.png');">
+                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                                 <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
                             </div>
                         <input type="file" id="avatar-upload-hud" class="visually-hidden" accept="image/*">
@@ -387,7 +391,17 @@
             <section id="games" class="games-grid">
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/rompecabezas_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/rompecabezas-cover-art.avif"
+                            alt="Portada de Rompecabezas"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Rompecabezas</h3>
@@ -399,7 +413,17 @@
                 </article>
                 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/wordhunt_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/word-hunt-cover-art.avif"
+                            alt="Portada de Word Hunt"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Word Hunt</h3>
@@ -411,7 +435,17 @@
                 </article>
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/ollin_smash_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/ollin-smash-cover-art.avif"
+                            alt="Portada de Ollin Smash"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Ollin Smash</h3>
@@ -423,7 +457,17 @@
                 </article>
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/space_shooter_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/space-shooter-cover-art.avif"
+                            alt="Portada de Vortex"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Vortex</h3>
@@ -435,7 +479,17 @@
                 </article>
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/2048_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/2048-cover-art.avif"
+                            alt="Portada de 2048"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">2048</h3>
@@ -447,7 +501,17 @@
                 </article>
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/jungle_dash_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/jungle-dash-cover-art.avif"
+                            alt="Portada de Jungle Dash"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Jungle Dash</h3>
@@ -459,7 +523,17 @@
                 </article>
 
                 <article class="game-card">
-                    <div class="card-cover" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/f_auto,q_auto,ar_16:9,c_fill,g_auto,w_1080/dodger_cover_art');">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/dodger-cover-art.avif"
+                            alt="Portada de Dodger"
+                            width="1920"
+                            height="804"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Dodger</h3>
@@ -472,67 +546,6 @@
 
             </section>
 
-            <!-- ── FAQ ── -->
-            <section id="faq" style="margin-top: 72px;">
-                <div class="section-header">
-                    <div>
-                        <h2 class="section-title">Preguntas Frecuentes</h2>
-                        <p class="section-subtitle">Todo lo que necesitas saber</p>
-                    </div>
-                </div>
-                <div class="faq-grid">
-
-                    <details class="glass-panel">
-                        <summary>¿Cómo gano monedas?</summary>
-                        <div class="faq-content">
-                            Ganas monedas completando niveles en los juegos, canjeando códigos promocionales en la tienda, y reclamando el Bono Diario. La recompensa diaria escala con tu racha: empieza en 20 monedas y aumenta 5 por cada día consecutivo, hasta un máximo de 60. Activa la Bendición Lunar para sumar 90 monedas extra por reclamo.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Cómo descargo mis wallpapers?</summary>
-                        <div class="faq-content">
-                            Al canjear un item en la Tienda, el botón cambia a "Descargar" de forma instantánea. También puedes ir a la pestaña "Mis Tesoros" para ver y descargar todos tus wallpapers en cualquier momento, sin límite de veces.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Qué es el cashback?</summary>
-                        <div class="faq-content">
-                            Al comprar cualquier wallpaper, recibes automáticamente un porcentaje del precio pagado de vuelta a tu saldo. Lo verás reflejado en el toast de confirmación. Durante las ofertas especiales, el descuento y el cashback se combinan.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Qué es la Bendición Lunar?</summary>
-                        <div class="faq-content">
-                            La Bendición Lunar es un buff temporal que puedes activar desde la Tienda → Ajustes por 100 monedas. Mientras esté activa (7 días reales), cada vez que reclames el bono diario recibirás 90 monedas adicionales. El icono 🌙 aparece junto a tu saldo cuando está activo.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Cómo busco wallpapers específicos?</summary>
-                        <div class="faq-content">
-                            En la Tienda encontrarás una barra de búsqueda con debounce y filtros por categoría. Puedes filtrar por Todos, PC, Mobile, o tu Lista de Deseos. Los filtros se combinan con la búsqueda de texto en tiempo real.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Cómo cambio el tema de color?</summary>
-                        <div class="faq-content">
-                            Ve a Tienda → pestaña "Ajustes". Encontrarás el selector de tema con 5 opciones: Violeta, Rosa Neón, Cyan Arcade, Dorado y Carmesí Arcade. El color se aplica instantáneamente a toda la plataforma.
-                        </div>
-                    </details>
-
-                    <details class="glass-panel">
-                        <summary>¿Qué pasa si cambio de dispositivo?</summary>
-                        <div class="faq-content">
-                            No pierdes tu avance. Si inicias sesión, tu progreso se guarda en la nube y se recupera automáticamente al entrar en otro dispositivo con la misma cuenta. También puedes hacer una copia de seguridad local desde Tienda → Sincronizar (Exportar) y restaurarla luego con Importar.
-                        </div>
-                    </details>
-
-                </div>
-            </section>
 
         </div><!-- /#view-home -->
 
@@ -764,18 +777,42 @@
                             <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-lock"></use></svg>
                             Gestionar Cuenta
                         </button>
-                        <button id="btn-cloud-change-email" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cambiar correo
-                        </button>
-                        <button id="btn-cloud-change-password" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cambiar contraseña
-                        </button>
-                        <button id="btn-cloud-signout" class="btn-ghost" style="font-size:0.78rem; padding:9px 14px;">
-                            Cerrar sesión
-                        </button>
                     </div>
                     <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
                     <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
+                </div>
+
+                <div class="memory-card" id="push-notifications-card" style="border-color:rgba(155,89,255,0.45); margin-top:8px;">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(102,57,166,0.2)); border:1px solid rgba(155,89,255,0.5);">
+                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:var(--accent);"><use href="#icon-bell"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Recordatorios activos</h3>
+                            <p class="memory-card__sub">Recibe avisos importantes.</p>
+                        </div>
+                    </div>
+
+                    <p id="push-support-state" class="push-support-state"></p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                        <button id="btn-push-enable" class="btn-primary push-enable-btn" style="justify-content:center;">
+                            <svg class="icon push-enable-btn__icon" width="14" height="14" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                            <span class="push-enable-btn__label">Recibir novedades</span>
+                        </button>
+                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar aviso</button>
+                    </div>
+                    <p id="push-status-msg" class="feedback-msg" style="min-height:18px;"></p>
+                    <div id="push-recovery-card" class="push-recovery-card hidden" role="status" aria-live="polite">
+                        <p class="push-recovery-title">¡Casi listo! Solo falta un paso:</p>
+                        <p class="push-recovery-copy">Para recibir actualizaciones, tu navegador necesita un permiso manual:</p>
+                        <ol class="push-recovery-steps">
+                            <li>Toca el <strong>candado o escudo</strong> junto a la URL.</li>
+                            <li>Entra en <strong>Configuración del sitio</strong>.</li>
+                            <li>Ve a <strong>Permisos</strong> y activa <strong>Notificaciones</strong>.</li>
+                        </ol>
+                    </div>
+
+                    
                 </div>
             </section>
 
@@ -1055,44 +1092,10 @@
                 <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-x"></use></svg>
             </button>
 
-            <h3 id="cloud-gatekeeper-title" class="modal-title cloud-gatekeeper-title">Elige cómo quieres continuar</h3>
-            <p class="cloud-gatekeeper-sub">Guarda tu avance con cuenta o sigue como invitado.</p>
-
-            <div class="cloud-gatekeeper-tabs" role="tablist" aria-label="Opciones de acceso">
-                <button id="gate-tab-register" class="cloud-gatekeeper-tab is-active" role="tab" aria-selected="true" data-gate-tab="register">Crear cuenta</button>
-                <button id="gate-tab-login" class="cloud-gatekeeper-tab" role="tab" aria-selected="false" data-gate-tab="login">Iniciar sesión</button>
-            </div>
-
+            <h3 id="cloud-gatekeeper-title" class="modal-title cloud-gatekeeper-title">Inicia sesión para continuar</h3>
+            
             <div class="cloud-gatekeeper-panels">
-                <form id="cloud-register-form" class="cloud-gatekeeper-panel is-active" data-gate-panel="register">
-                    <label class="identity-label" for="cloud-register-nickname">Nombre de jugador</label>
-                    <input id="cloud-register-nickname" class="identity-input cloud-gatekeeper-input" type="text" maxlength="15" autocomplete="nickname" placeholder="ArcadeMaster" required>
-
-                    <label class="identity-label" for="cloud-register-email">Correo</label>
-                    <input id="cloud-register-email" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="tu@correo.com" required>
-
-                    <label class="identity-label" for="cloud-register-password">Contraseña</label>
-                    <div class="cloud-password-input-wrap">
-                        <input id="cloud-register-password" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="new-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                        <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-register-password" aria-label="Mostrar u ocultar password">
-                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                        </button>
-                    </div>
-                    <div class="cloud-password-strength" aria-hidden="true">
-                        <div id="cloud-register-password-strength" class="cloud-password-strength-bar"></div>
-                    </div>
-                    <p class="cloud-password-hint">Usa una frase larga y memorable. Estado óptimo: 16+ caracteres.</p>
-                    <button id="btn-generate-register-password" class="btn-ghost cloud-password-generate-btn" type="button">
-                        Generar contraseña segura
-                    </button>
-
-                    <button id="btn-cloud-register" class="btn-primary cloud-gatekeeper-submit" type="submit">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-plus"></use></svg>
-                        Crear cuenta
-                    </button>
-                </form>
-
-                <form id="cloud-login-form" class="cloud-gatekeeper-panel" data-gate-panel="login" aria-hidden="true">
+                <form id="cloud-login-form" class="cloud-gatekeeper-panel is-active" data-gate-panel="login">
                     <label class="identity-label" for="cloud-login-email">Correo</label>
                     <input id="cloud-login-email" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="tu@correo.com" required>
 
@@ -1109,54 +1112,6 @@
                         Iniciar sesión
                     </button>
                 </form>
-            </div>
-
-            <form id="cloud-email-form" class="cloud-password-form hidden">
-                <label class="identity-label" for="cloud-change-email-input">Nuevo correo electrónico</label>
-                <input id="cloud-change-email-input" class="identity-input cloud-gatekeeper-input" type="email" autocomplete="email" placeholder="nuevo@correo.com">
-                <button id="btn-cloud-change-email-submit" class="btn-ghost cloud-gatekeeper-submit" type="button">
-                    Solicitar cambio de correo
-                </button>
-                <p id="cloud-email-change-banner" class="cloud-email-change-banner hidden" role="status" aria-live="polite">
-                    <strong>Cambio pendiente:</strong> Hemos enviado un enlace de confirmación a tu correo actual y otro al nuevo. Debes confirmar ambos para finalizar el proceso.
-                </p>
-            </form>
-
-            <form id="cloud-password-form" class="cloud-password-form hidden">
-                <label class="identity-label" for="cloud-current-password-input">Contraseña actual</label>
-                <div class="cloud-password-input-wrap">
-                    <input id="cloud-current-password-input" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="current-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                    <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-current-password-input" aria-label="Mostrar u ocultar password">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                    </button>
-                </div>
-                <label class="identity-label" for="cloud-change-password-input">Nueva contraseña</label>
-                <div class="cloud-password-input-wrap">
-                    <input id="cloud-change-password-input" class="identity-input cloud-gatekeeper-input" type="password" autocomplete="new-password" minlength="16" placeholder="perro-azul-salta-alto" required>
-                    <button class="cloud-password-toggle" type="button" data-password-toggle="cloud-change-password-input" aria-label="Mostrar u ocultar password">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                    </button>
-                </div>
-                <div class="cloud-password-strength" aria-hidden="true">
-                    <div id="cloud-change-password-strength" class="cloud-password-strength-bar"></div>
-                </div>
-                <p class="cloud-password-hint">Usa una frase larga y memorable. Estado óptimo: 16+ caracteres.</p>
-                <button id="btn-generate-change-password" class="btn-ghost cloud-password-generate-btn" type="button">
-                    Generar contraseña segura
-                </button>
-
-                <button id="btn-cloud-change-password-submit" class="btn-primary cloud-gatekeeper-submit" type="submit" disabled>
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-shield-check"></use></svg>
-                    Actualizar contraseña
-                </button>
-            </form>
-
-            <div class="cloud-guest-block">
-                <p class="cloud-guest-note">Como invitado, tu avance se guarda en este dispositivo.</p>
-                <button id="btn-cloud-guest" class="btn-ghost" type="button">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-monitor"></use></svg>
-                    Continuar como invitado
-                </button>
             </div>
 
             <p id="cloud-gatekeeper-msg" class="feedback-msg cloud-gatekeeper-msg" aria-live="polite"></p>
@@ -1286,8 +1241,10 @@
     <script src="js/analytics.js"></script>     
     <script src="js/supabase-loader.js"></script>
     <script src="js/milestones-config.js"></script>
+    <script src="js/lifecycle-scheduler.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
+    <script src="js/push-notifications.js"></script>
     <script src="js/shop-logic.js"></script>
     <script src="js/spa-router.js"></script>
     <script src="js/event-logic.js"></script>
@@ -1339,7 +1296,7 @@
         }
 
         // ── Countdown (vista Inicio) ─────────────────────────────────────────
-        let _countdownInterval = null;
+        let _countdownLastSecond = null;
 
         function updateCountdownDisplay() {
             const canClaim    = window.GameCenter?.canClaimDaily?.();
@@ -1351,36 +1308,34 @@
             if (canClaim) {
                 countdownEl.classList.add('hidden');
                 if (dailyBtn) dailyBtn.disabled = false;
-                if (_countdownInterval) { clearInterval(_countdownInterval); _countdownInterval = null; }
                 return;
             }
 
             countdownEl.classList.remove('hidden');
             if (dailyBtn) dailyBtn.disabled = true;
 
-            function tick() {
-                const now      = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setHours(24, 0, 0, 0);
-                let diff = Math.max(0, tomorrow - now);
-                const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
-                diff %= 3_600_000;
-                const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');
-                diff %= 60_000;
-                const ss = String(Math.floor(diff / 1_000)).padStart(2, '0');
-                if (displayEl) displayEl.textContent = `${hh}:${mm}:${ss}`;
+            const now = Date.now();
+            const secBucket = Math.floor(now / 1000);
+            if (_countdownLastSecond === secBucket && !displayEl.textContent) return;
+            _countdownLastSecond = secBucket;
 
-                if (window.GameCenter?.canClaimDaily?.()) {
-                    countdownEl.classList.add('hidden');
-                    if (dailyBtn) dailyBtn.disabled = false;
-                    clearInterval(_countdownInterval);
-                    _countdownInterval = null;
-                }
-            }
-
-            tick();
-            if (!_countdownInterval) _countdownInterval = setInterval(tick, 1000);
+            const tomorrow = new Date(now);
+            tomorrow.setHours(24, 0, 0, 0);
+            let diff = Math.max(0, tomorrow.getTime() - now);
+            const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
+            diff %= 3_600_000;
+            const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');
+            diff %= 60_000;
+            const ss = String(Math.floor(diff / 1_000)).padStart(2, '0');
+            if (displayEl) displayEl.textContent = `${hh}:${mm}:${ss}`;
         }
+
+        const _homeCountdownTask = window.AppScheduler?.registerInterval(
+            'countdown',
+            'home-daily-countdown',
+            updateCountdownDisplay,
+            250
+        );
 
         // ── API pública para la vista Inicio (usada por spa-router.js) ────────
         window.HomeView = {
@@ -1395,7 +1350,11 @@
              * silenciosamente cuando se añadan recursos que requieran cleanup.
              */
             onLeave() {
-                // placeholder — listo para futuros IntersectionObservers o timers
+                window.AppScheduler?.pauseGroup?.('countdown');
+            },
+            onEnter() {
+                window.AppScheduler?.resumeGroup?.('countdown');
+                updateCountdownDisplay();
             }
         };
 
@@ -1406,6 +1365,87 @@
         updateStreakBar();
         updateCountdownDisplay();
 
+
+        const modalA11yState = {
+            activeModal: null,
+            modalTriggerMap: new WeakMap(),
+            focusTrapHandler: null,
+            hiddenSiblings: []
+        };
+
+        function getFocusableElements(container) {
+            if (!container) return [];
+            return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                .filter((el) => !el.disabled && !el.hidden && el.offsetParent !== null && !el.getAttribute('aria-hidden'));
+        }
+
+        function setBackgroundInteractivity(modalEl, blocked) {
+            const siblings = Array.from(document.body.children).filter((el) => el !== modalEl);
+            if (blocked) {
+                modalA11yState.hiddenSiblings = siblings;
+                siblings.forEach((el) => {
+                    el.setAttribute('aria-hidden', 'true');
+                    el.inert = true;
+                });
+                return;
+            }
+
+            (modalA11yState.hiddenSiblings || []).forEach((el) => {
+                el.removeAttribute('aria-hidden');
+                el.inert = false;
+            });
+            modalA11yState.hiddenSiblings = [];
+        }
+
+        function trapModalFocus(modalEl) {
+            if (!modalEl) return;
+            if (modalA11yState.focusTrapHandler) {
+                document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
+            }
+
+            modalA11yState.focusTrapHandler = (e) => {
+                if (e.key !== 'Tab' || modalA11yState.activeModal !== modalEl) return;
+                const focusables = getFocusableElements(modalEl);
+                if (!focusables.length) return;
+
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                const current = document.activeElement;
+
+                if (e.shiftKey && current === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && current === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            };
+
+            document.addEventListener('keydown', modalA11yState.focusTrapHandler, true);
+        }
+
+        window.ModalA11y = {
+            open(modalEl, triggerEl) {
+                if (!modalEl) return;
+                const opener = triggerEl || document.activeElement;
+                if (opener) modalA11yState.modalTriggerMap.set(modalEl, opener);
+                modalA11yState.activeModal = modalEl;
+                setBackgroundInteractivity(modalEl, true);
+                trapModalFocus(modalEl);
+            },
+            close(modalEl) {
+                if (!modalEl) return;
+                setBackgroundInteractivity(modalEl, false);
+                if (modalA11yState.focusTrapHandler) {
+                    document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
+                    modalA11yState.focusTrapHandler = null;
+                }
+                modalA11yState.activeModal = null;
+                const trigger = modalA11yState.modalTriggerMap.get(modalEl);
+                trigger?.focus?.();
+            }
+        };
+
         // ── Identity Modal — función reutilizable (bienvenida + edición) ────
         //
         // mode = 'welcome' → primer acceso: título/botón de bienvenida, sin
@@ -1414,11 +1454,91 @@
         //                    título/botón de edición, NO llama revealUI()
         //                    (el HUD ya está visible).
         //
+        const identityModalState = {
+            mode: 'welcome',
+            selectedGender: '@'
+        };
+
+        function setActiveGenderChip(gender) {
+            const identityModal = document.getElementById('identity-modal');
+            if (!identityModal) return;
+            const chips = identityModal.querySelectorAll('.identity-chip');
+            chips.forEach((chip) => {
+                chip.classList.toggle('identity-chip--active', chip.dataset.gender === gender);
+            });
+        }
+
+        function confirmIdentityFromModal() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const errorEl = document.getElementById('identity-input-error');
+            const nickname = nicknameInput?.value.trim() || '';
+
+            if (!nickname) {
+                errorEl?.classList.remove('hidden');
+                nicknameInput?.focus();
+                return;
+            }
+
+            window.GameCenter?.setIdentity?.(nickname, identityModalState.selectedGender);
+            identityModal?.classList.add('hidden');
+            window.ModalA11y?.close?.(identityModal);
+            if (identityModalState.mode !== 'edit') {
+                window.revealUI?.();
+            }
+        }
+
+        function initIdentityModalListeners() {
+            const identityModal = document.getElementById('identity-modal');
+            const nicknameInput = document.getElementById('identity-nickname-input');
+            const charCount = document.getElementById('identity-char-count');
+            const errorEl = document.getElementById('identity-input-error');
+            const confirmBtn = document.getElementById('identity-confirm-btn');
+
+            if (!identityModal) return;
+
+            identityModal.addEventListener('click', (e) => {
+                const chip = e.target.closest('.identity-chip');
+                if (chip && identityModal.contains(chip)) {
+                    identityModalState.selectedGender = chip.dataset.gender || '@';
+                    setActiveGenderChip(identityModalState.selectedGender);
+                    return;
+                }
+
+                if (identityModalState.mode === 'edit' && e.target === identityModal) {
+                    identityModal.classList.add('hidden');
+                    window.ModalA11y?.close?.(identityModal);
+                }
+            });
+
+            nicknameInput?.addEventListener('input', () => {
+                if (charCount) charCount.textContent = `${nicknameInput.value.length}/15`;
+                if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
+            });
+
+            nicknameInput?.addEventListener('focus', () => {
+                setTimeout(() => {
+                    document.getElementById('identity-confirm-btn')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 350);
+            });
+
+            nicknameInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmIdentityFromModal();
+                }
+            });
+
+            confirmBtn?.addEventListener('click', confirmIdentityFromModal);
+        }
+
         function openIdentityModal(mode) {
             const identityModal = document.getElementById('identity-modal');
             if (!identityModal) { if (mode === 'welcome') window.revealUI?.(); return; }
 
             const isEdit = (mode === 'edit');
+            identityModalState.mode = isEdit ? 'edit' : 'welcome';
 
             // ── Adaptar textos según modo ───────────────────────────────────
             const titleEl   = document.getElementById('identity-modal-title-text');
@@ -1433,7 +1553,7 @@
 
             // ── Pre-rellenar valores actuales en modo edición ───────────────
             const currentIdentity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
-            let selectedGender = isEdit ? currentIdentity.gender : '@';
+            identityModalState.selectedGender = isEdit ? currentIdentity.gender : '@';
 
             const nicknameInput = document.getElementById('identity-nickname-input');
             const charCount     = document.getElementById('identity-char-count');
@@ -1445,78 +1565,15 @@
             }
 
             // ── Chips: marcar la selección actual ──────────────────────────
-            const chips = identityModal.querySelectorAll('.identity-chip');
-            chips.forEach(chip => {
-                chip.classList.toggle('identity-chip--active', chip.dataset.gender === selectedGender);
-            });
+            setActiveGenderChip(identityModalState.selectedGender);
 
             // ── Mostrar modal ──────────────────────────────────────────────
             identityModal.classList.remove('hidden');
+            window.ModalA11y?.open?.(identityModal, document.activeElement);
             errorEl?.classList.add('hidden');
-
-            // ── Listeners (se registran con {once:true} para evitar duplicados)
-            chips.forEach(chip => {
-                chip.addEventListener('click', () => {
-                    selectedGender = chip.dataset.gender;
-                    chips.forEach(c => c.classList.toggle('identity-chip--active', c === chip));
-                }, { once: false }); // chips pueden ser clicados varias veces en el mismo modal
-            });
-
-            if (nicknameInput && charCount) {
-                nicknameInput.addEventListener('input', () => {
-                    charCount.textContent = `${nicknameInput.value.length}/15`;
-                    if (nicknameInput.value.trim()) errorEl?.classList.add('hidden');
-                });
-            }
 
             // ── Focus automático ───────────────────────────────────────────
             setTimeout(() => nicknameInput?.focus(), 280);
-
-            // ── Scroll para teclado móvil ──────────────────────────────────
-            nicknameInput?.addEventListener('focus', () => {
-                setTimeout(() => {
-                    document.getElementById('identity-confirm-btn')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 350);
-            });
-
-            // ── Confirmar ──────────────────────────────────────────────────
-            function confirmIdentity() {
-                const nickname = nicknameInput?.value.trim() || '';
-                if (!nickname) {
-                    errorEl?.classList.remove('hidden');
-                    nicknameInput?.focus();
-                    return;
-                }
-                window.GameCenter?.setIdentity?.(nickname, selectedGender);
-                identityModal.classList.add('hidden');
-                if (!isEdit) {
-                    window.revealUI?.();
-                }
-                // En modo edición el HUD ya es visible; applyIdentity() ya fue
-                // llamado por setIdentity() → el DOM se actualiza al instante.
-            }
-
-            document.getElementById('identity-confirm-btn')
-                ?.addEventListener('click', confirmIdentity, { once: true });
-
-            nicknameInput?.addEventListener('keydown', function onEnter(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    nicknameInput.removeEventListener('keydown', onEnter);
-                    confirmIdentity();
-                }
-            });
-
-            // ── Cerrar al hacer clic en el overlay (solo en modo edición) ──
-            if (isEdit) {
-                identityModal.addEventListener('click', function onOverlayClick(e) {
-                    if (e.target === identityModal) {
-                        identityModal.classList.add('hidden');
-                        identityModal.removeEventListener('click', onOverlayClick);
-                    }
-                });
-            }
         }
 
         // ── Identity Flow — v9.4 ────────────────────────────────────────────
@@ -1528,6 +1585,8 @@
         // ── Botón de edición en el HUD ──────────────────────────────────────
         document.getElementById('btn-edit-identity')
             ?.addEventListener('click', () => openIdentityModal('edit'));
+
+        initIdentityModalListeners();
 
         // ── Post-claim UI refresh ────────────────────────────────────────────
         // El handler principal de #btn-daily (reclamo, validación, mensaje)

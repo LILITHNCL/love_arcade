@@ -267,7 +267,7 @@ Ahora (v9.3):          Script síncrono → applyTheme → init saldo → reveal
 
 **Archivo:** `styles.css`
 
-**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`assets/default_avatar.png`) antes de que JS aplicara la imagen guardada.
+**Causa:** `.hud-avatar-wrap` era visible inmediatamente con el avatar por defecto (`https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif`) antes de que JS aplicara la imagen guardada.
 
 **Solución:**
 
@@ -417,7 +417,7 @@ Se eliminan las carpetas locales `assets/product-thumbs/` y `assets/cover/` del 
 | Archivo | Cambio |
 |---|---|
 | `data/shop.json` | El campo `image` de cada producto ya no apunta a `assets/product-thumbs/`. Ahora es una URL Cloudinary con `ar_16:9,c_fill,g_auto,w_640`. |
-| `index.html` | Las 9 carátulas de juegos (`card-cover`) usan URLs Cloudinary `ar_16:9,c_fill,g_auto,w_1080` en lugar de `assets/cover/`. |
+| `index.html` | Las carátulas de juegos (`card-cover`) del catálogo principal ahora usan rutas locales en `assets/images/games/cover/*.avif` (sin Cloudinary). |
 | `js/app.js` | `getDownloadUrl()` ahora devuelve la URL maestra de Cloudinary sin extensión ni transformaciones: `https://res.cloudinary.com/dyspgn0sw/image/upload/{public_id}`. |
 | `js/shop-logic.js` | Nueva función privada `_getMockupUrl(item)`. `openPreviewModal()` usa `_getMockupUrl()` en lugar de `CONFIG.wallpapersPath + item.file`. |
 
@@ -1797,7 +1797,7 @@ love_arcade/
 │
 ├── wallpapers/             # Carpeta local legacy (reemplazada por Cloudinary CDN)
 ├── assets/
-│   └── default_avatar.png
+│   └── default_avatar.avif
 │
 │   # assets/product-thumbs/ → ELIMINADA en v9.5 (Cloudinary CDN Migration)
 │   # assets/cover/          → ELIMINADA en v9.5 (Cloudinary CDN Migration)
@@ -4763,8 +4763,8 @@ El Sentinel vive **exclusivamente en `js/app.js`** como una IIFE (`SentinelCloud
 
 | Variable | Descripción |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto en Supabase (ej: `https://abc.supabase.co`) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Llave API pública (Anon). Segura en cliente gracias a RLS. |
+| `NEXT_PUBLIC_LA_CLOUD_URL` | URL del proyecto en Supabase (ej: `https://abc.supabase.co`) |
+| `NEXT_PUBLIC_LA_CLOUD_ANON_KEY` | Llave API pública (Anon). Segura en cliente gracias a RLS. |
 
 > **Nota de seguridad:** El Anon Key de Supabase está diseñado para ser público. La seguridad real la provee la política de Row Level Security (RLS) de la base de datos, que garantiza que cada usuario solo pueda leer y escribir su propio perfil.
 
@@ -4900,7 +4900,7 @@ window.Sentinel.getSession()
 |---|---|---|
 | `index.html` | **Modificado** | CDN de `@supabase/supabase-js@2` en `<head>`. Card "Sincronización en la Nube" en `#tab-sync`. Panel de login (email + Magic Link) y panel de sesión (estado, sync manual, cerrar sesión). Comentario de orden de scripts actualizado. |
 | `js/app.js` | **Modificado** | IIFE `SentinelCloudSync` añadida al final. Incluye: `SENTINEL_WATCHED_KEYS`, `StorageInterceptor`, `_buildSnapshot()`, `_applySnapshot()`, `_sentinelSync()`, `_sentinelLoad()`, `_sentinelScheduleSync()`, `_handleSignIn()`, `_handleSignOut()`, listeners de UI, `_sentinelInit()`, `window.Sentinel` API pública. |
-| `api/client-config.js` | **Nuevo** | Función serverless Vercel. Expone `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` al cliente. Cache-Control: no-store. Bodyparser desactivado (GET-only). |
+| `api/client-config.js` | **Nuevo** | Función serverless Vercel. Expone `NEXT_PUBLIC_LA_CLOUD_URL` y `NEXT_PUBLIC_LA_CLOUD_ANON_KEY` al cliente. Cache-Control: no-store. Bodyparser desactivado (GET-only). |
 | `vercel.json` | **Modificado** | Header `Content-Type: application/json` y `Cache-Control: no-store` para rutas `/api/*`. Sin cambios en rewrites (la regla `/api/(.*)` existente cubre el nuevo endpoint). |
 | `DOCUMENTACION.md` | **Modificado** | Sección §2ad añadida. ToC actualizado. Header actualizado a v13.0. |
 
@@ -4919,7 +4919,7 @@ La v14.0 mueve el acceso cloud desde la zona de tienda a un **flujo de entrada a
 | Área | Cambio |
 |---|---|
 | **Entrada automática** | Al cargar (`DOMContentLoaded`), si no hay sesión cloud y no hay identidad local, se abre automáticamente el **Modal de Acceso Unificado** y se bloquea el acceso hasta elegir registro/login o entrar como invitad@. |
-| **Modo Invitado** | El botón "Invitado" activa estado guest, permite entrar al hub y deja mensaje explícito de progreso volátil. |
+| **Modo Invitado** | Eliminado en v14.2. El acceso requiere sesión Supabase válida. |
 | **Dashboard en Tienda** | La tarjeta de nube pasa a ser un panel de cuenta: estado (`En línea` / `Invitado`), última sincronización (`updated_at`) y acciones de gestión (`Cambiar Contraseña`, `Cerrar Sesión`). |
 | **Contraseñas reforzadas** | Registro y cambio de contraseña exigen: mínimo 20 caracteres, mayúscula, minúscula, dígito y símbolo (`@$!%*?&`). |
 | **Validación en vivo** | Reglas visuales bajo el input cambian de rojo a verde en tiempo real y bloquean submit hasta cumplir el 100% de requisitos. |
@@ -4948,8 +4948,8 @@ public.user_profiles (
 
 1. `DOMContentLoaded` evalúa identidad local y sesión cloud.
 2. Si falta ambas, se abre Gatekeeper en modo bloqueado.
-3. Registro/Login habilitan sesión cloud (con `nickname` en `signUp.options.data`).
-4. Invitado desbloquea acceso local y mantiene estado volátil.
+3. Solo `Login` habilita sesión cloud para usuarios ya provisionados por administración en Supabase.
+4. Si no hay sesión activa, el middleware de acceso mantiene el gatekeeper bloqueado.
 5. Sentinel sincroniza con debounce de 1 s y actualiza `updated_at` para dashboard.
 *Arquitectura: vanilla JS + Vercel Serverless + Supabase (Auth + PostgreSQL JSONB) · Compatible con GitHub Pages (frontend) + Vercel (proxy + serverless)*
 
@@ -4958,6 +4958,16 @@ public.user_profiles (
 Esta versión endurece la persistencia local para evitar `QuotaExceededError` y proteger el progreso del jugador cuando el almacenamiento del navegador está cerca del límite (5–10 MB según navegador/dispositivo).
 
 ### Cambios clave
+
+### Registro de mantenimiento
+
+- **Fecha:** 2026-05-15  
+  **Cambio:** Se eliminó del Gatekeeper el registro (`signUp`) y el acceso "Continuar como invitado"; el modal quedó centrado únicamente en `Iniciar sesión` con Supabase.  
+  **Razón técnica:** *Control administrativo estricto de usuarios desde Supabase y simplificación del flujo de autenticación*.
+
+- **Fecha:** 2026-05-15  
+  **Cambio:** Se retiraron de la interfaz de "Sincronización en la Nube" las acciones de `Cambiar Contraseña`, `Cambiar Correo` y `Cerrar Sesión`, junto con su lógica cliente asociada.  
+  **Razón técnica:** *Gestión de credenciales delegada nativamente a Supabase para simplificar la lógica del cliente*.
 
 | Área | Cambio |
 |---|---|

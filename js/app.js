@@ -339,23 +339,6 @@ function _readTimeCache() {
 // ── Sincronización en segundo plano ──────────────────────────────────────
 
 /**
- * Lanza una petición a una URL de tiempo con timeout propio.
- * @param {string}   url
- * @param {function} extract  Extrae el timestamp del objeto JSON.
- * @returns {Promise<number>} Timestamp en ms.
- */
-function _fetchTimeSource(url, extract) {
-    return new Promise((resolve, reject) => {
-        const ctrl = new AbortController();
-        const tid  = setTimeout(() => { ctrl.abort(); reject(new Error('timeout')); }, TIME_API_TIMEOUT);
-        fetch(url, { cache: 'no-store', signal: ctrl.signal })
-            .then(r  => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(d  => { clearTimeout(tid); resolve(extract(d)); })
-            .catch(e => { clearTimeout(tid); reject(e); });
-    });
-}
-
-/**
  * Lee el encabezado HTTP Date del propio origen (Vercel) para tener una
  * referencia de tiempo sin depender de CORS de terceros.
  *
@@ -398,8 +381,8 @@ function _scheduleTimeSync(delay = 0) {
 }
 
 /**
- * Sincroniza el caché de tiempo en segundo plano: consulta las APIs en
- * paralelo (Promise.any) y persiste el resultado SIN bloquear la UI.
+ * Sincroniza el caché de tiempo en segundo plano usando el encabezado HTTP
+ * Date del propio origen y persiste el resultado SIN bloquear la UI.
  *
  * No retorna ningún valor útil — su único efecto es actualizar el caché.
  * Se llama automáticamente al cargar la página, al volver a la pestaña
@@ -407,13 +390,7 @@ function _scheduleTimeSync(delay = 0) {
  */
 async function _syncTimeBackground() {
     try {
-        const networkTime = await Promise.any([
-            _fetchTimeSource(
-                'https://timeapi.io/api/time/current/ip',
-                d => new Date(d.dateTime ?? d.datetime).getTime()
-            ),
-            _fetchServerDateHeader()
-        ]);
+        const networkTime = await _fetchServerDateHeader();
 
         const drift    = networkTime - Date.now();
         const desynced = Math.abs(drift) > CLOCK_SKEW_LIMIT;
@@ -478,6 +455,15 @@ window.workerTask = workerTask;
 // Garantiza retrocompatibilidad con stores de versiones anteriores.
 // Nunca sobrescribe datos existentes; solo rellena campos faltantes.
 // =====================================================
+/**
+ * Normaliza estado persistido y aplica migraciones backward-compatible.
+ *
+ * Precondiciones: `loadedStore` puede venir incompleto o con schema legado.
+ * Efectos secundarios: ninguno fuera del objeto retornado (función pura).
+ * Coste esperado: O(p) sobre cantidad de propiedades/colecciones migradas.
+ * Diseño (por qué): centralizar migración en un único punto reduce riesgo de
+ * corrupción al agregar features y evita condicionales de versión dispersos.
+ */
 function migrateState(loadedStore) {
     const defaults = {
         coins:          CONFIG.initialCoins,
@@ -727,6 +713,16 @@ function _showStorageToast(message, type = 'warning') {
 
 function initInteractiveMicroFX() {
     const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
+    const coarsePointerMql = window.matchMedia('(pointer: coarse)');
+    const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let coarsePointer = coarsePointerMql.matches;
+    let reducedMotion = reducedMotionMql.matches;
+    const _bindMediaChange = (mql, handler) => {
+        if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
+        else if (typeof mql.addListener === 'function') mql.addListener(handler);
+    };
+    _bindMediaChange(coarsePointerMql, (e) => { coarsePointer = e.matches; });
+    _bindMediaChange(reducedMotionMql, (e) => { reducedMotion = e.matches; });
     const isAndroid = /Android/i.test(navigator.userAgent || '');
     let activePressEl = null;
 
@@ -745,24 +741,38 @@ function initInteractiveMicroFX() {
         if (!el) return;
         releasePress();
         activePressEl = el;
-        const rect = el.getBoundingClientRect();
         if (!el.classList.contains('interactive-ripple')) {
             el.classList.add('interactive-ripple');
         }
-        el.style.setProperty('--tap-x', `${event.clientX - rect.left}px`);
-        el.style.setProperty('--tap-y', `${event.clientY - rect.top}px`);
+        el.classList.add('ripple-active');
         el.classList.add('is-pressing');
-        el.classList.remove('is-rippling');
-        requestAnimationFrame(() => el.classList.add('is-rippling'));
-        setTimeout(() => el.classList.remove('is-rippling'), 430);
-        if (isAndroid && navigator.vibrate) {
+        if (!reducedMotion && !coarsePointer) {
+            const rect = el.getBoundingClientRect();
+            el.style.setProperty('--tap-x', `${event.clientX - rect.left}px`);
+            el.style.setProperty('--tap-y', `${event.clientY - rect.top}px`);
+            el.classList.remove('is-rippling');
+            requestAnimationFrame(() => el.classList.add('is-rippling'));
+            setTimeout(() => {
+                el.classList.remove('is-rippling');
+                el.classList.remove('ripple-active');
+            }, 430);
+        } else {
+            setTimeout(() => el.classList.remove('ripple-active'), 90);
+        }
+        if (isAndroid && _canUseVibration()) {
             navigator.vibrate(8);
         }
     }, { passive: true });
 
-    document.addEventListener('pointerup', releasePress, { passive: true });
-    document.addEventListener('pointercancel', releasePress, { passive: true });
-    document.addEventListener('scroll', releasePress, { passive: true });
+    document.addEventListener('pointerup', () => {
+        releasePress();
+    }, { passive: true });
+    document.addEventListener('pointercancel', () => {
+        releasePress();
+    }, { passive: true });
+    document.addEventListener('scroll', () => {
+        releasePress();
+    }, { passive: true });
 }
 
 function initLoadingStateObserver() {
@@ -1978,19 +1988,39 @@ function applyTheme(key) {
     // Este es el mecanismo principal para que CSS pueda usar
     // body.theme-violet .selector { ... } sin variables dinámicas.
     const bodyClasses = document.body.classList;
-    Object.keys(THEMES).forEach(k => bodyClasses.remove(`theme-${k}`));
-    bodyClasses.add(`theme-${key}`);
+    const nextThemeClass = `theme-${key}`;
+    const prevThemeClass = document.body.dataset.activeThemeClass;
+    if (!prevThemeClass) {
+        Array.from(bodyClasses).forEach((className) => {
+            if (className.startsWith('theme-') && className !== nextThemeClass) {
+                bodyClasses.remove(className);
+            }
+        });
+    } else if (prevThemeClass !== nextThemeClass) {
+        bodyClasses.remove(prevThemeClass);
+    }
+    if (!bodyClasses.contains(nextThemeClass)) {
+        bodyClasses.add(nextThemeClass);
+    }
+    document.body.dataset.activeThemeClass = nextThemeClass;
 
     // ── data-theme en <html> (retrocompatibilidad con atributo CSS selector) ──
     document.documentElement.setAttribute('data-theme', key);
 
     // ── Actualizar estado visual de los botones de tema ───────────────────────
-    document.querySelectorAll('.theme-btn').forEach(btn => {
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const activeButton = document.querySelector(`.theme-btn[data-theme="${key}"]`);
+    themeButtons.forEach(btn => {
         const isActive = btn.dataset.theme === key;
-        btn.classList.toggle('theme-btn--active', isActive);
-        // aria-pressed comunica el estado seleccionado a lectores de pantalla (WCAG 4.1.2)
-        btn.setAttribute('aria-pressed', String(isActive));
+        if (!isActive && btn.classList.contains('theme-btn--active')) {
+            btn.classList.remove('theme-btn--active');
+            btn.setAttribute('aria-pressed', 'false');
+        }
     });
+    if (activeButton) {
+        activeButton.classList.add('theme-btn--active');
+        activeButton.setAttribute('aria-pressed', 'true');
+    }
 }
 
 function updateDailyButton() {
@@ -2058,8 +2088,15 @@ function updateMoonBlessingUI() {
 
 let _streakMilestoneModalLocked = false;
 
+function _canUseVibration() {
+    if (!navigator?.vibrate) return false;
+    const userActivation = navigator.userActivation;
+    if (!userActivation) return true;
+    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
+}
+
 function _vibrateLight() {
-    if (navigator?.vibrate) navigator.vibrate(12);
+    if (_canUseVibration()) navigator.vibrate(12);
 }
 
 function _getPendingStreakMilestone() {
@@ -2150,10 +2187,13 @@ function showStreakMilestoneModal() {
 // REVEAL UI — v9.3 Zero-Flicker
 // =====================================================
 /**
- * Añade la clase .is-ready a los contenedores de datos críticos,
- * disparando su transición de opacidad (0 → 1) en el siguiente frame.
- * Se llama DESPUÉS de escribir los valores correctos en el DOM para que
- * el usuario nunca vea el estado "vacío" o con datos por defecto del HTML.
+ * Revela bloques críticos de UI en el primer frame seguro tras hidratación.
+ *
+ * Precondiciones: saldo/avatar/hud ya escritos con valores reales.
+ * Efectos secundarios: escrituras DOM de clases CSS; dispara transiciones visuales.
+ * Coste esperado: O(n) sobre nodos HUD (pequeño y acotado).
+ * Diseño (por qué): usar `requestAnimationFrame` separa "hidratar datos" de
+ * "mostrar UI", evitando flicker del estado placeholder y layout-shift temprano.
  */
 function revealUI() {
     requestAnimationFrame(() => {
@@ -2329,12 +2369,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const startPlaytimeTicker = () => {
         if (_playtimeTicker) return;
         _visibleStartedAt = Date.now();
-        _playtimeTicker = setInterval(flushVisiblePlaytime, 15_000);
+        _playtimeTicker = window.AppScheduler?.registerInterval('sync', 'playtime-flush', flushVisiblePlaytime, 15_000) || setInterval(flushVisiblePlaytime, 15_000);
     };
 
     const stopPlaytimeTicker = () => {
         flushVisiblePlaytime();
-        clearInterval(_playtimeTicker);
+if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
+            window.AppScheduler.clearIntervalTask(_playtimeTicker);
+        } else {
+            clearInterval(_playtimeTicker);
+        }
         _playtimeTicker = null;
         _visibleStartedAt = 0;
     };
@@ -2358,7 +2402,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Refresco periódico cada 30 min por si la app permanece abierta mucho tiempo
-    setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
+    window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
+        || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
 
     // Avatar upload — delegado único
     document.addEventListener('change', async (e) => {
@@ -2492,7 +2537,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Clave del registro de marca de tiempo local (para Last Write Wins)
     const SENTINEL_TS_KEY = 'love_arcade_sentinel_ts';
-    const SENTINEL_GUEST_KEY = 'love_arcade_guest_mode';
 
     // Tabla de Supabase
     const SUPABASE_TABLE = 'user_profiles';
@@ -2584,22 +2628,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function _setAccountStateLabel(isOnline) {
         const el = document.getElementById('cloud-account-state');
         if (!el) return;
-        el.textContent = isOnline ? 'Estado: En línea' : 'Estado: Invitado';
+        el.textContent = isOnline ? 'Estado: En línea' : 'Estado: Sin sesión';
         el.style.color = isOnline ? '#68d391' : 'var(--text-low)';
     }
 
     function _setSessionEmail(email) {
         const el = document.getElementById('cloud-session-email');
         if (el) el.textContent = email || '';
-    }
-
-    function _setGuestMode(active) {
-        if (active) _originalSetItem(SENTINEL_GUEST_KEY, '1');
-        else localStorage.removeItem(SENTINEL_GUEST_KEY);
-    }
-
-    function _isGuestMode() {
-        return localStorage.getItem(SENTINEL_GUEST_KEY) === '1';
     }
 
     // ── Snapshot — lectura/escritura del estado vigilado ─────────────────────
@@ -2668,8 +2703,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Sincronización hacia la nube ──────────────────────────────────────────
 
     /**
-     * Sube el snapshot actual a Supabase (upsert).
-     * Guarda la marca de tiempo local del envío para Last Write Wins.
+     * Sincroniza el snapshot local hacia Supabase cuando existe sesión activa.
+     * Flujo: snapshot local -> upsert en user_profiles -> marca de tiempo local -> refresco UI.
+     * @returns {Promise<void>}
      */
     async function _sentinelSync() {
         if (!_sbClient || !_sbSession || _isRestoringSession) return;
@@ -2777,38 +2813,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Carga/merge desde la nube — Sentinel v14.0 ──────────────────────────
 
-    async function _migrateGuestData(cloudData = {}) {
-        if (!_sbClient || !_sbSession) return cloudData || {};
-
-        const localGuestData = _buildSnapshot();
-        const hasGuestProgress = Object.keys(localGuestData).length > 0;
-        if (!hasGuestProgress) {
-            _setGuestMode(false);
-            return cloudData || {};
-        }
-
-        const mergedData = { ...(cloudData || {}), ...localGuestData };
-        const now = new Date().toISOString();
-        const userId = _sbSession.user.id;
-        const nickname = window.GameCenter?.getIdentity?.()?.nickname || '';
-        const avatar_url = _getCloudAvatarUrl();
-        const { error } = await _sbClient
-            .from(SUPABASE_TABLE)
-            .upsert({ id: userId, game_data: mergedData, nickname, avatar_url, updated_at: now }, { onConflict: 'id' });
-        if (error) throw error;
-
-        _originalSetItem(SENTINEL_TS_KEY, now);
-        _setGuestMode(false);
-        _hasUnsyncedChanges = false;
-        _setSyncMsg('Progreso de invitad@ migrado a la nube ✓');
-        _setLastSyncLabel(now);
-        document.dispatchEvent(new CustomEvent('la:synced', {
-            detail: { at: now, source: 'guest-migration' }
-        }));
-
-        return mergedData;
-    }
-
     async function _handleAuthChange(event, session) {
         if (!_sbClient) return;
 
@@ -2845,10 +2849,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            let effectiveData = data?.game_data || {};
-            if (_isGuestMode() && event === 'SIGNED_IN') {
-                effectiveData = await _migrateGuestData(effectiveData);
-            }
+            const effectiveData = data?.game_data || {};
 
             const localRawTs = localStorage.getItem(SENTINEL_TS_KEY);
             const _safeTs = (iso) => {
@@ -2998,65 +2999,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const gateModal = document.getElementById('cloud-gatekeeper-modal');
         const gateBox = gateModal?.querySelector('.cloud-gatekeeper-modal-box');
         const gateMsgEl = document.getElementById('cloud-gatekeeper-msg');
-        const gateTabs = Array.from(document.querySelectorAll('[data-gate-tab]'));
         const gatePanels = Array.from(document.querySelectorAll('[data-gate-panel]'));
-        const gateTabsWrap = gateModal?.querySelector('.cloud-gatekeeper-tabs');
-        const emailForm = document.getElementById('cloud-email-form');
-        const passwordForm = document.getElementById('cloud-password-form');
-        const registerForm = document.getElementById('cloud-register-form');
         const loginForm = document.getElementById('cloud-login-form');
-        const registerSubmitBtn = document.getElementById('btn-cloud-register');
-        const changePasswordSubmitBtn = document.getElementById('btn-cloud-change-password-submit');
-        const emailBanner = document.getElementById('cloud-email-change-banner');
         let gateLocked = false;
 
-        const PASSPHRASE_MIN_LENGTH = 16;
-        const secureChars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789-_.!@#$%^&*+=';
-        const createPassphraseStrengthUpdater = (inputId, barId, submitBtn) => {
-            const input = document.getElementById(inputId);
-            const bar = document.getElementById(barId);
-            if (!input || !bar || !submitBtn) return () => false;
-
-            const refresh = () => {
-                const length = (input.value || '').length;
-                const ratio = Math.max(0, Math.min(1, length / PASSPHRASE_MIN_LENGTH));
-                bar.style.width = `${Math.round(ratio * 100)}%`;
-                if (ratio < 0.5) bar.style.background = 'linear-gradient(90deg, #f56565, #ed8936)';
-                else if (ratio < 1) bar.style.background = 'linear-gradient(90deg, #ed8936, #f6e05e)';
-                else bar.style.background = 'linear-gradient(90deg, #84f08f, #39ff88)';
-                submitBtn.disabled = length < PASSPHRASE_MIN_LENGTH;
-                return length >= PASSPHRASE_MIN_LENGTH;
-            };
-
-            input.addEventListener('input', refresh);
-            refresh();
-            return refresh;
-        };
-        const generateSecurePassword = (length = 24) => {
-            const values = new Uint32Array(length);
-            window.crypto.getRandomValues(values);
-            return Array.from(values, (value) => secureChars[value % secureChars.length]).join('');
-        };
-        const bindPasswordGenerator = (buttonId, inputId, refreshFn) => {
-            const button = document.getElementById(buttonId);
-            const input = document.getElementById(inputId);
-            if (!button || !input) return;
-            button.addEventListener('click', async () => {
-                const generated = generateSecurePassword();
-                input.type = 'text';
-                input.value = generated;
-                refreshFn?.();
-                window.setTimeout(() => {
-                    if (input.value === generated) input.type = 'password';
-                }, 10000);
-                try {
-                    await navigator.clipboard.writeText(generated);
-                    _showStorageToast('Contraseña copiada. Por favor, asegúrate de guardarla en un lugar seguro (como un gestor de contraseñas).', 'warning');
-                } catch (_) {
-                    _showStorageToast('Se generó una contraseña segura, pero no se pudo copiar automáticamente al portapapeles.', 'warning');
-                }
-            });
-        };
         const bindPasswordToggle = () => {
             document.querySelectorAll('[data-password-toggle]').forEach((btn) => {
                 btn.addEventListener('click', () => {
@@ -3073,8 +3019,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!msg) return 'No se pudo completar la acción. Inténtalo de nuevo.';
             if (msg.includes('invalid login credentials')) return 'Correo o contraseña incorrectos.';
             if (msg.includes('email not confirmed')) return 'Revisa tu correo y confirma tu cuenta para continuar.';
-            if (msg.includes('user already registered')) return 'Ese correo ya tiene una cuenta.';
-            if (msg.includes('password should be at least')) return 'Tu contraseña es demasiado corta.';
             if (msg.includes('network') || msg.includes('fetch')) return 'Sin conexión. Revisa internet e inténtalo de nuevo.';
             if (msg.includes('rate limit') || msg.includes('too many requests')) return 'Demasiados intentos. Espera un momento y vuelve a intentar.';
             return 'No se pudo completar la acción. Inténtalo de nuevo.';
@@ -3096,93 +3040,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const resetGateFeedback = () => {
             setGateMsg('');
-            emailBanner?.classList.add('hidden');
         };
 
+        /**
+         * Controla el panel de login del Gatekeeper.
+         * @param {'login'} mode - Modo activo del modal.
+         * @returns {void}
+         */
         const renderGateMode = (mode) => {
-            const selectedMode = mode || 'register';
-            const isRegister = selectedMode === 'register';
-            const isLogin = selectedMode === 'login';
-            const isChangeEmail = selectedMode === 'change-email';
-            const isChangePassword = selectedMode === 'change-password';
-            const hasTabMode = isRegister || isLogin;
-
+            const selectedMode = mode || 'login';
             resetGateFeedback();
-            gateTabsWrap?.classList.toggle('hidden', !hasTabMode);
-            gateTabs.forEach(tab => {
-                const active = hasTabMode && tab.dataset.gateTab === selectedMode;
-                tab.classList.toggle('is-active', active);
-                tab.setAttribute('aria-selected', String(active));
-            });
             gatePanels.forEach(panel => {
                 const active = panel.dataset.gatePanel === selectedMode;
                 panel.classList.toggle('is-active', active);
                 panel.setAttribute('aria-hidden', String(!active));
                 setFormEnabled(panel, active);
             });
-            emailForm?.classList.toggle('hidden', !isChangeEmail);
-            passwordForm?.classList.toggle('hidden', !isChangePassword);
-            setFormEnabled(emailForm, isChangeEmail);
-            setFormEnabled(passwordForm, isChangePassword);
         };
 
-        const switchGateTab = (name) => {
-            renderGateMode(name);
-        };
-
-        gateTabs.forEach(tab => tab.addEventListener('click', () => switchGateTab(tab.dataset.gateTab)));
-
-        const openGate = ({ mode = 'register', locked = false } = {}) => {
+        const openGate = ({ mode = 'login', locked = false } = {}) => {
             gateLocked = locked;
             gateModal?.classList.remove('hidden');
+            window.ModalA11y?.open?.(gateModal, document.activeElement);
             gateBox?.classList.toggle('is-locked', gateLocked);
             renderGateMode(mode);
         };
 
         const btnOpenGate = document.getElementById('btn-cloud-open-gatekeeper');
         btnOpenGate?.addEventListener('click', () => {
-            openGate({ mode: _sbSession ? 'login' : 'register' });
+            openGate({ mode: 'login' });
         });
 
         const closeGate = () => {
             if (gateLocked) return;
             gateModal?.classList.add('hidden');
-            renderGateMode('register');
+            window.ModalA11y?.close?.(gateModal);
+            renderGateMode('login');
         };
         document.getElementById('cloud-gatekeeper-close')?.addEventListener('click', closeGate);
         gateModal?.addEventListener('click', (e) => {
             if (e.target === gateModal && !gateLocked) closeGate();
-        });
-
-        const validateRegisterPassword = createPassphraseStrengthUpdater('cloud-register-password', 'cloud-register-password-strength', registerSubmitBtn);
-        const validateChangePassword = createPassphraseStrengthUpdater('cloud-change-password-input', 'cloud-change-password-strength', changePasswordSubmitBtn);
-        bindPasswordGenerator('btn-generate-register-password', 'cloud-register-password', validateRegisterPassword);
-        bindPasswordGenerator('btn-generate-change-password', 'cloud-change-password-input', validateChangePassword);
-
-        registerForm?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
-
-            const email = document.getElementById('cloud-register-email')?.value?.trim();
-            const password = document.getElementById('cloud-register-password')?.value || '';
-            const nickname = document.getElementById('cloud-register-nickname')?.value?.trim();
-            if (!email || !password || !nickname) return setGateMsg('Completa nombre, correo y contraseña.', true);
-            if (!validateRegisterPassword()) return setGateMsg('Tu contraseña es demasiado corta.', true);
-
-            setGateMsg('Creando tu cuenta…');
-            try {
-                const { error } = await _sbClient.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { nickname } }
-                });
-                if (error) throw error;
-                _setGuestMode(false);
-                setGateMsg('Cuenta creada. Revisa tu correo para confirmarla.');
-                _setLoginMsg('Cuenta creada correctamente.');
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
         });
 
         loginForm?.addEventListener('submit', async (e) => {
@@ -3204,85 +3101,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setGateMsg(err?.message, true);
             }
         });
-
-        document.getElementById('btn-cloud-change-email-submit')?.addEventListener('click', async () => {
-            if (!_sbClient || !_sbSession) return setGateMsg('Debes iniciar sesión para cambiar tu correo.', true);
-            const newEmail = document.getElementById('cloud-change-email-input')?.value?.trim();
-            if (!newEmail) return setGateMsg('Ingresa un nuevo correo para continuar.', true);
-            try {
-                const { error } = await _sbClient.auth.updateUser({ email: newEmail });
-                if (error) throw error;
-                emailBanner?.classList.remove('hidden');
-                setGateMsg('Solicitud enviada. Revisa ambos correos para confirmar el cambio.');
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
-        });
-
-        passwordForm?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!_sbClient || !_sbSession) return setGateMsg('Debes iniciar sesión para cambiar tu contraseña.', true);
-            if (!validateChangePassword()) return setGateMsg('Tu contraseña es demasiado corta.', true);
-
-            const currentPassword = document.getElementById('cloud-current-password-input')?.value || '';
-            const password = document.getElementById('cloud-change-password-input')?.value || '';
-            if (!currentPassword) return setGateMsg('Debes ingresar tu contraseña actual.', true);
-            try {
-                const email = _sbSession.user?.email || '';
-                const { error: authError } = await _sbClient.auth.signInWithPassword({ email, password: currentPassword });
-                if (authError) {
-                    setGateMsg('La contraseña actual es incorrecta. Verifícala antes de continuar.', true);
-                    return;
-                }
-                const { error } = await _sbClient.auth.updateUser({ password });
-                if (error) throw error;
-                setGateMsg('Contraseña actualizada.');
-                setTimeout(() => closeGate(), 700);
-            } catch (err) {
-                setGateMsg(err?.message, true);
-            }
-        });
-
-        document.getElementById('btn-cloud-guest')?.addEventListener('click', () => {
-            _setGuestMode(true);
-            if (!window.GameCenter?.hasIdentity?.()) {
-                window.GameCenter?.setIdentity?.('Invitad@', '@');
-            }
-            _setAccountStateLabel(false);
-            setGateMsg('Estás jugando como invitado.');
-            _setLoginMsg('Jugando como invitado.');
-            gateLocked = false;
-            gateBox?.classList.remove('is-locked');
-            closeGate();
-        });
-
-        document.getElementById('btn-cloud-change-password')?.addEventListener('click', () => {
-            if (!_sbSession) {
-                openGate({ mode: 'login' });
-                setGateMsg('Inicia sesión para poder cambiar tu contraseña.', true);
-                return;
-            }
-            openGate({ mode: 'change-password' });
-        });
-
-        document.getElementById('btn-cloud-change-email')?.addEventListener('click', () => {
-            if (!_sbSession) {
-                openGate({ mode: 'login' });
-                setGateMsg('Inicia sesión para poder cambiar tu correo.', true);
-                return;
-            }
-            openGate({ mode: 'change-email' });
-        });
-
-        // ── Cerrar sesión ────────────────────────────────────────────────────
-        const btnSignOut = document.getElementById('btn-cloud-signout');
-        if (btnSignOut) {
-            btnSignOut.addEventListener('click', async () => {
-                if (!_sbClient) return;
-                await _sbClient.auth.signOut();
-                // _handleSignOut() es llamado por onAuthStateChange
-            });
-        }
 
         const cloudIndicator = document.getElementById('cloud-sync-indicator')
             || document.getElementById('hud-cloud-sync-indicator');
@@ -3322,7 +3140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasLocalIdentity = window.GameCenter?.hasIdentity?.();
         if (!hasLocalIdentity && !_sbSession) {
-            openGate({ locked: true, mode: 'register' });
+            openGate({ locked: true, mode: 'login' });
         }
     });
 
@@ -3365,3 +3183,38 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 })(); // fin IIFE SentinelCloudSync
+
+
+(function setupServiceWorkerUpdateBridge() {
+    if (!('serviceWorker' in navigator)) return;
+
+    function showUpdateBanner(registration) {
+        if (document.getElementById('sw-update-banner')) return;
+        const banner = document.createElement('div');
+        banner.id = 'sw-update-banner';
+        banner.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;padding:12px 14px;border-radius:10px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;';
+        banner.innerHTML = '<span>Nueva versión disponible.</span><button id="sw-update-btn" style="background:#6d28d9;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;">Actualizar</button>';
+        document.body.appendChild(banner);
+        banner.querySelector('#sw-update-btn')?.addEventListener('click', () => {
+            registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        });
+    }
+
+    navigator.serviceWorker.getRegistration('/').then((registration) => {
+        if (!registration) return;
+        if (registration.waiting) showUpdateBanner(registration);
+        registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    showUpdateBanner(registration);
+                }
+            });
+        });
+    }).catch(() => {});
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
+})();

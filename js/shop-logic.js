@@ -97,8 +97,8 @@
  *    usan Cloudinary con la transformación ar_16:9,c_fill,g_auto,w_1080.
  *  - _getMockupUrl(item): nueva función privada que construye la URL Cloudinary
  *    con la transformación correcta según el tag del producto:
- *      · Mobile → f_auto,q_auto,ar_9:20,c_fill,w_500
- *      · PC     → f_auto,q_auto,ar_16:9,c_fill,w_1200
+ *      · Mobile → f_avif,q_auto,ar_9:20,c_fill,w_500
+ *      · PC     → f_avif,q_auto,ar_16:9,c_fill,w_1200
  *  - openPreviewModal(): Phase 2 ahora usa _getMockupUrl() en lugar de
  *    CONFIG.wallpapersPath + item.file, garantizando que el mockup siempre
  *    recibe la versión optimizada para el marco del dispositivo.
@@ -128,7 +128,7 @@
  * DEPENDENCIAS (deben estar cargadas ANTES en el DOM):
  *  - js/app.js          → window.GameCenter, window.ECONOMY, window.debounce, window.MailHelper
  *  - [v9.6] lucide eliminado. _icon() helper genera referencias al SVG Sprite.
- *  - canvas-confetti    → window.confetti
+ *  - canvas-confetti    → lazy-load on demand (no bloquea ruta crítica)
  *
  * OPTIMIZACIONES DE RENDIMIENTO:
  *  - fetch('data/shop.json') se ejecuta UNA SOLA VEZ en DOMContentLoaded y
@@ -161,6 +161,17 @@ let _giftAutoplayTimer = null;
 let _giftPauseUntil = 0;
 let _giftCurrentIndex = 0;
 let _giftSnapTimer = null;
+const _shopReducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+const _shopCoarsePointerMql = window.matchMedia('(pointer: coarse)');
+let _shopPrefersReducedMotion = _shopReducedMotionMql.matches;
+let _shopCoarsePointer = _shopCoarsePointerMql.matches;
+let _giftCardSnapOffsets = [];
+const _bindMqlChange = (mql, handler) => {
+    if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
+    else if (typeof mql.addListener === 'function') mql.addListener(handler);
+};
+_bindMqlChange(_shopReducedMotionMql, (e) => { _shopPrefersReducedMotion = e.matches; });
+_bindMqlChange(_shopCoarsePointerMql, (e) => { _shopCoarsePointer = e.matches; });
 if (typeof window.__laSessionGameCompleted === 'undefined') {
     let fromSession = false;
     try { fromSession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
@@ -178,6 +189,15 @@ const _shopRenderState = {
     batchSize: 18
 };
 
+/**
+ * Agenda el filtrado de catálogo en el siguiente frame para colapsar ráfagas de input.
+ *
+ * Precondiciones: `filterItems` disponible y estado de filtros ya actualizado.
+ * Efectos secundarios: cancela/crea `requestAnimationFrame` y luego muta DOM vía `filterItems`.
+ * Coste esperado: O(1) en scheduling; coste real delegado al render posterior.
+ * Diseño (por qué): usar rAF evita ejecutar múltiples renders síncronos durante tecleo,
+ * taps rápidos o cambios consecutivos de chip, reduciendo jank perceptible.
+ */
 function scheduleFilterItems() {
     if (_pendingFilterFrame !== null) cancelAnimationFrame(_pendingFilterFrame);
     _pendingFilterFrame = requestAnimationFrame(() => {
@@ -241,12 +261,15 @@ function openConfirmModal({ title, bodyHTML, confirmText = 'Confirmar' }) {
     _lastFocusedElement = document.activeElement;
     const overlay = document.getElementById('confirm-modal');
     overlay.classList.remove('hidden');
+    window.ModalA11y?.open?.(overlay, _lastFocusedElement);
     requestAnimationFrame(() => document.getElementById('modal-confirm').focus());
     return new Promise(resolve => { _modalResolve = resolve; });
 }
 
 function _closeModal(value) {
-    document.getElementById('confirm-modal').classList.add('hidden');
+    const confirmModal = document.getElementById('confirm-modal');
+    confirmModal.classList.add('hidden');
+    window.ModalA11y?.close?.(confirmModal);
     if (_modalResolve) { _modalResolve(value); _modalResolve = null; }
     // Restaurar foco al elemento que abrió el modal para no desorientar al usuario
     // de teclado (WCAG 2.4.3 — Focus Order).
@@ -547,10 +570,10 @@ function _getMockupUrl(item) {
     const tags     = Array.isArray(item.tags) ? item.tags : [];
     const base     = item.file.replace(/\.[^.]+$/, ''); // strip extension → public ID
 
-    if (tags.includes('Mobile')) return `${CDN_BASE}f_auto,q_auto,ar_9:20,c_fill,w_500/${base}`;
-    if (tags.includes('Avatar')) return `${CDN_BASE}f_auto,q_auto,ar_1:1,c_fill,w_800/${base}`;
+    if (tags.includes('Mobile')) return `${CDN_BASE}f_avif,q_auto,ar_9:20,c_fill,w_500/${base}`;
+    if (tags.includes('Avatar')) return `${CDN_BASE}f_avif,q_auto,ar_1:1,c_fill,w_800/${base}`;
     // PC o no etiquetado — 16:9 widescreen
-    return `${CDN_BASE}f_auto,q_auto,ar_16:9,c_fill,w_1200/${base}`;
+    return `${CDN_BASE}f_avif,q_auto,ar_16:9,c_fill,w_1200/${base}`;
 }
 
 /**
@@ -986,6 +1009,7 @@ function openPreviewModal(itemOrId) {
     // Registrar foco y abrir modal ANTES del trabajo pesado (v9.8).
     _lastFocusedElement = document.activeElement;
     modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement);
 
     // Analítica — view_preview: se dispara en fase síncrona, antes del rAF,
     // para garantizar el registro incluso si el usuario cierra rápidamente.
@@ -1163,7 +1187,7 @@ function closePreviewModal(modal, stage) {
     // .hidden aplica display:none, lo que destruye la capa GPU creada por
     // will-change:opacity,transform declarado en .modal-box (CSS). No es
     // necesario m.style.willChange = 'auto'.
-    if (m) { m.classList.add('hidden'); }
+    if (m) { m.classList.add('hidden'); window.ModalA11y?.close?.(m); }
 
     // ── Clock interval ────────────────────────────────────────────────────────
     if (_mockupClockInterval) { clearInterval(_mockupClockInterval); _mockupClockInterval = null; }
@@ -1202,6 +1226,12 @@ function switchTab(tab) {
         renderHistory();
         renderMoonBlessingStatus();
         renderStreakCalendar();
+    }
+    if (tab !== 'catalog') {
+        _stopGiftAutoplay();
+        _teardownShopLazyRender();
+    } else if (activeFilter !== 'Regalos') {
+        filterItems();
     }
     // Scope al panel activo: evita re-escanear vistas ocultas de la SPA.
     refreshIcons(panel);
@@ -1299,7 +1329,11 @@ function _advanceGiftCarousel(step = 1) {
         return;
     }
     _giftCurrentIndex = Math.max(0, next);
-    cards[_giftCurrentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    cards[_giftCurrentIndex].scrollIntoView({
+        behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'start'
+    });
 }
 
 function _initGiftAutoplay() {
@@ -1332,7 +1366,7 @@ function _renderGiftCarousel(items) {
         const disabled = !owned && !unlocked ? 'disabled' : '';
         const opacity = !owned && !unlocked ? ' style="opacity:.5"' : '';
         return `<article class="gift-card" data-gift-id="${item.id}">
-            <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async"
+            <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
                  onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
             ${owned ? `<span class="gift-owned-badge">${_icon('check', 11)} Obtenido</span>` : ''}
             <h3 class="gift-card-name">${item.name}</h3>
@@ -1342,6 +1376,7 @@ function _renderGiftCarousel(items) {
     }).join('');
 
     track.innerHTML = html;
+    _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
     if (collectionToggle) {
         collectionToggle.textContent = `Ver mi colección completa (${ownedTotal} totales)`;
         collectionToggle.classList.toggle('hidden', collection.length === 0);
@@ -1351,7 +1386,7 @@ function _renderGiftCarousel(items) {
         collectionGrid.classList.add('hidden');
         collectionGrid.innerHTML = collection.map(item =>
             `<article class="gift-collection-item" title="${item.name}">
-                <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async"
+                <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
                      onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
             </article>`
         ).join('');
@@ -1359,26 +1394,51 @@ function _renderGiftCarousel(items) {
 
     requestAnimationFrame(() => {
         const cards = track.querySelectorAll('.gift-card');
-        cards[_giftCurrentIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        cards[_giftCurrentIndex]?.scrollIntoView({
+            behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+            block: 'nearest',
+            inline: 'start'
+        });
     });
 
     if (!track.dataset.boundScrollPause) {
         track.dataset.boundScrollPause = '1';
+        let rafId = null;
+        let lastScrollTs = 0;
+        const SNAP_DEBOUNCE_MS = 160;
+        const SNAP_THRESHOLD_PX = 14;
+        const runSnap = () => {
+            rafId = null;
+            const idleFor = performance.now() - lastScrollTs;
+            if (idleFor < SNAP_DEBOUNCE_MS) {
+                rafId = requestAnimationFrame(runSnap);
+                return;
+            }
+            if (_shopCoarsePointer) return;
+            if (!_giftCardSnapOffsets.length) return;
+            let nearest = 0;
+            let minDist = Number.POSITIVE_INFINITY;
+            _giftCardSnapOffsets.forEach((left, idx) => {
+                const dist = Math.abs(left - track.scrollLeft);
+                if (dist < minDist) { minDist = dist; nearest = idx; }
+            });
+            _giftCurrentIndex = nearest;
+            if (minDist <= SNAP_THRESHOLD_PX) return;
+            const targetCard = track.querySelectorAll('.gift-card')[nearest];
+            targetCard?.scrollIntoView({
+                behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
+                block: 'nearest',
+                inline: 'start'
+            });
+        };
         track.addEventListener('scroll', () => {
             _giftPauseUntil = Date.now() + 10000;
-            if (_giftSnapTimer) clearTimeout(_giftSnapTimer);
-            _giftSnapTimer = setTimeout(() => {
-                const cards = Array.from(track.querySelectorAll('.gift-card'));
-                if (!cards.length) return;
-                let nearest = 0;
-                let minDist = Number.POSITIVE_INFINITY;
-                cards.forEach((card, idx) => {
-                    const dist = Math.abs(card.offsetLeft - track.scrollLeft);
-                    if (dist < minDist) { minDist = dist; nearest = idx; }
-                });
-                _giftCurrentIndex = nearest;
-                cards[nearest]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-            }, 120);
+            lastScrollTs = performance.now();
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(runSnap);
+        }, { passive: true });
+        window.addEventListener('resize', () => {
+            _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
         }, { passive: true });
     }
 
@@ -1386,6 +1446,15 @@ function _renderGiftCarousel(items) {
 }
 
 // ── Filtros ───────────────────────────────────────────────────────────────────
+/**
+ * Calcula subconjunto visible del catálogo y reinicia render incremental por lotes.
+ *
+ * Precondiciones: `allItems` cargado (o vacío válido), `activeFilter`/`searchQuery` consistentes.
+ * Efectos secundarios: lectura de GameCenter state, escrituras DOM del grid/estados vacíos.
+ * Coste esperado: O(n) filtrado sobre items + coste de pintar primer lote.
+ * Diseño (por qué): mantener filtrado centralizado facilita evolucionar reglas de negocio
+ * sin duplicar lógica entre búsqueda, tabs y reseteos de filtros.
+ */
 function filterItems() {
     if (!allItems.length) return;
     const gridEl      = document.getElementById('shop-container');
@@ -1414,6 +1483,7 @@ function filterItems() {
         giftEl?.classList.remove('hidden');
         _renderGiftCarousel(filtered);
     } else {
+        _stopGiftAutoplay();
         giftEl?.classList.add('hidden');
         renderShop(filtered);
     }
@@ -1479,11 +1549,12 @@ function renderStreakCalendar() {
     }).join('');
 }
 
-function _buildShopCard(item) {
+function _buildShopCard(item, loading = 'lazy') {
     const bought     = GameCenter.getBoughtCount(item.id);
     const isOwned    = bought > 0;
     const eco        = window.ECONOMY;
     const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
+    const isEager    = loading === 'eager';
 
     const priceHTML = eco.isSaleActive && !isOwned
         ? `<div class="shop-price">
@@ -1526,7 +1597,10 @@ function _buildShopCard(item) {
     const card = document.createElement('article');
     card.className = 'glass-panel shop-card';
     card.innerHTML =
-        `        <img src="${item.image}" alt="${item.name}" class="shop-img" loading="lazy" decoding="async"
+        `        <img src="${item.image}" alt="${item.name}" class="shop-img"
+             loading="${loading}"
+             ${isEager ? 'fetchpriority="high"' : ''}
+             decoding="async" crossorigin="anonymous"
              onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
         ${isOwned ? '<div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>' : ''}
         ${eco.isSaleActive && !isOwned
@@ -1557,7 +1631,12 @@ function _appendShopBatch(container) {
     if (start >= end) return false;
 
     const frag = document.createDocumentFragment();
-    for (let i = start; i < end; i += 1) frag.appendChild(_buildShopCard(_shopRenderState.items[i]));
+    for (let i = start; i < end; i += 1) {
+        // Mark first 6 items of the entire catalog to load eagerly.
+        // i is the global index in _shopRenderState.items.
+        const loading = i < 6 ? 'eager' : 'lazy';
+        frag.appendChild(_buildShopCard(_shopRenderState.items[i], loading));
+    }
     if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
         container.insertBefore(frag, _shopLazySentinel);
     } else {
@@ -1898,15 +1977,35 @@ function shakeElement(el) {
 }
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
-function fireConfetti() {
+let _confettiLoaderPromise = null;
+function _getConfetti() {
+    if (typeof window.confetti === 'function') return Promise.resolve(window.confetti);
+    if (_confettiLoaderPromise) return _confettiLoaderPromise;
+
+    _confettiLoaderPromise = new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js';
+        script.async = true;
+        script.onload = () => resolve(typeof window.confetti === 'function' ? window.confetti : null);
+        script.onerror = () => resolve(null); // fallback silencioso
+        document.head.appendChild(script);
+    }).catch(() => null);
+
+    return _confettiLoaderPromise;
+}
+
+async function fireConfetti() {
     // No disparar si la pestaña está inactiva (performance)
     if (document.hidden) return;
     // Verificar que estamos en la vista de Tienda
     if (window.SpaRouter?.getCurrentView?.() !== 'shop') return;
 
+    const confettiFn = await _getConfetti();
+    if (typeof confettiFn !== 'function') return; // fallback silencioso
+
     const colors = ['#9b59ff', '#ff59b4', '#fbbf24', '#22d07a', '#00d4ff'];
-    confetti({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
-    confetti({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
+    confettiFn({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
+    confettiFn({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1955,7 +2054,8 @@ async function handleRedeem() {
             });
             document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
             if (!document.hidden) {
-                confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
+                const confettiFn = await _getConfetti();
+                confettiFn?.({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
             }
             // [v9.9.2] Fuente ÚNICA de track('redeem_code'): aquí, al final de la cadena
             // de éxito de UI. El disparo en app.js/redeemPromoCode() fue eliminado para
@@ -2131,15 +2231,18 @@ function openEmailModal(item, absoluteUrl) {
     if (fallbackEl) fallbackEl.classList.remove('visible');
 
     const modal = document.getElementById('email-modal');
-    modal.classList.remove('hidden');
     // Guardar foco activo para restaurarlo al cerrar el modal (WCAG 2.4.3).
     _lastFocusedElement = document.activeElement;
+    modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement);
     refreshIcons(modal);
     requestAnimationFrame(() => { if (inputEl) inputEl.focus(); });
 }
 
 function _closeEmailModal() {
-    document.getElementById('email-modal').classList.add('hidden');
+    const emailModal = document.getElementById('email-modal');
+    emailModal.classList.add('hidden');
+    window.ModalA11y?.close?.(emailModal);
     _emailItem        = null;
     _emailAbsoluteUrl = '';
     // Restaurar foco al botón de envío que abrió el modal (WCAG 2.4.3).
@@ -2294,6 +2397,10 @@ function loadCatalog() {
             .catch(() => [])
     ])
         .then(([items, gifts]) => {
+            try {
+                const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
+                localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
+            } catch (_) {}
             const baseCatalog = items.filter(item => !_isGiftItem(item));
             const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
             allItems = [...baseCatalog, ...giftCatalog];
@@ -2389,7 +2496,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escape global cierra todos los modales
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            document.getElementById('confirm-modal').classList.add('hidden');
+            const confirmModal = document.getElementById('confirm-modal');
+            confirmModal.classList.add('hidden');
+            window.ModalA11y?.close?.(confirmModal);
             closePreviewModal();
             _closeEmailModal();
         }

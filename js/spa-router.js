@@ -15,9 +15,8 @@
  *  - [v9.6] Añadida llamada a window.ShopView.onLeave() / window.HomeView.onLeave()
  *           en _applyView() antes de activar la vista entrante, para que las vistas
  *           puedan liberar recursos (p. ej. IntersectionObserver de precarga).
- *  - Restaurar el scroll a 0,0 ANTES de la animación de entrada (instant),
+ *  - Restaurar el scroll a 0,0 ANTES de la animación de entrada (auto/fallback),
  *    garantizando que la vista nueva empieza desde arriba sin salto visual.
- *  - Manejar data-anchor para deep-links dentro de la vista Inicio (#games, #faq).
  *  - [v9.1] Integrar la History API: botón Atrás vuelve a vista anterior sin recargar.
  *  - [v9.2] Añadir clase .view-section a las vistas para activar la transición
  *           anti-golpe CSS (opacity + translateY, GPU-only, 250ms).
@@ -80,6 +79,15 @@
         }
     }
 
+    /**
+     * Ejecuta callbacks de ciclo de vida en lotes cooperativos (rAF + idle).
+     *
+     * Precondiciones: `tasks` contiene funciones puras o tolerantes a reintento.
+     * Efectos secundarios: callbacks pueden mutar DOM/estado según cada vista.
+     * Coste esperado: O(n) sobre cantidad de tareas; distribución temporal en frames.
+     * Diseño (por qué): separar trabajo evita picos de main-thread tras navegación
+     * y protege la transición visual inicial de bloqueos.
+     */
     function _drainLifecycleQueue(tasks) {
         if (!tasks.length) return;
 
@@ -102,17 +110,35 @@
         const container = document.getElementById('home-events-summary');
         if (!container) return;
 
-        const icon = (name) => `
-            <svg class="icon" width="14" height="14" aria-hidden="true">
-                <use href="#icon-${name}"></use>
-            </svg>
-        `;
+        const createIcon = (name) => {
+            const svgNs = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNs, 'svg');
+            svg.setAttribute('class', 'icon');
+            svg.setAttribute('width', '14');
+            svg.setAttribute('height', '14');
+            svg.setAttribute('aria-hidden', 'true');
+            const use = document.createElementNS(svgNs, 'use');
+            use.setAttribute('href', `#icon-${name}`);
+            svg.appendChild(use);
+            return svg;
+        };
+
+        const createIconLabel = (name, text, className) => {
+            const el = document.createElement('p');
+            if (className) el.className = className;
+            el.appendChild(createIcon(name));
+            el.appendChild(document.createTextNode(` ${text}`));
+            return el;
+        };
 
         container.classList.add('hidden');
-        container.innerHTML = `
-            <p class="home-events-summary-card__label">${icon('sparkles')} Eventos</p>
-            <p class="home-events-summary-card__empty">Cargando resumen...</p>
-        `;
+        container.replaceChildren(
+            createIconLabel('sparkles', 'Eventos', 'home-events-summary-card__label'),
+            Object.assign(document.createElement('p'), {
+                className: 'home-events-summary-card__empty',
+                textContent: 'Cargando resumen...'
+            })
+        );
 
         try {
             const summary = await window.EventView?.getHomeEventsSummary?.(2);
@@ -125,35 +151,52 @@
             const urgent = summary.urgentEvent;
             const secondary = summary.topEvents[1];
 
-            container.innerHTML = `
-                <div class="home-events-summary-card__header">
-                    <p class="home-events-summary-card__label">${icon('sparkles')} Eventos activos</p>
-                    <span class="home-events-summary-card__count-badge">
-                        <strong>${summary.activeCount}</strong>
-                        <span>en vivo</span>
-                    </span>
-                </div>
-                <div class="home-events-summary-card__layout">
-                    <div class="home-events-summary-card__body">
-                        <p class="home-events-summary-card__kicker">Más urgente</p>
-                        <h3 class="home-events-summary-card__title">${urgent.title}</h3>
-                        <p class="home-events-summary-card__meta">${icon('clock')} Termina en ${urgent.timeLeft}</p>
-                        <p class="home-events-summary-card__reward">${icon('gift')} ${urgent.reward}</p>
-                        ${secondary
-                            ? `<p class="home-events-summary-card__secondary">${icon('calendar')} También: ${secondary.title} · ${secondary.timeLeft}</p>`
-                            : ''}
-                    </div>
-                    <button type="button" class="btn-ghost home-events-summary-card__cta" data-home-open-events>
-                        Ver eventos
-                    </button>
-                </div>
-            `;
+            const header = document.createElement('div');
+            header.className = 'home-events-summary-card__header';
+            header.appendChild(createIconLabel('sparkles', 'Eventos activos', 'home-events-summary-card__label'));
+
+            const badge = document.createElement('span');
+            badge.className = 'home-events-summary-card__count-badge';
+            const strong = document.createElement('strong');
+            strong.textContent = String(summary.activeCount);
+            const liveLabel = document.createElement('span');
+            liveLabel.textContent = 'en vivo';
+            badge.append(strong, liveLabel);
+            header.appendChild(badge);
+
+            const layout = document.createElement('div');
+            layout.className = 'home-events-summary-card__layout';
+            const body = document.createElement('div');
+            body.className = 'home-events-summary-card__body';
+
+            body.appendChild(Object.assign(document.createElement('p'), {
+                className: 'home-events-summary-card__kicker',
+                textContent: 'Más urgente'
+            }));
+            body.appendChild(Object.assign(document.createElement('h3'), {
+                className: 'home-events-summary-card__title',
+                textContent: urgent.title || ''
+            }));
+            body.appendChild(createIconLabel('clock', `Termina en ${urgent.timeLeft || ''}`, 'home-events-summary-card__meta'));
+            body.appendChild(createIconLabel('gift', `${urgent.reward || ''}`, 'home-events-summary-card__reward'));
+            if (secondary) {
+                body.appendChild(createIconLabel('calendar', `También: ${secondary.title || ''} · ${secondary.timeLeft || ''}`, 'home-events-summary-card__secondary'));
+            }
+
+            const cta = document.createElement('button');
+            cta.type = 'button';
+            cta.className = 'btn-ghost home-events-summary-card__cta';
+            cta.dataset.homeOpenEvents = '';
+            cta.textContent = 'Ver eventos';
+
+            layout.append(body, cta);
+            container.replaceChildren(header, layout);
 
             container.classList.remove('hidden');
             container.querySelector('[data-home-open-events]')?.addEventListener('click', () => navigateTo('events'));
         } catch (_) {
             container.classList.add('hidden');
-            container.innerHTML = '';
+            container.replaceChildren();
         }
     }
     
@@ -164,7 +207,7 @@
      * Ruta interna: usada tanto por navigateTo() como por el handler popstate.
      *
      * Orden de operaciones (v9.2 — Anti-Golpe):
-     *  1. Scroll reset INSTANTÁNEO antes de mostrar la vista entrante.
+     *  1. Scroll reset inmediato antes de mostrar la vista entrante.
      *     Así la vista nueva siempre empieza desde arriba, y la animación CSS
      *     de entrada (opacity + translateY) parte de una posición limpia.
      *  2. Quitar .hidden de la vista destino → CSS dispara la transición de
@@ -174,15 +217,28 @@
      * @param {'home'|'shop'} viewId
      * @param {string|null}   [anchor]
      */
+    /**
+     * Aplica transición SPA sin mutar History API (núcleo de enrutado).
+     *
+     * Precondiciones: `viewId` existe en `VIEWS` y sus nodos están cacheados.
+     * Efectos secundarios: escrituras DOM (hidden/nav), scroll, callbacks de vistas.
+     * Coste esperado: O(v) para alternar vistas + O(t) tareas lifecycle diferidas.
+     * Diseño (por qué): pipeline en fases (scroll inmediato, rAF, idle queue) para
+     * priorizar Time-to-Visual-Response y desacoplar trabajo no crítico del primer frame.
+     */
     function _applyView(viewId, anchor) {
         if (!viewEls[viewId]) return;
         const previousView = currentView;
         
         // [v9.2] Scroll reset ANTES de la transición de entrada.
-        // behavior:'instant' garantiza que no hay scroll animado compitiendo
-        // con la animación de entrada de la vista.
+        // behavior:'auto' evita scroll animado y mantiene compatibilidad amplia.
+        // Fallback defensivo para entornos que no aceptan la firma con objeto.
         if (!anchor) {
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            try {
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            } catch (_) {
+                window.scrollTo(0, 0);
+            }
         }
         
         VIEWS.forEach(id => {
@@ -192,7 +248,8 @@
         });
         
         currentView = viewId;
-        
+        window.AppScheduler?.setActiveView?.(viewId);
+
         _syncNavHighlight(viewId);
 
         // Fase 2 (next frame): operaciones no críticas del primer frame.
@@ -217,6 +274,7 @@
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
+                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
@@ -235,6 +293,15 @@
      * @param {'home'|'shop'} viewId
      * @param {string|null}   [anchor]   ID del elemento al que hacer scroll (sin #).
      * @param {boolean}       [replace]  Si true, usa replaceState (para estado inicial).
+     */
+    /**
+     * Navega a una vista y sincroniza History API para back/forward nativo.
+     *
+     * Precondiciones: llamada desde interacción UI o restauración controlada.
+     * Efectos secundarios: `_applyView`, `history.pushState/replaceState`.
+     * Coste esperado: O(1) sobre historial + coste de `_applyView`.
+     * Diseño (por qué): mantener `navigateTo` como frontera pública reduce
+     * acoplamiento: cualquier caller obtiene transición + URL state consistentes.
      */
     function navigateTo(viewId, anchor, replace) {
         const state = { viewId, anchor: anchor || null };

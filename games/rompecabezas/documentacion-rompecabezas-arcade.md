@@ -32,7 +32,6 @@
 9. [Motor Visual — PuzzleEngine en Detalle](#9-motor-visual--puzzleengine-en-detalle)
 10. [Sistema Háptico](#10-sistema-háptico)
 11. [Sistema de Audio Procedural](#11-sistema-de-audio-procedural)
-12. [Características PWA](#12-características-pwa)
 13. [Herramientas de Desarrollo (Dev Tools)](#13-herramientas-de-desarrollo-dev-tools)
 14. [Accesibilidad (WCAG 2.2)](#14-accesibilidad-wcag-22)
 15. [Guía de Mantenimiento y Expansión](#15-guía-de-mantenimiento-y-expansión)
@@ -41,12 +40,12 @@
 
 ## 1. Visión General
 
-**Rompecabezas Arcade** es un juego de puzzles de arrastrar y soltar, construido con JavaScript vanilla y Canvas API, diseñado para correr como Progressive Web App (PWA) dentro del ecosistema **Love Arcade**. El jugador arrastra piezas de una imagen fragmentada hasta reconstruirla dentro de un tablero.
+**Rompecabezas Arcade** es un juego de puzzles de arrastrar y soltar, construido con JavaScript vanilla y Canvas API, diseñado para correr como experiencia web dentro del ecosistema **Love Arcade**. El jugador arrastra piezas de una imagen fragmentada hasta reconstruirla dentro de un tablero.
 
 ### Características principales
 
 - **150 niveles** generados algorítmicamente desde una constante única (`TOTAL_LEVELS`). No se requiere editar JSON para agregar niveles.
-- Activos visuales de **1600×1600 px** servidos desde **Cloudinary** en formato **WebP calidad máxima** (`f_webp,q_100`). A q_100, el codificador WebP de Cloudinary activa automáticamente el modo sin pérdida (VP8L), equivalente a `fl_lossless` pero compatible con todos los planes de Cloudinary (evita el error HTTP 400). A partir de v6.1 se elimina `fl_lossless` que causaba fallos de red en cuentas sin transformaciones activas habilitadas.
+- Activos visuales de **1600×1600 px** servidos desde **Cloudinary** en formato **AVIF calidad máxima** (`f_avif,q_100`). A q_100, el codificador AVIF de Cloudinary activa automáticamente el modo sin pérdida (VP8L), equivalente a `fl_lossless` pero compatible con todos los planes de Cloudinary (evita el error HTTP 400). A partir de v6.1 se elimina `fl_lossless` que causaba fallos de red en cuentas sin transformaciones activas habilitadas.
 - Escalado de alta fidelidad en cliente mediante **step-down scaling** (v19.0): la textura 1600×1600 se reduce escalonadamente, nunca más del 50% por paso, neutralizando el blur bilineal y el ruido de mosquito que producía el downsampling en un solo paso.
 - **Protección de VRAM (v19.1):** el `sourceCanvas` se limita a un máximo de 1600 px por dimensión, redondeado al múltiplo inferior de `gridSize`. Previene el desbordamiento en dispositivos DPR 3× con tableros grandes sin perder nitidez, ya que la imagen fuente tiene exactamente 1600 px nativos.
 - **Prefetching Predictivo de ImageBitmap (v7.0 / v9.0):** mientras el usuario juega el nivel N, el sistema descarga y decodifica en background la imagen del nivel N+1 mediante `fetch({ priority: 'low' })` + `createImageBitmap()`. La decodificación ocurre completamente fuera del Event Loop (worker interno del navegador). Al iniciar el siguiente nivel, la textura está lista en VRAM y la transición es imperceptible. Si la precarga falla o no termina a tiempo, el flujo de carga estándar actúa como fallback transparente.
@@ -74,8 +73,6 @@
 /
 ├── index.html                  # Shell HTML — preconnect Cloudinary, ARIA completo,
 │                               # modales personalizados (modal-alert, modal-confirm)
-├── manifest.json               # Manifiesto PWA
-├── service-worker.js           # Service Worker (modo purge activo)
 └── src/
     ├── main.js                 # Punto de entrada y orquestador (v9.0)
     ├── style.css               # Estilos globales — Flat 2.0, variables CSS, .sr-only
@@ -317,23 +314,23 @@ Síntesis procedural mediante Web Audio API. Eventos: `click`, `snap`, `win`. El
 
 | Parámetro       | Valor         | Efecto                                                                 |
 |-----------------|---------------|------------------------------------------------------------------------|
-| `f_webp`        | WebP          | Formato WebP soportado universalmente. Sin conversión en cliente.      |
+| `f_avif`        | AVIF          | Formato AVIF usado en los assets originales de Cloudinary.             |
 | `q_100`         | Calidad 100   | Activa automáticamente el modo VP8L (sin pérdida): sin submuestreo de croma, sin artefactos DCT, perfil ICC preservado. Compatible con todos los planes de Cloudinary. |
 | *(sin `w_`)*    | 1600×1600     | Resolución nativa, sin reescalado en servidor. El cliente escala via step-down. |
 
 **URL ejemplo:**
 ```
-https://res.cloudinary.com/dyspgn0sw/image/upload/f_webp,q_100/v1/Nivel05
+https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_100/v1/Nivel05
 ```
 
 **Por qué se usa `q_100` en lugar de `fl_lossless`:**
-`fl_lossless` es un flag del pipeline de transformación activa de Cloudinary que no está disponible en todos los planes. Cuando la cuenta no tiene ese permiso, Cloudinary retorna HTTP 400, bloqueando la carga. `q_100` en combinación con `f_webp` produce exactamente el mismo resultado (WebP VP8L sin pérdida) a través de la API estándar de calidad numérica, válida en todos los planes.
+`fl_lossless` es un flag del pipeline de transformación activa de Cloudinary que no está disponible en todos los planes. Cuando la cuenta no tiene ese permiso, Cloudinary retorna HTTP 400, bloqueando la carga. `q_100` en combinación con `f_avif` mantiene la máxima calidad de codificación AVIF a través de la API estándar de calidad numérica, válida en todos los planes.
 
 **Por qué se elimina `w_` para la imagen de juego:**
-En v5.0 los parámetros `w_700`/`w_900`/`w_1200` reducían la imagen en el servidor con un filtro Lanczos de Cloudinary. Aunque Lanczos es de calidad alta, la imagen resultante llegaba al cliente ya degradada: el `drawImage` del sourceCanvas partía de una fuente de menor resolución, y el PuzzleEngine no podía recuperar la información perdida. Con WebP `q_100` a 1600 px, el motor dispone de la textura completa y aplica su propio pipeline de reducción de alta fidelidad.
+En v5.0 los parámetros `w_700`/`w_900`/`w_1200` reducían la imagen en el servidor con un filtro Lanczos de Cloudinary. Aunque Lanczos es de calidad alta, la imagen resultante llegaba al cliente ya degradada: el `drawImage` del sourceCanvas partía de una fuente de menor resolución, y el PuzzleEngine no podía recuperar la información perdida. Con AVIF `q_100` a 1600 px, el motor dispone de la textura completa y aplica su propio pipeline de reducción de alta fidelidad.
 
 **Impacto en ancho de banda:**
-Un WebP Lossless 1600×1600 de ilustración/anime típico ocupa entre 800 KB y 2 MB. El WebP lossy q_auto equivalente oscilaba entre 150–400 KB. La diferencia se justifica porque:
+Un AVIF Lossless 1600×1600 de ilustración/anime típico ocupa entre 800 KB y 2 MB. El AVIF lossy q_auto equivalente oscilaba entre 150–400 KB. La diferencia se justifica porque:
 1. El archivo se descarga una sola vez y el navegador lo cachea con URL única.
 2. La URL única (sin parámetro `w_`) maximiza los aciertos del CDN y del Service Worker caché.
 3. La ganancia visual es perceptible y permanente en todo el ciclo de vida de la partida.
@@ -345,7 +342,7 @@ Un WebP Lossless 1600×1600 de ilustración/anime típico ocupa entre 800 KB y 2
 | `c_thumb`   | Crop centrado      | Encuadre centrado de la imagen.  |
 | `w_N`       | 160–320px          | Ancho dinámico según DPR.        |
 | `g_center`  | Gravedad central   | Mantiene el sujeto visible.      |
-| `f_auto`    | WebP/AVIF/JPEG     | Mejor formato soportado.         |
+| `f_auto`    | AVIF/AVIF/JPEG     | Mejor formato soportado.         |
 | `q_auto`    | Calidad automática | Balance calidad/tamaño óptimo.   |
 
 ### Nomenclatura de assets
@@ -485,10 +482,9 @@ Sin archivos de audio externos. Todo el audio se sintetiza en tiempo real median
 
 ---
 
-## 12. Características PWA
+## 12. Distribución Web
 
-- `manifest.json`: nombre del juego, ícono, color de tema `#0f172a`, modo standalone.
-- `service-worker.js`: en modo **purge activo**. Se auto-instala para desregistrarse y limpiar cualquier caché anterior. Todas las peticiones van directamente a la red.
+- En v9.1 se eliminó la capa PWA: el juego se distribuye como experiencia web estándar sin manifiesto ni Service Worker.
 - Viewport: `user-scalable=no`, `viewport-fit=cover`.
 
 ---
@@ -567,10 +563,10 @@ Con tarjetas de 100px y DPR 2×: `100 × 2 × 1.07 ≈ 214` → snapped a `240px
 Editar `buildImageUrl()` en `LevelManager.js`:
 
 ```js
-// WebP calidad máxima / sin pérdida efectiva (v6.1, actual — máxima fidelidad, compatible con todos los planes)
-return `${CLOUDINARY_BASE}/f_webp,q_100/v1/${publicId}`;
+// AVIF calidad máxima / sin pérdida efectiva (v6.1, actual — máxima fidelidad, compatible con todos los planes)
+return `${CLOUDINARY_BASE}/f_avif,q_100/v1/${publicId}`;
 
-// WebP lossy con ancho adaptativo (v5.0 legacy — menor tamaño de archivo)
+// AVIF lossy con ancho adaptativo (v5.0 legacy — menor tamaño de archivo)
 const wTransform = _fullW === 1600 ? '' : `,w_${_fullW}`;
 return `${CLOUDINARY_BASE}/f_auto,q_auto${wTransform}/v1/${publicId}`;
 ```
@@ -590,7 +586,7 @@ El sistema de prefetch es transparente; si `createImageBitmap` no está disponib
 | Síntoma                                               | Causa probable                                                      | Solución                                                                                   |
 |-------------------------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | Imagen de nivel no carga (pantalla infinita)          | `publicId` incorrecto o asset no subido a Cloudinary                | Verificar que el nombre sea `Nivel${NN}` en el cloud `dyspgn0sw`                           |
-| **HTTP 400 / Network Error al cargar imagen**         | **`fl_lossless` en la URL (flag no disponible en el plan)**         | **Verificado en v6.1: `buildImageUrl()` usa `f_webp,q_100` en lugar de `fl_lossless`**    |
+| **HTTP 400 / Network Error al cargar imagen**         | **`fl_lossless` en la URL (flag no disponible en el plan)**         | **Verificado en v6.1: `buildImageUrl()` usa `f_avif,q_100` en lugar de `fl_lossless`**    |
 | Error CORS al iniciar partida                         | Falta `crossOrigin = 'Anonymous'`                                   | Ya corregido en `startGame()`; no revertir                                                 |
 | Thumbnails no aparecen al abrir pantalla niveles      | Observer desconectado o `data-src` no asignado                      | Verificar que `renderLevelsGrid()` se llame después de `loadLevels()`                     |
 | Tarjeta de nivel no responde al teclado               | `tabindex` o `role` faltante en el elemento                         | Verificar UIController v6.0 o superior                                                     |
@@ -604,8 +600,8 @@ El sistema de prefetch es transparente; si `createImageBitmap` no está disponib
 | Alto consumo de RAM al cambiar niveles                | Buffers offscreen no liberados en `destroy()`                       | Verificar que `destroy()` asigne `width=0`/`height=0` y llame a `bitmap.close()`          |
 | Thumbnails cargados dos veces en la grid              | Observer huérfano del render anterior                               | Verificar que `UI._thumbObserver.disconnect()` se llame al inicio de `renderLevelsGrid()` |
 | Pieza queda "flotando" al pausar                      | `cancelDrag()` no invocado antes de `togglePause()`                 | Verificar que `togglePause()` en main.js llame a `activeGame.cancelDrag()`                |
-| Colores lavados / desaturados en las piezas           | URL de Cloudinary con `q_auto` (compresión lossy)                   | Verificado en v6.1: `buildImageUrl()` usa `f_webp,q_100`                                  |
-| "Ruido de mosquito" en líneas de alto contraste       | Artefactos DCT del JPEG/WebP lossy                                  | Verificado en v6.1: `q_100` activa VP8L, eliminando el codificador DCT                    |
+| Colores lavados / desaturados en las piezas           | URL de Cloudinary con `q_auto` (compresión lossy)                   | Verificado en v6.1: `buildImageUrl()` usa `f_avif,q_100`                                  |
+| "Ruido de mosquito" en líneas de alto contraste       | Artefactos DCT del JPEG/AVIF lossy                                  | Verificado en v6.1: `q_100` activa VP8L, eliminando el codificador DCT                    |
 | Blur generalizado en el tablero                       | `drawImage` único 1600→target (bilineal en un paso)                 | Verificado en v19.0: `_buildSourceCanvasHQ()` implementa step-down ≤2:1 por paso          |
 | Canvas intermedio no liberado (posible OOM)           | Referencia a canvas intermedio sobrevive el scope                   | `_buildSourceCanvasHQ()` invalida `width=0/height=0` en cada iteración                    |
 | **Fuga de VRAM entre niveles (bitmap precargado)**    | **`clearPrefetch()` no invocado en salida del nivel**               | **Verificado en v9.0: todos los puntos de salida del nivel llaman `levelManager.clearPrefetch()`** |
