@@ -3218,3 +3218,43 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         window.location.reload();
     });
 })();
+
+(function setupGamesCarouselInteractions() {
+    const carousels = Array.from(document.querySelectorAll('.games-carousel'));
+    if (!carousels.length) return;
+
+    document.querySelectorAll('.carousel-nav').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.carouselTarget;
+            const track = targetId ? document.getElementById(targetId) : null;
+            if (!track) return;
+            const direction = btn.classList.contains('carousel-nav--next') ? 1 : -1;
+            track.scrollBy({ left: direction * Math.round(track.clientWidth * 0.85), behavior: 'smooth' });
+        });
+    });
+
+    const tiles = Array.from(document.querySelectorAll('.game-tile'));
+    function clearActive(except = null) {
+        tiles.forEach(tile => {
+            if (tile !== except) tile.classList.remove('is-active');
+        });
+    }
+
+    tiles.forEach(tile => {
+        tile.addEventListener('pointerdown', () => {
+            if (window.matchMedia('(hover: none)').matches) {
+                const alreadyActive = tile.classList.contains('is-active');
+                clearActive(alreadyActive ? null : tile);
+                tile.classList.toggle('is-active', !alreadyActive);
+            }
+        });
+        tile.addEventListener('focusin', () => tile.classList.add('is-active'));
+        tile.addEventListener('focusout', (event) => {
+            if (!tile.contains(event.relatedTarget)) tile.classList.remove('is-active');
+        });
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+        if (!event.target.closest('.game-tile')) clearActive();
+    });
+})();
