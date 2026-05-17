@@ -820,6 +820,10 @@ function initGamesCarousels() {
         const prevBtn = section?.querySelector('[data-carousel-prev]');
         const nextBtn = section?.querySelector('[data-carousel-next]');
         const scrollStep = () => Math.max(track.clientWidth * 0.85, 220);
+        let dragPointerId = null;
+        let dragStartX = 0;
+        let dragStartScrollLeft = 0;
+        let isDraggingTrack = false;
 
         prevBtn?.addEventListener('click', () => {
             track.scrollBy({ left: -scrollStep(), behavior: 'smooth' });
@@ -827,6 +831,40 @@ function initGamesCarousels() {
         nextBtn?.addEventListener('click', () => {
             track.scrollBy({ left: scrollStep(), behavior: 'smooth' });
         });
+
+        track.addEventListener('pointerdown', (event) => {
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            dragPointerId = event.pointerId;
+            dragStartX = event.clientX;
+            dragStartScrollLeft = track.scrollLeft;
+            isDraggingTrack = false;
+            track.setPointerCapture?.(event.pointerId);
+        });
+
+        track.addEventListener('pointermove', (event) => {
+            if (dragPointerId !== event.pointerId) return;
+            const deltaX = event.clientX - dragStartX;
+            if (!isDraggingTrack && Math.abs(deltaX) > 6) isDraggingTrack = true;
+            if (!isDraggingTrack) return;
+            track.scrollLeft = dragStartScrollLeft - deltaX;
+        });
+
+        const endTrackDrag = (event) => {
+            if (dragPointerId !== event.pointerId) return;
+            if (track.hasPointerCapture?.(event.pointerId)) {
+                track.releasePointerCapture(event.pointerId);
+            }
+            dragPointerId = null;
+            requestAnimationFrame(() => { isDraggingTrack = false; });
+        };
+        track.addEventListener('pointerup', endTrackDrag);
+        track.addEventListener('pointercancel', endTrackDrag);
+
+        track.addEventListener('click', (event) => {
+            if (!isDraggingTrack) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }, true);
     });
 
     document.querySelectorAll('.game-card').forEach((card) => {

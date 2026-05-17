@@ -1463,6 +1463,8 @@ body::before {
 .games-carousel-btn { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--border-subtle); background: var(--solid-surface-raised); color: var(--text-primary); cursor: pointer; }
 .games-carousel-track { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; padding: 0 2px 6px; touch-action: pan-x; overscroll-behavior-x: contain; }
 .games-carousel-track::-webkit-scrollbar { display: none; }
+.games-carousel-track { cursor: grab; }
+.games-carousel-track:active { cursor: grabbing; }
 
 .game-card {
     background: #141620;
@@ -1473,6 +1475,7 @@ body::before {
     scroll-snap-align: start;
     flex: 0 0 auto;
     width: clamp(220px, 72vw, 340px);
+    user-select: none;
 }
 .game-card--popular { aspect-ratio: 3 / 2; }
 .game-card--more { aspect-ratio: 4 / 5; width: clamp(170px, 46vw, 250px); }
