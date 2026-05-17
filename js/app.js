@@ -3240,14 +3240,58 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         });
     }
 
-    tiles.forEach(tile => {
-        tile.addEventListener('pointerdown', () => {
-            if (window.matchMedia('(hover: none)').matches) {
-                const alreadyActive = tile.classList.contains('is-active');
-                clearActive(alreadyActive ? null : tile);
-                tile.classList.toggle('is-active', !alreadyActive);
-            }
+    const gestureState = new WeakMap();
+    carousels.forEach((carousel) => {
+        const state = { startX: 0, startY: 0, moved: false, pointerActive: false, dragBlockUntil: 0 };
+        gestureState.set(carousel, state);
+
+        carousel.addEventListener('pointerdown', (event) => {
+            state.pointerActive = true;
+            state.moved = false;
+            state.startX = event.clientX;
+            state.startY = event.clientY;
         });
+
+        carousel.addEventListener('pointermove', (event) => {
+            if (!state.pointerActive) return;
+            const dx = Math.abs(event.clientX - state.startX);
+            const dy = Math.abs(event.clientY - state.startY);
+            if (dx > 8 || dy > 8) state.moved = true;
+        });
+
+        const finishPointer = () => {
+            if (!state.pointerActive) return;
+            if (state.moved) state.dragBlockUntil = Date.now() + 100;
+            state.pointerActive = false;
+        };
+
+        carousel.addEventListener('pointerup', finishPointer);
+        carousel.addEventListener('pointercancel', finishPointer);
+
+        carousel.addEventListener('click', (event) => {
+            const dragged = state.moved || Date.now() < state.dragBlockUntil;
+            if (!dragged) return;
+            const targetTile = event.target.closest('.game-tile');
+            if (!targetTile) return;
+            event.preventDefault();
+            event.stopPropagation();
+            clearActive();
+        }, true);
+    });
+
+    tiles.forEach(tile => {
+        tile.addEventListener('click', (event) => {
+            if (!window.matchMedia('(hover: none)').matches) return;
+            const carousel = tile.closest('.games-carousel');
+            const state = carousel ? gestureState.get(carousel) : null;
+            const dragged = !!state && (state.moved || Date.now() < state.dragBlockUntil);
+            if (dragged) return;
+            if (event.target.closest('a')) return;
+            const alreadyActive = tile.classList.contains('is-active');
+            clearActive(alreadyActive ? null : tile);
+            tile.classList.toggle('is-active', !alreadyActive);
+        });
+
         tile.addEventListener('focusin', () => tile.classList.add('is-active'));
         tile.addEventListener('focusout', (event) => {
             if (!tile.contains(event.relatedTarget)) tile.classList.remove('is-active');

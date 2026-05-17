@@ -1476,9 +1476,10 @@ body::before {
     gap: 12px;
     overflow-x: auto;
     padding: 2px 4px 8px;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     scroll-behavior: smooth;
     overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     flex: 1;
@@ -1494,6 +1495,10 @@ body::before {
     border: 1px solid var(--border-subtle);
     background: #141620;
     isolation: isolate;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    touch-action: manipulation;
 }
 .game-tile--popular { aspect-ratio: 3 / 2; }
 .game-tile--more { aspect-ratio: 4 / 5; }
@@ -1502,6 +1507,10 @@ body::before {
     height: 100%;
     object-fit: cover;
     display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
 }
 .game-tile__overlay {
     position: absolute;
