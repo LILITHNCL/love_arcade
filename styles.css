@@ -1485,7 +1485,7 @@ body::before {
 }
 .games-carousel::-webkit-scrollbar { display: none; }
 .games-carousel--popular { grid-auto-columns: minmax(240px, 32vw); }
-.games-carousel--more { grid-auto-columns: minmax(150px, 18vw); }
+.games-carousel--more { grid-auto-columns: minmax(105px, 12.6vw); }
 .game-tile {
     position: relative;
     border-radius: var(--radius-lg);
@@ -1542,7 +1542,7 @@ body::before {
     .carousel-nav { display: none; }
     .games-carousel { grid-auto-columns: 58vw; }
     .games-carousel--popular { grid-auto-columns: 74vw; }
-    .games-carousel--more { grid-auto-columns: 44vw; }
+    .games-carousel--more { grid-auto-columns: 31vw; }
 }
 
 /* ================================================================
