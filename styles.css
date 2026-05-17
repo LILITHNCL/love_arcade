@@ -1463,8 +1463,6 @@ body::before {
 .games-carousel-btn { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--border-subtle); background: var(--solid-surface-raised); color: var(--text-primary); cursor: pointer; }
 .games-carousel-track { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; padding: 0 2px 6px; touch-action: pan-x; overscroll-behavior-x: contain; }
 .games-carousel-track::-webkit-scrollbar { display: none; }
-.games-carousel-track { cursor: grab; }
-.games-carousel-track:active { cursor: grabbing; }
 
 .game-card {
     background: #141620;
@@ -2396,15 +2394,15 @@ body::before {
 
 /* Bloqueo de scroll de fondo cuando cualquier modal/overlay está abierto */
 html:has(.modal-overlay:not(.hidden)),
-html:has(.gacha-roulette-overlay),
+html:has(.gacha-roulette-overlay.gacha-roulette-overlay--visible),
 body:has(.modal-overlay:not(.hidden)),
-body:has(.gacha-roulette-overlay) {
+body:has(.gacha-roulette-overlay.gacha-roulette-overlay--visible) {
     overflow: hidden;
     overscroll-behavior: none;
 }
 
 body:has(.modal-overlay:not(.hidden)),
-body:has(.gacha-roulette-overlay) {
+body:has(.gacha-roulette-overlay.gacha-roulette-overlay--visible) {
     touch-action: none;
 }
 @keyframes modalFadeIn {
