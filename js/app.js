@@ -3218,3 +3218,87 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         window.location.reload();
     });
 })();
+
+(function setupGamesCarouselInteractions() {
+    const carousels = Array.from(document.querySelectorAll('.games-carousel'));
+    if (!carousels.length) return;
+
+    document.querySelectorAll('.carousel-nav').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.carouselTarget;
+            const track = targetId ? document.getElementById(targetId) : null;
+            if (!track) return;
+            const direction = btn.classList.contains('carousel-nav--next') ? 1 : -1;
+            track.scrollBy({ left: direction * Math.round(track.clientWidth * 0.85), behavior: 'smooth' });
+        });
+    });
+
+    const tiles = Array.from(document.querySelectorAll('.game-tile'));
+    function clearActive(except = null) {
+        tiles.forEach(tile => {
+            if (tile !== except) tile.classList.remove('is-active');
+        });
+    }
+
+    const gestureState = new WeakMap();
+    carousels.forEach((carousel) => {
+        const state = { startX: 0, startY: 0, moved: false, pointerActive: false, dragBlockUntil: 0 };
+        gestureState.set(carousel, state);
+
+        carousel.addEventListener('pointerdown', (event) => {
+            state.pointerActive = true;
+            state.moved = false;
+            state.startX = event.clientX;
+            state.startY = event.clientY;
+        });
+
+        carousel.addEventListener('pointermove', (event) => {
+            if (!state.pointerActive) return;
+            const dx = Math.abs(event.clientX - state.startX);
+            const dy = Math.abs(event.clientY - state.startY);
+            if (dx > 8 || dy > 8) state.moved = true;
+        });
+
+        const finishPointer = () => {
+            if (!state.pointerActive) return;
+            if (state.moved) state.dragBlockUntil = Date.now() + 100;
+            state.pointerActive = false;
+        };
+
+        carousel.addEventListener('pointerup', finishPointer);
+        carousel.addEventListener('pointercancel', finishPointer);
+
+        carousel.addEventListener('click', (event) => {
+            const dragged = state.moved || Date.now() < state.dragBlockUntil;
+            if (!dragged) return;
+            const targetTile = event.target.closest('.game-tile');
+            if (!targetTile) return;
+            event.preventDefault();
+            event.stopPropagation();
+            clearActive();
+        }, true);
+    });
+
+    tiles.forEach(tile => {
+        tile.addEventListener('click', (event) => {
+            if (!window.matchMedia('(hover: none)').matches) return;
+            const carousel = tile.closest('.games-carousel');
+            const state = carousel ? gestureState.get(carousel) : null;
+            const dragged = !!state && (state.moved || Date.now() < state.dragBlockUntil);
+            if (dragged) return;
+            if (event.target.closest('a')) return;
+            const alreadyActive = tile.classList.contains('is-active');
+            clearActive(alreadyActive ? null : tile);
+            tile.classList.toggle('is-active', !alreadyActive);
+        });
+
+        tile.addEventListener('focusin', () => tile.classList.add('is-active'));
+        tile.addEventListener('focusout', (event) => {
+            if (!tile.contains(event.relatedTarget)) tile.classList.remove('is-active');
+        });
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+        if (!event.target.closest('.game-tile')) clearActive();
+    });
+})();

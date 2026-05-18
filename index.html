@@ -13,10 +13,10 @@
     <link rel="apple-touch-icon" href="/assets/icon/apple-touch-icon.png">
 
     <!-- Preload critical above-the-fold game card images -->
-    <link rel="preload" as="image" href="assets/images/games/cover/rompecabezas-cover-art.avif" fetchpriority="high">
-    <link rel="preload" as="image" href="assets/images/games/cover/word-hunt-cover-art.avif" fetchpriority="high">
-    <link rel="preload" as="image" href="assets/images/games/cover/ollin-smash-cover-art.avif" fetchpriority="high">
-    <link rel="preload" as="image" href="assets/images/games/cover/space-shooter-cover-art.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/rompecabezas-cover-art-3-2.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/word-hunt-cover-art-3-2.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/ollin-smash-cover-art-3-2.avif" fetchpriority="high">
+    <link rel="preload" as="image" href="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/space-shooter-cover-art-4-5.avif" fetchpriority="high">
 
     <!--
       ╔══════════════════════════════════════════════════════════════╗
@@ -384,168 +384,48 @@
             </section>
 
             <!-- ── GAME CARDS ── -->
-            <div style="margin-bottom: 20px;">
-                <h2 class="section-title" style="margin-bottom: 4px;">¿Qué vamos a jugar?</h2>
-                <p class="section-subtitle">Gana monedas en cada partida</p>
-            </div>
+            <section id="games" class="games-sections" aria-label="Secciones de juegos">
+                <div class="games-section">
+                    <div class="games-section__header">
+                        <h2 class="section-title">Juegos Populares</h2>
+                    </div>
+                    <div class="games-carousel-wrap">
+                        <button class="carousel-nav carousel-nav--prev" type="button" aria-label="Desplazar juegos populares hacia la izquierda" data-carousel-target="popular-games">‹</button>
+                        <div id="popular-games" class="games-carousel games-carousel--popular" tabindex="0">
+                            <article class="game-tile game-tile--popular" tabindex="0">
+                                <img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/word-hunt-cover-art-3-2.avif" alt="Portada de Word Hunt" width="1500" height="1000" loading="eager" fetchpriority="high" decoding="sync">
+                                <div class="game-tile__overlay"><a href="games/word-hunt" class="btn-primary game-tile__cta">Jugar</a></div>
+                            </article>
+                            <article class="game-tile game-tile--popular" tabindex="0">
+                                <img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/rompecabezas-cover-art-3-2.avif" alt="Portada de Rompecabezas" width="1500" height="1000" loading="eager" fetchpriority="high" decoding="sync">
+                                <div class="game-tile__overlay"><a href="games/rompecabezas" class="btn-primary game-tile__cta">Jugar</a></div>
+                            </article>
+                            <article class="game-tile game-tile--popular" tabindex="0">
+                                <img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/ollin-smash-cover-art-3-2.avif" alt="Portada de Ollin Smash" width="1500" height="1000" loading="eager" fetchpriority="high" decoding="sync">
+                                <div class="game-tile__overlay"><a href="games/ollin-smash" class="btn-primary game-tile__cta">Jugar</a></div>
+                            </article>
+                        </div>
+                        <button class="carousel-nav carousel-nav--next" type="button" aria-label="Desplazar juegos populares hacia la derecha" data-carousel-target="popular-games">›</button>
+                    </div>
+                </div>
 
-            <section id="games" class="games-grid">
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/rompecabezas-cover-art.avif"
-                            alt="Portada de Rompecabezas"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
+                <div class="games-section">
+                    <div class="games-section__header">
+                        <h2 class="section-title">Más Juegos</h2>
                     </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Rompecabezas</h3>
-                        <p class="card-desc">Une las piezas para completar la imagen y ganar monedas.</p>
-                        <a href="games/rompecabezas" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
+                    <div class="games-carousel-wrap">
+                        <button class="carousel-nav carousel-nav--prev" type="button" aria-label="Desplazar más juegos hacia la izquierda" data-carousel-target="more-games">‹</button>
+                        <div id="more-games" class="games-carousel games-carousel--more" tabindex="0">
+                            <article class="game-tile game-tile--more" tabindex="0"><img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/space-shooter-cover-art-4-5.avif" alt="Portada de Vortex" width="1200" height="1500" loading="eager" fetchpriority="high" decoding="sync"><div class="game-tile__overlay"><a href="games/Shooter" class="btn-primary game-tile__cta">Jugar</a></div></article>
+                            <article class="game-tile game-tile--more" tabindex="0"><img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/2048-cover-art-4-5.avif" alt="Portada de 2048" width="1200" height="1500" loading="eager" fetchpriority="high" decoding="sync"><div class="game-tile__overlay"><a href="games/2048" class="btn-primary game-tile__cta">Jugar</a></div></article>
+                            <article class="game-tile game-tile--more" tabindex="0"><img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/jungle-dash-cover-art-4-5.avif" alt="Portada de Jungle Dash" width="1200" height="1500" loading="eager" fetchpriority="high" decoding="sync"><div class="game-tile__overlay"><a href="games/jungle-dash" class="btn-primary game-tile__cta">Jugar</a></div></article>
+                            <article class="game-tile game-tile--more" tabindex="0"><img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/dodger-cover-art-4-5.avif" alt="Portada de Dodger" width="1200" height="1500" loading="eager" fetchpriority="high" decoding="sync"><div class="game-tile__overlay"><a href="games/Dodger" class="btn-primary game-tile__cta">Jugar</a></div></article>
+                        </div>
+                        <button class="carousel-nav carousel-nav--next" type="button" aria-label="Desplazar más juegos hacia la derecha" data-carousel-target="more-games">›</button>
                     </div>
-                </article>
-                
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/word-hunt-cover-art.avif"
-                            alt="Portada de Word Hunt"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Word Hunt</h3>
-                        <p class="card-desc">Encuentra todas las palabras ocultas en el tablero.</p>
-                        <a href="games/word-hunt" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/ollin-smash-cover-art.avif"
-                            alt="Portada de Ollin Smash"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Ollin Smash</h3>
-                        <p class="card-desc">Destruye todos los bloques antes de que la pelota caiga.</p>
-                        <a href="games/ollin-smash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/space-shooter-cover-art.avif"
-                            alt="Portada de Vortex"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Vortex</h3>
-                        <p class="card-desc">Elimina todas las naves enemigas en este frenético shooter espacial.</p>
-                        <a href="games/Shooter" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/2048-cover-art.avif"
-                            alt="Portada de 2048"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">2048</h3>
-                        <p class="card-desc">Desliza las fichas y combina números iguales para sumarlos.</p>
-                        <a href="games/2048" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/jungle-dash-cover-art.avif"
-                            alt="Portada de Jungle Dash"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Jungle Dash</h3>
-                        <p class="card-desc">Controla a un jaguar en la selva y salta para esquivar obstáculos. ¿Cuánto puedes resistir?</p>
-                        <a href="games/jungle-dash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/dodger-cover-art.avif"
-                            alt="Portada de Dodger"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Dodger</h3>
-                        <p class="card-desc">Sobrevive el mayor tiempo posible a la lluvia de asteroides.</p>
-                        <a href="games/Dodger" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
+                </div>
             </section>
+
 
 
         </div><!-- /#view-home -->
