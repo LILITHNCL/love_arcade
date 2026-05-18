@@ -666,11 +666,12 @@ body::before {
     gap: 10px;
     padding: 6px;
     border-radius: 999px;
-    background: #121421;
-    border: 1px solid rgba(255,255,255,0.07);
+    background: #171a2b;
+    border: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 24px rgba(2, 4, 12, 0.38);
 }
 .nav-link {
-    color: #b9bdd3;
+    color: #cfd5f7;
     font-weight: 600;
     font-size: 0.9rem;
     transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
@@ -681,13 +682,14 @@ body::before {
     gap: 8px;
 }
 .nav-link:hover {
-    background: rgba(255,255,255,0.06);
-    color: #d8ddf4;
+    background: rgba(139, 92, 246, 0.18);
+    color: #f1f3ff;
     transform: translateY(-1px);
 }
 .nav-link.active {
-    background: #20243a;
-    color: #f7f8ff;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(59, 130, 246, 0.45));
+    color: #ffffff;
+    box-shadow: 0 8px 22px rgba(76, 29, 149, 0.42), inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .nav-link:focus-visible {
     outline: 2px solid var(--accent);
@@ -765,10 +767,10 @@ body::before {
     transform: translateX(-50%);
     width: min(420px, calc(100% - 32px));
     height: 72px;
-    background: #111320;
-    border: 1px solid rgba(255,255,255,0.09);
+    background: linear-gradient(180deg, #171a2b 0%, #121524 100%);
+    border: 1px solid transparent;
     border-radius: 999px;
-    box-shadow: 0 12px 28px rgba(4, 5, 12, 0.42);
+    box-shadow: 0 14px 34px rgba(4, 5, 12, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
     z-index: 1000;
     justify-content: space-between;
     align-items: center;
@@ -781,9 +783,10 @@ body::before {
     width: calc((100% - 16px) / var(--nav-items));
     height: calc(100% - 16px);
     border-radius: 999px;
-    background: #252b47;
+    background: linear-gradient(135deg, rgba(124,58,237,0.66), rgba(59,130,246,0.56));
     transform: translateX(calc(var(--active-index) * 100%));
-    transition: transform 480ms cubic-bezier(.22, 1.35, .36, 1);
+    box-shadow: 0 10px 24px rgba(76, 29, 149, 0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: transform 560ms cubic-bezier(.2, .95, .22, 1.08), box-shadow 260ms ease;
     pointer-events: none;
 }
 
@@ -793,26 +796,27 @@ body::before {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    color: var(--text-mute);
+    color: #aeb7dd;
     font-size: 0.78rem;
     font-weight: 600;
     gap: 8px;
     flex: 1; height: 100%;
     border-radius: 999px;
     z-index: 1;
-    transition: color 200ms ease, transform 140ms ease;
+    transition: color 260ms ease, transform 240ms cubic-bezier(.22,.88,.3,1.2), filter 220ms ease;
 }
 .b-nav-item__icon-wrap { display: inline-flex; }
-.b-nav-item.active { color: #fff; }
+.b-nav-item.active { color: #fff; filter: drop-shadow(0 0 8px rgba(199, 210, 254, 0.35)); }
 .b-nav-item:active,
 .b-nav-item.is-pressing {
-    transform: scale(0.96) translateY(1px);
+    transform: scale(0.92) translateY(1px);
 }
 .b-nav-item .icon {
-    transition: transform 300ms ease;
+    transition: transform 380ms cubic-bezier(.22,.88,.3,1.2), filter 240ms ease;
 }
 .b-nav-item.active .icon {
-    animation: bNavIconPop 500ms cubic-bezier(.22,.85,.27,1.2);
+    animation: bNavIconPop 620ms cubic-bezier(.18,.9,.22,1.25);
+    filter: drop-shadow(0 0 10px rgba(196, 181, 253, 0.46));
 }
 .b-nav-item__label {
     max-width: 0;
@@ -820,7 +824,7 @@ body::before {
     transform: translateX(-6px);
     white-space: nowrap;
     overflow: hidden;
-    transition: max-width 280ms ease, opacity 220ms ease, transform 260ms ease;
+    transition: max-width 420ms cubic-bezier(.18,.84,.26,1), opacity 260ms ease, transform 340ms cubic-bezier(.18,.84,.26,1);
 }
 .b-nav-item.active .b-nav-item__label {
     max-width: 84px;
@@ -845,10 +849,11 @@ body::before {
     outline-offset: -2px;
 }
 @keyframes bNavIconPop {
-    0% { transform: scale(0.86) rotate(-8deg); }
-    35% { transform: scale(1.18) rotate(7deg); }
-    62% { transform: scale(0.98) rotate(-3deg); }
-    100% { transform: scale(1.04) rotate(0deg); }
+    0% { transform: translateY(3px) scale(0.8) rotate(-10deg); }
+    28% { transform: translateY(-4px) scale(1.22) rotate(7deg); }
+    52% { transform: translateY(0) scale(0.96) rotate(-3deg); }
+    76% { transform: translateY(-1px) scale(1.08) rotate(1deg); }
+    100% { transform: translateY(0) scale(1.02) rotate(0deg); }
 }
 @keyframes bNavRipple {
     0% { opacity: 0.42; transform: scale(0.1); }
@@ -1492,7 +1497,7 @@ body::before {
     border-radius: var(--radius-lg);
     overflow: hidden;
     scroll-snap-align: start;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid transparent;
     background: #141620;
     isolation: isolate;
     user-select: none;
