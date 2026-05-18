@@ -250,9 +250,10 @@
         </div>
 
         <ul class="nav-links" role="list">
-            <li><a href="#" class="nav-link active" data-view="home"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-home"></use></svg><span>Inicio</span></a></li>
+            <li><a href="#" class="nav-link active" data-view="home"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-home"></use></svg><span>Hub</span></a></li>
+            <li><a href="#" class="nav-link" data-view="games"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg><span>Juegos</span></a></li>
             <li><a href="#" class="nav-link" data-view="shop"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg><span>Tienda</span></a></li>
-            <li><a href="#" class="nav-link" data-view="events"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-sparkles"></use></svg><span>Eventos</span></a></li>
+            <li><a href="#" class="nav-link" data-view="profile"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-user"></use></svg><span>Perfil</span></a></li>
         </ul>
 
         <div class="nav-user">
@@ -280,17 +281,21 @@
     <!-- ── BOTTOM NAV (mobile) ── -->
     <nav class="bottom-nav" aria-label="Navegación rápida móvil" style="--active-index:0;">
         <span class="bottom-nav-bubble" aria-hidden="true"></span>
-        <a href="#" class="b-nav-item active" data-view="home" data-nav-index="0" aria-label="Inicio">
+        <a href="#" class="b-nav-item active" data-view="home" data-nav-index="0" aria-label="Hub">
             <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg></span>
-            <span class="b-nav-item__label">Inicio</span>
+            <span class="b-nav-item__label">Hub</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="shop" data-nav-index="1" aria-label="Tienda">
+        <a href="#" class="b-nav-item" data-view="games" data-nav-index="1" aria-label="Juegos">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg></span>
+            <span class="b-nav-item__label">Juegos</span>
+        </a>
+        <a href="#" class="b-nav-item" data-view="shop" data-nav-index="2" aria-label="Tienda">
             <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg></span>
             <span class="b-nav-item__label">Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events" data-nav-index="2" aria-label="Eventos">
-            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg></span>
-            <span class="b-nav-item__label">Eventos</span>
+        <a href="#" class="b-nav-item" data-view="profile" data-nav-index="3" aria-label="Perfil">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-user"></use></svg></span>
+            <span class="b-nav-item__label">Perfil</span>
         </a>
     </nav>
 
@@ -382,6 +387,13 @@
                 <p class="home-events-summary-card__label">Eventos</p>
                 <p class="home-events-summary-card__empty">Cargando resumen...</p>
             </section>
+            <section class="glass-panel" style="padding:14px; margin:14px 0;">
+                <p class="section-subtitle" style="margin:0 0 8px;">Continuar jugando</p>
+                <h3 style="margin:0 0 6px;">Word Hunt</h3>
+                <p class="section-subtitle" style="margin:0 0 12px;">Puzzle · 3 min · +100 monedas disponibles</p>
+                <a href="games/word-hunt" class="btn-primary" style="width:100%; justify-content:center;">Continuar</a>
+            </section>
+
 
             <!-- ── GAME CARDS ── -->
             <section id="games" class="games-sections" aria-label="Secciones de juegos">
@@ -485,15 +497,7 @@
                 <button class="shop-tab active" data-tab="catalog">
                     <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-layout-grid"></use></svg> Catálogo
                 </button>
-                <button class="shop-tab" data-tab="library">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
-                </button>
-                <button class="shop-tab" data-tab="sync">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg> Sincronizar
-                </button>
-                <button class="shop-tab" data-tab="settings">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-settings-2"></use></svg> Ajustes
-                </button>
+                <button class="shop-tab" data-tab="offers"><svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg> Ofertas</button>
             </div>
 
             <!-- ── TAB: CATÁLOGO ── -->
@@ -502,7 +506,7 @@
                     <div class="search-wrap">
                         <svg class="icon search-icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg>
                         <input type="text" id="search-input" class="search-input"
-                               placeholder="Buscar wallpaper…" autocomplete="off">
+                               placeholder="Buscar recompensa, wallpaper o avatar…" autocomplete="off">
                         <button id="search-clear" class="search-clear hidden" aria-label="Limpiar">
                             <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-x"></use></svg>
                         </button>
@@ -837,13 +841,53 @@
 
         </div><!-- /#view-shop -->
 
+
+
+        <div id="view-games" class="view-section hidden">
+            <section class="games-hub-header glass-panel">
+                <h1 class="section-title">Juegos</h1><p class="section-subtitle">Busca tu próxima partida</p>
+            </section>
+            <section class="tab-panel">
+                <div class="shop-toolbar">
+                    <div class="search-wrap"><svg class="icon search-icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg><input type="text" class="search-input" placeholder="Buscar juego…" autocomplete="off"></div>
+                    <div class="filter-pills"><button class="pill active">Todos</button><button class="pill">Puzzle</button><button class="pill">Arcade</button><button class="pill">Acción</button><button class="pill">Nuevos</button><button class="pill">Con recompensas</button></div>
+                </div>
+                <h2 class="section-title">Continuar jugando</h2>
+                <div class="games-carousel" style="margin-bottom:14px;"><article class="game-tile game-tile--popular"><img class="game-tile__img" src="https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto/word-hunt-cover-art-3-2.avif" alt="Portada de Word Hunt"><div class="game-tile__overlay"><a href="games/word-hunt" class="btn-primary game-tile__cta">Continuar</a></div></article></div>
+            </section>
+        </div>
+
+        <div id="view-profile" class="view-section hidden">
+            <section class="glass-panel settings-card" style="margin-bottom:12px;">
+                <h2 class="section-title">Mi Arcade</h2>
+                <p class="section-subtitle">Centro de progreso, cuenta y personalización.</p>
+            </section>
+
+            <section class="games-section">
+                <div class="games-section__header"><h2 class="section-title">Atajos de jugador</h2></div>
+                <div class="filter-pills" style="margin-bottom:12px;">
+                    <button class="pill" data-view="shop" data-tab="library">Mis Tesoros</button>
+                    <button class="pill" data-view="shop" data-tab="sync">Sincronización</button>
+                    <button class="pill" data-view="shop" data-tab="settings">Personalización</button>
+                </div>
+                <div class="glass-panel" style="padding:14px;">
+                    <p class="section-subtitle" style="margin:0;">Desde aquí accedes a inventario, nube, historial, economía y tema de color.</p>
+                </div>
+            </section>
+        </div>
+
         <!-- ═══════════════════════════════════════════
              VISTA: EVENTOS (v10.0 — LTE System)
              Cargada de forma lazy por event-logic.js al navegar aquí.
              El contenido interno es inyectado por _renderEventsView().
              ═══════════════════════════════════════════ -->
         <div id="view-events" class="view-section hidden">
-            <!-- Contenido inyectado por event-logic.js onEnter() -->
+            <section class="glass-panel" style="padding:16px;">
+                <p class="section-subtitle">Sin eventos activos</p>
+                <h2 class="section-title">Eventos y retos</h2>
+                <p class="section-subtitle">El arcade está cargando el próximo evento. Mientras tanto, completa partidas para subir tu racha y ganar monedas.</p>
+                <a href="games/word-hunt" class="btn-primary" style="margin-top:10px; justify-content:center;">Jugar ahora</a>
+            </section>
         </div><!-- /#view-events -->
 
     </main><!-- /.container -->

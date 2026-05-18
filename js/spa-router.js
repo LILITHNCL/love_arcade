@@ -48,7 +48,7 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'events'];
+    const VIEWS = ['home', 'games', 'shop', 'profile', 'events'];
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
@@ -60,7 +60,18 @@
     /** @type {string} */
     let currentView = 'home';
 
-    const scheduleIdle = window.requestIdleCallback
+    
+    document.addEventListener('click', (event) => {
+        const shortcut = event.target.closest('#view-profile [data-view="shop"][data-tab]');
+        if (!shortcut) return;
+        event.preventDefault();
+        navigateTo('shop');
+        const tabId = shortcut.dataset.tab;
+        const btn = document.querySelector(`.shop-tab[data-tab="${tabId}"]`);
+        btn?.click();
+    });
+
+const scheduleIdle = window.requestIdleCallback
         ? (cb) => window.requestIdleCallback(cb, { timeout: 120 })
         : (cb) => setTimeout(() => cb({ didTimeout: true, timeRemaining: () => 0 }), 16);
 

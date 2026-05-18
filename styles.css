@@ -5338,4 +5338,28 @@ svg { stroke-width: 2; }
 @media (max-width: 640px) {
     .push-rules-grid { grid-template-columns: 1fr; }
 }
-    line-height: 1.2;
+
+/* v12 redesign: Premium Console + Neon Operator */
+:root {
+  --bg-main:#06070D;
+  --bg-elev:#10131E;
+  --card-bg:#151827;
+  --card-elev:#1B2032;
+  --text-main:#F4F6FF;
+  --text-med:#B8C0D8;
+}
+body{background:var(--bg-main);color:var(--text-main)}
+.navbar,.bottom-nav,.glass-panel,.player-hud,.game-tile,.sale-banner__ticket,.settings-card,.memory-card{backdrop-filter:none!important;background:var(--card-bg)!important;border:1px solid rgba(160,125,255,.18)!important;box-shadow:0 14px 32px rgba(0,0,0,.28)!important}
+.bottom-nav{bottom:16px!important;background:#151827!important}
+.b-nav-item.active,.nav-link.active{background:linear-gradient(135deg,#8B4DFF,#3E68FF)!important;color:#fff!important}
+.section-title{font-size:1.35rem;letter-spacing:-.02em}
+.section-subtitle{color:#B8C0D8}
+#view-games .game-tile__overlay,#view-home .game-tile__overlay{background:linear-gradient(to top,rgba(8,9,14,.86),rgba(8,9,14,.15))}
+#view-games .tab-panel,#view-profile .tab-panel{margin-bottom:14px}
+.shop-tabs{gap:8px;overflow:auto}
+.shop-tab{border-radius:999px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+#view-profile .filter-pills .pill{min-height:44px;}
+#view-games .search-wrap, #view-shop .search-wrap{background:#10131E;border:1px solid rgba(160,125,255,.18);}
+#view-events .btn-primary{display:inline-flex;}
