@@ -3188,24 +3188,40 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 (function setupServiceWorkerUpdateBridge() {
     if (!('serviceWorker' in navigator)) return;
 
+    let swReloadTriggeredByUser = false;
+    let swReloadInProgress = false;
+
     function showUpdateBanner(registration) {
         if (document.getElementById('sw-update-banner')) return;
+
         const banner = document.createElement('div');
         banner.id = 'sw-update-banner';
-        banner.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;padding:12px 14px;border-radius:10px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;';
-        banner.innerHTML = '<span>Nueva versión disponible.</span><button id="sw-update-btn" style="background:#6d28d9;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;">Actualizar</button>';
+        banner.className = 'sw-update-banner';
+        banner.innerHTML = `
+            <p class="sw-update-banner__text">Hay una nueva versión disponible. Actualiza para obtener las últimas mejoras.</p>
+            <div class="sw-update-banner__actions">
+                <button type="button" id="sw-update-btn" class="sw-update-banner__btn sw-update-banner__btn--primary">Actualizar ahora</button>
+                <button type="button" id="sw-update-later-btn" class="sw-update-banner__btn sw-update-banner__btn--ghost" aria-label="Cerrar aviso de actualización">Más tarde</button>
+            </div>
+        `;
+
         document.body.appendChild(banner);
+
         banner.querySelector('#sw-update-btn')?.addEventListener('click', () => {
+            swReloadTriggeredByUser = true;
             registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
         });
+        banner.querySelector('#sw-update-later-btn')?.addEventListener('click', () => banner.remove());
     }
 
     navigator.serviceWorker.getRegistration('/').then((registration) => {
         if (!registration) return;
+
         if (registration.waiting) showUpdateBanner(registration);
         registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (!newWorker) return;
+
             newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                     showUpdateBanner(registration);
@@ -3215,6 +3231,8 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     }).catch(() => {});
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!swReloadTriggeredByUser || swReloadInProgress) return;
+        swReloadInProgress = true;
         window.location.reload();
     });
 })();
