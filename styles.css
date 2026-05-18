@@ -143,8 +143,8 @@ span + .icon,
     --price-original-aa: #b6c1d6;
 
     /* Non-text contrast / focus */
-    --border-subtle-aa: #2a3040;
-    --border-strong-aa: #3a4358;
+    --border-subtle-aa: transparent;
+    --border-strong-aa: transparent;
     --accent-500: #8b5cf6;
     --accent-400: #a78bfa;
     --accent-300: #c4b5fd;
@@ -173,18 +173,18 @@ span + .icon,
 
     /* Hard-Edge borders — replaces glass borders */
     --border-subtle:   var(--border-subtle-aa);
-    --border-mid:      rgba(255, 255, 255, 0.1);
-    --border-bright:   rgba(255, 255, 255, 0.18);
+    --border-mid:      transparent;
+    --border-bright:   transparent;
 
     /* ── Legacy aliases kept for backward-compat with JS that may read them ── */
     --glass-base-bg:      #0f1018;
-    --glass-base-border:  rgba(255, 255, 255, 0.06);
+    --glass-base-border:  transparent;
     --glass-base-blur:    none;
     --glass-float-bg:     #141620;
     --glass-float-border: var(--border-strong-aa);
     --glass-float-blur:   none;
     --glass-hi-bg:        #1a1d2e;
-    --glass-hi-border:    rgba(255, 255, 255, 0.18);
+    --glass-hi-border:    transparent;
     --glass-hi-blur:      none;
 
     /* ── Accent (overridden by applyTheme) ── */
