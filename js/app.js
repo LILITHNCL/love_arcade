@@ -3190,8 +3190,26 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     let swReloadTriggeredByUser = false;
     let swReloadInProgress = false;
+    let swManualReloadTimer = null;
+    let swWaitingWorker = null;
+
+    function triggerUserReload() {
+        if (swReloadInProgress) return;
+        swReloadInProgress = true;
+        window.location.reload();
+    }
+
+    function scheduleManualReloadFallback() {
+        if (swManualReloadTimer) return;
+        swManualReloadTimer = window.setTimeout(() => {
+            swManualReloadTimer = null;
+            if (!swReloadTriggeredByUser || swReloadInProgress) return;
+            triggerUserReload();
+        }, 4000);
+    }
 
     function showUpdateBanner(registration) {
+        if (registration.waiting) swWaitingWorker = registration.waiting;
         if (document.getElementById('sw-update-banner')) return;
 
         const banner = document.createElement('div');
@@ -3207,9 +3225,20 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
         document.body.appendChild(banner);
 
-        banner.querySelector('#sw-update-btn')?.addEventListener('click', () => {
+        banner.querySelector('#sw-update-btn')?.addEventListener('click', async () => {
             swReloadTriggeredByUser = true;
-            registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+
+            try {
+                const latestRegistration = await navigator.serviceWorker.getRegistration('/');
+                const waitingWorker = latestRegistration?.waiting || registration.waiting || swWaitingWorker;
+                if (waitingWorker) {
+                    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+                    scheduleManualReloadFallback();
+                    return;
+                }
+            } catch (_) {}
+
+            triggerUserReload();
         });
         banner.querySelector('#sw-update-later-btn')?.addEventListener('click', () => banner.remove());
     }
@@ -3217,13 +3246,18 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     navigator.serviceWorker.getRegistration('/').then((registration) => {
         if (!registration) return;
 
-        if (registration.waiting) showUpdateBanner(registration);
+        if (registration.waiting) {
+            swWaitingWorker = registration.waiting;
+            showUpdateBanner(registration);
+        }
+
         registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (!newWorker) return;
 
             newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    swWaitingWorker = registration.waiting || newWorker;
                     showUpdateBanner(registration);
                 }
             });
@@ -3231,9 +3265,12 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     }).catch(() => {});
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!swReloadTriggeredByUser || swReloadInProgress) return;
-        swReloadInProgress = true;
-        window.location.reload();
+        if (!swReloadTriggeredByUser) return;
+        if (swManualReloadTimer) {
+            window.clearTimeout(swManualReloadTimer);
+            swManualReloadTimer = null;
+        }
+        triggerUserReload();
     });
 })();
 
