@@ -48,7 +48,7 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'events'];
+    const VIEWS = ['hub', 'games', 'shop', 'profile', 'events'];
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
@@ -58,7 +58,7 @@
     let bottomNavItems = [];
     
     /** @type {string} */
-    let currentView = 'home';
+    let currentView = 'hub';
 
     const scheduleIdle = window.requestIdleCallback
         ? (cb) => window.requestIdleCallback(cb, { timeout: 120 })
@@ -269,14 +269,14 @@
                 // no según la vista destino. De lo contrario, transiciones como
                 // shop -> events no liberan recursos de ShopView.
                 if (previousView !== viewId) {
-                    if (previousView === 'home') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
+                    if (previousView === 'hub') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
                     if (previousView === 'shop') lifecycleTasks.push(() => window.ShopView?.onLeave?.());
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
                 if (viewId === 'events') lifecycleTasks.push(() => _profileViewCallback('EventView.onEnter', () => window.EventView?.onEnter?.()));
 
@@ -343,7 +343,8 @@
     function _bindNavItem(el) {
         el.addEventListener('click', (e) => {
             e.preventDefault();
-            const viewId = el.dataset.view;
+            let viewId = el.dataset.view;
+            if (viewId === 'home') viewId = 'hub';
             const anchor = el.dataset.anchor || null;
             
             if (viewId === currentView && !anchor) {
@@ -362,7 +363,8 @@
         
         // Construir mapa de vistas
         VIEWS.forEach(id => {
-            const el = document.getElementById(`view-${id}`);
+            const domId = id === 'hub' ? 'view-home' : `view-${id}`;
+            const el = document.getElementById(domId);
             if (el) viewEls[id] = el;
         });
         
@@ -374,19 +376,19 @@
             if (viewEls[el.dataset.view]) _bindNavItem(el);
         });
         
-        _syncNavHighlight('home');
+        _syncNavHighlight('hub');
         
         // ── History API: estado inicial ───────────────────────────────────────
         // replaceState (no pushState) para que la entrada inicial quede en el
         // historial sin crear un salto extra hacia "atrás".
-        navigateTo('home', null, /* replace= */ true);
+        navigateTo('hub', null, /* replace= */ true);
         
         // ── Popstate: botón Atrás / Adelante ─────────────────────────────────
         // El navegador restaura el state y dispara 'popstate'. Usamos _applyView
         // directamente para NO generar una nueva entrada (evita bucle infinito).
         window.addEventListener('popstate', (e) => {
             const state = e.state;
-            const viewId = VIEWS.includes(state?.viewId) ? state.viewId : 'home';
+            const viewId = VIEWS.includes(state?.viewId) ? state.viewId : 'hub';
             const anchor = state?.anchor || null;
             _applyView(viewId, anchor);
         });

@@ -250,9 +250,10 @@
         </div>
 
         <ul class="nav-links" role="list">
-            <li><a href="#" class="nav-link active" data-view="home"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-home"></use></svg><span>Inicio</span></a></li>
+            <li><a href="#" class="nav-link active" data-view="hub"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-home"></use></svg><span>Hub</span></a></li>
+            <li><a href="#" class="nav-link" data-view="games"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg><span>Juegos</span></a></li>
             <li><a href="#" class="nav-link" data-view="shop"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg><span>Tienda</span></a></li>
-            <li><a href="#" class="nav-link" data-view="events"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-sparkles"></use></svg><span>Eventos</span></a></li>
+            <li><a href="#" class="nav-link" data-view="profile"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-user"></use></svg><span>Perfil</span></a></li>
         </ul>
 
         <div class="nav-user">
@@ -280,17 +281,21 @@
     <!-- ── BOTTOM NAV (mobile) ── -->
     <nav class="bottom-nav" aria-label="Navegación rápida móvil" style="--active-index:0;">
         <span class="bottom-nav-bubble" aria-hidden="true"></span>
-        <a href="#" class="b-nav-item active" data-view="home" data-nav-index="0" aria-label="Inicio">
+        <a href="#" class="b-nav-item active" data-view="hub" data-nav-index="0" aria-label="Hub">
             <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg></span>
-            <span class="b-nav-item__label">Inicio</span>
+            <span class="b-nav-item__label">Hub</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="shop" data-nav-index="1" aria-label="Tienda">
+        <a href="#" class="b-nav-item" data-view="games" data-nav-index="1" aria-label="Juegos">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg></span>
+            <span class="b-nav-item__label">Juegos</span>
+        </a>
+        <a href="#" class="b-nav-item" data-view="shop" data-nav-index="2" aria-label="Tienda">
             <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg></span>
             <span class="b-nav-item__label">Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events" data-nav-index="2" aria-label="Eventos">
-            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg></span>
-            <span class="b-nav-item__label">Eventos</span>
+        <a href="#" class="b-nav-item" data-view="profile" data-nav-index="3" aria-label="Perfil">
+            <span class="b-nav-item__icon-wrap"><svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-user"></use></svg></span>
+            <span class="b-nav-item__label">Perfil</span>
         </a>
     </nav>
 
@@ -431,6 +436,27 @@
         </div><!-- /#view-home -->
 
 
+
+
+        <div id="view-games" class="view-section hidden">
+            <div class="section-header" style="margin-bottom:16px;">
+                <div>
+                    <h2 class="section-title">Juegos</h2>
+                    <p class="section-subtitle">Explora, filtra y continúa tus partidas</p>
+                </div>
+            </div>
+            <div class="shop-toolbar" style="margin-bottom:16px;">
+                <div class="search-box">
+                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg>
+                    <input id="games-search-input" type="text" placeholder="Buscar juego" aria-label="Buscar juego">
+                </div>
+            </div>
+            <p class="section-subtitle">Continuar jugando</p>
+            <div id="continue-playing-state" class="glass-panel" style="padding:14px;margin-bottom:16px;">Empieza tu primera partida</div>
+            <p class="section-subtitle">Todos los juegos</p>
+            <div id="games-grid" class="shop-grid"></div>
+        </div><!-- /#view-games -->
+
         <!-- ═══════════════════════════════════════════
              VISTA: TIENDA
              ═══════════════════════════════════════════ -->
@@ -456,7 +482,7 @@
             <div class="promo-toggle-wrap">
                 <button id="btn-promo-toggle" class="btn-ghost promo-toggle-btn" aria-expanded="false" aria-controls="promo-section">
                     <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
-                    <span>¿Tienes un código promocional?</span>
+                    <span>Canjear código</span>
                     <svg class="icon promo-chevron" width="13" height="13" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
                 </button>
                 <section id="promo-section" class="glass-panel promo-section promo-section--collapsed" aria-hidden="true">
@@ -836,6 +862,29 @@
             </section>
 
         </div><!-- /#view-shop -->
+
+
+
+        <div id="view-profile" class="view-section hidden">
+            <div class="section-header" style="margin-bottom:16px;">
+                <div>
+                    <h2 class="section-title">Mi Arcade</h2>
+                    <p class="section-subtitle">Perfil, progreso, sincronización y tesoros</p>
+                </div>
+            </div>
+            <section id="profile-summary" class="glass-panel" style="padding:16px; margin-bottom:12px;">
+                <h3 class="section-title" style="font-size:1rem;">Resumen</h3>
+                <p class="section-subtitle">Monedas, racha, bonos activos y tesoros desbloqueados.</p>
+            </section>
+            <section id="profile-history" class="glass-panel" style="padding:16px; margin-bottom:12px;">
+                <h3 class="section-title" style="font-size:1rem;">Historial</h3>
+                <div id="history-list-profile"></div>
+            </section>
+            <section id="profile-sync" class="glass-panel" style="padding:16px;">
+                <h3 class="section-title" style="font-size:1rem;">Sincronización</h3>
+                <p class="section-subtitle">Protección activa · exportar / importar desde aquí.</p>
+            </section>
+        </div><!-- /#view-profile -->
 
         <!-- ═══════════════════════════════════════════
              VISTA: EVENTOS (v10.0 — LTE System)
