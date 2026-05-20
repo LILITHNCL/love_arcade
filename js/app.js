@@ -3192,7 +3192,10 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     let swReloadInProgress = false;
     let swWaitingWorker = null;
     let swControllerChangeHandled = false;
+    let swUpdateActionInProgress = false;
     const SW_RELOAD_FALLBACK_MS = 6000;
+    const SW_WAITING_WORKER_TIMEOUT_MS = 4000;
+    const SW_WAITING_WORKER_POLL_MS = 250;
     const SW_BANNER_ID = 'sw-update-banner';
     const SW_UPDATE_BTN_ID = 'sw-update-btn';
     const SW_LATER_BTN_ID = 'sw-update-later-btn';
@@ -3209,6 +3212,17 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     function requestServiceWorkerUpdate(registration) {
         registration?.update?.().catch(() => {});
+    }
+
+    async function waitForWaitingWorker(initialRegistration) {
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < SW_WAITING_WORKER_TIMEOUT_MS) {
+            const latestRegistration = await navigator.serviceWorker.getRegistration().catch(() => initialRegistration);
+            const waitingWorker = resolveWaitingWorker(latestRegistration || initialRegistration);
+            if (waitingWorker) return waitingWorker;
+            await new Promise((resolve) => window.setTimeout(resolve, SW_WAITING_WORKER_POLL_MS));
+        }
+        return null;
     }
 
     function scheduleReloadFallback() {
@@ -3235,20 +3249,37 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
         document.body.appendChild(banner);
 
-        banner.querySelector(`#${SW_UPDATE_BTN_ID}`)?.addEventListener('click', async () => {
+        const updateBtn = banner.querySelector(`#${SW_UPDATE_BTN_ID}`);
+        const laterBtn = banner.querySelector(`#${SW_LATER_BTN_ID}`);
+
+        updateBtn?.addEventListener('click', async () => {
+            if (swUpdateActionInProgress) return;
+            swUpdateActionInProgress = true;
             swReloadTriggeredByUser = true;
+            if (updateBtn) {
+                updateBtn.disabled = true;
+                updateBtn.textContent = 'Actualizando...';
+            }
+            if (laterBtn) laterBtn.disabled = true;
+
             const latestRegistration = await navigator.serviceWorker.getRegistration().catch(() => registration);
-            const waitingWorker = resolveWaitingWorker(latestRegistration || registration);
+            requestServiceWorkerUpdate(latestRegistration || registration);
+            const waitingWorker =
+                resolveWaitingWorker(latestRegistration || registration) ||
+                await waitForWaitingWorker(latestRegistration || registration);
+
             if (!waitingWorker) {
+                if (updateBtn) updateBtn.textContent = 'Recargando...';
                 requestServiceWorkerUpdate(latestRegistration || registration);
                 scheduleReloadFallback();
                 return;
             }
+            if (updateBtn) updateBtn.textContent = 'Aplicando...';
             waitingWorker.postMessage({ type: 'SKIP_WAITING' });
             scheduleReloadFallback();
         });
 
-        banner.querySelector(`#${SW_LATER_BTN_ID}`)?.addEventListener('click', () => banner.remove());
+        laterBtn?.addEventListener('click', () => banner.remove());
     }
 
     navigator.serviceWorker.getRegistration().then((registration) => {
