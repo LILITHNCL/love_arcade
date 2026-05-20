@@ -3191,6 +3191,11 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     let swReloadTriggeredByUser = false;
     let swReloadInProgress = false;
     let swWaitingWorker = null;
+    let swControllerChangeHandled = false;
+    const SW_RELOAD_FALLBACK_MS = 6000;
+    const SW_BANNER_ID = 'sw-update-banner';
+    const SW_UPDATE_BTN_ID = 'sw-update-btn';
+    const SW_LATER_BTN_ID = 'sw-update-later-btn';
 
     function triggerUserReload() {
         if (swReloadInProgress) return;
@@ -3206,35 +3211,44 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         registration?.update?.().catch(() => {});
     }
 
+    function scheduleReloadFallback() {
+        window.setTimeout(() => {
+            if (swReloadInProgress || swControllerChangeHandled) return;
+            triggerUserReload();
+        }, SW_RELOAD_FALLBACK_MS);
+    }
+
     function showUpdateBanner(registration) {
         if (registration.waiting) swWaitingWorker = registration.waiting;
-        if (document.getElementById('sw-update-banner')) return;
+        if (document.getElementById(SW_BANNER_ID)) return;
 
         const banner = document.createElement('div');
-        banner.id = 'sw-update-banner';
+        banner.id = SW_BANNER_ID;
         banner.className = 'sw-update-banner';
         banner.innerHTML = `
             <p class="sw-update-banner__text">Hay una nueva versión disponible. Actualiza para obtener las últimas mejoras.</p>
             <div class="sw-update-banner__actions">
-                <button type="button" id="sw-update-btn" class="sw-update-banner__btn sw-update-banner__btn--primary">Actualizar ahora</button>
-                <button type="button" id="sw-update-later-btn" class="sw-update-banner__btn sw-update-banner__btn--ghost" aria-label="Cerrar aviso de actualización">Más tarde</button>
+                <button type="button" id="${SW_UPDATE_BTN_ID}" class="sw-update-banner__btn sw-update-banner__btn--primary">Actualizar ahora</button>
+                <button type="button" id="${SW_LATER_BTN_ID}" class="sw-update-banner__btn sw-update-banner__btn--ghost" aria-label="Cerrar aviso de actualización">Más tarde</button>
             </div>
         `;
 
         document.body.appendChild(banner);
 
-        banner.querySelector('#sw-update-btn')?.addEventListener('click', async () => {
+        banner.querySelector(`#${SW_UPDATE_BTN_ID}`)?.addEventListener('click', async () => {
             swReloadTriggeredByUser = true;
             const latestRegistration = await navigator.serviceWorker.getRegistration().catch(() => registration);
             const waitingWorker = resolveWaitingWorker(latestRegistration || registration);
             if (!waitingWorker) {
                 requestServiceWorkerUpdate(latestRegistration || registration);
+                scheduleReloadFallback();
                 return;
             }
             waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            scheduleReloadFallback();
         });
 
-        banner.querySelector('#sw-update-later-btn')?.addEventListener('click', () => banner.remove());
+        banner.querySelector(`#${SW_LATER_BTN_ID}`)?.addEventListener('click', () => banner.remove());
     }
 
     navigator.serviceWorker.getRegistration().then((registration) => {
@@ -3267,6 +3281,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!swReloadTriggeredByUser) return;
+        swControllerChangeHandled = true;
         triggerUserReload();
     });
 })();
