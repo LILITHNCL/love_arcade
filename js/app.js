@@ -3205,7 +3205,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
             swManualReloadTimer = null;
             if (!swReloadTriggeredByUser || swReloadInProgress) return;
             triggerUserReload();
-        }, 4000);
+        }, 1500);
     }
 
     function showUpdateBanner(registration) {
@@ -3229,21 +3229,23 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
             swReloadTriggeredByUser = true;
 
             try {
-                const latestRegistration = await navigator.serviceWorker.getRegistration('/');
+                const latestRegistration = await navigator.serviceWorker.getRegistration();
                 const waitingWorker = latestRegistration?.waiting || registration.waiting || swWaitingWorker;
                 if (waitingWorker) {
                     waitingWorker.postMessage({ type: 'SKIP_WAITING' });
                     scheduleManualReloadFallback();
                     return;
                 }
+                latestRegistration?.update?.().catch(() => {});
             } catch (_) {}
 
-            triggerUserReload();
+            scheduleManualReloadFallback();
         });
         banner.querySelector('#sw-update-later-btn')?.addEventListener('click', () => banner.remove());
     }
 
-    navigator.serviceWorker.getRegistration('/').then((registration) => {
+    navigator.serviceWorker.getRegistration().then((registration) => {
+
         if (!registration) return;
 
         if (registration.waiting) {
