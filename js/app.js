@@ -3190,7 +3190,6 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     let swReloadTriggeredByUser = false;
     let swReloadInProgress = false;
-    let swManualReloadTimer = null;
     let swWaitingWorker = null;
 
     function triggerUserReload() {
@@ -3199,13 +3198,12 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         window.location.reload();
     }
 
-    function scheduleManualReloadFallback() {
-        if (swManualReloadTimer) return;
-        swManualReloadTimer = window.setTimeout(() => {
-            swManualReloadTimer = null;
-            if (!swReloadTriggeredByUser || swReloadInProgress) return;
-            triggerUserReload();
-        }, 1500);
+    function resolveWaitingWorker(registration) {
+        return registration?.waiting || swWaitingWorker || null;
+    }
+
+    function requestServiceWorkerUpdate(registration) {
+        registration?.update?.().catch(() => {});
     }
 
     function showUpdateBanner(registration) {
@@ -3227,26 +3225,22 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
         banner.querySelector('#sw-update-btn')?.addEventListener('click', async () => {
             swReloadTriggeredByUser = true;
-
-            try {
-                const latestRegistration = await navigator.serviceWorker.getRegistration();
-                const waitingWorker = latestRegistration?.waiting || registration.waiting || swWaitingWorker;
-                if (waitingWorker) {
-                    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-                    scheduleManualReloadFallback();
-                    return;
-                }
-                latestRegistration?.update?.().catch(() => {});
-            } catch (_) {}
-
-            scheduleManualReloadFallback();
+            const latestRegistration = await navigator.serviceWorker.getRegistration().catch(() => registration);
+            const waitingWorker = resolveWaitingWorker(latestRegistration || registration);
+            if (!waitingWorker) {
+                requestServiceWorkerUpdate(latestRegistration || registration);
+                return;
+            }
+            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
         });
+
         banner.querySelector('#sw-update-later-btn')?.addEventListener('click', () => banner.remove());
     }
 
     navigator.serviceWorker.getRegistration().then((registration) => {
-
         if (!registration) return;
+
+        requestServiceWorkerUpdate(registration);
 
         if (registration.waiting) {
             swWaitingWorker = registration.waiting;
@@ -3264,14 +3258,15 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
                 }
             });
         });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+            requestServiceWorkerUpdate(registration);
+        });
     }).catch(() => {});
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!swReloadTriggeredByUser) return;
-        if (swManualReloadTimer) {
-            window.clearTimeout(swManualReloadTimer);
-            swManualReloadTimer = null;
-        }
         triggerUserReload();
     });
 })();

@@ -262,7 +262,7 @@
 
   async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return null;
-    swReg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    swReg = await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
     return swReg;
   }
 
