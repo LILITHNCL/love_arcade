@@ -214,8 +214,8 @@
         var validation = puzzle && puzzle.validation ? puzzle.validation : null;
         if (title) title.textContent = level.title;
         if (pack) pack.textContent = level.pack + ' · ' + level.difficulty;
-        if (badge) badge.textContent = 'Fase 6';
-        if (readyCopy) readyCopy.textContent = imageStatus + '. Pistas, ayuda y reinicio seguro activos.';
+        if (badge) badge.textContent = 'RC Fase 8';
+        if (readyCopy) readyCopy.textContent = imageStatus + '. Release candidate: catálogo validado, Cloudinary real y QA final activos.';
         if (!details) return;
         details.innerHTML = [
             MAREJIG_detailRow('Nivel', level.id),
@@ -416,7 +416,8 @@
 
     function MAREJIG_completePuzzle(scene) {
         if (!scene || !scene.progress) return;
-        if (scene.progress.completionStarted && scene.progress.gamePhase === 'completed') return;
+        if (scene.progress.completionStarted && scene.progress.gamePhase === 'completing') return;
+        if (scene.progress.completionStarted && scene.progress.gamePhase === 'completed' && (scene.progress.rewardReported || scene.progress.rewardSkipped || MAREJIG_Storage.isLevelCompleted(scene.level.id))) return;
         scene.progress.completionStarted = true;
         scene.progress.gamePhase = 'completing';
         scene.progress.status = 'Completando';
@@ -495,10 +496,16 @@
     }
 
     function MAREJIG_backToMenu() {
+        var state = MAREJIG_State.getState();
+        var releaseLevelId = (state && state.selectedLevelId) || MAREJIG_currentLevelId;
         MAREJIG_pauseTimer();
         MAREJIG_saveGame('menu');
         MAREJIG_Input.detach();
+        if (releaseLevelId && MAREJIG_ImageLoader && typeof MAREJIG_ImageLoader.releaseFullImage === 'function') {
+            MAREJIG_ImageLoader.releaseFullImage(releaseLevelId);
+        }
         MAREJIG_currentLevelId = null;
+        MAREJIG_State.setState({ selectedLevelId: null, selectedRuntimeProfile: null, loadedImageResult: null, puzzle: null, scene: null, loading: false });
         MAREJIG_Menu.mountPendingLevels();
         MAREJIG_showScreen('menu');
     }
@@ -583,7 +590,7 @@
         MAREJIG_wireUi();
         MAREJIG_Menu.mountPendingLevels();
         MAREJIG_showScreen('menu');
-        console.info('[MAREJIG] Fase 6 inicializada');
+        console.info('[MAREJIG] Fase 8 RC inicializada');
     }
 
     if (documentObject.readyState === 'loading') documentObject.addEventListener('DOMContentLoaded', MAREJIG_init, { once: true });

@@ -2,6 +2,7 @@
     'use strict';
 
     var MAREJIG_Segments = windowObject.MAREJIG_Segments;
+    var MAREJIG_Config = windowObject.MAREJIG_Config;
 
     function MAREJIG_groupHasActivePiece(scene, group, activeSegmentId) {
         return Boolean(group && group.visible && group.pieceIds.some(function MAREJIG_activePiece(pieceId) {
@@ -68,11 +69,15 @@
         var target = MAREJIG_chooseHintTarget(scene);
         if (!target.ok) return target;
         scene.progress.hintsUsed = Math.max(0, Number(scene.progress.hintsUsed) || 0) + 1;
+        var difficulty = scene.level && scene.level.difficulty || 'standard';
+        var difficultyConfig = MAREJIG_Config && MAREJIG_Config.difficulty ? MAREJIG_Config.difficulty[difficulty] : null;
+        var pieceLimit = Math.max(1, Math.min(4, Number(difficultyConfig && difficultyConfig.hintPieceLimit) || 3));
+        var durationMs = Math.max(1800, Number(difficultyConfig && difficultyConfig.hintDurationMs) || 3600);
         scene.ui.hint = {
             groupId: target.groupId,
-            pieceIds: target.pieceIds.slice(0, Math.max(1, Math.min(3, target.pieceIds.length))),
+            pieceIds: target.pieceIds.slice(0, Math.max(1, Math.min(pieceLimit, target.pieceIds.length))),
             startedAt: Date.now(),
-            durationMs: options && options.reducedMotion ? 2400 : 3600
+            durationMs: options && options.reducedMotion ? 2400 : durationMs
         };
         scene.ui.message = 'Pista mostrada';
         scene.ui.messageStartedAt = Date.now();

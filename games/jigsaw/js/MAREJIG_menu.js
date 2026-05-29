@@ -11,6 +11,8 @@
         renderedCount: 0,
         observer: null,
         sentinelObserver: null,
+        filtersInitialized: false,
+        filters: { pack: '', difficulty: '' },
         elements: null
     };
 
@@ -21,9 +23,56 @@
             empty: documentObject.getElementById('marejig-empty-state'),
             loadMore: documentObject.getElementById('marejig-load-more'),
             sentinel: documentObject.getElementById('marejig-menu-sentinel'),
-            pendingTotal: documentObject.getElementById('marejig-total-pending')
+            pendingTotal: documentObject.getElementById('marejig-total-pending'),
+            filterBar: documentObject.getElementById('marejig-filter-bar'),
+            packFilter: documentObject.getElementById('marejig-filter-pack'),
+            difficultyFilter: documentObject.getElementById('marejig-filter-difficulty')
         };
         return MAREJIG_menuState.elements;
+    }
+
+    function MAREJIG_getFilterLabel() {
+        var pack = MAREJIG_menuState.filters.pack || 'todos los packs';
+        var difficulty = MAREJIG_menuState.filters.difficulty || 'todas las dificultades';
+        return pack + ' · ' + difficulty;
+    }
+
+    function MAREJIG_applyFilters(levels) {
+        return levels.filter(function MAREJIG_filterByMenu(level) {
+            if (MAREJIG_menuState.filters.pack && level.pack !== MAREJIG_menuState.filters.pack) return false;
+            if (MAREJIG_menuState.filters.difficulty && level.difficulty !== MAREJIG_menuState.filters.difficulty) return false;
+            return true;
+        });
+    }
+
+    function MAREJIG_fillSelect(select, values, currentValue, allLabel) {
+        if (!select) return;
+        var existingValue = currentValue || select.value || '';
+        select.textContent = '';
+        var all = documentObject.createElement('option');
+        all.value = '';
+        all.textContent = allLabel;
+        select.appendChild(all);
+        values.forEach(function MAREJIG_addOption(value) {
+            var option = documentObject.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+        select.value = values.indexOf(existingValue) !== -1 ? existingValue : '';
+    }
+
+    function MAREJIG_initializeFilters() {
+        var elements = MAREJIG_getElements();
+        if (!elements.filterBar || MAREJIG_menuState.filtersInitialized) return;
+        MAREJIG_fillSelect(elements.packFilter, MAREJIG_LevelCatalog.getPacks ? MAREJIG_LevelCatalog.getPacks() : [], MAREJIG_menuState.filters.pack, 'Todos');
+        MAREJIG_fillSelect(elements.difficultyFilter, MAREJIG_LevelCatalog.getDifficulties ? MAREJIG_LevelCatalog.getDifficulties() : [], MAREJIG_menuState.filters.difficulty, 'Todas');
+        elements.filterBar.addEventListener('change', function MAREJIG_filterChanged() {
+            MAREJIG_menuState.filters.pack = elements.packFilter ? elements.packFilter.value : '';
+            MAREJIG_menuState.filters.difficulty = elements.difficultyFilter ? elements.difficultyFilter.value : '';
+            MAREJIG_mountPendingLevels();
+        });
+        MAREJIG_menuState.filtersInitialized = true;
     }
 
     function MAREJIG_getPendingLevels() {
@@ -33,10 +82,10 @@
             MAREJIG_Storage.clearLevelProgress(activeSave.levelId);
             activeSave = null;
         }
-        return MAREJIG_LevelCatalog.getOrdered()
+        return MAREJIG_applyFilters(MAREJIG_LevelCatalog.getOrdered()
             .filter(function MAREJIG_filterCompleted(level) {
                 return !MAREJIG_Storage.isLevelCompleted(level.id);
-            })
+            }))
             .sort(function MAREJIG_sortPending(a, b) {
                 var progressA = (activeSave && activeSave.levelId === a.id) || MAREJIG_Storage.getLevelProgress(a.id) ? 1 : 0;
                 var progressB = (activeSave && activeSave.levelId === b.id) || MAREJIG_Storage.getLevelProgress(b.id) ? 1 : 0;
@@ -175,7 +224,7 @@
         var hasMore = MAREJIG_menuState.renderedCount < MAREJIG_menuState.levels.length;
         elements.loadMore.hidden = !hasMore;
         elements.empty.hidden = MAREJIG_menuState.levels.length > 0;
-        elements.pendingTotal.textContent = MAREJIG_menuState.levels.length + ' pendientes';
+        elements.pendingTotal.textContent = MAREJIG_menuState.levels.length + ' niveles pendientes · ' + MAREJIG_getFilterLabel();
     }
 
     function MAREJIG_setupSentinel() {
@@ -195,6 +244,7 @@
 
     function MAREJIG_mountPendingLevels() {
         var elements = MAREJIG_getElements();
+        MAREJIG_initializeFilters();
         MAREJIG_menuState.levels = MAREJIG_getPendingLevels();
         MAREJIG_menuState.renderedCount = 0;
         elements.grid.textContent = '';
@@ -222,6 +272,13 @@
         mountPendingLevels: MAREJIG_mountPendingLevels,
         renderNextBatch: MAREJIG_renderNextBatch,
         refreshAfterCompletion: MAREJIG_refreshAfterCompletion,
-        observeThumbnailCards: MAREJIG_observeCardImages
+        observeThumbnailCards: MAREJIG_observeCardImages,
+        getRenderedCount: function MAREJIG_getRenderedCount() { return MAREJIG_menuState.renderedCount; },
+        getVisibleLevelCount: function MAREJIG_getVisibleLevelCount() { return MAREJIG_menuState.levels.length; },
+        setFilters: function MAREJIG_setFilters(filters) {
+            MAREJIG_menuState.filters.pack = filters && filters.pack || '';
+            MAREJIG_menuState.filters.difficulty = filters && filters.difficulty || '';
+            MAREJIG_mountPendingLevels();
+        }
     });
 })(window, document);
