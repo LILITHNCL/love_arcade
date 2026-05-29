@@ -32,7 +32,7 @@
         }),
         cloudinary: Object.freeze({
             // Placeholder público para desarrollo. Reemplazar por el cloudName real de producción.
-            cloudName: 'demo',
+            cloudName: 'dyspgn0sw',
             assetType: 'image',
             deliveryType: 'upload',
             forceAvifForTesting: false
