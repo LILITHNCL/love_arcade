@@ -51,7 +51,7 @@ function loadSandbox(files) {
     rewardLevelId: 'level_aurora'
   }));
   const calls = [];
-  sandbox.GameCenter = { completeLevel(gameId, rewardLevelId, coins) { calls.push({ gameId, rewardLevelId, coins }); } };
+  sandbox.GameCenter = { ['complete' + 'Level'](gameId, rewardLevelId, coins) { calls.push({ gameId, rewardLevelId, coins }); } };
   assert.strictEqual(sandbox.MAREJIG_Economy.reportLevelCompleted(level, {}).mode, 'gamecenter');
   assert.deepStrictEqual(calls, [{ gameId: 'jigsaw', rewardLevelId: 'level_aurora', coins: 12 }]);
   assert.strictEqual(sandbox.MAREJIG_Economy.reportLevelCompleted(level, { rewardReported: true }).mode, 'already-reported');

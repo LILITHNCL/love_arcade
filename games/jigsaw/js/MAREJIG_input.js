@@ -75,6 +75,9 @@
         }
 
         event.preventDefault();
+        if (windowObject.MAREJIG_Hints && windowObject.MAREJIG_Hints.clearHint(scene) && MAREJIG_context.renderer) {
+            MAREJIG_context.renderer.markDirty('hint-clear-drag');
+        }
         if (MAREJIG_context.canvas.setPointerCapture) {
             try { MAREJIG_context.canvas.setPointerCapture(event.pointerId); } catch (captureError) { /* noop */ }
         }

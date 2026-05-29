@@ -87,6 +87,7 @@
         context.clearRect(0, 0, width, height);
         MAREJIG_drawBackground(context, width, height);
         MAREJIG_drawBoardPreview(context, scene);
+        MAREJIG_drawHintGhost(context, scene);
         MAREJIG_drawStaging(context, scene);
         MAREJIG_drawVisiblePieces(context, scene);
         MAREJIG_drawSceneMessage(context, scene, width);
@@ -174,6 +175,59 @@
         context.lineWidth = 1.5;
         MAREJIG_drawRoundRect(context, board.x, board.y, board.width, board.height, 18);
         context.stroke();
+        context.restore();
+    }
+
+    function MAREJIG_drawHintGhost(context, scene) {
+        var hint = scene.ui && scene.ui.hint;
+        if (!hint || !hint.pieceIds || !hint.pieceIds.length) return;
+        var age = Date.now() - (hint.startedAt || 0);
+        var duration = Math.max(400, Number(hint.durationMs) || 3000);
+        if (age > duration) {
+            scene.ui.hint = null;
+            scene.ui.dirty = true;
+            MAREJIG_markDirty('hint-expired');
+            return;
+        }
+        var remaining = Math.max(0, 1 - (age / duration));
+        var alpha = 0.34 + remaining * 0.28;
+        context.save();
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        hint.pieceIds.forEach(function MAREJIG_drawHintPiece(pieceId) {
+            var puzzlePiece = scene.puzzle.pieces[pieceId];
+            var scenePiece = scene.pieces[pieceId];
+            if (!puzzlePiece || !scenePiece || !scenePiece.visible) return;
+            var segment = scene.puzzle.segments.items[puzzlePiece.segmentId];
+            if (!segment || !segment.revealed) return;
+            var x = scene.board.x + puzzlePiece.solution.gridX * scene.board.cellSize;
+            var y = scene.board.y + puzzlePiece.solution.gridY * scene.board.cellSize;
+            context.save();
+            context.translate(x, y);
+            MAREJIG_fillPieceByCells(context, puzzlePiece, scene.board.cellSize, 'rgba(255, 209, 102, ' + (alpha * 0.18).toFixed(3) + ')');
+            context.strokeStyle = 'rgba(255, 209, 102, ' + alpha.toFixed(3) + ')';
+            context.lineWidth = 3;
+            MAREJIG_strokePieceByCells(context, puzzlePiece, scene.board.cellSize);
+            context.strokeStyle = 'rgba(119, 247, 228, ' + Math.max(0.28, alpha - 0.16).toFixed(3) + ')';
+            context.lineWidth = 1.4;
+            MAREJIG_strokePieceByCells(context, puzzlePiece, scene.board.cellSize);
+            context.restore();
+        });
+        var group = scene.groups[hint.groupId];
+        if (group && group.visible && group.bounds) {
+            var targetPiece = scene.puzzle.pieces[hint.pieceIds[0]];
+            if (targetPiece) {
+                var targetX = scene.board.x + (targetPiece.solution.gridX + targetPiece.bounds.w / 2) * scene.board.cellSize;
+                var targetY = scene.board.y + (targetPiece.solution.gridY + targetPiece.bounds.h / 2) * scene.board.cellSize;
+                context.beginPath();
+                context.moveTo(group.bounds.x + group.bounds.width / 2, group.bounds.y + group.bounds.height / 2);
+                context.quadraticCurveTo(scene.board.x + scene.board.width * 0.5, scene.board.y + scene.board.height + 22, targetX, targetY);
+                context.strokeStyle = 'rgba(119, 247, 228, ' + Math.max(0.22, alpha * 0.42).toFixed(3) + ')';
+                context.lineWidth = 2;
+                context.setLineDash([8, 10]);
+                context.stroke();
+            }
+        }
         context.restore();
     }
 
