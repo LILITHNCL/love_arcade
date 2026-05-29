@@ -29,7 +29,8 @@
     });
 
     var MAREJIG_LEVEL_SPECS = Object.freeze([
-        Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf'])
+        Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf']),
+        Object.freeze(['raiden_shogun_002', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
