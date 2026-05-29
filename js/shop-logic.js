@@ -296,7 +296,7 @@ let _preloadObserver     = null;   // IntersectionObserver for hi-res smart prel
 /**
  * Resuelve el aspect ratio objetivo del preview.
  * Prioridad:
- *  1) Tag del item (Mobile=9:20, PC=16:9, Avatar=1:1).
+ *  1) Tag del item (Mobile=9:20, PC=16:9, Avatar/Stickers=1:1).
  *  2) Dimensiones reales de la imagen (naturalWidth/naturalHeight) si existen.
  *  3) Fallback neutro 1:1.
  *
@@ -309,7 +309,7 @@ function _resolvePreviewAspectRatio(item, probeImg = null) {
     // Reglas explícitas de negocio: el tag manda sobre cualquier metadato.
     if (tags.includes('Mobile')) return 9 / 20;
     if (tags.includes('PC')) return 16 / 9;
-    if (tags.includes('Avatar')) return 1;
+    if (tags.includes('Avatar') || tags.includes('Stickers')) return 1;
 
     // Solo si no hay tag reconocido, usar dimensión real del archivo.
     const w = Number(probeImg?.naturalWidth || 0);
@@ -557,6 +557,7 @@ function _applyArtFallback(artEl) {
  * matches the target device frame:
  *   Mobile → 9:20 portrait, 500 px wide   (phone screen)
  *   PC     → 16:9 landscape, 1200 px wide  (desktop screen)
+ *   Avatar/Stickers → 1:1 square, 800 px wide
  *   Other  → falls back to the PC preset
  *
  * The public ID is derived from item.file by stripping the file extension,
@@ -571,7 +572,7 @@ function _getMockupUrl(item) {
     const base     = item.file.replace(/\.[^.]+$/, ''); // strip extension → public ID
 
     if (tags.includes('Mobile')) return `${CDN_BASE}f_avif,q_auto,ar_9:20,c_fill,w_500/${base}`;
-    if (tags.includes('Avatar')) return `${CDN_BASE}f_avif,q_auto,ar_1:1,c_fill,w_800/${base}`;
+    if (tags.includes('Avatar') || tags.includes('Stickers')) return `${CDN_BASE}f_avif,q_auto,ar_1:1,c_fill,w_800/${base}`;
     // PC o no etiquetado — 16:9 widescreen
     return `${CDN_BASE}f_avif,q_auto,ar_16:9,c_fill,w_1200/${base}`;
 }
