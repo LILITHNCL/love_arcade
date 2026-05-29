@@ -27,13 +27,19 @@
     }
 
     function MAREJIG_getPendingLevels() {
+        var activeSave = MAREJIG_Storage.getActiveSave();
+        if (activeSave && MAREJIG_Storage.isLevelCompleted(activeSave.levelId)) {
+            MAREJIG_Storage.clearActiveSave();
+            MAREJIG_Storage.clearLevelProgress(activeSave.levelId);
+            activeSave = null;
+        }
         return MAREJIG_LevelCatalog.getOrdered()
             .filter(function MAREJIG_filterCompleted(level) {
                 return !MAREJIG_Storage.isLevelCompleted(level.id);
             })
             .sort(function MAREJIG_sortPending(a, b) {
-                var progressA = MAREJIG_Storage.getLevelProgress(a.id) ? 1 : 0;
-                var progressB = MAREJIG_Storage.getLevelProgress(b.id) ? 1 : 0;
+                var progressA = (activeSave && activeSave.levelId === a.id) || MAREJIG_Storage.getLevelProgress(a.id) ? 1 : 0;
+                var progressB = (activeSave && activeSave.levelId === b.id) || MAREJIG_Storage.getLevelProgress(b.id) ? 1 : 0;
                 if (progressA !== progressB) return progressB - progressA;
                 return a.order - b.order;
             });
@@ -51,7 +57,8 @@
     }
 
     function MAREJIG_createCard(level) {
-        var progress = MAREJIG_Storage.getLevelProgress(level.id);
+        var activeSave = MAREJIG_Storage.getActiveSave();
+        var progress = activeSave && activeSave.levelId === level.id ? activeSave : MAREJIG_Storage.getLevelProgress(level.id);
         var card = documentObject.createElement('button');
         var tinyUrl = MAREJIG_Cloudinary.buildTinyPlaceholderUrl(level);
         var thumbnailUrl = MAREJIG_Cloudinary.buildThumbnailUrl(level, 'small');
@@ -211,6 +218,7 @@
     });
 
     windowObject.MAREJIG_Menu = Object.freeze({
+        getPendingLevels: MAREJIG_getPendingLevels,
         mountPendingLevels: MAREJIG_mountPendingLevels,
         renderNextBatch: MAREJIG_renderNextBatch,
         refreshAfterCompletion: MAREJIG_refreshAfterCompletion,
