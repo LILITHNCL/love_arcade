@@ -45,7 +45,7 @@
                     </div>
                     <div class="marejig-level-grid" id="marejig-level-grid" aria-label="Lista de niveles pendientes"></div>
                     <div class="marejig-menu-actions">
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-load-more" hidden>Ver más</button>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-load-more" aria-label="Ver más niveles pendientes" hidden>Ver más</button>
                     </div>
                     <div class="marejig-empty" id="marejig-empty-state" hidden>
                         <div class="marejig-empty-orb" aria-hidden="true">✓</div>
@@ -68,7 +68,7 @@
                         <span class="marejig-progress-bar" id="marejig-progress-bar"></span>
                     </div>
                     <div class="marejig-menu-actions">
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-cancel-loading">Volver</button>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-cancel-loading" aria-label="Volver a niveles pendientes">Volver</button>
                     </div>
                 </div>
             </section>
@@ -76,7 +76,7 @@
             <section class="marejig-screen" id="marejig-screen-game" aria-labelledby="marejig-game-title" hidden>
                 <div class="marejig-game-layout">
                     <div class="marejig-game-head">
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-back-to-menu">← Pendientes</button>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-back-to-menu" aria-label="Volver a niveles pendientes">← Pendientes</button>
                         <div>
                             <p class="marejig-kicker" id="marejig-game-pack">Nivel</p>
                             <h1 class="marejig-game-title" id="marejig-game-title">Nivel listo</h1>
@@ -90,7 +90,9 @@
                         <span class="marejig-hud-pill" id="marejig-hud-total">0 piezas</span>
                         <span class="marejig-hud-pill" id="marejig-hud-image">Imagen pendiente</span>
                         <span class="marejig-hud-pill" id="marejig-hud-save">Sin guardar</span>
-                        <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-center-view">Centrar</button>
+                        <button class="marejig-button marejig-button-primary marejig-button-compact" type="button" id="marejig-hint-button" aria-label="Mostrar una pista del segmento activo">Pista</button>
+                        <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-pause-button" aria-label="Abrir opciones de pausa">Opciones</button>
+                        <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-center-view" aria-label="Centrar vista del puzzle">Centrar</button>
                     </div>
                     <div class="marejig-canvas-wrap">
                         <canvas id="marejig-canvas" class="marejig-canvas" width="1280" height="960" aria-label="Escena del puzzle"></canvas>
@@ -110,8 +112,8 @@
                     <h1 class="marejig-title" id="marejig-error-title">No pudimos cargar la imagen</h1>
                     <p class="marejig-subtitle" id="marejig-error-copy">Puedes reintentar o volver al catálogo.</p>
                     <div class="marejig-menu-actions">
-                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-retry-level">Reintentar</button>
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-error-back">Volver</button>
+                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-retry-level" aria-label="Reintentar carga del nivel">Reintentar</button>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-error-back" aria-label="Volver a niveles pendientes">Volver a niveles</button>
                     </div>
                 </div>
             </section>
@@ -133,9 +135,60 @@
             </div>
             <p class="marejig-victory-status" id="marejig-victory-status" aria-live="polite">Modo standalone: monedas no acreditadas</p>
             <div class="marejig-menu-actions marejig-victory-actions">
-                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next">Siguiente nivel</button>
-                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels">Volver a niveles</button>
-                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay">Repetir nivel</button>
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next" aria-label="Abrir siguiente nivel pendiente">Siguiente nivel</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels" aria-label="Volver a niveles pendientes">Volver a niveles</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay" aria-label="Repetir nivel completado sin duplicar recompensa">Repetir nivel</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="marejig-toast" id="marejig-toast" role="status" aria-live="polite" hidden></div>
+
+    <div class="marejig-modal" id="marejig-help-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-help-title" hidden>
+        <div class="marejig-modal-backdrop" aria-hidden="true"></div>
+        <section class="marejig-victory-card marejig-dialog-card" role="document">
+            <button class="marejig-modal-close" type="button" id="marejig-help-close" aria-label="Cerrar cómo jugar">×</button>
+            <p class="marejig-kicker">Ayuda</p>
+            <h2 class="marejig-title" id="marejig-help-title">Cómo jugar</h2>
+            <ul class="marejig-help-list">
+                <li>Arrastra piezas desde la zona inferior y suéltalas cerca de su vecina.</li>
+                <li>Las piezas correctas se pegan automáticamente cuando quedan suficientemente cerca.</li>
+                <li>El puzzle aparece por segmentos: completa el segmento activo para desbloquear el siguiente.</li>
+                <li>Usa <strong>Pista</strong> si te atoras; muestra una referencia temporal sin mover piezas.</li>
+                <li>Los niveles completados desaparecen del menú de pendientes.</li>
+            </ul>
+            <div class="marejig-menu-actions">
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-help-ok" aria-label="Entendido, cerrar ayuda">Entendido</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="marejig-modal" id="marejig-pause-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-pause-title" hidden>
+        <div class="marejig-modal-backdrop" aria-hidden="true"></div>
+        <section class="marejig-victory-card marejig-dialog-card" role="document">
+            <button class="marejig-modal-close" type="button" id="marejig-pause-close" aria-label="Cerrar opciones">×</button>
+            <p class="marejig-kicker">Pausa</p>
+            <h2 class="marejig-title" id="marejig-pause-title">Opciones</h2>
+            <div class="marejig-option-grid">
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-pause-continue" aria-label="Continuar nivel">Continuar</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-pause-help" aria-label="Abrir cómo jugar">Cómo jugar</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-pause-levels" aria-label="Volver a niveles pendientes">Volver a niveles</button>
+                <button class="marejig-button marejig-button-danger" type="button" id="marejig-pause-reset" aria-label="Reiniciar nivel actual">Reiniciar nivel</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-toggle-haptics" aria-label="Activar o desactivar vibración">Haptics: on</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-toggle-sound" aria-label="Activar o desactivar sonido preparado">Sonido: on</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="marejig-modal" id="marejig-confirm-reset-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-confirm-reset-title" aria-describedby="marejig-confirm-reset-copy" hidden>
+        <div class="marejig-modal-backdrop" aria-hidden="true"></div>
+        <section class="marejig-victory-card marejig-dialog-card" role="document">
+            <p class="marejig-kicker">Confirmar</p>
+            <h2 class="marejig-title" id="marejig-confirm-reset-title">¿Reiniciar nivel?</h2>
+            <p class="marejig-subtitle" id="marejig-confirm-reset-copy">Se borrará solo la partida activa de este nivel. Los niveles completados y recompensas ya registradas se conservan.</p>
+            <div class="marejig-menu-actions marejig-victory-actions">
+                <button class="marejig-button marejig-button-danger" type="button" id="marejig-reset-confirm" aria-label="Confirmar reinicio del nivel">Sí, reiniciar</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-reset-cancel" aria-label="Cancelar reinicio">Cancelar</button>
             </div>
         </section>
     </div>
@@ -149,6 +202,7 @@
     <script src="./js/MAREJIG_shapes.js"></script>
     <script src="./js/MAREJIG_groups.js"></script>
     <script src="./js/MAREJIG_segments.js"></script>
+    <script src="./js/MAREJIG_hints.js"></script>
     <script src="./js/MAREJIG_generator.js"></script>
     <script src="./js/MAREJIG_scene.js"></script>
     <script src="./js/MAREJIG_renderer.js"></script>

@@ -50,6 +50,10 @@
         }
     }
 
+    function MAREJIG_noteSaving(key) {
+        return MAREJIG_setStatus(true, 'Guardando…', key, null);
+    }
+
     function MAREJIG_safeSet(key, value) {
         if (!MAREJIG_isAllowedKey(key)) return MAREJIG_setStatus(false, 'Guardado local no disponible', key, 'clave no permitida');
         try {
@@ -199,6 +203,7 @@
     }
 
     function MAREJIG_saveActiveSave(save) {
+        MAREJIG_noteSaving(MAREJIG_KEYS.activeSave);
         var safeSave = MAREJIG_validateActiveSave(MAREJIG_compactActiveSave(save || {}));
         if (!safeSave) return MAREJIG_setStatus(false, 'Sin guardar', MAREJIG_KEYS.activeSave, 'save inválido');
         return MAREJIG_safeSet(MAREJIG_KEYS.activeSave, safeSave);
@@ -235,6 +240,7 @@
         clearActiveSave: MAREJIG_clearActiveSave,
         getSettings: MAREJIG_getSettings,
         saveSettings: MAREJIG_saveSettings,
-        getLastSaveStatus: MAREJIG_getLastSaveStatus
+        getLastSaveStatus: MAREJIG_getLastSaveStatus,
+        noteSaving: MAREJIG_noteSaving
     });
 })(window);
