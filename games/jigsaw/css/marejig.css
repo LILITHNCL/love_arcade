@@ -630,3 +630,12 @@
         height: min(72vh, 760px);
     }
 }
+
+.marejig-canvas {
+    touch-action: none;
+    user-select: none;
+}
+
+.marejig-ready-overlay {
+    pointer-events: none;
+}

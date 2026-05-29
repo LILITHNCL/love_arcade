@@ -10,6 +10,8 @@
     var MAREJIG_Generator = windowObject.MAREJIG_Generator;
     var MAREJIG_Scene = windowObject.MAREJIG_Scene;
     var MAREJIG_Renderer = windowObject.MAREJIG_Renderer;
+    var MAREJIG_Input = windowObject.MAREJIG_Input;
+    var MAREJIG_Segments = windowObject.MAREJIG_Segments;
 
     var MAREJIG_currentLevelId = null;
     var MAREJIG_rendererReady = false;
@@ -192,14 +194,17 @@
 
 
     function MAREJIG_updateHud(level, puzzle, imageResult, scene) {
-        var activeSegmentId = puzzle && puzzle.segments ? puzzle.segments.order[puzzle.segments.currentSegmentIndex || 0] : null;
+        var stats = scene && MAREJIG_Segments ? MAREJIG_Segments.getSegmentStats(scene) : null;
+        var activeSegmentId = stats ? stats.activeSegmentId : (puzzle && puzzle.segments ? puzzle.segments.order[puzzle.segments.currentSegmentIndex || 0] : null);
         var activeSegment = activeSegmentId ? puzzle.segments.items[activeSegmentId] : null;
         var visibleCount = scene ? MAREJIG_Scene.getVisiblePieceIds(scene).length : 0;
+        var status = scene && scene.progress ? scene.progress.status : 'Jugando';
+        var moves = scene && scene.progress ? scene.progress.moves : 0;
         var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
         var values = {
-            'marejig-hud-reward': '+' + level.rewardCoins + ' monedas',
-            'marejig-hud-segment': activeSegmentId ? 'Segmento 1/' + puzzle.segments.order.length : 'Segmento —',
-            'marejig-hud-visible': activeSegment ? visibleCount + ' visibles' : '0 visibles',
+            'marejig-hud-reward': status + ' · ' + moves + ' mov.',
+            'marejig-hud-segment': activeSegmentId ? 'Segmento ' + ((stats ? stats.activeSegmentIndex : (puzzle.segments.currentSegmentIndex || 0)) + 1) + '/' + puzzle.segments.order.length : 'Segmento —',
+            'marejig-hud-visible': activeSegment ? (stats ? stats.connectedInSegment : 0) + '/' + activeSegment.pieceIds.length + ' conectadas · ' + visibleCount + ' visibles' : '0 visibles',
             'marejig-hud-total': puzzle && puzzle.validation ? puzzle.validation.pieceCount + ' piezas' : '0 piezas',
             'marejig-hud-image': imageStatus
         };
@@ -264,6 +269,26 @@
                 MAREJIG_showScreen('game');
                 MAREJIG_ensureRenderer();
                 MAREJIG_Renderer.setScene(scene);
+                MAREJIG_Input.attach(MAREJIG_byId('marejig-canvas'), scene, MAREJIG_Renderer, {
+                    onSelect: function MAREJIG_inputSelect() {
+                        MAREJIG_updateHud(level, puzzle, imageResult, scene);
+                    },
+                    onMoveEnd: function MAREJIG_inputMoveEnd() {
+                        var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
+                        MAREJIG_updateHud(level, puzzle, imageResult, scene);
+                        MAREJIG_Storage.saveActiveSave({
+                            levelId: level.id,
+                            runtimeProfile: profile,
+                            phase: segmentResult.puzzleComplete ? 'puzzle_complete_local' : 'gameplay',
+                            puzzleSeed: puzzle.seed,
+                            activeSegmentId: scene.ui.activeSegmentId,
+                            mainGroupId: scene.progress.mainGroupId,
+                            moves: scene.progress.moves,
+                            puzzleCompletedLocal: scene.progress.puzzleCompletedLocal
+                        });
+                        MAREJIG_Renderer.markDirty('input-end');
+                    }
+                });
                 MAREJIG_updateHud(level, puzzle, imageResult, scene);
                 MAREJIG_renderLevelDetails(level, imageResult, puzzle);
             })
@@ -281,6 +306,19 @@
     }
 
     function MAREJIG_backToMenu() {
+        var state = MAREJIG_State.getState();
+        if (state.scene && state.puzzle && state.selectedLevelId) {
+            MAREJIG_Storage.saveActiveSave({
+                levelId: state.selectedLevelId,
+                phase: 'left_level',
+                puzzleSeed: state.puzzle.seed,
+                activeSegmentId: state.scene.ui.activeSegmentId,
+                mainGroupId: state.scene.progress.mainGroupId,
+                moves: state.scene.progress.moves,
+                puzzleCompletedLocal: state.scene.progress.puzzleCompletedLocal
+            });
+        }
+        MAREJIG_Input.detach();
         MAREJIG_currentLevelId = null;
         MAREJIG_Menu.mountPendingLevels();
         MAREJIG_showScreen('menu');
@@ -308,6 +346,9 @@
         if (errorBack) errorBack.addEventListener('click', MAREJIG_backToMenu);
         if (retry) retry.addEventListener('click', MAREJIG_retryCurrentLevel);
         if (center) center.addEventListener('click', function MAREJIG_centerView() {
+            var state = MAREJIG_State.getState();
+            if (state.scene) MAREJIG_Scene.centerScene(state.scene);
+            MAREJIG_Input.cancelInteraction();
             MAREJIG_Renderer.resize();
             MAREJIG_Renderer.markDirty('center');
         });

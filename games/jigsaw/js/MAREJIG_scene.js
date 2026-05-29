@@ -2,6 +2,7 @@
     'use strict';
 
     var MAREJIG_Config = windowObject.MAREJIG_Config;
+    var MAREJIG_Groups = windowObject.MAREJIG_Groups;
 
     function MAREJIG_createRng(seed) {
         var state = seed >>> 0;
@@ -57,6 +58,9 @@
                 zIndex: visible ? Math.floor(rng() * 1000) : 0,
                 lockedToBoard: false,
                 visible: visible,
+                positioned: false,
+                bounds: { x: 0, y: 0, width: 0, height: 0 },
+                hitBounds: { x: 0, y: 0, width: 0, height: 0 },
                 laneIndex: activeSegment.pieceIds.indexOf(firstPieceId),
                 jitter: { x: rng() - 0.5, y: rng() - 0.5 }
             };
@@ -95,8 +99,22 @@
             },
             groups: groups,
             pieces: pieces,
+            progress: {
+                moves: 0,
+                startedAt: null,
+                elapsedMs: 0,
+                mainGroupId: null,
+                puzzleCompletedLocal: false,
+                status: 'Jugando',
+                nextZIndex: 1000
+            },
             ui: {
                 activeSegmentId: activeSegmentId,
+                selectedGroupId: null,
+                snapFeedback: null,
+                lastSnapCandidate: null,
+                message: 'Jugando',
+                messageStartedAt: Date.now(),
                 dirty: true
             }
         };
@@ -146,19 +164,30 @@
             var row = Math.floor(index / columns);
             var pieceW = piece.bounds.w * pieceScale;
             var pieceH = piece.bounds.h * pieceScale;
-            group.x = margin + col * slotW + (slotW - pieceW) / 2 + group.jitter.x * Math.min(12, slotW * 0.08);
-            group.y = stagingY + row * slotH + (slotH - pieceH) / 2 + group.jitter.y * Math.min(10, slotH * 0.08);
-            scene.pieces[group.pieceIds[0]].hitBounds = {
-                x: group.x - 8,
-                y: group.y - 8,
-                width: pieceW + 16,
-                height: pieceH + 16
-            };
+            if (!group.positioned) {
+                group.x = margin + col * slotW + (slotW - pieceW) / 2 + group.jitter.x * Math.min(12, slotW * 0.08);
+                group.y = stagingY + row * slotH + (slotH - pieceH) / 2 + group.jitter.y * Math.min(10, slotH * 0.08);
+                group.positioned = true;
+            }
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         });
 
         scene.camera.x = 0;
         scene.camera.y = 0;
         scene.camera.zoom = 1;
+        if (scene.progress) scene.progress.nextZIndex = Math.max(scene.progress.nextZIndex || 0, visibleGroups.reduce(function MAREJIG_maxLayoutZ(max, group) {
+            return Math.max(max, Number(group.zIndex) || 0);
+        }, 1000));
+        scene.ui.dirty = true;
+        return scene;
+    }
+
+    function MAREJIG_centerScene(scene) {
+        if (!scene) return scene;
+        scene.camera.x = 0;
+        scene.camera.y = 0;
+        scene.camera.zoom = 1;
+        scene.ui.selectedGroupId = null;
         scene.ui.dirty = true;
         return scene;
     }
@@ -172,6 +201,7 @@
     windowObject.MAREJIG_Scene = Object.freeze({
         createScene: MAREJIG_createScene,
         layoutScene: MAREJIG_layoutScene,
-        getVisiblePieceIds: MAREJIG_getVisiblePieceIds
+        getVisiblePieceIds: MAREJIG_getVisiblePieceIds,
+        centerScene: MAREJIG_centerScene
     });
 })(window);

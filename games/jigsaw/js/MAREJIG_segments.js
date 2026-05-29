@@ -180,6 +180,155 @@
         return { ok: errors.length === 0, errors: errors };
     }
 
+
+
+    function MAREJIG_createRng(seedText) {
+        var text = String(seedText || 'segment');
+        var hash = 2166136261;
+        for (var i = 0; i < text.length; i += 1) {
+            hash ^= text.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        var state = hash >>> 0;
+        return function MAREJIG_segmentRng() {
+            state += 0x6D2B79F5;
+            var t = state;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function MAREJIG_getActiveSegmentId(segments) {
+        if (!segments || !segments.order || !segments.order.length) return null;
+        return segments.order[Math.min(segments.currentSegmentIndex || 0, segments.order.length - 1)];
+    }
+
+    function MAREJIG_countConnectedInSegment(scene, segmentId) {
+        var segment = scene && scene.puzzle && scene.puzzle.segments ? scene.puzzle.segments.items[segmentId] : null;
+        if (!segment) return 0;
+        var mainGroupId = scene.progress && scene.progress.mainGroupId;
+        if (!mainGroupId) {
+            var firstPiece = scene.pieces[segment.pieceIds[0]];
+            var firstGroupId = firstPiece ? firstPiece.groupId : null;
+            return segment.pieceIds.filter(function MAREJIG_pieceInFirstGroup(pieceId) {
+                return scene.pieces[pieceId] && scene.pieces[pieceId].groupId === firstGroupId;
+            }).length;
+        }
+        return segment.pieceIds.filter(function MAREJIG_pieceInMainGroup(pieceId) {
+            return scene.pieces[pieceId] && scene.pieces[pieceId].groupId === mainGroupId;
+        }).length;
+    }
+
+    function MAREJIG_isActiveSegmentComplete(scene) {
+        var segments = scene && scene.puzzle ? scene.puzzle.segments : null;
+        var activeSegmentId = MAREJIG_getActiveSegmentId(segments);
+        var segment = activeSegmentId ? segments.items[activeSegmentId] : null;
+        if (!segment || segment.completed) return false;
+        if (!segment.pieceIds.length) return true;
+        if ((segments.currentSegmentIndex || 0) === 0 && !scene.progress.mainGroupId) {
+            var firstGroupId = scene.pieces[segment.pieceIds[0]] && scene.pieces[segment.pieceIds[0]].groupId;
+            return segment.pieceIds.every(function MAREJIG_pieceInS0Group(pieceId) {
+                return scene.pieces[pieceId] && scene.pieces[pieceId].groupId === firstGroupId;
+            });
+        }
+        return segment.pieceIds.every(function MAREJIG_pieceInMain(pieceId) {
+            return scene.pieces[pieceId] && scene.pieces[pieceId].groupId === scene.progress.mainGroupId;
+        });
+    }
+
+    function MAREJIG_placeRevealedGroup(scene, group, segmentId, index, count) {
+        var rng = MAREJIG_createRng(String(scene.puzzle.seed) + ':' + segmentId + ':' + group.id);
+        var columns = Math.max(2, Math.min(5, Math.ceil(Math.sqrt(Math.max(1, count)))));
+        var rows = Math.max(1, Math.ceil(count / columns));
+        var slotW = scene.staging.width / columns;
+        var slotH = scene.staging.height / rows;
+        var piece = scene.puzzle.pieces[group.pieceIds[0]];
+        var scale = scene.staging.pieceScale || scene.board.cellSize || 24;
+        var col = index % columns;
+        var row = Math.floor(index / columns);
+        var pieceW = piece.bounds.w * scale;
+        var pieceH = piece.bounds.h * scale;
+        group.x = scene.staging.x + col * slotW + Math.max(10, (slotW - pieceW) / 2) + (rng() - 0.5) * Math.min(16, slotW * 0.12);
+        group.y = scene.staging.y + row * slotH + Math.max(32, (slotH - pieceH) / 2) + (rng() - 0.5) * Math.min(14, slotH * 0.1);
+        group.zIndex = (scene.progress.nextZIndex += 1);
+        group.laneIndex = index;
+        group.visible = true;
+    }
+
+    function MAREJIG_revealSegment(scene, segmentId) {
+        var segment = scene && scene.puzzle && scene.puzzle.segments ? scene.puzzle.segments.items[segmentId] : null;
+        if (!segment || segment.revealed) return [];
+        segment.revealed = true;
+        var newGroupIds = [];
+        segment.pieceIds.forEach(function MAREJIG_revealPiece(pieceId) {
+            if (scene.puzzle.pieces[pieceId]) scene.puzzle.pieces[pieceId].revealed = true;
+            if (scene.pieces[pieceId]) scene.pieces[pieceId].visible = true;
+            var groupId = scene.pieces[pieceId] && scene.pieces[pieceId].groupId;
+            if (groupId && scene.groups[groupId]) {
+                scene.groups[groupId].visible = true;
+                if (newGroupIds.indexOf(groupId) === -1) newGroupIds.push(groupId);
+            }
+        });
+        newGroupIds.sort().forEach(function MAREJIG_placeGroup(groupId, index) {
+            MAREJIG_placeRevealedGroup(scene, scene.groups[groupId], segmentId, index, newGroupIds.length);
+            if (windowObject.MAREJIG_Groups) windowObject.MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+        });
+        return newGroupIds;
+    }
+
+    function MAREJIG_updateMainGroupAfterMerge(scene, mergedGroupId, previousIds) {
+        if (!scene || !scene.progress) return;
+        if (!scene.progress.mainGroupId) return;
+        if (previousIds && previousIds.indexOf(scene.progress.mainGroupId) !== -1) {
+            scene.progress.mainGroupId = mergedGroupId;
+        }
+    }
+
+    function MAREJIG_advanceIfSegmentComplete(scene) {
+        var segments = scene && scene.puzzle ? scene.puzzle.segments : null;
+        var activeSegmentId = MAREJIG_getActiveSegmentId(segments);
+        if (!activeSegmentId || !MAREJIG_isActiveSegmentComplete(scene)) return { completed: false, revealed: null, puzzleComplete: false };
+
+        var activeSegment = segments.items[activeSegmentId];
+        activeSegment.completed = true;
+        if (!scene.progress.mainGroupId) {
+            scene.progress.mainGroupId = scene.pieces[activeSegment.pieceIds[0]].groupId;
+        }
+        scene.progress.status = 'Segmento completado';
+        scene.ui.message = 'Segmento completado';
+        scene.ui.messageStartedAt = Date.now();
+
+        if ((segments.currentSegmentIndex || 0) >= segments.order.length - 1) {
+            scene.progress.puzzleCompletedLocal = true;
+            scene.progress.status = 'Puzzle completo local';
+            scene.ui.message = 'Puzzle completo local';
+            return { completed: true, revealed: null, puzzleComplete: true };
+        }
+
+        segments.currentSegmentIndex += 1;
+        var nextSegmentId = segments.order[segments.currentSegmentIndex];
+        MAREJIG_revealSegment(scene, nextSegmentId);
+        scene.ui.activeSegmentId = nextSegmentId;
+        scene.ui.message = 'Segmento desbloqueado';
+        scene.ui.messageStartedAt = Date.now();
+        if (scene.ui) scene.ui.dirty = true;
+        return { completed: true, revealed: nextSegmentId, puzzleComplete: false };
+    }
+
+    function MAREJIG_getSegmentStats(scene) {
+        var segments = scene && scene.puzzle ? scene.puzzle.segments : null;
+        var activeSegmentId = MAREJIG_getActiveSegmentId(segments);
+        var activeSegment = activeSegmentId ? segments.items[activeSegmentId] : null;
+        return {
+            activeSegmentId: activeSegmentId,
+            activeSegmentIndex: segments ? segments.currentSegmentIndex || 0 : 0,
+            totalSegments: segments ? segments.order.length : 0,
+            connectedInSegment: activeSegmentId ? MAREJIG_countConnectedInSegment(scene, activeSegmentId) : 0,
+            activeSegmentPieceCount: activeSegment ? activeSegment.pieceIds.length : 0
+        };
+    }
+
     function MAREJIG_getRevealedPieceIds(segments) {
         var ids = [];
         segments.order.forEach(function MAREJIG_collectRevealed(segmentId) {
@@ -202,6 +351,12 @@
     windowObject.MAREJIG_Segments = Object.freeze({
         buildSegments: MAREJIG_buildSegments,
         validateSegments: MAREJIG_validateSegments,
+        getActiveSegmentId: MAREJIG_getActiveSegmentId,
+        isActiveSegmentComplete: MAREJIG_isActiveSegmentComplete,
+        advanceIfSegmentComplete: MAREJIG_advanceIfSegmentComplete,
+        revealSegment: MAREJIG_revealSegment,
+        getSegmentStats: MAREJIG_getSegmentStats,
+        updateMainGroupAfterMerge: MAREJIG_updateMainGroupAfterMerge,
         getRevealedPieceIds: MAREJIG_getRevealedPieceIds,
         markSegmentRevealed: MAREJIG_markSegmentRevealed,
         markSegmentCompleted: MAREJIG_markSegmentCompleted
