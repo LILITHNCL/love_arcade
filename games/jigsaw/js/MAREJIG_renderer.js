@@ -3,6 +3,7 @@
 
     var MAREJIG_Config = windowObject.MAREJIG_Config;
     var MAREJIG_Scene = windowObject.MAREJIG_Scene;
+    var MAREJIG_Groups = windowObject.MAREJIG_Groups;
 
     var MAREJIG_rendererState = {
         canvas: null,
@@ -88,6 +89,7 @@
         MAREJIG_drawBoardPreview(context, scene);
         MAREJIG_drawStaging(context, scene);
         MAREJIG_drawVisiblePieces(context, scene);
+        MAREJIG_drawSceneMessage(context, scene, width);
         context.restore();
         scene.ui.dirty = false;
         if (MAREJIG_rendererState.options && typeof MAREJIG_rendererState.options.onRender === 'function') {
@@ -185,7 +187,7 @@
         context.stroke();
         context.fillStyle = 'rgba(220, 231, 255, 0.52)';
         context.font = '700 12px system-ui, sans-serif';
-        context.fillText('Piezas reveladas · segmento inicial', staging.x + 16, staging.y + 24);
+        context.fillText('Piezas reveladas · arrastra y une vecinas reales', staging.x + 16, staging.y + 24);
         context.restore();
     }
 
@@ -227,14 +229,15 @@
 
     function MAREJIG_drawPiece(context, scene, puzzlePiece, group) {
         var scenePiece = scene.pieces[puzzlePiece.id];
-        var scale = scene.staging.pieceScale;
+        var rect = MAREJIG_Groups ? MAREJIG_Groups.getPieceWorldRect(scene, puzzlePiece.id, group) : null;
+        var scale = rect ? rect.scale : scene.staging.pieceScale;
         var pieceW = puzzlePiece.bounds.w * scale;
         var pieceH = puzzlePiece.bounds.h * scale;
         var path = MAREJIG_getPathForPiece(scenePiece, puzzlePiece, scale);
 
-        scenePiece.hitBounds = { x: group.x - 8, y: group.y - 8, width: pieceW + 16, height: pieceH + 16 };
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         context.save();
-        context.translate(group.x, group.y);
+        context.translate(rect ? rect.x : group.x, rect ? rect.y : group.y);
         context.shadowColor = 'rgba(0, 0, 0, 0.42)';
         context.shadowBlur = 16;
         context.shadowOffsetY = 9;
@@ -265,9 +268,18 @@
         }
         context.restore();
 
-        context.strokeStyle = puzzlePiece.segmentId === scene.ui.activeSegmentId ? 'rgba(119, 247, 228, 0.92)' : 'rgba(255, 255, 255, 0.72)';
-        context.lineWidth = 1.5;
+        var isSelected = scene.ui.selectedGroupId === group.id;
+        var snapFeedback = scene.ui.snapFeedback && scene.ui.snapFeedback.groupId === group.id ? scene.ui.snapFeedback : null;
+        var pulse = snapFeedback ? Math.max(0, 1 - ((Date.now() - snapFeedback.startedAt) / snapFeedback.durationMs)) : 0;
+        context.strokeStyle = isSelected ? 'rgba(255, 209, 102, 0.98)' : (puzzlePiece.segmentId === scene.ui.activeSegmentId ? 'rgba(119, 247, 228, 0.92)' : 'rgba(255, 255, 255, 0.72)');
+        context.lineWidth = isSelected ? 2.8 : 1.5;
         MAREJIG_strokePieceByCells(context, puzzlePiece, scale);
+        if (pulse > 0) {
+            context.strokeStyle = 'rgba(255, 209, 102, ' + (0.25 + pulse * 0.55).toFixed(3) + ')';
+            context.lineWidth = 3 + pulse * 4;
+            MAREJIG_strokePieceByCells(context, puzzlePiece, scale);
+            MAREJIG_markDirty('snap-feedback');
+        }
         context.restore();
     }
 
@@ -292,6 +304,28 @@
                 MAREJIG_drawFallbackCell(context, puzzlePiece, cell, scale);
             }
         });
+    }
+
+
+
+    function MAREJIG_drawSceneMessage(context, scene, width) {
+        if (!scene.ui.message) return;
+        var age = Date.now() - (scene.ui.messageStartedAt || 0);
+        if (age > 1800 && scene.ui.message !== 'Puzzle completo local') return;
+        context.save();
+        context.textAlign = 'center';
+        context.font = '800 13px system-ui, sans-serif';
+        var textWidth = context.measureText(scene.ui.message).width + 28;
+        var x = width / 2 - textWidth / 2;
+        var y = Math.max(12, scene.board.y + 10);
+        MAREJIG_drawRoundRect(context, x, y, textWidth, 34, 17);
+        context.fillStyle = 'rgba(9, 17, 31, 0.78)';
+        context.fill();
+        context.strokeStyle = 'rgba(119, 247, 228, 0.35)';
+        context.stroke();
+        context.fillStyle = '#f8fbff';
+        context.fillText(scene.ui.message, width / 2, y + 22);
+        context.restore();
     }
 
     function MAREJIG_drawFallbackPattern(context, x, y, width, height, alpha) {
