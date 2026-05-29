@@ -148,7 +148,7 @@
         var slotW = availableWidth / columns;
         var slotH = stagingHeight / rows;
         var boardCell = boardWidth / scene.board.cols;
-        var pieceScale = Math.max(9, Math.min(boardCell * 0.78, slotW * 0.36, slotH * 0.42));
+        var pieceScale = Math.max(12, Math.min(boardCell * 0.92, slotW * 0.44, slotH * 0.50));
 
         scene.board.x = boardX;
         scene.board.y = boardY;

@@ -20,8 +20,8 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 
 - biblioteca de formas poliminó ortogonales en `MAREJIG_shapes.js`;
 - generador determinístico por `level.id` en `MAREJIG_generator.js`;
-- board estándar `16×12` con cobertura exacta de 192 celdas;
-- target estándar de 60 piezas, validado dentro del rango 56–64;
+- board estándar `12×9` con cobertura exacta de 108 celdas;
+- target estándar de 40 piezas, validado dentro del rango 36–42;
 - grafo de adyacencia real por lados compartidos;
 - `neighborIds`, `segmentId`, `groupId` y contornos serializables por pieza;
 - segmentos progresivos con `s_0` revelado inicialmente;
@@ -125,8 +125,8 @@ Formato exacto del objeto `Level` exportado por el catálogo:
   sourceFormat: 'avif',
   aspectRatio: '4:3',
   master: { width: 2400, height: 1800 },
-  board: { cols: 16, rows: 12 },
-  targetPieceCount: 60,
+  board: { cols: 12, rows: 9 },
+  targetPieceCount: 40,
   segmentPlan: [10, 10, 12, 12, 16],
   rewardCoins: 55
 }
@@ -156,7 +156,7 @@ Para producción, reemplaza `demo` por el cloud name real. Las URLs usan `f_auto
 
 ### Balance de dificultad y recompensas
 
-Las dificultades válidas son `easy`, `standard` y `hard`. En v1 todas conservan board `16×12` y `targetPieceCount: 60` para mantenerse dentro del rango estable del generador (`56–64` piezas). El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
+Las dificultades válidas son `easy`, `standard` y `hard`. En v1 todas conservan board `12×9`; los targets son 30 piezas para `easy`, 40 para `standard` y 48 para `hard` con rangos validados por dificultad. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
 
 - `easy`: segmentos más generosos y recompensas 35–45 monedas.
 - `standard`: segmentos estándar y recompensas 50–65 monedas.
@@ -180,7 +180,7 @@ node games/jigsaw/tools/validate-levels.mjs
 node games/jigsaw/test/phase7_unit.mjs
 ```
 
-`validate-levels.mjs` valida ids, orders, campos críticos, aspecto 4:3, maestro 2400×1800, board 16×12, `segmentPlan`, recompensas, `cloudinaryPublicId`, formato AVIF, dificultad y generación determinística válida. `phase7_unit.mjs` añade fixture de 200 niveles, stress de generación, URL builder Cloudinary, menú por batches, filtrado de completados, economía idempotente y checks de integración Love Arcade.
+`validate-levels.mjs` valida ids, orders, campos críticos, aspecto 4:3, maestro 2400×1800, board 12×9, `segmentPlan`, recompensas, `cloudinaryPublicId`, formato AVIF, dificultad y generación determinística válida. `phase7_unit.mjs` añade fixture de 200 niveles, stress de generación, URL builder Cloudinary, menú por batches, filtrado de completados, economía idempotente y checks de integración Love Arcade.
 
 ## Fase 8 — release candidate
 

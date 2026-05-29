@@ -14,23 +14,27 @@
         Z4: Object.freeze([{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }]),
         P5: Object.freeze([{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: 2 }]),
         U5: Object.freeze([{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }]),
-        V5: Object.freeze([{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }])
+        V5: Object.freeze([{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]),
+        W5: Object.freeze([{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 2, y: 2 }]),
+        Y5: Object.freeze([{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 1, y: 3 }])
     });
 
     var MAREJIG_SHAPE_WEIGHTS = Object.freeze({
         standard: Object.freeze([
-            { signature: 'I2', weight: 15 },
-            { signature: 'I3', weight: 24 },
-            { signature: 'L3', weight: 18 },
-            { signature: 'I4', weight: 10 },
-            { signature: 'O4', weight: 8 },
-            { signature: 'T4', weight: 8 },
-            { signature: 'L4', weight: 8 },
-            { signature: 'S4', weight: 4 },
-            { signature: 'Z4', weight: 4 },
-            { signature: 'P5', weight: 1 },
-            { signature: 'U5', weight: 1 },
-            { signature: 'V5', weight: 1 },
+            { signature: 'L3', weight: 34 },
+            { signature: 'L4', weight: 18 },
+            { signature: 'T4', weight: 18 },
+            { signature: 'S4', weight: 14 },
+            { signature: 'Z4', weight: 14 },
+            { signature: 'P5', weight: 10 },
+            { signature: 'U5', weight: 10 },
+            { signature: 'V5', weight: 10 },
+            { signature: 'W5', weight: 10 },
+            { signature: 'Y5', weight: 10 },
+            { signature: 'I2', weight: 5 },
+            { signature: 'I3', weight: 2 },
+            { signature: 'I4', weight: 1 },
+            { signature: 'O4', weight: 1 },
             { signature: 'O1', weight: 1 }
         ])
     });
@@ -119,6 +123,26 @@
         return pool;
     }
 
+
+    function MAREJIG_isRectangularCells(cells) {
+        if (!cells || !cells.length) return false;
+        var normalized = MAREJIG_normalizeCells(cells);
+        var maxX = Math.max.apply(null, normalized.map(function MAREJIG_cellMaxX(cell) { return cell.x; }));
+        var maxY = Math.max.apply(null, normalized.map(function MAREJIG_cellMaxY(cell) { return cell.y; }));
+        var expectedArea = (maxX + 1) * (maxY + 1);
+        if (expectedArea !== normalized.length) return false;
+        var seen = Object.create(null);
+        normalized.forEach(function MAREJIG_markRectCell(cell) {
+            seen[MAREJIG_getCellKey(cell.x, cell.y)] = true;
+        });
+        for (var y = 0; y <= maxY; y += 1) {
+            for (var x = 0; x <= maxX; x += 1) {
+                if (!seen[MAREJIG_getCellKey(x, y)]) return false;
+            }
+        }
+        return true;
+    }
+
     function MAREJIG_buildPieceOutline(piece) {
         var cellSet = Object.create(null);
         var absoluteCells = piece.cells.map(function MAREJIG_absoluteCell(cell) {
@@ -155,6 +179,7 @@
         reflectCells: MAREJIG_reflectCells,
         getShapeSignature: MAREJIG_getShapeSignature,
         getCellKey: MAREJIG_getCellKey,
+        isRectangularCells: MAREJIG_isRectangularCells,
         buildPieceOutline: MAREJIG_buildPieceOutline
     });
 })(window);

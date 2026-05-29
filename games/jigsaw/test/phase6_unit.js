@@ -35,7 +35,7 @@ function loadSandbox(files) {
 }
 
 function sceneFixture(sandbox) {
-  const level = { id: 'phase6', title: 'Phase 6', pack: 'Unit', difficulty: 'test', rewardCoins: 9, board: { cols: 16, rows: 12 }, targetPieceCount: 60, segmentPlan: [10, 10, 12, 12, 16] };
+  const level = { id: 'phase6', title: 'Phase 6', pack: 'Unit', difficulty: 'test', rewardCoins: 9, board: { cols: 12, rows: 9 }, targetPieceCount: 40, segmentPlan: [8, 8, 8, 8, 8] };
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);

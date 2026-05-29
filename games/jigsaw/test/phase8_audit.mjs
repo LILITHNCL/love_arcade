@@ -103,7 +103,7 @@ function forceSegmentComplete(scene, segmentId) {
   sandbox.localStorage.setItem('MAREJIG_activeSave_v1', '{bad json');
   assert.equal(sandbox.MAREJIG_Storage.getActiveSave(), null, 'corrupt active save is ignored safely');
   sandbox.MAREJIG_Storage.saveSettings({ haptics: false });
-  sandbox.MAREJIG_Storage.saveLevelProgress('audit_level', { totalPieceCount: 60, placedPieceCount: 8 });
+  sandbox.MAREJIG_Storage.saveLevelProgress('audit_level', { totalPieceCount: 40, placedPieceCount: 8 });
   sandbox.MAREJIG_Storage.markLevelCompleted({ id: 'audit_level', rewardCoins: 5 }, { rewardReported: false, rewardCoins: 5 });
   for (const key of sandbox.localStorage._store.keys()) {
     assert.ok(allowed.has(key), `unexpected storage key ${key}`);
@@ -139,13 +139,17 @@ function forceSegmentComplete(scene, segmentId) {
   assert.match(rendererSource, /Math\.min\(windowObject\.devicePixelRatio \|\| 1, MAREJIG_Config\.canvas\.maxDpr\)/, 'canvas DPR is capped');
   assert.match(rendererSource, /if \(MAREJIG_rendererState\.rafId\) return;/, 'renderer coalesces dirty frames');
   assert.match(rendererSource, /if \(scene\.ui\.dirty === false\) return;/, 'renderer skips clean frames');
+  assert.equal(/function\s+MAREJIG_drawGrid|drawGrid|boardOutline|piece\.outline\.segments\.forEach\(function MAREJIG_boardOutline/.test(rendererSource), false, 'renderer does not draw a visible board grid');
 }
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('reef_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
+  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
+  assert.equal(scene.board.sourceCellW, scene.imageMeta.width / 12, 'sourceCellW uses 12 columns');
+  assert.equal(scene.board.sourceCellH, scene.imageMeta.height / 9, 'sourceCellH uses 9 rows');
   const firstSegmentId = scene.puzzle.segments.order[0];
   const secondSegmentId = scene.puzzle.segments.order[1];
   const hiddenSegmentId = scene.puzzle.segments.order[2];
@@ -168,7 +172,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('reef_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   const lastIndex = scene.puzzle.segments.order.length - 1;
