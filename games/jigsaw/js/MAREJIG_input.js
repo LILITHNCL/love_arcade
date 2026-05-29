@@ -54,6 +54,7 @@
     function MAREJIG_onPointerDown(event) {
         var scene = MAREJIG_context.scene;
         if (!scene || !MAREJIG_context.canvas) return;
+        if (scene.progress && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'completed')) return;
         MAREJIG_context.pointers.set(event.pointerId, MAREJIG_canvasPoint(event));
         if (MAREJIG_context.pointers.size > 1) {
             MAREJIG_inputState.mode = 'pinching';
@@ -89,6 +90,7 @@
     function MAREJIG_onPointerMove(event) {
         var scene = MAREJIG_context.scene;
         if (!scene) return;
+        if (scene.progress && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'completed')) return;
         var point = MAREJIG_canvasPoint(event);
         MAREJIG_context.pointers.set(event.pointerId, point);
         if (MAREJIG_inputState.mode === 'pinching') return;
@@ -118,6 +120,10 @@
         var scene = MAREJIG_context.scene;
         MAREJIG_context.pointers.delete(event.pointerId);
         if (!scene) {
+            MAREJIG_resetState(true);
+            return;
+        }
+        if (scene.progress && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'completed')) {
             MAREJIG_resetState(true);
             return;
         }

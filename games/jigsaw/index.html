@@ -83,11 +83,13 @@
                         </div>
                     </div>
                     <div class="marejig-game-hud" aria-label="Estado del puzzle">
-                        <span class="marejig-hud-pill" id="marejig-hud-reward">+0 monedas</span>
+                        <span class="marejig-hud-pill" id="marejig-hud-time">Tiempo 00:00</span>
+                        <span class="marejig-hud-pill" id="marejig-hud-reward">0 movimientos</span>
                         <span class="marejig-hud-pill" id="marejig-hud-segment">Segmento 1/1</span>
                         <span class="marejig-hud-pill" id="marejig-hud-visible">0 visibles</span>
                         <span class="marejig-hud-pill" id="marejig-hud-total">0 piezas</span>
                         <span class="marejig-hud-pill" id="marejig-hud-image">Imagen pendiente</span>
+                        <span class="marejig-hud-pill" id="marejig-hud-save">Sin guardar</span>
                         <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-center-view">Centrar</button>
                     </div>
                     <div class="marejig-canvas-wrap">
@@ -114,6 +116,28 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <div class="marejig-modal" id="marejig-victory-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-victory-title" aria-describedby="marejig-victory-summary" hidden>
+        <div class="marejig-modal-backdrop" aria-hidden="true"></div>
+        <section class="marejig-victory-card" role="document">
+            <button class="marejig-modal-close" type="button" id="marejig-victory-close" aria-label="Cerrar pantalla de victoria">×</button>
+            <p class="marejig-kicker">Victoria</p>
+            <h2 class="marejig-title" id="marejig-victory-title">¡Nivel completado!</h2>
+            <p class="marejig-subtitle" id="marejig-victory-summary"><strong id="marejig-victory-level">Nivel</strong> · <span id="marejig-victory-pack">Pack</span></p>
+            <div class="marejig-victory-stats" aria-label="Métricas finales">
+                <div class="marejig-victory-stat"><span>Tiempo</span><strong id="marejig-victory-time">00:00</strong></div>
+                <div class="marejig-victory-stat"><span>Movimientos</span><strong id="marejig-victory-moves">0</strong></div>
+                <div class="marejig-victory-stat"><span>Pistas</span><strong id="marejig-victory-hints">0</strong></div>
+                <div class="marejig-victory-stat"><span>Monedas</span><strong id="marejig-victory-coins">+0</strong></div>
+            </div>
+            <p class="marejig-victory-status" id="marejig-victory-status" aria-live="polite">Modo standalone: monedas no acreditadas</p>
+            <div class="marejig-menu-actions marejig-victory-actions">
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next">Siguiente nivel</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels">Volver a niveles</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay">Repetir nivel</button>
+            </div>
+        </section>
     </div>
 
     <script src="./js/MAREJIG_config.js"></script>

@@ -103,9 +103,14 @@
                 moves: 0,
                 startedAt: null,
                 elapsedMs: 0,
+                hintsUsed: 0,
                 mainGroupId: null,
                 puzzleCompletedLocal: false,
+                completionStarted: false,
+                rewardReported: false,
+                rewardSkipped: false,
                 status: 'Jugando',
+                gamePhase: 'playing',
                 nextZIndex: 1000
             },
             ui: {
@@ -192,6 +197,84 @@
         return scene;
     }
 
+
+
+    function MAREJIG_applySave(scene, save) {
+        if (!scene || !save || save.levelId !== scene.level.id) return false;
+        if (Number(save.puzzleSeed) && Number(save.puzzleSeed) !== Number(scene.puzzle.seed)) {
+            console.warn('[MAREJIG] Save ignorado por seed incompatible', save.levelId);
+            return false;
+        }
+
+        var savedGroups = {};
+        (save.groups || []).forEach(function MAREJIG_indexSavedGroup(group) {
+            savedGroups[group.groupId] = group;
+        });
+        var nextGroups = {};
+        Object.keys(savedGroups).forEach(function MAREJIG_restoreGroup(groupId) {
+            var saved = savedGroups[groupId];
+            nextGroups[groupId] = Object.assign({}, scene.groups[groupId] || {}, {
+                id: groupId,
+                pieceIds: saved.pieceIds.slice(),
+                x: Number(saved.x) || 0,
+                y: Number(saved.y) || 0,
+                zIndex: Number(saved.zIndex) || 0,
+                lockedToBoard: Boolean(saved.lockedToBoard),
+                visible: Boolean(saved.visible),
+                positioned: true
+            });
+        });
+        if (!Object.keys(nextGroups).length) return false;
+        scene.groups = nextGroups;
+        scene.puzzle.groups = JSON.parse(JSON.stringify(nextGroups));
+
+        (save.pieces || []).forEach(function MAREJIG_restorePiece(savedPiece) {
+            if (scene.pieces[savedPiece.pieceId]) {
+                scene.pieces[savedPiece.pieceId].groupId = savedPiece.groupId;
+                scene.pieces[savedPiece.pieceId].visible = Boolean(savedPiece.revealed);
+                scene.pieces[savedPiece.pieceId].locked = Boolean(savedPiece.locked);
+            }
+            if (scene.puzzle.pieces[savedPiece.pieceId]) {
+                scene.puzzle.pieces[savedPiece.pieceId].groupId = savedPiece.groupId;
+                scene.puzzle.pieces[savedPiece.pieceId].revealed = Boolean(savedPiece.revealed);
+                scene.puzzle.pieces[savedPiece.pieceId].locked = Boolean(savedPiece.locked);
+            }
+        });
+
+        var completed = new Set(save.completedSegmentIds || []);
+        var revealed = new Set(save.revealedSegmentIds || []);
+        scene.puzzle.segments.currentSegmentIndex = Math.max(0, Math.min(Number(save.currentSegmentIndex) || 0, scene.puzzle.segments.order.length - 1));
+        scene.puzzle.segments.order.forEach(function MAREJIG_restoreSegment(segmentId, index) {
+            var segment = scene.puzzle.segments.items[segmentId];
+            if (!segment) return;
+            segment.completed = completed.has(segmentId);
+            segment.revealed = revealed.has(segmentId) || index === 0;
+            segment.pieceIds.forEach(function MAREJIG_restoreSegmentPiece(pieceId) {
+                if (scene.pieces[pieceId]) scene.pieces[pieceId].visible = segment.revealed;
+                if (scene.puzzle.pieces[pieceId]) scene.puzzle.pieces[pieceId].revealed = segment.revealed;
+            });
+        });
+
+        scene.progress.elapsedMs = Math.max(0, Number(save.elapsedMs) || 0);
+        scene.progress.moves = Math.max(0, Number(save.moves) || 0);
+        scene.progress.hintsUsed = Math.max(0, Number(save.hintsUsed) || 0);
+        scene.progress.mainGroupId = save.mainGroupId || null;
+        scene.progress.puzzleCompletedLocal = Boolean(save.puzzleCompletedLocal);
+        scene.progress.completionStarted = Boolean(save.completionStarted);
+        scene.progress.rewardReported = Boolean(save.rewardReported);
+        scene.progress.gamePhase = scene.progress.puzzleCompletedLocal ? 'completed' : 'playing';
+        scene.progress.status = scene.progress.puzzleCompletedLocal ? 'Completado' : 'Continuando';
+        scene.progress.nextZIndex = Object.keys(scene.groups).reduce(function MAREJIG_maxZ(max, groupId) {
+            return Math.max(max, Number(scene.groups[groupId].zIndex) || 0);
+        }, scene.progress.nextZIndex || 1000);
+        scene.ui.activeSegmentId = scene.puzzle.segments.order[scene.puzzle.segments.currentSegmentIndex] || scene.ui.activeSegmentId;
+        scene.ui.message = scene.progress.puzzleCompletedLocal ? 'Puzzle completado' : 'Partida reanudada';
+        scene.ui.messageStartedAt = Date.now();
+        scene.ui.dirty = true;
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateAllGroupBounds(scene);
+        return true;
+    }
+
     function MAREJIG_getVisiblePieceIds(scene) {
         return Object.keys(scene.pieces).filter(function MAREJIG_isVisible(pieceId) {
             return scene.pieces[pieceId].visible;
@@ -202,6 +285,7 @@
         createScene: MAREJIG_createScene,
         layoutScene: MAREJIG_layoutScene,
         getVisiblePieceIds: MAREJIG_getVisiblePieceIds,
-        centerScene: MAREJIG_centerScene
+        centerScene: MAREJIG_centerScene,
+        applySave: MAREJIG_applySave
     });
 })(window);

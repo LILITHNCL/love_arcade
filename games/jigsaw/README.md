@@ -89,3 +89,14 @@ El renderer usa una única imagen decodificada por nivel activo y cachea únicam
 - `MAREJIG_Segments` controla la progresión: `s_0` define el grupo principal al completarse, los segmentos posteriores se revelan de uno en uno y el último solo marca `puzzleCompletedLocal`.
 - El HUD muestra estado/movimientos, segmento activo, conectadas del segmento, visibles y total de piezas. La persistencia ligera solo se actualiza en eventos discretos.
 - Esta fase no reporta economía, no llama `GameCenter.completeLevel` y no marca niveles como completados finales.
+
+## Fase 5 — loop completo, persistencia y economía
+
+- Persistencia robusta en `MAREJIG_activeSave_v1` con un snapshot compacto de grupos, piezas, segmentos y métricas; no se guardan imágenes, canvases, blobs ni datos base64.
+- `MAREJIG_levelProgress_v1` conserva solo un resumen por nivel para el menú de pendientes; `MAREJIG_completedLevels_v1` guarda métricas finales y mantiene `completedAt` original, añadiendo `lastCompletedAt` en repeticiones para auditoría local.
+- El menú oculta niveles ya completados, muestra “Continuar” si existe una partida activa válida y renderiza niveles por lotes para evitar pintar todo el catálogo de golpe.
+- La reanudación regenera el puzzle determinístico desde `level.id`, reconstruye la escena y aplica posiciones/grupos/segmentos guardados desde el active save.
+- El timer acumula `elapsedMs`, se pausa al ocultar la pestaña, al salir al menú o cuando la pantalla de victoria está abierta, y actualiza solo el HUD con un intervalo ligero.
+- Al completar el último segmento, el input se bloquea, el tiempo queda congelado, se muestra modal accesible de victoria, se limpia el progreso parcial y el nivel desaparece de pendientes.
+- La economía usa únicamente `window.GameCenter.completeLevel("jigsaw", "level_" + level.id, coins)` desde `MAREJIG_Economy.reportLevelCompleted`; en modo standalone el nivel se marca localmente como completado sin acreditar monedas ni reclamar después automáticamente.
+- Las recompensas son idempotentes localmente: `completionStarted` evita repetir el flujo visual y `rewardReported` evita una segunda llamada local a GameCenter. Repetir un nivel desde la victoria no vuelve a pagar.
