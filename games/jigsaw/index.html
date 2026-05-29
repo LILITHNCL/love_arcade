@@ -30,7 +30,7 @@
                     <h1 class="marejig-title" id="marejig-menu-title">Niveles pendientes</h1>
                     <p class="marejig-subtitle">Arma imágenes 4:3 premium con piezas ortogonales y segmentos progresivos.</p>
                     <div class="marejig-hero-metrics" aria-label="Resumen del catálogo">
-                        <span class="marejig-chip" id="marejig-total-pending">0 pendientes</span>
+                        <span class="marejig-chip" id="marejig-total-pending">0 niveles pendientes · todos los packs</span>
                         <span class="marejig-chip">16×12</span>
                         <span class="marejig-chip">~60 piezas</span>
                     </div>
@@ -42,6 +42,20 @@
                             <h2 class="marejig-section-title">Catálogo</h2>
                             <p class="marejig-section-note">Solo aparecen niveles no completados.</p>
                         </div>
+                        <form class="marejig-filter-bar" id="marejig-filter-bar" aria-label="Filtros de niveles pendientes">
+                            <label class="marejig-filter-field" for="marejig-filter-pack">
+                                <span>Pack</span>
+                                <select class="marejig-filter-select" id="marejig-filter-pack" name="pack">
+                                    <option value="">Todos</option>
+                                </select>
+                            </label>
+                            <label class="marejig-filter-field" for="marejig-filter-difficulty">
+                                <span>Dificultad</span>
+                                <select class="marejig-filter-select" id="marejig-filter-difficulty" name="difficulty">
+                                    <option value="">Todas</option>
+                                </select>
+                            </label>
+                        </form>
                     </div>
                     <div class="marejig-level-grid" id="marejig-level-grid" aria-label="Lista de niveles pendientes"></div>
                     <div class="marejig-menu-actions">

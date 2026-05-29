@@ -214,8 +214,8 @@
         var validation = puzzle && puzzle.validation ? puzzle.validation : null;
         if (title) title.textContent = level.title;
         if (pack) pack.textContent = level.pack + ' · ' + level.difficulty;
-        if (badge) badge.textContent = 'Fase 6';
-        if (readyCopy) readyCopy.textContent = imageStatus + '. Pistas, ayuda y reinicio seguro activos.';
+        if (badge) badge.textContent = 'Fase 7';
+        if (readyCopy) readyCopy.textContent = imageStatus + '. Catálogo validado, Cloudinary real y pistas balanceadas activos.';
         if (!details) return;
         details.innerHTML = [
             MAREJIG_detailRow('Nivel', level.id),
@@ -495,10 +495,16 @@
     }
 
     function MAREJIG_backToMenu() {
+        var state = MAREJIG_State.getState();
+        var releaseLevelId = (state && state.selectedLevelId) || MAREJIG_currentLevelId;
         MAREJIG_pauseTimer();
         MAREJIG_saveGame('menu');
         MAREJIG_Input.detach();
+        if (releaseLevelId && MAREJIG_ImageLoader && typeof MAREJIG_ImageLoader.releaseFullImage === 'function') {
+            MAREJIG_ImageLoader.releaseFullImage(releaseLevelId);
+        }
         MAREJIG_currentLevelId = null;
+        MAREJIG_State.setState({ selectedLevelId: null, selectedRuntimeProfile: null, loadedImageResult: null, puzzle: null, scene: null, loading: false });
         MAREJIG_Menu.mountPendingLevels();
         MAREJIG_showScreen('menu');
     }

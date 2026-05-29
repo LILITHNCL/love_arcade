@@ -1,0 +1,37 @@
+const { chromium } = require('playwright');
+
+(async function MAREJIG_phase7Smoke() {
+    const baseUrl = process.env.MAREJIG_BASE_URL || 'http://127.0.0.1:4173';
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    await page.goto(`${baseUrl}/games/jigsaw/index.html`, { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+        ['MAREJIG_completedLevels_v1', 'MAREJIG_levelProgress_v1', 'MAREJIG_activeSave_v1', 'MAREJIG_settings_v1'].forEach((key) => localStorage.removeItem(key));
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.marejig-level-card', { timeout: 30000 });
+    const initialCards = await page.locator('.marejig-level-card').count();
+    if (initialCards > 12) throw new Error(`batch inicial demasiado grande: ${initialCards}`);
+    await page.locator('#marejig-filter-pack').selectOption({ label: 'Océano' }).catch(() => null);
+    await page.locator('.marejig-level-card').first().click();
+    await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
+    await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });
+    const completedId = await page.evaluate(() => window.MAREJIG_State.getState().selectedLevelId);
+    await page.locator('#marejig-hint-button').click();
+    await page.waitForFunction(() => {
+        const state = window.MAREJIG_State.getState();
+        return state.scene && state.scene.ui.hint && state.scene.progress.hintsUsed === 1;
+    }, null, { timeout: 5000 });
+    await page.evaluate(() => window.MAREJIG_Main.completeCurrentForDebug());
+    await page.waitForSelector('#marejig-victory-modal:not([hidden])', { timeout: 10000 });
+    await page.locator('#marejig-victory-levels').click();
+    await page.waitForSelector('#marejig-screen-menu:not([hidden])', { timeout: 10000 });
+    const stillVisible = await page.locator(`[data-marejig-level-id="${completedId}"]`).count();
+    if (stillVisible !== 0) throw new Error(`nivel completado todavía visible: ${completedId}`);
+    await page.screenshot({ path: 'games/jigsaw/phase7-menu-after-complete-390x844.png', fullPage: false });
+    await browser.close();
+    console.log('phase7 smoke ok');
+}()).catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

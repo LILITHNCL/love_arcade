@@ -62,6 +62,36 @@
         return MAREJIG_buildUrl(level, runtimeProfile === 'fullPremium' ? 'fullPremium' : 'fullMobile');
     }
 
+
+    function MAREJIG_buildAllUrls(level, options) {
+        return {
+            tiny: MAREJIG_buildUrl(level, 'tiny', options),
+            thumbnail: MAREJIG_buildUrl(level, 'thumbnail', options),
+            thumbnailLarge: MAREJIG_buildUrl(level, 'thumbnailLarge', options),
+            fullMobile: MAREJIG_buildUrl(level, 'fullMobile', options),
+            fullPremium: MAREJIG_buildUrl(level, 'fullPremium', options)
+        };
+    }
+
+    function MAREJIG_validateUrl(url, options) {
+        var fetcher = options && options.fetch ? options.fetch : windowObject.fetch;
+        if (!url || typeof url !== 'string') {
+            return Promise.resolve({ ok: false, skipped: false, status: 0, error: 'URL vacía' });
+        }
+        if (options && options.offline) {
+            return Promise.resolve({ ok: true, skipped: true, status: 0, reason: 'offline' });
+        }
+        if (typeof fetcher !== 'function') {
+            return Promise.resolve({ ok: true, skipped: true, status: 0, reason: 'fetch no disponible' });
+        }
+        return fetcher(url, { method: 'HEAD', mode: 'cors', cache: 'no-store' }).then(function MAREJIG_headResponse(response) {
+            return { ok: response.ok, skipped: false, status: response.status, url: url };
+        }).catch(function MAREJIG_headFailed(error) {
+            if (options && options.strict) return { ok: false, skipped: false, status: 0, error: error.message, url: url };
+            return { ok: true, skipped: true, status: 0, reason: error.message, url: url };
+        });
+    }
+
     function MAREJIG_getRuntimeProfile() {
         var longSide = Math.max(windowObject.innerWidth || 0, windowObject.innerHeight || 0);
         var dpr = Math.min(windowObject.devicePixelRatio || 1, MAREJIG_Config.canvas.maxDpr);
@@ -78,6 +108,8 @@
         buildTinyPlaceholderUrl: MAREJIG_buildTinyPlaceholderUrl,
         buildThumbnailUrl: MAREJIG_buildThumbnailUrl,
         buildFullUrl: MAREJIG_buildFullUrl,
+        buildAllUrls: MAREJIG_buildAllUrls,
+        validateUrl: MAREJIG_validateUrl,
         getRuntimeProfile: MAREJIG_getRuntimeProfile
     });
 })(window);
