@@ -291,6 +291,7 @@
         if (!activeSegmentId || !MAREJIG_isActiveSegmentComplete(scene)) return { completed: false, revealed: null, puzzleComplete: false };
 
         var activeSegment = segments.items[activeSegmentId];
+        if (activeSegment.completed) return { completed: false, revealed: null, puzzleComplete: false };
         activeSegment.completed = true;
         if (!scene.progress.mainGroupId) {
             scene.progress.mainGroupId = scene.pieces[activeSegment.pieceIds[0]].groupId;

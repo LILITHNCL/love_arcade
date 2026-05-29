@@ -181,3 +181,72 @@ node games/jigsaw/test/phase7_unit.mjs
 ```
 
 `validate-levels.mjs` valida ids, orders, campos críticos, aspecto 4:3, maestro 2400×1800, board 16×12, `segmentPlan`, recompensas, `cloudinaryPublicId`, formato AVIF, dificultad y generación determinística válida. `phase7_unit.mjs` añade fixture de 200 niveles, stress de generación, URL builder Cloudinary, menú por batches, filtrado de completados, economía idempotente y checks de integración Love Arcade.
+
+## Fase 8 — release candidate
+
+`games/jigsaw/` queda en estado **release candidate**: gameplay completo, catálogo escalable, validadores automatizados, smoke browser reproducible y checklist manual de producción. Esta fase no añade mecánicas grandes; congela el alcance y se enfoca en QA, estabilidad e integración Love Arcade.
+
+### Arquitectura rápida
+
+- `index.html`: shell Love Arcade, pantallas, HUD, modales y carga de scripts. `../../js/app.js` debe permanecer como último script del `<body>`.
+- `js/MAREJIG_levels.js`: catálogo compacto, packs, dificultad, recompensa y metadata Cloudinary.
+- `js/MAREJIG_generator.js`, `MAREJIG_shapes.js`, `MAREJIG_segments.js`, `MAREJIG_groups.js`: generación determinística, segmentación y reglas de snap por adjacency.
+- `js/MAREJIG_renderer.js`: Canvas 2D con DPR capado y dirty rendering; no hay loop continuo.
+- `js/MAREJIG_input.js`: Pointer Events, drag, cancelación y bloqueo durante victoria.
+- `js/MAREJIG_storage.js`: única capa de persistencia local del juego, limitada a claves `MAREJIG_` permitidas.
+- `js/MAREJIG_economy.js`: único adaptador económico; el juego reporta eventos y Love Arcade conserva el banco.
+- `js/MAREJIG_cloudinary.js` y `MAREJIG_imageLoader.js`: delivery responsive, fallback visual y liberación de imagen full al volver al menú.
+
+### Cómo correr local
+
+Desde la raíz del repo, sirve archivos estáticos con cualquier servidor local. Ejemplo sin dependencias persistentes:
+
+```bash
+python3 -m http.server 4173
+# abrir http://127.0.0.1:4173/games/jigsaw/index.html
+```
+
+El juego funciona standalone si `GameCenter` está ausente. En ese modo los niveles se completan localmente, pero no se acreditan monedas.
+
+### Tests Node obligatorios
+
+```bash
+git diff --check
+git diff --cached --check
+for file in games/jigsaw/js/*.js; do node --check "$file" || exit 1; done
+node games/jigsaw/tools/validate-levels.mjs
+node games/jigsaw/test/phase4_unit.js
+node games/jigsaw/test/phase5_unit.js
+node games/jigsaw/test/phase6_unit.js
+node games/jigsaw/test/phase7_unit.mjs
+node games/jigsaw/test/phase8_audit.mjs
+```
+
+`phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de pistas/segmentos y restricciones críticas de namespace.
+
+### Smoke Playwright reproducible
+
+El smoke browser queda preparado para CI o local. Si Playwright no está instalado, el script lo omite con un mensaje explícito e instrucciones; para CI estricto usa `MAREJIG_REQUIRE_PLAYWRIGHT=1`.
+
+Instalación temporal:
+
+```bash
+npm install --no-save playwright
+npx playwright install chromium
+python3 -m http.server 4173
+MAREJIG_REQUIRE_PLAYWRIGHT=1 node games/jigsaw/test/phase7_smoke_playwright.js
+```
+
+Flujo cubierto: menú → filtro → seleccionar nivel → usar pista → completar con helper debug → victoria → volver a niveles → verificar que el nivel completado desaparece.
+
+### Troubleshooting
+
+- **Cloudinary falla o la URL devuelve 404:** el juego muestra fallback visual y sigue siendo jugable. Revisa `cloudName`, `cloudinaryPublicId`, formato AVIF y que la imagen sea 4:3.
+- **`localStorage` lleno o bloqueado:** `MAREJIG_storage.js` captura errores, conserva el juego usable y muestra estado de guardado local no disponible.
+- **Playwright no instalado:** ejecuta los comandos de instalación temporal anteriores o deja que el smoke se omita explícitamente en entornos no CI.
+- **GameCenter ausente:** modo standalone esperado; no hay recompensa real ni reclamación retroactiva automática.
+- **Un nivel completado no aparece:** es la política correcta del menú principal; los completados desaparecen de pendientes.
+
+### Checklist manual de release
+
+Ver `games/jigsaw/RELEASE_CHECKLIST.md` para la lista completa de integración, storage, economía, Cloudinary, performance, responsive, accesibilidad y pasos previos a subir un catálogo real de 200+ niveles.

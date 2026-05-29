@@ -1,4 +1,23 @@
-const { chromium } = require('playwright');
+let chromium;
+try {
+    ({ chromium } = require('playwright'));
+} catch (error) {
+    const message = [
+        '[MAREJIG] Playwright no está instalado; smoke browser omitido explícitamente.',
+        'Instalación reproducible:',
+        '  npm install --no-save playwright',
+        '  npx playwright install chromium',
+        '  MAREJIG_REQUIRE_PLAYWRIGHT=1 node games/jigsaw/test/phase7_smoke_playwright.js',
+        'Para convertir la omisión en fallo de CI, define MAREJIG_REQUIRE_PLAYWRIGHT=1.'
+    ].join('\n');
+    if (process.env.MAREJIG_REQUIRE_PLAYWRIGHT === '1' || process.env.CI === 'true') {
+        console.error(message);
+        console.error(error.message);
+        process.exit(1);
+    }
+    console.warn(message);
+    process.exit(0);
+}
 
 (async function MAREJIG_phase7Smoke() {
     const baseUrl = process.env.MAREJIG_BASE_URL || 'http://127.0.0.1:4173';
