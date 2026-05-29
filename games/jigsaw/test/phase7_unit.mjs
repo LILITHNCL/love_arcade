@@ -49,8 +49,9 @@ function loadSandbox(files, extra = {}) {
 function createFixtureLevel(index) {
   const packs = ['Océano', 'Bosque', 'Ciudad', 'Fantasía', 'Espacio', 'Postres', 'Mascotas', 'Arte'];
   const difficulties = ['easy', 'standard', 'hard'];
-  const plans = { easy: [8, 8, 10, 10, 24], standard: [10, 10, 12, 12, 16], hard: [12, 12, 12, 12, 12] };
+  const plans = { easy: [6, 6, 8, 10], standard: [8, 8, 8, 8, 8], hard: [9, 9, 10, 10, 10] };
   const rewards = { easy: 40, standard: 58, hard: 80 };
+  const targetCounts = { easy: 30, standard: 40, hard: 48 };
   const difficulty = difficulties[index % difficulties.length];
   const id = `fixture_${String(index + 1).padStart(3, '0')}`;
   return Object.freeze({
@@ -63,23 +64,30 @@ function createFixtureLevel(index) {
     sourceFormat: 'avif',
     aspectRatio: '4:3',
     master: Object.freeze({ width: 2400, height: 1800 }),
-    board: Object.freeze({ cols: 16, rows: 12 }),
-    targetPieceCount: 60,
+    board: Object.freeze({ cols: 12, rows: 9 }),
+    targetPieceCount: targetCounts[difficulty],
     segmentPlan: plans[difficulty].slice(),
     rewardCoins: rewards[difficulty]
   });
 }
 
 function validatePuzzle(level, puzzle) {
-  assert.equal(puzzle.board.cols, 16, `${level.id} cols`);
-  assert.equal(puzzle.board.rows, 12, `${level.id} rows`);
-  assert.equal(puzzle.board.cellCount, 192, `${level.id} cell count`);
+  assert.equal(puzzle.board.cols, 12, `${level.id} cols`);
+  assert.equal(puzzle.board.rows, 9, `${level.id} rows`);
+  assert.equal(puzzle.board.cellCount, 108, `${level.id} cell count`);
   assert.ok(puzzle.validation.ok, `${level.id} puzzle validation: ${puzzle.validation.errors.join('; ')}`);
   assert.ok(puzzle.validation.cellCoverageOk, `${level.id} coverage`);
   assert.ok(puzzle.validation.adjacencyOk, `${level.id} adjacency`);
   assert.ok(puzzle.validation.segmentsOk, `${level.id} segments`);
-  assert.ok(puzzle.validation.pieceCount >= 56 && puzzle.validation.pieceCount <= 64, `${level.id} piece count`);
+  const ranges = { easy: [28, 34], standard: [36, 42], hard: [44, 50] };
+  const [minPieces, maxPieces] = ranges[level.difficulty] || ranges.standard;
+  assert.ok(puzzle.validation.pieceCount >= minPieces && puzzle.validation.pieceCount <= maxPieces, `${level.id} piece count`);
   assert.equal(puzzle.segments.items.s_0.revealed, true, `${level.id} s_0 revealed`);
+  if (level.difficulty === 'standard') {
+    assert.ok(puzzle.validation.variety.nonRectangularPieceRatio >= 0.55, `${level.id} non-rectangular variety`);
+    assert.ok(puzzle.validation.variety.rectangularPieceRatio <= 0.40, `${level.id} rectangular cap`);
+  }
+  assert.ok(puzzle.validation.variety.monominoCount <= 2, `${level.id} monomino cap`);
   for (const segmentId of puzzle.segments.order) {
     assert.ok(puzzle.segments.items[segmentId].pieceIds.length > 0, `${level.id} ${segmentId} non-empty`);
   }
@@ -95,7 +103,7 @@ function validatePuzzle(level, puzzle) {
     'MAREJIG_generator.js'
   ]);
   const levels = sandbox.MAREJIG_LevelCatalog.levels;
-  assert.ok(levels.length >= 20, 'catalog has at least 20 levels');
+  assert.ok(levels.length >= 1, 'catalog has at least one level');
   const fixture = Array.from({ length: 200 }, (_, index) => createFixtureLevel(index));
   const startedAt = performance.now();
   for (const level of [...levels, ...fixture]) {

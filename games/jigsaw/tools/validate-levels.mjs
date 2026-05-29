@@ -41,7 +41,7 @@ function assertLevelShape(level, index, catalog) {
   if (!catalog.validateLevel(level)) errors.push(`${level.id || `#${index}`}: validateLevel devolvió false`);
   if (level.aspectRatio !== '4:3') errors.push(`${level.id}: aspectRatio debe ser 4:3`);
   if (level.master?.width !== 2400 || level.master?.height !== 1800) errors.push(`${level.id}: master debe ser 2400×1800`);
-  if (level.board?.cols !== 16 || level.board?.rows !== 12) errors.push(`${level.id}: board debe ser 16×12`);
+  if (level.board?.cols !== 12 || level.board?.rows !== 9) errors.push(`${level.id}: board debe ser 12×9`);
   if (level.sourceFormat !== 'avif') errors.push(`${level.id}: sourceFormat debe ser avif`);
   if (!level.cloudinaryPublicId || typeof level.cloudinaryPublicId !== 'string') errors.push(`${level.id}: cloudinaryPublicId vacío`);
   if (!Number.isInteger(level.rewardCoins) || level.rewardCoins <= 0) errors.push(`${level.id}: rewardCoins debe ser entero positivo`);
@@ -56,11 +56,17 @@ function assertLevelShape(level, index, catalog) {
 function validatePuzzle(level, puzzle) {
   const errors = [];
   if (!puzzle || !puzzle.validation?.ok) errors.push(`${level.id}: puzzle inválido ${puzzle?.validation?.errors?.join('; ') || ''}`);
-  if (puzzle.board.cols !== 16 || puzzle.board.rows !== 12 || puzzle.board.cellCount !== 192) errors.push(`${level.id}: board generado inválido`);
+  if (puzzle.board.cols !== 12 || puzzle.board.rows !== 9 || puzzle.board.cellCount !== 108) errors.push(`${level.id}: board generado inválido`);
   if (!puzzle.validation.cellCoverageOk) errors.push(`${level.id}: cobertura de celdas inválida`);
   if (!puzzle.validation.adjacencyOk) errors.push(`${level.id}: adjacency inválida`);
   if (!puzzle.validation.segmentsOk) errors.push(`${level.id}: segmentos inválidos`);
-  if (puzzle.validation.pieceCount < 56 || puzzle.validation.pieceCount > 64) errors.push(`${level.id}: piece count ${puzzle.validation.pieceCount} fuera de 56–64`);
+  const ranges = { easy: [28, 34], standard: [36, 42], hard: [44, 50] };
+  const [minPieces, maxPieces] = ranges[level.difficulty] || ranges.standard;
+  if (puzzle.validation.pieceCount < minPieces || puzzle.validation.pieceCount > maxPieces) errors.push(`${level.id}: piece count ${puzzle.validation.pieceCount} fuera de ${minPieces}–${maxPieces}`);
+  const variety = puzzle.validation.variety;
+  if (level.difficulty === 'standard' && variety.nonRectangularPieceRatio < 0.55) errors.push(`${level.id}: nonRectangularPieceRatio insuficiente ${variety.nonRectangularPieceRatio}`);
+  if (level.difficulty === 'standard' && variety.rectangularPieceRatio > 0.40) errors.push(`${level.id}: rectangularPieceRatio excesivo ${variety.rectangularPieceRatio}`);
+  if (variety.monominoCount > 2) errors.push(`${level.id}: demasiados monominós ${variety.monominoCount}`);
   if (!puzzle.segments.items.s_0?.revealed) errors.push(`${level.id}: s_0 no revelado`);
   for (const segmentId of puzzle.segments.order) {
     if (!puzzle.segments.items[segmentId]?.pieceIds?.length) errors.push(`${level.id}: segmento vacío ${segmentId}`);

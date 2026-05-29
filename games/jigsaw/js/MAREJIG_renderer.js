@@ -144,34 +144,23 @@
         context.save();
         MAREJIG_drawRoundRect(context, board.x, board.y, board.width, board.height, 18);
         context.clip();
+        context.fillStyle = 'rgba(4, 7, 18, 0.72)';
+        context.fillRect(board.x, board.y, board.width, board.height);
         if (scene.drawableImage) {
             try {
-                context.globalAlpha = 0.24;
+                context.globalAlpha = 0.11;
                 context.drawImage(scene.drawableImage, board.x, board.y, board.width, board.height);
             } catch (error) {
-                MAREJIG_drawFallbackPattern(context, board.x, board.y, board.width, board.height, 0.22);
+                MAREJIG_drawFallbackPattern(context, board.x, board.y, board.width, board.height, 0.12);
             }
         } else {
-            MAREJIG_drawFallbackPattern(context, board.x, board.y, board.width, board.height, 0.25);
+            MAREJIG_drawFallbackPattern(context, board.x, board.y, board.width, board.height, 0.14);
         }
         context.globalAlpha = 1;
-        context.fillStyle = 'rgba(4, 7, 18, 0.42)';
-        context.fillRect(board.x, board.y, board.width, board.height);
         context.restore();
 
         context.save();
-        context.strokeStyle = 'rgba(255, 255, 255, 0.13)';
-        context.lineWidth = 1;
-        Object.keys(scene.puzzle.pieces).forEach(function MAREJIG_boardPiece(pieceId) {
-            var piece = scene.puzzle.pieces[pieceId];
-            piece.outline.segments.forEach(function MAREJIG_boardOutline(segment) {
-                context.beginPath();
-                context.moveTo(board.x + segment.x1 * board.cellSize, board.y + segment.y1 * board.cellSize);
-                context.lineTo(board.x + segment.x2 * board.cellSize, board.y + segment.y2 * board.cellSize);
-                context.stroke();
-            });
-        });
-        context.strokeStyle = 'rgba(119, 247, 228, 0.35)';
+        context.strokeStyle = 'rgba(119, 247, 228, 0.30)';
         context.lineWidth = 1.5;
         MAREJIG_drawRoundRect(context, board.x, board.y, board.width, board.height, 18);
         context.stroke();

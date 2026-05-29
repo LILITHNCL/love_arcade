@@ -6,9 +6,9 @@
         publicGameId: 'jigsaw',
         storagePrefix: 'MAREJIG_',
         board: Object.freeze({
-            cols: 16,
-            rows: 12,
-            targetPieceCount: 60
+            cols: 12,
+            rows: 9,
+            targetPieceCount: 40
         }),
         images: Object.freeze({
             master: Object.freeze({ width: 2400, height: 1800 }),
@@ -28,7 +28,7 @@
         difficulty: Object.freeze({
             easy: Object.freeze({ hintPieceLimit: 4, hintDurationMs: 4200, rewardRange: Object.freeze([35, 45]) }),
             standard: Object.freeze({ hintPieceLimit: 3, hintDurationMs: 3600, rewardRange: Object.freeze([50, 65]) }),
-            hard: Object.freeze({ hintPieceLimit: 2, hintDurationMs: 3000, rewardRange: Object.freeze([70, 90]), activePieceTarget: 60 })
+            hard: Object.freeze({ hintPieceLimit: 2, hintDurationMs: 3000, rewardRange: Object.freeze([70, 90]), activePieceTarget: 48 })
         }),
         cloudinary: Object.freeze({
             // Placeholder público para desarrollo. Reemplazar por el cloudName real de producción.

@@ -68,7 +68,7 @@ function loadSandbox(files) {
     'MAREJIG_scene.js',
     'MAREJIG_storage.js'
   ]);
-  const level = { id: 'resume_test', title: 'Resume', pack: 'Unit', difficulty: 'test', rewardCoins: 5, board: { cols: 16, rows: 12 }, targetPieceCount: 60, segmentPlan: [10, 10, 12, 12, 16] };
+  const level = { id: 'resume_test', title: 'Resume', pack: 'Unit', difficulty: 'test', rewardCoins: 5, board: { cols: 12, rows: 9 }, targetPieceCount: 40, segmentPlan: [8, 8, 8, 8, 8] };
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   const firstGroupId = Object.keys(scene.groups)[0];

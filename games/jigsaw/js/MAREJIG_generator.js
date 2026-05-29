@@ -4,9 +4,13 @@
     var MAREJIG_Shapes = windowObject.MAREJIG_Shapes;
     var MAREJIG_Segments = windowObject.MAREJIG_Segments;
     var MAREJIG_Groups = windowObject.MAREJIG_Groups;
-    var MAREJIG_GENERATOR_VERSION = 1;
-    var MAREJIG_MIN_PIECES = 56;
-    var MAREJIG_MAX_PIECES = 64;
+    var MAREJIG_GENERATOR_VERSION = 2;
+    var MAREJIG_PIECE_RANGES = Object.freeze({
+        easy: Object.freeze([28, 34]),
+        standard: Object.freeze([36, 42]),
+        hard: Object.freeze([44, 50]),
+        test: Object.freeze([28, 50])
+    });
 
     function MAREJIG_hashSeed(input) {
         var text = String(input || 'marejig');
@@ -146,6 +150,160 @@
         return piece.cells.map(function MAREJIG_absoluteCell(cell) {
             return { x: piece.solution.gridX + cell.x, y: piece.solution.gridY + cell.y };
         });
+    }
+
+
+    function MAREJIG_isRectangularPiece(piece) {
+        return MAREJIG_Shapes.isRectangularCells(piece.cells);
+    }
+
+    function MAREJIG_incrementDistribution(distribution, key) {
+        distribution[key] = (distribution[key] || 0) + 1;
+    }
+
+    function MAREJIG_buildShapeSignatureDistribution(pieces) {
+        var distribution = {};
+        Object.keys(pieces).forEach(function MAREJIG_countSignature(pieceId) {
+            MAREJIG_incrementDistribution(distribution, pieces[pieceId].shapeSignature);
+        });
+        return distribution;
+    }
+
+    function MAREJIG_buildVarietyMetrics(pieces) {
+        var pieceIds = Object.keys(pieces);
+        var rectangularCount = 0;
+        var monominoCount = 0;
+        pieceIds.forEach(function MAREJIG_countVariety(pieceId) {
+            var piece = pieces[pieceId];
+            piece.isRectangular = MAREJIG_isRectangularPiece(piece);
+            if (piece.isRectangular) rectangularCount += 1;
+            if (piece.shapeSize === 1) monominoCount += 1;
+        });
+        var total = Math.max(1, pieceIds.length);
+        return {
+            rectangularPieceCount: rectangularCount,
+            nonRectangularPieceCount: pieceIds.length - rectangularCount,
+            rectangularPieceRatio: rectangularCount / total,
+            nonRectangularPieceRatio: (pieceIds.length - rectangularCount) / total,
+            monominoCount: monominoCount,
+            shapeSignatureDistribution: MAREJIG_buildShapeSignatureDistribution(pieces),
+            shapeSizeDistribution: MAREJIG_buildSizeDistribution(pieces)
+        };
+    }
+
+    function MAREJIG_getPieceRange(difficulty) {
+        return MAREJIG_PIECE_RANGES[difficulty] || MAREJIG_PIECE_RANGES.standard;
+    }
+
+    function MAREJIG_getVarietyThresholds(difficulty) {
+        if (difficulty === 'standard' || difficulty === 'test') {
+            return { minNonRectangularRatio: 0.55, maxRectangularRatio: 0.40, maxMonominoCount: 2 };
+        }
+        if (difficulty === 'easy') {
+            return { minNonRectangularRatio: 0.50, maxRectangularRatio: 0.50, maxMonominoCount: 2 };
+        }
+        return { minNonRectangularRatio: 0.16, maxRectangularRatio: 0.84, maxMonominoCount: 2 };
+    }
+
+    function MAREJIG_validateVariety(puzzle, difficulty) {
+        var thresholds = MAREJIG_getVarietyThresholds(difficulty);
+        var metrics = MAREJIG_buildVarietyMetrics(puzzle.pieces);
+        var errors = [];
+        var warnings = [];
+        if (metrics.nonRectangularPieceRatio < thresholds.minNonRectangularRatio) {
+            errors.push('Variedad insuficiente: nonRectangularPieceRatio ' + metrics.nonRectangularPieceRatio.toFixed(3));
+        }
+        if (metrics.rectangularPieceRatio > thresholds.maxRectangularRatio) {
+            errors.push('Demasiadas piezas rectangulares: rectangularPieceRatio ' + metrics.rectangularPieceRatio.toFixed(3));
+        }
+        if (metrics.monominoCount > thresholds.maxMonominoCount) {
+            errors.push('Demasiados monominós: ' + metrics.monominoCount);
+        }
+        return { ok: errors.length === 0, metrics: metrics, errors: errors, warnings: warnings };
+    }
+
+    function MAREJIG_lCellsForBlock(blockX, blockY, variant) {
+        if (variant % 2 === 0) {
+            return [
+                [{ x: blockX, y: blockY }, { x: blockX, y: blockY + 1 }, { x: blockX + 1, y: blockY + 1 }],
+                [{ x: blockX + 1, y: blockY }, { x: blockX + 2, y: blockY }, { x: blockX + 2, y: blockY + 1 }]
+            ];
+        }
+        return [
+            [{ x: blockX, y: blockY }, { x: blockX + 1, y: blockY }, { x: blockX, y: blockY + 1 }],
+            [{ x: blockX + 1, y: blockY + 1 }, { x: blockX + 2, y: blockY }, { x: blockX + 2, y: blockY + 1 }]
+        ];
+    }
+
+    function MAREJIG_dominoCellsForBlock(blockX, blockY, vertical) {
+        if (vertical) {
+            return [
+                [{ x: blockX, y: blockY }, { x: blockX, y: blockY + 1 }],
+                [{ x: blockX + 1, y: blockY }, { x: blockX + 1, y: blockY + 1 }],
+                [{ x: blockX + 2, y: blockY }, { x: blockX + 2, y: blockY + 1 }]
+            ];
+        }
+        return [
+            [{ x: blockX, y: blockY }, { x: blockX + 1, y: blockY }],
+            [{ x: blockX + 2, y: blockY }, { x: blockX + 2, y: blockY + 1 }],
+            [{ x: blockX, y: blockY + 1 }, { x: blockX + 1, y: blockY + 1 }]
+        ];
+    }
+
+    function MAREJIG_sixCellBlock(blockX, blockY) {
+        return [[
+            { x: blockX, y: blockY }, { x: blockX + 1, y: blockY }, { x: blockX + 2, y: blockY },
+            { x: blockX, y: blockY + 1 }, { x: blockX + 1, y: blockY + 1 }, { x: blockX + 2, y: blockY + 1 }
+        ]];
+    }
+
+    function MAREJIG_buildPremiumBlockPieces(cols, rows, targetPieceCount, rng) {
+        if (cols !== 12 || rows !== 9 || targetPieceCount < 30 || targetPieceCount > 48) return null;
+        var blocks = [];
+        for (var y = 0; y < rows; y += 2) {
+            if (y + 1 >= rows) break;
+            for (var x = 0; x < cols; x += 3) {
+                blocks.push({ x: x, y: y });
+            }
+        }
+        // La última fila (y=8) se resuelve como relleno I3 mínimo para mantener cobertura 12×9.
+        var rowTail = [0, 3, 6, 9];
+        var targetDelta = targetPieceCount - 36; // 16 bloques L + 4 piezas de cola = 36 piezas base.
+        var sixCellBlockCount = 0;
+        var dominoBlockCount = 0;
+        if (targetDelta >= 0) {
+            dominoBlockCount = Math.min(blocks.length, targetDelta);
+        } else {
+            sixCellBlockCount = Math.min(blocks.length, -targetDelta);
+        }
+        var shuffledBlocks = MAREJIG_shuffle(blocks, rng);
+        var dominoBlocks = new Set(shuffledBlocks.slice(0, dominoBlockCount).map(function MAREJIG_blockKey(block) { return MAREJIG_Shapes.getCellKey(block.x, block.y); }));
+        var sixCellBlocks = new Set(shuffledBlocks.slice(0, sixCellBlockCount).map(function MAREJIG_blockKey(block) { return MAREJIG_Shapes.getCellKey(block.x, block.y); }));
+        var absolutePieces = [];
+
+        blocks.forEach(function MAREJIG_addBlock(block, index) {
+            var key = MAREJIG_Shapes.getCellKey(block.x, block.y);
+            var cellsList;
+            if (dominoBlocks.has(key)) cellsList = MAREJIG_dominoCellsForBlock(block.x, block.y, (index + Math.floor(rng() * 3)) % 2 === 0);
+            else if (sixCellBlocks.has(key)) cellsList = MAREJIG_sixCellBlock(block.x, block.y);
+            else cellsList = MAREJIG_lCellsForBlock(block.x, block.y, index + Math.floor(rng() * 4));
+            absolutePieces = absolutePieces.concat(cellsList);
+        });
+
+        rowTail.forEach(function MAREJIG_addTailBlock(x, index) {
+            absolutePieces.push([{ x: x, y: rows - 1 }, { x: x + 1, y: rows - 1 }, { x: x + 2, y: rows - 1 }]);
+        });
+
+        var pieces = {};
+        var occupancy = {};
+        MAREJIG_shuffle(absolutePieces, rng).forEach(function MAREJIG_makeBlockPiece(absoluteCells, index) {
+            var piece = MAREJIG_makePiece(index + 1, absoluteCells);
+            pieces[piece.id] = piece;
+            absoluteCells.forEach(function MAREJIG_markBlockOccupancy(cell) {
+                occupancy[MAREJIG_Shapes.getCellKey(cell.x, cell.y)] = piece.id;
+            });
+        });
+        return { pieces: pieces, occupancy: occupancy, targetSizes: absolutePieces.map(function MAREJIG_sizeOf(cells) { return cells.length; }) };
     }
 
     function MAREJIG_buildAdjacency(pieces, occupancy) {
@@ -316,7 +474,8 @@
         if (!segmentsValidation.ok) errors = errors.concat(segmentsValidation.errors);
 
         var pieceCount = pieceIds.length;
-        var pieceCountOk = pieceCount >= MAREJIG_MIN_PIECES && pieceCount <= MAREJIG_MAX_PIECES;
+        var pieceRange = MAREJIG_getPieceRange(puzzle.difficulty);
+        var pieceCountOk = pieceCount >= pieceRange[0] && pieceCount <= pieceRange[1];
         if (!pieceCountOk) errors.push('Conteo fuera de rango: ' + pieceCount);
 
         return {
@@ -329,6 +488,7 @@
             segmentsOk: segmentsValidation.ok,
             pieceCountOk: pieceCountOk,
             sizeDistribution: MAREJIG_buildSizeDistribution(puzzle.pieces),
+            variety: MAREJIG_buildVarietyMetrics(puzzle.pieces),
             warnings: warnings,
             errors: errors
         };
@@ -339,16 +499,21 @@
         var cols = level.board.cols;
         var rows = level.board.rows;
         var cellCount = cols * rows;
-        var targetPieceCount = level.targetPieceCount || 60;
+        var targetPieceCount = level.targetPieceCount || 40;
         var lastPuzzle = null;
 
         for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
             var seedInput = level.id + ':attempt:' + attempt;
             var seed = MAREJIG_hashSeed(seedInput);
             var rng = MAREJIG_createRng(seed);
-            var targetSizes = MAREJIG_buildTargetSizes(targetPieceCount, cellCount, rng);
-            var path = MAREJIG_buildSerpentinePath(cols, rows, rng);
-            var build = MAREJIG_buildPiecesFromPath(path, targetSizes);
+            var build = MAREJIG_buildPremiumBlockPieces(cols, rows, targetPieceCount, rng);
+            if (!build) {
+                var fallbackTargetSizes = MAREJIG_buildTargetSizes(targetPieceCount, cellCount, rng);
+                var path = MAREJIG_buildSerpentinePath(cols, rows, rng);
+                build = MAREJIG_buildPiecesFromPath(path, fallbackTargetSizes);
+                build.targetSizes = fallbackTargetSizes;
+            }
+            var targetSizes = build.targetSizes || Object.keys(build.pieces).map(function MAREJIG_pieceSize(pieceId) { return build.pieces[pieceId].shapeSize; });
             var pieces = build.pieces;
             var adjacency = MAREJIG_buildAdjacency(pieces, build.occupancy);
             var groups = MAREJIG_Groups.createInitialGroups(pieces);
@@ -357,6 +522,7 @@
             var puzzle = {
                 version: 1,
                 levelId: level.id,
+                difficulty: level.difficulty || 'standard',
                 seed: seed,
                 generatorVersion: MAREJIG_GENERATOR_VERSION,
                 board: { cols: cols, rows: rows, cellCount: cellCount },
@@ -372,8 +538,11 @@
                 }
             };
             puzzle.validation = MAREJIG_validatePuzzle(puzzle);
+            var varietyValidation = MAREJIG_validateVariety(puzzle, level.difficulty || 'standard');
+            puzzle.validation.variety = varietyValidation.metrics;
+            puzzle.debug.varietyErrors = varietyValidation.errors.slice();
             lastPuzzle = puzzle;
-            if (puzzle.validation.ok) return puzzle;
+            if (puzzle.validation.ok && varietyValidation.ok) return puzzle;
         }
 
         console.warn('[MAREJIG] No se generó puzzle válido dentro del límite de intentos', level.id);
