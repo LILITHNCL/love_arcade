@@ -8,8 +8,11 @@
     var MAREJIG_State = windowObject.MAREJIG_State;
     var MAREJIG_Storage = windowObject.MAREJIG_Storage;
     var MAREJIG_Generator = windowObject.MAREJIG_Generator;
+    var MAREJIG_Scene = windowObject.MAREJIG_Scene;
+    var MAREJIG_Renderer = windowObject.MAREJIG_Renderer;
 
     var MAREJIG_currentLevelId = null;
+    var MAREJIG_rendererReady = false;
 
     function MAREJIG_byId(id) {
         return documentObject.getElementById(id);
@@ -187,6 +190,33 @@
         ].join('');
     }
 
+
+    function MAREJIG_updateHud(level, puzzle, imageResult, scene) {
+        var activeSegmentId = puzzle && puzzle.segments ? puzzle.segments.order[puzzle.segments.currentSegmentIndex || 0] : null;
+        var activeSegment = activeSegmentId ? puzzle.segments.items[activeSegmentId] : null;
+        var visibleCount = scene ? MAREJIG_Scene.getVisiblePieceIds(scene).length : 0;
+        var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
+        var values = {
+            'marejig-hud-reward': '+' + level.rewardCoins + ' monedas',
+            'marejig-hud-segment': activeSegmentId ? 'Segmento 1/' + puzzle.segments.order.length : 'Segmento —',
+            'marejig-hud-visible': activeSegment ? visibleCount + ' visibles' : '0 visibles',
+            'marejig-hud-total': puzzle && puzzle.validation ? puzzle.validation.pieceCount + ' piezas' : '0 piezas',
+            'marejig-hud-image': imageStatus
+        };
+
+        Object.keys(values).forEach(function MAREJIG_setHudValue(id) {
+            var element = MAREJIG_byId(id);
+            if (element) element.textContent = values[id];
+        });
+    }
+
+    function MAREJIG_ensureRenderer() {
+        var canvas = MAREJIG_byId('marejig-canvas');
+        if (!canvas || MAREJIG_rendererReady) return;
+        MAREJIG_Renderer.init(canvas);
+        MAREJIG_rendererReady = true;
+    }
+
     function MAREJIG_detailRow(label, value) {
         return '<div class="marejig-detail-row"><span>' + MAREJIG_escape(label) + '</span><span>' + MAREJIG_escape(value) + '</span></div>';
     }
@@ -221,7 +251,8 @@
             .then(function MAREJIG_levelLoaded(imageResult) {
                 if (MAREJIG_currentLevelId !== levelId) return;
                 var puzzle = MAREJIG_Generator.generate(level);
-                MAREJIG_State.setState({ loading: false, selectedRuntimeProfile: profile, loadedImageResult: imageResult, puzzle: puzzle });
+                var scene = MAREJIG_Scene.createScene(level, puzzle, imageResult);
+                MAREJIG_State.setState({ loading: false, selectedRuntimeProfile: profile, loadedImageResult: imageResult, puzzle: puzzle, scene: scene });
                 MAREJIG_Storage.saveActiveSave({
                     levelId: level.id,
                     runtimeProfile: profile,
@@ -230,9 +261,11 @@
                     puzzleSeed: puzzle.seed,
                     puzzleValid: Boolean(puzzle.validation && puzzle.validation.ok)
                 });
-                MAREJIG_drawReadyCanvas(level, imageResult, puzzle);
-                MAREJIG_renderLevelDetails(level, imageResult, puzzle);
                 MAREJIG_showScreen('game');
+                MAREJIG_ensureRenderer();
+                MAREJIG_Renderer.setScene(scene);
+                MAREJIG_updateHud(level, puzzle, imageResult, scene);
+                MAREJIG_renderLevelDetails(level, imageResult, puzzle);
             })
             .catch(function MAREJIG_levelLoadFatal(error) {
                 console.warn('[MAREJIG] Error fatal al preparar nivel', error.message);
@@ -268,11 +301,16 @@
         var back = MAREJIG_byId('marejig-back-to-menu');
         var errorBack = MAREJIG_byId('marejig-error-back');
         var retry = MAREJIG_byId('marejig-retry-level');
+        var center = MAREJIG_byId('marejig-center-view');
 
         if (cancel) cancel.addEventListener('click', MAREJIG_backToMenu);
         if (back) back.addEventListener('click', MAREJIG_backToMenu);
         if (errorBack) errorBack.addEventListener('click', MAREJIG_backToMenu);
         if (retry) retry.addEventListener('click', MAREJIG_retryCurrentLevel);
+        if (center) center.addEventListener('click', function MAREJIG_centerView() {
+            MAREJIG_Renderer.resize();
+            MAREJIG_Renderer.markDirty('center');
+        });
     }
 
     function MAREJIG_init() {

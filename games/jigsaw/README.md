@@ -1,4 +1,4 @@
-# marejigweb — Fases 1 y 2
+# marejigweb — Fases 1, 2 y 3
 
 Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `games/jigsaw/` y registrado ante Love Arcade con `gameId` público `jigsaw`.
 
@@ -25,8 +25,17 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 - grafo de adyacencia real por lados compartidos;
 - `neighborIds`, `segmentId`, `groupId` y contornos serializables por pieza;
 - segmentos progresivos con `s_0` revelado inicialmente;
-- grupos iniciales de una pieza y helpers puros de merge/validación;
-- debug visual temporal en Canvas con wireframe por segmento.
+- grupos iniciales de una pieza y helpers puros de merge/validación.
+
+### Fase 3 — renderer y escena visual
+
+- `MAREJIG_scene.js` crea una escena preparada para input futuro, con board 4:3, staging, grupos visibles y `hitBounds`;
+- `MAREJIG_renderer.js` dibuja en Canvas 2D con DPR capado a `Math.min(devicePixelRatio, 2)`;
+- el tablero muestra una silueta premium tenue de la imagen completa;
+- solo las piezas del segmento inicial `s_0` aparecen reveladas en la bandeja visual;
+- cada pieza visible dibuja el fragmento correcto de la imagen runtime dentro de su máscara poliminó;
+- si Cloudinary falla, el renderer usa un patrón premium de fallback sin romper el flujo;
+- el render funciona por dirty frames con `requestAnimationFrame`, no con loop continuo.
 
 No incluye todavía drag, snap interactivo, fusión durante input ni gameplay final.
 
@@ -60,3 +69,15 @@ window.MAREJIG_Generator.generate(level)
 ```
 
 El generador no lee píxeles de la imagen. Solo usa metadata del nivel (`id`, board, dificultad, target y segment plan). La estrategia actual usa una partición serpentina determinística para garantizar cobertura completa, conteo estable y piezas conectadas; el modelo queda preparado para que el renderer construya `Path2D` desde los contornos serializables.
+
+
+## Renderer
+
+La escena visual se crea con:
+
+```js
+const scene = window.MAREJIG_Scene.createScene(level, puzzle, imageResult);
+window.MAREJIG_Renderer.setScene(scene);
+```
+
+El renderer usa una única imagen decodificada por nivel activo y cachea únicamente paths/métricas. No crea canvases grandes por pieza ni persiste datos visuales en `localStorage`.
