@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#080a14">
+    <title>Marejigweb — Love Arcade Jigsaw</title>
+    <link rel="stylesheet" href="./css/marejig.css">
+</head>
+<body class="marejig-body">
+    <div class="marejig-shell" data-marejig-app>
+        <header class="marejig-topbar" aria-label="Cabecera de marejigweb">
+            <a class="marejig-exit-link" href="../../index.html" aria-label="Salir al menú principal de Love Arcade">
+                <span class="marejig-exit-icon" aria-hidden="true">←</span>
+                <span>Salir</span>
+            </a>
+            <div class="marejig-brand" aria-label="marejigweb">
+                <span class="marejig-brand-mark" aria-hidden="true">▧</span>
+                <span class="marejig-brand-copy">
+                    <strong>MAREJIG</strong>
+                    <small>premium jigsaw</small>
+                </span>
+            </div>
+        </header>
+
+        <main class="marejig-main" id="marejig-main">
+            <section class="marejig-screen marejig-screen-current" id="marejig-screen-menu" aria-labelledby="marejig-menu-title">
+                <div class="marejig-hero">
+                    <p class="marejig-kicker">Love Arcade · Jigsaw</p>
+                    <h1 class="marejig-title" id="marejig-menu-title">Niveles pendientes</h1>
+                    <p class="marejig-subtitle">Arma imágenes 4:3 premium con piezas ortogonales y segmentos progresivos.</p>
+                    <div class="marejig-hero-metrics" aria-label="Resumen del catálogo">
+                        <span class="marejig-chip" id="marejig-total-pending">0 pendientes</span>
+                        <span class="marejig-chip">16×12</span>
+                        <span class="marejig-chip">~60 piezas</span>
+                    </div>
+                </div>
+
+                <div class="marejig-panel" aria-live="polite">
+                    <div class="marejig-panel-head">
+                        <div>
+                            <h2 class="marejig-section-title">Catálogo</h2>
+                            <p class="marejig-section-note">Solo aparecen niveles no completados.</p>
+                        </div>
+                    </div>
+                    <div class="marejig-level-grid" id="marejig-level-grid" aria-label="Lista de niveles pendientes"></div>
+                    <div class="marejig-menu-actions">
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-load-more" hidden>Ver más</button>
+                    </div>
+                    <div class="marejig-empty" id="marejig-empty-state" hidden>
+                        <div class="marejig-empty-orb" aria-hidden="true">✓</div>
+                        <h2 class="marejig-section-title">Catálogo completado</h2>
+                        <p class="marejig-section-note">No tienes niveles pendientes por ahora. Vuelve cuando haya nuevos packs.</p>
+                    </div>
+                    <div class="marejig-sentinel" id="marejig-menu-sentinel" aria-hidden="true"></div>
+                </div>
+            </section>
+
+            <section class="marejig-screen" id="marejig-screen-loading" aria-labelledby="marejig-loading-title" hidden>
+                <div class="marejig-loading-card">
+                    <div class="marejig-loading-preview" id="marejig-loading-preview" aria-hidden="true">
+                        <span class="marejig-loading-shimmer"></span>
+                    </div>
+                    <p class="marejig-kicker">Preparando nivel</p>
+                    <h1 class="marejig-title" id="marejig-loading-title">Cargando imagen premium…</h1>
+                    <p class="marejig-subtitle" id="marejig-loading-copy">Optimizando resolución para tu dispositivo.</p>
+                    <div class="marejig-progress" aria-label="Progreso de carga">
+                        <span class="marejig-progress-bar" id="marejig-progress-bar"></span>
+                    </div>
+                    <div class="marejig-menu-actions">
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-cancel-loading">Volver</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="marejig-screen" id="marejig-screen-game" aria-labelledby="marejig-game-title" hidden>
+                <div class="marejig-game-layout">
+                    <div class="marejig-game-head">
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-back-to-menu">← Pendientes</button>
+                        <div>
+                            <p class="marejig-kicker" id="marejig-game-pack">Nivel</p>
+                            <h1 class="marejig-game-title" id="marejig-game-title">Nivel listo</h1>
+                        </div>
+                    </div>
+                    <div class="marejig-canvas-wrap">
+                        <canvas id="marejig-canvas" class="marejig-canvas" width="1280" height="960" aria-label="Vista futura del puzzle"></canvas>
+                        <div class="marejig-ready-overlay" id="marejig-ready-overlay">
+                            <span class="marejig-ready-badge">Fase 1</span>
+                            <h2 class="marejig-section-title">Nivel listo</h2>
+                            <p class="marejig-section-note" id="marejig-ready-copy">La imagen y los metadatos están preparados. El motor de piezas se implementará en la siguiente fase.</p>
+                        </div>
+                    </div>
+                    <aside class="marejig-level-details" id="marejig-level-details" aria-label="Detalles del nivel seleccionado"></aside>
+                </div>
+            </section>
+
+            <section class="marejig-screen" id="marejig-screen-error" aria-labelledby="marejig-error-title" hidden>
+                <div class="marejig-loading-card marejig-error-card">
+                    <div class="marejig-empty-orb" aria-hidden="true">!</div>
+                    <p class="marejig-kicker">Carga interrumpida</p>
+                    <h1 class="marejig-title" id="marejig-error-title">No pudimos cargar la imagen</h1>
+                    <p class="marejig-subtitle" id="marejig-error-copy">Puedes reintentar o volver al catálogo.</p>
+                    <div class="marejig-menu-actions">
+                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-retry-level">Reintentar</button>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-error-back">Volver</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="./js/MAREJIG_config.js"></script>
+    <script src="./js/MAREJIG_levels.js"></script>
+    <script src="./js/MAREJIG_cloudinary.js"></script>
+    <script src="./js/MAREJIG_imageLoader.js"></script>
+    <script src="./js/MAREJIG_storage.js"></script>
+    <script src="./js/MAREJIG_state.js"></script>
+    <script src="./js/MAREJIG_economy.js"></script>
+    <script src="./js/MAREJIG_menu.js"></script>
+    <script src="./js/MAREJIG_main.js"></script>
+    <script src="../../js/app.js"></script>
+</body>
+</html>
