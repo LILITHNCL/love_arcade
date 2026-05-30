@@ -223,14 +223,11 @@
     function MAREJIG_drawStaging(context, scene) {
         var staging = scene.staging;
         context.save();
-        MAREJIG_drawRoundRect(context, staging.x, staging.y, staging.width, staging.height, 22);
-        context.fillStyle = 'rgba(255, 255, 255, 0.045)';
-        context.fill();
-        context.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        context.stroke();
-        context.fillStyle = 'rgba(220, 231, 255, 0.52)';
-        context.font = '700 12px system-ui, sans-serif';
-        if (staging.height > 46) context.fillText('Piezas', staging.x + 14, staging.y + 22);
+        var gradient = context.createLinearGradient(staging.x, staging.y, staging.x, staging.y + staging.height);
+        gradient.addColorStop(0, 'rgba(5, 7, 17, 0.00)');
+        gradient.addColorStop(1, 'rgba(5, 7, 17, 0.34)');
+        context.fillStyle = gradient;
+        context.fillRect(staging.x, staging.y, staging.width, staging.height);
         context.restore();
     }
 

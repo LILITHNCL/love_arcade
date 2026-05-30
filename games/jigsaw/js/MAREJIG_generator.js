@@ -8,8 +8,8 @@
     var MAREJIG_PIECE_RANGES = Object.freeze({
         easy: Object.freeze([22, 28]),
         standard: Object.freeze([28, 34]),
-        hard: Object.freeze([36, 42]),
-        test: Object.freeze([22, 42])
+        hard: Object.freeze([56, 64]),
+        test: Object.freeze([22, 64])
     });
 
     function MAREJIG_hashSeed(input) {

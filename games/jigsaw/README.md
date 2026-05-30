@@ -20,7 +20,7 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 
 - biblioteca de formas poliminó ortogonales en `MAREJIG_shapes.js`;
 - generador determinístico por `level.id` en `MAREJIG_generator.js`;
-- board estándar `12×9` con cobertura exacta de 108 celdas;
+- boards dependientes de dificultad: `12×9` para easy/standard y `16×12` para hard, siempre 4:3;
 - target estándar de 32 piezas, validado dentro del rango 28–34;
 - grafo de adyacencia real por lados compartidos;
 - `neighborIds`, `segmentId`, `groupId` y contornos serializables por pieza;
@@ -29,7 +29,7 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 
 ### Fase 3 — renderer y escena visual
 
-- `MAREJIG_scene.js` crea una escena preparada para input futuro, con board 4:3, staging, grupos visibles y `hitBounds`;
+- `MAREJIG_scene.js` crea una escena fullscreen/mobile-first con board 4:3 dependiente del nivel, staging compacto, reflow estable y `hitBounds`;
 - `MAREJIG_renderer.js` dibuja en Canvas 2D con DPR capado a `Math.min(devicePixelRatio, 2)`;
 - el tablero muestra una silueta premium tenue de la imagen completa;
 - solo las piezas del segmento inicial `s_0` aparecen reveladas en la bandeja visual;
@@ -87,7 +87,7 @@ El renderer usa una única imagen decodificada por nivel activo y cachea únicam
 - Se añadió `MAREJIG_Input` con Pointer Events para seleccionar, traer al frente y arrastrar grupos visibles sin iniciar un render loop continuo.
 - `MAREJIG_Groups` ahora contiene hit testing, bounds inflados para móvil, búsqueda de snap basada exclusivamente en adjacency real y fusión de grupos de escena/puzzle.
 - `MAREJIG_Segments` controla la progresión: `s_0` define el grupo principal al completarse, los segmentos posteriores se revelan de uno en uno y el último solo marca `puzzleCompletedLocal`.
-- El HUD muestra estado/movimientos, segmento activo, conectadas del segmento, visibles y total de piezas. La persistencia ligera solo se actualiza en eventos discretos.
+- Durante partida la UI normal queda reducida a controles flotantes, pista/opciones y un indicador mínimo de segmento; métricas, estado técnico y detalles quedan ocultos salvo `?debug=1`. La persistencia ligera solo se actualiza en eventos discretos.
 - Esta fase no reporta economía, no llama `GameCenter.completeLevel` y no marca niveles como completados finales.
 
 ## Fase 5 — loop completo, persistencia y economía
@@ -125,9 +125,9 @@ Formato exacto del objeto `Level` exportado por el catálogo:
   sourceFormat: 'avif',
   aspectRatio: '4:3',
   master: { width: 2400, height: 1800 },
-  board: { cols: 12, rows: 9 },
+  board: { cols: 12, rows: 9 },      // hard usa { cols: 16, rows: 12 }
   targetPieceCount: 32,
-  segmentPlan: [10, 10, 12, 12, 16],
+  segmentPlan: [8, 8, 8, 8],
   rewardCoins: 55
 }
 ```
@@ -156,11 +156,11 @@ Para producción, reemplaza `demo` por el cloud name real. Las URLs usan `f_auto
 
 ### Balance de dificultad y recompensas
 
-Las dificultades válidas son `easy`, `standard` y `hard`. En v1 todas conservan board `12×9`; los targets son 24 piezas para `easy`, 32 para `standard` y 40 para `hard` con rangos validados por dificultad: 22–28, 28–34 y 36–42. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
+Las dificultades válidas son `easy`, `standard` y `hard`. `easy` y `standard` usan board `12×9`; `hard` usa `16×12` para sostener 60 piezas reales sin piezas ridículamente pequeñas. Los rangos validados son 22–28, 28–34 y 56–64. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
 
-- `easy`: segmentos más generosos y recompensas 35–45 monedas.
-- `standard`: segmentos estándar y recompensas 50–65 monedas.
-- `hard`: segmentos más compactos, pistas menos generosas y recompensas 70–90 monedas. Queda documentado como dificultad metadata-safe; no sube todavía a 70–80 piezas para evitar riesgo en el generador actual.
+- `easy`: 24 piezas objetivo, segmentos `[6, 6, 6, 6]` y recompensas 35–45 monedas.
+- `standard`: 32 piezas objetivo, segmentos `[8, 8, 8, 8]` y recompensas 50–65 monedas.
+- `hard`: 60 piezas objetivo, segmentos `[8, 8, 8, 8, 8, 10, 10]`, máximo 10 piezas nuevas por segmento, pistas menos generosas y recompensas 70–90 monedas.
 
 La recompensa sigue siendo fija por nivel y se reporta una sola vez. Love Arcade es el banco: el juego solo llama `window.GameCenter.completeLevel("jigsaw", "level_" + level.id, coins)` desde `MAREJIG_economy.js`, no modifica saldos globales.
 
@@ -180,7 +180,7 @@ node games/jigsaw/tools/validate-levels.mjs
 node games/jigsaw/test/phase7_unit.mjs
 ```
 
-`validate-levels.mjs` valida ids, orders, campos críticos, aspecto 4:3, maestro 2400×1800, board 12×9, `segmentPlan`, recompensas, `cloudinaryPublicId`, formato AVIF, dificultad y generación determinística válida. `phase7_unit.mjs` añade fixture de 200 niveles, stress de generación, URL builder Cloudinary, menú por batches, filtrado de completados, economía idempotente y checks de integración Love Arcade.
+`validate-levels.mjs` valida ids, orders, campos críticos, aspecto 4:3, maestro 2400×1800, board por dificultad (`12×9` o `16×12`), `segmentPlan`, recompensas, `cloudinaryPublicId`, formato AVIF, dificultad y generación determinística válida. `phase7_unit.mjs` añade fixture de 200 niveles, stress de generación, URL builder Cloudinary, menú por batches, filtrado de completados, economía idempotente y checks de integración Love Arcade.
 
 ## Fase 8 — release candidate
 

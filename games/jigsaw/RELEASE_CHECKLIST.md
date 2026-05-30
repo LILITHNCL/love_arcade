@@ -72,6 +72,9 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 - [ ] Input queda bloqueado durante completar/victoria.
 - [ ] Reiniciar conserva completados y recompensas ya registradas.
 - [ ] La pista no mueve piezas ni revela segmentos futuros.
+- [ ] Hard valida 60 piezas reales sobre board `16×12`, rango 56–64, y no revela más de 10 piezas nuevas por segmento.
+- [ ] Resize/orientación no regenera puzzle, no cambia `groupId`/segmento activo y mantiene piezas visibles o recuperables.
+- [ ] La acción “Recuperar piezas” desde opciones devuelve grupos fuera de pantalla al área segura.
 
 ## 7. Responsive QA manual
 
@@ -86,8 +89,8 @@ Probar estas vistas:
 
 En cada vista verificar:
 
-- [ ] HUD legible, compacto y sin datos técnicos fuera de `?debug=1`.
-- [ ] Tablero 4:3 maximizado y bandeja compacta sin panel vacío.
+- [ ] Gameplay oculta header, logo, botón Salir grande, título, pack, tiempo, movimientos, conectadas y chips técnicos fuera de `?debug=1`.
+- [ ] Tablero 4:3 maximizado y staging compacto/flotante sin panel vacío.
 - [ ] Botones sin solapes.
 - [ ] Canvas visible y zona de puzzle principal.
 - [ ] Filtros del menú usable con teclado/touch.
