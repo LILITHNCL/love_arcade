@@ -91,7 +91,9 @@
                 y: 0,
                 width: 0,
                 height: 0,
-                pieceScale: 0
+                pieceScale: 0,
+                columns: 0,
+                rows: 0
             },
             camera: {
                 x: 0,
@@ -129,14 +131,17 @@
     }
 
     function MAREJIG_layoutScene(scene, viewportWidth, viewportHeight) {
-        var margin = Math.max(8, Math.min(12, viewportWidth * 0.032));
-        var gap = Math.max(8, Math.min(14, viewportHeight * 0.018));
+        var oldLayout = MAREJIG_captureLayout(scene);
+        var margin = Math.max(6, Math.min(10, viewportWidth * 0.024));
+        var gap = Math.max(6, Math.min(10, viewportHeight * 0.012));
         var availableWidth = Math.max(1, viewportWidth - margin * 2);
-        var boardMaxHeight = Math.max(180, viewportHeight * (viewportWidth < 680 ? 0.46 : 0.58));
-        var boardWidth = Math.min(availableWidth, viewportWidth * 0.96, boardMaxHeight * 4 / 3);
-        var boardHeight = boardWidth * 3 / 4;
+        var boardRatio = scene.board.cols / scene.board.rows;
+        var controlsReserve = viewportWidth < 680 ? 86 : 72;
+        var boardMaxHeight = Math.max(180, viewportHeight - controlsReserve - margin * 2);
+        var boardWidth = Math.min(availableWidth, viewportWidth * 0.96, boardMaxHeight * boardRatio);
+        var boardHeight = boardWidth / boardRatio;
         var boardX = (viewportWidth - boardWidth) / 2;
-        var boardY = margin;
+        var boardY = Math.max(margin, (viewportHeight - boardHeight - controlsReserve) * 0.28);
         var visibleGroups = Object.keys(scene.groups).map(function MAREJIG_groupById(groupId) {
             return scene.groups[groupId];
         }).filter(function MAREJIG_visibleGroup(group) {
@@ -145,19 +150,19 @@
             return a.laneIndex - b.laneIndex;
         });
         var boardCell = boardWidth / scene.board.cols;
-        var columns = Math.max(2, Math.min(viewportWidth > 720 ? 8 : 6, visibleGroups.length || 2));
+        var columns = Math.max(2, Math.min(viewportWidth > 720 ? 10 : 5, visibleGroups.length || 2));
         var rows = Math.max(1, Math.ceil(visibleGroups.length / columns));
         var slotW = availableWidth / columns;
-        var pieceScale = Math.max(18, Math.min(boardCell * 0.98, slotW * 0.62));
+        var pieceScale = Math.max(16, Math.min(boardCell * 0.88, slotW * 0.56));
         var maxPieceRows = visibleGroups.reduce(function MAREJIG_maxPieceRows(max, group) {
             var piece = scene.puzzle.pieces[group.pieceIds[0]];
             return Math.max(max, piece ? piece.bounds.h : 1);
         }, 1);
-        var slotH = Math.max(pieceScale * (maxPieceRows + 0.65), pieceScale * 2.25);
+        var slotH = Math.max(pieceScale * (maxPieceRows + 0.45), pieceScale * 1.65);
         var stagingY = boardY + boardHeight + gap;
-        var availableStagingHeight = Math.max(72, viewportHeight - stagingY - margin);
-        var stagingHeight = Math.min(availableStagingHeight, Math.max(72, rows * slotH + 28));
-        slotH = Math.max(1, (stagingHeight - 20) / rows);
+        var availableStagingHeight = Math.max(54, viewportHeight - stagingY - margin);
+        var stagingHeight = Math.min(availableStagingHeight, Math.max(54, rows * slotH + 12));
+        slotH = Math.max(1, (stagingHeight - 10) / rows);
 
         scene.board.x = boardX;
         scene.board.y = boardY;
@@ -171,6 +176,8 @@
         scene.staging.width = availableWidth;
         scene.staging.height = stagingHeight;
         scene.staging.pieceScale = pieceScale;
+        scene.staging.columns = columns;
+        scene.staging.rows = rows;
 
         visibleGroups.forEach(function MAREJIG_placeGroup(group, index) {
             var piece = scene.puzzle.pieces[group.pieceIds[0]];
@@ -186,6 +193,10 @@
             if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         });
 
+        var newLayout = MAREJIG_captureLayout(scene);
+        if (oldLayout) MAREJIG_reflowScene(scene, oldLayout, newLayout);
+        MAREJIG_ensureVisibleGroups(scene);
+
         scene.camera.x = 0;
         scene.camera.y = 0;
         scene.camera.zoom = 1;
@@ -196,12 +207,102 @@
         return scene;
     }
 
+    function MAREJIG_captureLayout(scene) {
+        if (!scene || !scene.board || !scene.board.width || !scene.staging || !scene.staging.pieceScale) return null;
+        return {
+            board: {
+                x: scene.board.x,
+                y: scene.board.y,
+                width: scene.board.width,
+                height: scene.board.height,
+                cellSize: scene.board.cellSize
+            },
+            staging: {
+                x: scene.staging.x,
+                y: scene.staging.y,
+                width: scene.staging.width,
+                height: scene.staging.height,
+                pieceScale: scene.staging.pieceScale
+            }
+        };
+    }
+
+    function MAREJIG_getGroupBoardAnchor(scene, group) {
+        if (!scene || !group || !group.pieceIds || !group.pieceIds.length) return null;
+        var anchorId = group.anchorPieceId || group.pieceIds[0];
+        return scene.puzzle && scene.puzzle.pieces ? scene.puzzle.pieces[anchorId] : null;
+    }
+
+    function MAREJIG_reflowScene(scene, oldLayout, newLayout) {
+        if (!scene || !oldLayout || !newLayout) return scene;
+        var oldSafe = MAREJIG_getSafeArea(oldLayout);
+        var newSafe = MAREJIG_getSafeArea(newLayout);
+        Object.keys(scene.groups).forEach(function MAREJIG_reflowGroup(groupId) {
+            var group = scene.groups[groupId];
+            if (!group || !group.visible || !group.positioned) return;
+            var anchor = MAREJIG_getGroupBoardAnchor(scene, group);
+            if (group.lockedToBoard && anchor) {
+                group.x = newLayout.board.x + anchor.solution.gridX * newLayout.board.cellSize;
+                group.y = newLayout.board.y + anchor.solution.gridY * newLayout.board.cellSize;
+            } else {
+                var oldW = Math.max(1, oldSafe.width);
+                var oldH = Math.max(1, oldSafe.height);
+                var relX = (group.x - oldSafe.x) / oldW;
+                var relY = (group.y - oldSafe.y) / oldH;
+                group.x = newSafe.x + relX * Math.max(1, newSafe.width);
+                group.y = newSafe.y + relY * Math.max(1, newSafe.height);
+            }
+            group.outlineDirty = true;
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        });
+        scene.ui.dirty = true;
+        return scene;
+    }
+
+    function MAREJIG_getSafeArea(layout) {
+        var staging = layout.staging;
+        var board = layout.board;
+        return {
+            x: Math.min(board.x, staging.x),
+            y: Math.min(board.y, staging.y),
+            width: Math.max(board.x + board.width, staging.x + staging.width) - Math.min(board.x, staging.x),
+            height: Math.max(board.y + board.height, staging.y + staging.height) - Math.min(board.y, staging.y)
+        };
+    }
+
+    function MAREJIG_clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function MAREJIG_ensureVisibleGroups(scene) {
+        if (!scene || !scene.groups || !scene.staging) return scene;
+        var safe = MAREJIG_getSafeArea({ board: scene.board, staging: scene.staging });
+        var padding = Math.max(8, Math.min(18, scene.board.cellSize * 0.35));
+        Object.keys(scene.groups).forEach(function MAREJIG_clampGroup(groupId) {
+            var group = scene.groups[groupId];
+            if (!group || !group.visible || group.lockedToBoard) return;
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+            var bounds = group.bounds || { x: group.x, y: group.y, width: 0, height: 0 };
+            var completelyOutside = bounds.x + bounds.width < safe.x || bounds.y + bounds.height < safe.y || bounds.x > safe.x + safe.width || bounds.y > safe.y + safe.height;
+            var tooFar = bounds.x < safe.x - padding || bounds.y < safe.y - padding || bounds.x + bounds.width > safe.x + safe.width + padding || bounds.y + bounds.height > safe.y + safe.height + padding;
+            if (!completelyOutside && !tooFar) return;
+            var targetX = MAREJIG_clamp(bounds.x, safe.x + padding, Math.max(safe.x + padding, safe.x + safe.width - bounds.width - padding));
+            var targetY = MAREJIG_clamp(bounds.y, safe.y + padding, Math.max(safe.y + padding, safe.y + safe.height - bounds.height - padding));
+            group.x += targetX - bounds.x;
+            group.y += targetY - bounds.y;
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        });
+        scene.ui.dirty = true;
+        return scene;
+    }
+
     function MAREJIG_centerScene(scene) {
         if (!scene) return scene;
         scene.camera.x = 0;
         scene.camera.y = 0;
         scene.camera.zoom = 1;
         scene.ui.selectedGroupId = null;
+        MAREJIG_ensureVisibleGroups(scene);
         scene.ui.dirty = true;
         return scene;
     }
@@ -296,6 +397,8 @@
     windowObject.MAREJIG_Scene = Object.freeze({
         createScene: MAREJIG_createScene,
         layoutScene: MAREJIG_layoutScene,
+        reflowScene: MAREJIG_reflowScene,
+        ensureVisibleGroups: MAREJIG_ensureVisibleGroups,
         getVisiblePieceIds: MAREJIG_getVisiblePieceIds,
         centerScene: MAREJIG_centerScene,
         applySave: MAREJIG_applySave

@@ -41,7 +41,10 @@ function assertLevelShape(level, index, catalog) {
   if (!catalog.validateLevel(level)) errors.push(`${level.id || `#${index}`}: validateLevel devolvió false`);
   if (level.aspectRatio !== '4:3') errors.push(`${level.id}: aspectRatio debe ser 4:3`);
   if (level.master?.width !== 2400 || level.master?.height !== 1800) errors.push(`${level.id}: master debe ser 2400×1800`);
-  if (level.board?.cols !== 12 || level.board?.rows !== 9) errors.push(`${level.id}: board debe ser 12×9`);
+  const expectedBoards = { easy: [12, 9], standard: [12, 9], hard: [16, 12] };
+  const expectedBoard = expectedBoards[level.difficulty] || expectedBoards.standard;
+  if (level.board?.cols !== expectedBoard[0] || level.board?.rows !== expectedBoard[1]) errors.push(`${level.id}: board debe ser ${expectedBoard[0]}×${expectedBoard[1]}`);
+  if (level.board && level.board.cols / level.board.rows !== 4 / 3) errors.push(`${level.id}: board debe conservar 4:3`);
   if (level.sourceFormat !== 'avif') errors.push(`${level.id}: sourceFormat debe ser avif`);
   if (!level.cloudinaryPublicId || typeof level.cloudinaryPublicId !== 'string') errors.push(`${level.id}: cloudinaryPublicId vacío`);
   if (!Number.isInteger(level.rewardCoins) || level.rewardCoins <= 0) errors.push(`${level.id}: rewardCoins debe ser entero positivo`);
@@ -56,11 +59,12 @@ function assertLevelShape(level, index, catalog) {
 function validatePuzzle(level, puzzle) {
   const errors = [];
   if (!puzzle || !puzzle.validation?.ok) errors.push(`${level.id}: puzzle inválido ${puzzle?.validation?.errors?.join('; ') || ''}`);
-  if (puzzle.board.cols !== 12 || puzzle.board.rows !== 9 || puzzle.board.cellCount !== 108) errors.push(`${level.id}: board generado inválido`);
+  if (puzzle.board.cols !== level.board.cols || puzzle.board.rows !== level.board.rows || puzzle.board.cellCount !== level.board.cols * level.board.rows) errors.push(`${level.id}: board generado inválido`);
+  if (puzzle.board.cols / puzzle.board.rows !== 4 / 3) errors.push(`${level.id}: board generado no conserva 4:3`);
   if (!puzzle.validation.cellCoverageOk) errors.push(`${level.id}: cobertura de celdas inválida`);
   if (!puzzle.validation.adjacencyOk) errors.push(`${level.id}: adjacency inválida`);
   if (!puzzle.validation.segmentsOk) errors.push(`${level.id}: segmentos inválidos`);
-  const ranges = { easy: [22, 28], standard: [28, 34], hard: [36, 42] };
+  const ranges = { easy: [22, 28], standard: [28, 34], hard: [56, 64] };
   const [minPieces, maxPieces] = ranges[level.difficulty] || ranges.standard;
   if (puzzle.validation.pieceCount < minPieces || puzzle.validation.pieceCount > maxPieces) errors.push(`${level.id}: piece count ${puzzle.validation.pieceCount} fuera de ${minPieces}–${maxPieces}`);
   const variety = puzzle.validation.variety;
@@ -69,7 +73,9 @@ function validatePuzzle(level, puzzle) {
   if (variety.monominoCount > 2) errors.push(`${level.id}: demasiados monominós ${variety.monominoCount}`);
   if (!puzzle.segments.items.s_0?.revealed) errors.push(`${level.id}: s_0 no revelado`);
   for (const segmentId of puzzle.segments.order) {
-    if (!puzzle.segments.items[segmentId]?.pieceIds?.length) errors.push(`${level.id}: segmento vacío ${segmentId}`);
+    const segmentSize = puzzle.segments.items[segmentId]?.pieceIds?.length || 0;
+    if (!segmentSize) errors.push(`${level.id}: segmento vacío ${segmentId}`);
+    if (level.difficulty === 'hard' && segmentSize > 10) errors.push(`${level.id}: hard revela más de 10 piezas en ${segmentId}`);
   }
   return errors;
 }

@@ -64,7 +64,10 @@
                 });
             });
 
-            if (!frontier.length) break;
+            if (!frontier.length) {
+                frontier = Array.from(unassignedSet).sort();
+                if (!frontier.length) break;
+            }
             frontier.sort();
             var next = frontier[Math.floor(rng() * frontier.length)];
             segment.push(next);
@@ -75,9 +78,31 @@
         return segment;
     }
 
+    function MAREJIG_buildLinearSegments(pieces, pieceIds, plan) {
+        var order = [];
+        var items = {};
+        var cursor = 0;
+        plan.forEach(function MAREJIG_createLinearSegment(targetSize, index) {
+            var chunk = pieceIds.slice(cursor, cursor + targetSize);
+            cursor += targetSize;
+            if (!chunk.length) return;
+            var id = 's_' + index;
+            chunk.forEach(function MAREJIG_markLinearPiece(pieceId) {
+                pieces[pieceId].segmentId = id;
+                pieces[pieceId].revealed = index === 0;
+            });
+            order.push(id);
+            items[id] = { id: id, pieceIds: chunk, revealed: index === 0, completed: false };
+        });
+        return { currentSegmentIndex: 0, order: order, items: items };
+    }
+
     function MAREJIG_buildSegments(pieces, adjacency, segmentPlan, rng) {
         var pieceIds = Object.keys(pieces).sort();
         var plan = MAREJIG_adjustPlan(segmentPlan, pieceIds.length);
+        if (pieceIds.length >= 56 && plan.every(function MAREJIG_planMax(size) { return size <= 10; })) {
+            return MAREJIG_buildLinearSegments(pieces, pieceIds, plan);
+        }
         var neighborMap = MAREJIG_buildNeighborMap(pieces, adjacency);
         var unassignedSet = new Set(pieceIds);
         var assigned = new Set();
@@ -108,17 +133,19 @@
         });
 
         if (unassignedSet.size > 0) {
-            var lastId = order[order.length - 1] || 's_0';
-            if (!items[lastId]) {
-                order.push(lastId);
-                items[lastId] = { id: lastId, pieceIds: [], revealed: true, completed: false };
+            var maxSegmentSize = Math.max(1, plan.reduce(function MAREJIG_maxPlan(max, size) { return Math.max(max, size); }, 1));
+            var remainder = Array.from(unassignedSet).sort();
+            while (remainder.length) {
+                var remainderId = 's_' + order.length;
+                var chunk = remainder.splice(0, maxSegmentSize);
+                order.push(remainderId);
+                items[remainderId] = { id: remainderId, pieceIds: chunk, revealed: order.length === 1, completed: false };
+                chunk.forEach(function MAREJIG_assignRemainder(pieceId) {
+                    pieces[pieceId].segmentId = remainderId;
+                    pieces[pieceId].revealed = items[remainderId].revealed;
+                    unassignedSet.delete(pieceId);
+                });
             }
-            Array.from(unassignedSet).sort().forEach(function MAREJIG_assignRemainder(pieceId) {
-                items[lastId].pieceIds.push(pieceId);
-                pieces[pieceId].segmentId = lastId;
-                pieces[pieceId].revealed = items[lastId].revealed;
-                unassignedSet.delete(pieceId);
-            });
         }
 
         return {
@@ -239,7 +266,7 @@
 
     function MAREJIG_placeRevealedGroup(scene, group, segmentId, index, count) {
         var rng = MAREJIG_createRng(String(scene.puzzle.seed) + ':' + segmentId + ':' + group.id);
-        var columns = Math.max(2, Math.min(6, count || 2));
+        var columns = Math.max(2, Math.min(scene.staging.columns || 5, count || 2));
         var rows = Math.max(1, Math.ceil(count / columns));
         var slotW = scene.staging.width / columns;
         var slotH = Math.max(1, (scene.staging.height - 20) / rows);
@@ -254,6 +281,7 @@
         group.zIndex = (scene.progress.nextZIndex += 1);
         group.laneIndex = index;
         group.visible = true;
+        group.positioned = true;
         group.outlineDirty = true;
         group.groupOutline = null;
     }

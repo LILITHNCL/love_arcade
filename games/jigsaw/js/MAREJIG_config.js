@@ -28,7 +28,7 @@
         difficulty: Object.freeze({
             easy: Object.freeze({ hintPieceLimit: 4, hintDurationMs: 4200, rewardRange: Object.freeze([35, 45]) }),
             standard: Object.freeze({ hintPieceLimit: 3, hintDurationMs: 3600, rewardRange: Object.freeze([50, 65]) }),
-            hard: Object.freeze({ hintPieceLimit: 2, hintDurationMs: 3000, rewardRange: Object.freeze([70, 90]), activePieceTarget: 40 })
+            hard: Object.freeze({ hintPieceLimit: 2, hintDurationMs: 3000, rewardRange: Object.freeze([70, 90]), activePieceTarget: 60 })
         }),
         debug: Object.freeze({
             enabled: false

@@ -33,6 +33,7 @@
             element.hidden = !visible;
             element.classList.toggle('marejig-screen-current', visible);
         });
+        documentObject.body.classList.toggle('marejig-is-playing', name === 'game');
         MAREJIG_State.setState({ currentScreen: name });
     }
 
@@ -199,7 +200,6 @@
         var stats = scene && MAREJIG_Segments ? MAREJIG_Segments.getSegmentStats(scene) : null;
         var activeSegmentId = stats ? stats.activeSegmentId : null;
         var activeSegment = activeSegmentId ? puzzle.segments.items[activeSegmentId] : null;
-        var visibleCount = scene ? MAREJIG_Scene.getVisiblePieceIds(scene).length : 0;
         var moves = scene && scene.progress ? scene.progress.moves : 0;
         var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
         MAREJIG_applyDebugVisibility();
@@ -207,7 +207,7 @@
         var values = {
             'marejig-hud-time': 'Tiempo ' + MAREJIG_formatTime(MAREJIG_getElapsed(scene)),
             'marejig-hud-reward': 'Movs ' + moves,
-            'marejig-hud-segment': activeSegmentId ? 'Segmento ' + (stats.activeSegmentIndex + 1) + '/' + puzzle.segments.order.length : 'Segmento —',
+            'marejig-hud-segment': activeSegmentId ? (stats.activeSegmentIndex + 1) + '/' + puzzle.segments.order.length : '—',
             'marejig-hud-visible': activeSegment ? stats.connectedInSegment + '/' + activeSegment.pieceIds.length + ' conectadas' : '0/0 conectadas',
             'marejig-hud-total': puzzle && puzzle.validation ? puzzle.validation.pieceCount + ' piezas' : '0 piezas',
             'marejig-hud-image': imageStatus,
@@ -217,6 +217,11 @@
             var element = MAREJIG_byId(id);
             if (element) element.textContent = values[id];
         });
+        var progress = MAREJIG_byId('marejig-segment-progress');
+        if (progress && activeSegment) {
+            var ratio = activeSegment.pieceIds.length ? stats.connectedInSegment / activeSegment.pieceIds.length : 0;
+            progress.style.setProperty('--marejig-progress', Math.max(0, Math.min(100, ratio * 100)).toFixed(1) + '%');
+        }
     }
 
     function MAREJIG_renderLevelDetails(level, imageResult, puzzle) {
@@ -557,6 +562,7 @@
         var pauseHelp = MAREJIG_byId('marejig-pause-help');
         var pauseLevels = MAREJIG_byId('marejig-pause-levels');
         var pauseReset = MAREJIG_byId('marejig-pause-reset');
+        var recoverPieces = MAREJIG_byId('marejig-recover-pieces');
         var resetConfirm = MAREJIG_byId('marejig-reset-confirm');
         var resetCancel = MAREJIG_byId('marejig-reset-cancel');
         var haptics = MAREJIG_byId('marejig-toggle-haptics');
@@ -578,6 +584,13 @@
         if (pauseHelp) pauseHelp.addEventListener('click', function MAREJIG_pauseHelpClick() { MAREJIG_closePause(); MAREJIG_openHelp(); });
         if (pauseLevels) pauseLevels.addEventListener('click', function MAREJIG_pauseLevelsClick() { MAREJIG_closePause(); MAREJIG_backToMenu(); });
         if (pauseReset) pauseReset.addEventListener('click', MAREJIG_openResetConfirm);
+        if (recoverPieces) recoverPieces.addEventListener('click', function MAREJIG_recoverPiecesClick() {
+            var state = MAREJIG_State.getState();
+            if (state.scene) MAREJIG_Scene.ensureVisibleGroups(state.scene);
+            MAREJIG_closePause();
+            MAREJIG_Input.cancelInteraction();
+            MAREJIG_Renderer.markDirty('recover');
+        });
         if (resetConfirm) resetConfirm.addEventListener('click', MAREJIG_confirmResetLevel);
         if (resetCancel) resetCancel.addEventListener('click', MAREJIG_closeResetConfirm);
         if (haptics) haptics.addEventListener('click', function MAREJIG_hapticsClick() { MAREJIG_toggleSetting('haptics'); });

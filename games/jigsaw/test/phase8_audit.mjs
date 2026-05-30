@@ -148,8 +148,9 @@ function forceSegmentComplete(scene, segmentId) {
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
-  assert.equal(scene.board.sourceCellW, scene.imageMeta.width / 12, 'sourceCellW uses 12 columns');
-  assert.equal(scene.board.sourceCellH, scene.imageMeta.height / 9, 'sourceCellH uses 9 rows');
+  assert.equal(scene.board.sourceCellW, scene.imageMeta.width / level.board.cols, 'sourceCellW uses level board columns');
+  assert.equal(scene.board.sourceCellH, scene.imageMeta.height / level.board.rows, 'sourceCellH uses level board rows');
+  assert.equal(Math.round(scene.board.width / scene.board.height * 1000), Math.round((level.board.cols / level.board.rows) * 1000), 'board layout follows level board ratio');
   const firstSegmentId = scene.puzzle.segments.order[0];
   const secondSegmentId = scene.puzzle.segments.order[1];
   const hiddenSegmentId = scene.puzzle.segments.order[2];
@@ -208,9 +209,75 @@ function forceSegmentComplete(scene, segmentId) {
 }
 
 {
+  const sandbox = loadGameplaySandbox({ Date });
+  const easy = sandbox.MAREJIG_LevelCatalog.getDifficultyConfig('easy');
+  const standard = sandbox.MAREJIG_LevelCatalog.getDifficultyConfig('standard');
+  const hard = sandbox.MAREJIG_LevelCatalog.getDifficultyConfig('hard');
+  assert.deepEqual([easy.board.cols, easy.board.rows, easy.targetPieceCount, ...easy.segmentPlan], [12, 9, 24, 6, 6, 6, 6], 'easy uses 12×9, 24 target pieces and four segments of six');
+  assert.deepEqual([standard.board.cols, standard.board.rows, standard.targetPieceCount, ...standard.segmentPlan], [12, 9, 32, 8, 8, 8, 8], 'standard uses 12×9, 32 target pieces and four segments of eight');
+  assert.deepEqual([hard.board.cols, hard.board.rows, hard.targetPieceCount], [16, 12, 60], 'hard uses 16×12 and 60 target pieces');
+  assert.equal(hard.board.cols / hard.board.rows, 4 / 3, 'hard board keeps 4:3');
+  assert.equal(Math.max(...hard.segmentPlan) <= 10, true, 'hard segment plan reveals at most 10 pieces per segment');
+  const hardLevel = {
+    id: 'hard_fixture', order: 99, title: 'Hard Fixture', pack: 'Tests', difficulty: 'hard', cloudinaryPublicId: 'fixture/hard',
+    sourceFormat: 'avif', aspectRatio: '4:3', master: { width: 2400, height: 1800 }, board: { cols: hard.board.cols, rows: hard.board.rows },
+    targetPieceCount: hard.targetPieceCount, segmentPlan: hard.segmentPlan.slice(), rewardCoins: 80
+  };
+  assert.equal(sandbox.MAREJIG_LevelCatalog.validateLevel(hardLevel), true, 'future hard levels validate with 60 pieces');
+  const hardPuzzle = sandbox.MAREJIG_Generator.generate(hardLevel);
+  assert.equal(hardPuzzle.validation.ok, true, `hard puzzle validates: ${hardPuzzle.validation.errors.join('; ')}`);
+  assert.ok(hardPuzzle.validation.pieceCount >= 56 && hardPuzzle.validation.pieceCount <= 64, 'hard puzzle uses 56–64 piece range');
+  assert.equal(hardPuzzle.board.cols, 16, 'hard puzzle board has 16 columns');
+  assert.equal(hardPuzzle.board.rows, 12, 'hard puzzle board has 12 rows');
+  assert.equal(hardPuzzle.board.cols / hardPuzzle.board.rows, 4 / 3, 'hard generated board keeps 4:3');
+  assert.equal(Math.max(...hardPuzzle.segments.order.map((segmentId) => hardPuzzle.segments.items[segmentId].pieceIds.length)) <= 10, true, 'hard generated segments reveal at most 10 pieces');
+}
+
+{
+  const sandbox = loadGameplaySandbox({ Date });
+  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const puzzle = sandbox.MAREJIG_Generator.generate(level);
+  const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
+  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
+  const groupId = sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).map((pieceId) => scene.pieces[pieceId].groupId)[0];
+  const group = scene.groups[groupId];
+  group.x += 37;
+  group.y += 29;
+  const before = { id: group.id, x: group.x, y: group.y, segment: scene.ui.activeSegmentId, seed: scene.puzzle.seed };
+  sandbox.MAREJIG_Scene.layoutScene(scene, 844, 390);
+  const after = scene.groups[groupId];
+  assert.equal(after.id, before.id, 'resize keeps groupId stable');
+  assert.equal(scene.ui.activeSegmentId, before.segment, 'resize keeps active segment stable');
+  assert.equal(scene.puzzle.seed, before.seed, 'resize does not regenerate puzzle');
+  assert.ok(after.bounds.x + after.bounds.width >= 0 && after.bounds.y + after.bounds.height >= 0 && after.bounds.x <= 844 && after.bounds.y <= 390, 'moved group remains recoverably visible after resize');
+  assert.ok(Math.abs(after.x - before.x) < 520 && Math.abs(after.y - before.y) < 520, 'resize preserves relative position without chaotic jump');
+  const mainGroupId = scene.pieces[scene.puzzle.segments.items[scene.ui.activeSegmentId].pieceIds[0]].groupId;
+  scene.groups[mainGroupId].lockedToBoard = true;
+  const anchor = scene.puzzle.pieces[scene.groups[mainGroupId].anchorPieceId];
+  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
+  assert.equal(Math.round(scene.groups[mainGroupId].x), Math.round(scene.board.x + anchor.solution.gridX * scene.board.cellSize), 'locked/completed groups stay aligned to board on reflow');
+}
+
+{
+  const sandbox = loadGameplaySandbox({ Date });
+  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const puzzle = sandbox.MAREJIG_Generator.generate(level);
+  const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
+  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
+  const groupId = sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).map((pieceId) => scene.pieces[pieceId].groupId)[0];
+  scene.groups[groupId].x = -5000;
+  scene.groups[groupId].y = -5000;
+  sandbox.MAREJIG_Scene.ensureVisibleGroups(scene);
+  assert.ok(scene.groups[groupId].bounds.x >= -1 && scene.groups[groupId].bounds.y >= -1, 'ensureVisibleGroups recovers a group outside the playfield');
+  assert.ok(scene.staging.height < 170, 'compact staging avoids a giant empty pieces panel on mobile');
+}
+
+{
   const html = read('index.html');
-  const normalHud = html.replace(/[\s\S]*<div class="marejig-game-hud" aria-label="Estado del puzzle">/, '').replace(/<div class="marejig-canvas-wrap">[\s\S]*/, '');
-  assert.doesNotMatch(normalHud, />[^<]*(Seed|Generador|Imagen runtime|Board|RC Fase)[^<]*</, 'normal HUD does not expose technical labels');
+  const gameMarkup = html.replace(/[\s\S]*<section class="marejig-screen" id="marejig-screen-game"/, '').replace(/<section class="marejig-screen" id="marejig-screen-error"[\s\S]*/, '');
+  assert.doesNotMatch(gameMarkup, />[^<]*(Tiempo|Movs|conectadas|Board|Seed|Generador|Imagen runtime|RC Fase|Piezas)[^<]*</, 'normal gameplay markup avoids stats, technical labels and pieces panel copy');
+  assert.match(gameMarkup, /marejig-game-overlay/, 'gameplay uses a floating controls overlay');
+  assert.match(gameMarkup, /id="marejig-hint-button"/, 'hint remains available as a minimal floating control');
   assert.match(html, /class="marejig-level-details marejig-debug-only"[^>]*hidden/, 'technical details are hidden debug-only markup');
   assert.match(html, /class="marejig-ready-overlay marejig-debug-only"[^>]*hidden/, 'debug overlay is hidden by default');
   const mainSource = read('js/MAREJIG_main.js');

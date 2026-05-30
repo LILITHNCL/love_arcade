@@ -31,8 +31,8 @@
                     <p class="marejig-subtitle">Arma imágenes 4:3 premium con piezas ortogonales y segmentos progresivos.</p>
                     <div class="marejig-hero-metrics" aria-label="Resumen del catálogo">
                         <span class="marejig-chip" id="marejig-total-pending">0 niveles pendientes · todos los packs</span>
-                        <span class="marejig-chip">12×9</span>
-                        <span class="marejig-chip">~40 piezas</span>
+                        <span class="marejig-chip">12×9 / 16×12</span>
+                        <span class="marejig-chip">24–60 piezas</span>
                     </div>
                 </div>
 
@@ -87,32 +87,35 @@
                 </div>
             </section>
 
-            <section class="marejig-screen" id="marejig-screen-game" aria-labelledby="marejig-game-title" hidden>
+            <section class="marejig-screen" id="marejig-screen-game" aria-label="Partida Marejig" hidden>
                 <div class="marejig-game-layout">
-                    <div class="marejig-game-head">
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-back-to-menu" aria-label="Volver a niveles pendientes">← Pendientes</button>
+                    <div class="marejig-game-head marejig-debug-only" hidden>
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-center-view" aria-label="Centrar vista del puzzle">Centrar</button>
                         <div>
                             <p class="marejig-kicker" id="marejig-game-pack">Nivel</p>
                             <h1 class="marejig-game-title" id="marejig-game-title">Nivel listo</h1>
                         </div>
                     </div>
-                    <div class="marejig-game-hud" aria-label="Estado del puzzle">
-                        <span class="marejig-hud-pill" id="marejig-hud-time">Tiempo 00:00</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-reward">Movs 0</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-segment">Segmento 1/1</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-visible">0/0 conectadas</span>
-                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-total" hidden>0 piezas</span>
-                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-image" hidden>Imagen pendiente</span>
-                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-save" hidden>Sin guardar</span>
-                        <button class="marejig-button marejig-button-primary marejig-button-compact" type="button" id="marejig-hint-button" aria-label="Mostrar una pista del segmento activo">Pista</button>
-                        <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-pause-button" aria-label="Abrir opciones de pausa">Opciones</button>
-                        <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-center-view" aria-label="Centrar vista del puzzle">Centrar</button>
+                    <div class="marejig-game-hud marejig-debug-only" aria-label="Estado técnico del puzzle" hidden>
+                        <span class="marejig-hud-pill" id="marejig-hud-time"></span>
+                        <span class="marejig-hud-pill" id="marejig-hud-reward"></span>
+                        <span class="marejig-hud-pill" id="marejig-hud-visible"></span>
+                        <span class="marejig-hud-pill" id="marejig-hud-total"></span>
+                        <span class="marejig-hud-pill" id="marejig-hud-image"></span>
+                        <span class="marejig-hud-pill" id="marejig-hud-save"></span>
                     </div>
                     <div class="marejig-canvas-wrap">
                         <canvas id="marejig-canvas" class="marejig-canvas" width="1280" height="960" aria-label="Escena del puzzle"></canvas>
+                        <div class="marejig-game-overlay" aria-label="Controles de partida">
+                            <button class="marejig-floating-button marejig-floating-button-back" type="button" id="marejig-back-to-menu" aria-label="Pausar y volver a niveles">←</button>
+                            <span class="marejig-segment-pill" id="marejig-hud-segment" aria-label="Segmento actual">1/1</span>
+                            <button class="marejig-floating-button marejig-floating-button-options" type="button" id="marejig-pause-button" aria-label="Abrir opciones">⋯</button>
+                            <button class="marejig-floating-button marejig-floating-button-hint" type="button" id="marejig-hint-button" aria-label="Mostrar una pista">Pista</button>
+                            <span class="marejig-segment-progress" id="marejig-segment-progress" aria-hidden="true"></span>
+                        </div>
                         <div class="marejig-ready-overlay marejig-debug-only" id="marejig-ready-overlay" hidden>
-                            <span class="marejig-ready-badge">Fase 4</span>
-                            <p class="marejig-section-note" id="marejig-ready-copy">Puzzle visual listo.</p>
+                            <span class="marejig-ready-badge">Debug</span>
+                            <p class="marejig-section-note" id="marejig-ready-copy"></p>
                         </div>
                     </div>
                     <aside class="marejig-level-details marejig-debug-only" id="marejig-level-details" aria-label="Detalles técnicos del nivel seleccionado" hidden></aside>
@@ -186,6 +189,7 @@
             <div class="marejig-option-grid">
                 <button class="marejig-button marejig-button-primary" type="button" id="marejig-pause-continue" aria-label="Continuar nivel">Continuar</button>
                 <button class="marejig-button marejig-button-secondary" type="button" id="marejig-pause-help" aria-label="Abrir cómo jugar">Cómo jugar</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-recover-pieces" aria-label="Recuperar piezas fuera de pantalla">Recuperar piezas</button>
                 <button class="marejig-button marejig-button-secondary" type="button" id="marejig-pause-levels" aria-label="Volver a niveles pendientes">Volver a niveles</button>
                 <button class="marejig-button marejig-button-danger" type="button" id="marejig-pause-reset" aria-label="Reiniciar nivel actual">Reiniciar nivel</button>
                 <button class="marejig-button marejig-button-secondary" type="button" id="marejig-toggle-haptics" aria-label="Activar o desactivar vibración">Haptics: on</button>

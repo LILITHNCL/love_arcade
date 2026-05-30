@@ -4,6 +4,7 @@
     var MAREJIG_DIFFICULTY_CONFIG = Object.freeze({
         easy: Object.freeze({
             label: 'Fácil',
+            board: Object.freeze({ cols: 12, rows: 9 }),
             targetPieceCount: 24,
             segmentPlan: Object.freeze([6, 6, 6, 6]),
             rewardRange: Object.freeze([35, 45]),
@@ -12,6 +13,7 @@
         }),
         standard: Object.freeze({
             label: 'Estándar',
+            board: Object.freeze({ cols: 12, rows: 9 }),
             targetPieceCount: 32,
             segmentPlan: Object.freeze([8, 8, 8, 8]),
             rewardRange: Object.freeze([50, 65]),
@@ -20,8 +22,9 @@
         }),
         hard: Object.freeze({
             label: 'Difícil',
-            targetPieceCount: 40,
-            segmentPlan: Object.freeze([8, 8, 8, 8, 8]),
+            board: Object.freeze({ cols: 16, rows: 12 }),
+            targetPieceCount: 60,
+            segmentPlan: Object.freeze([8, 8, 8, 8, 8, 10, 10]),
             rewardRange: Object.freeze([70, 90]),
             hintPieceLimit: 2,
             hintDurationMs: 3000
@@ -58,7 +61,7 @@
             sourceFormat: 'avif',
             aspectRatio: '4:3',
             master: Object.freeze({ width: 2400, height: 1800 }),
-            board: Object.freeze({ cols: 12, rows: 9 }),
+            board: Object.freeze({ cols: difficultyConfig.board.cols, rows: difficultyConfig.board.rows }),
             targetPieceCount: difficultyConfig.targetPieceCount,
             segmentPlan: MAREJIG_cloneArray(difficultyConfig.segmentPlan),
             rewardCoins: spec[5]
@@ -103,10 +106,13 @@
         if (level.sourceFormat !== 'avif') return false;
         if (level.aspectRatio !== '4:3') return false;
         if (!level.master || level.master.width !== 2400 || level.master.height !== 1800) return false;
-        if (!level.board || level.board.cols !== 12 || level.board.rows !== 9) return false;
+        if (!level.board || !MAREJIG_isPositiveInteger(level.board.cols) || !MAREJIG_isPositiveInteger(level.board.rows)) return false;
+        var expectedDifficulty = MAREJIG_getDifficultyConfig(level.difficulty);
+        if (level.board.cols !== expectedDifficulty.board.cols || level.board.rows !== expectedDifficulty.board.rows) return false;
+        if (level.board.cols / level.board.rows !== 4 / 3) return false;
         if (level.difficulty === 'easy' && (level.targetPieceCount < 22 || level.targetPieceCount > 28)) return false;
         if (level.difficulty === 'standard' && (level.targetPieceCount < 28 || level.targetPieceCount > 34)) return false;
-        if (level.difficulty === 'hard' && (level.targetPieceCount < 36 || level.targetPieceCount > 42)) return false;
+        if (level.difficulty === 'hard' && (level.targetPieceCount < 56 || level.targetPieceCount > 64)) return false;
         if (!MAREJIG_validateSegmentPlan(level)) return false;
         if (!MAREJIG_isPositiveInteger(level.rewardCoins)) return false;
 
