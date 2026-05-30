@@ -52,8 +52,7 @@ function loadGameplaySandbox(extra = {}) {
     'MAREJIG_groups.js',
     'MAREJIG_segments.js',
     'MAREJIG_generator.js',
-    'MAREJIG_scene.js',
-    'MAREJIG_hints.js'
+    'MAREJIG_scene.js'
   ], extra);
 }
 
@@ -147,28 +146,8 @@ function forceSegmentComplete(scene, segmentId) {
   const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
-  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
-  assert.equal(scene.board.sourceCellW, scene.imageMeta.width / level.board.cols, 'sourceCellW uses level board columns');
-  assert.equal(scene.board.sourceCellH, scene.imageMeta.height / level.board.rows, 'sourceCellH uses level board rows');
-  assert.equal(Math.round(scene.board.width / scene.board.height * 1000), Math.round((level.board.cols / level.board.rows) * 1000), 'board layout follows level board ratio');
-  const firstSegmentId = scene.puzzle.segments.order[0];
-  const secondSegmentId = scene.puzzle.segments.order[1];
-  const hiddenSegmentId = scene.puzzle.segments.order[2];
-  const hiddenPieceId = scene.puzzle.segments.items[hiddenSegmentId].pieceIds[0];
-  const hiddenGroupId = scene.pieces[hiddenPieceId].groupId;
-  assert.equal(sandbox.MAREJIG_Groups.findSnapCandidate(scene, hiddenGroupId), null, 'hidden pieces cannot snap');
-  const revealedBeforeHint = scene.puzzle.segments.order.filter((segmentId) => scene.puzzle.segments.items[segmentId].revealed);
-  const visibleBeforeHint = sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).sort();
-  const hint = sandbox.MAREJIG_Hints.showHint(scene, { reducedMotion: true });
-  assert.equal(hint.ok, true, 'hint can target current visible segment');
-  assert.deepEqual(sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).sort(), visibleBeforeHint, 'hint does not move or reveal pieces');
-  assert.deepEqual(scene.puzzle.segments.order.filter((segmentId) => scene.puzzle.segments.items[segmentId].revealed), revealedBeforeHint, 'hint does not reveal future segments');
-  forceSegmentComplete(scene, firstSegmentId);
-  const firstAdvance = sandbox.MAREJIG_Segments.advanceIfSegmentComplete(scene);
-  assert.equal(firstAdvance.revealed, secondSegmentId, 'one completed segment reveals exactly the next segment');
-  assert.equal(scene.puzzle.segments.currentSegmentIndex, 1, 'segment index advances by one');
-  const secondAdvanceWithoutCompletion = sandbox.MAREJIG_Segments.advanceIfSegmentComplete(scene);
-  assert.equal(secondAdvanceWithoutCompletion.completed, false, 'next segment does not auto-complete');
+  assert.equal(sandbox.MAREJIG_Hints, undefined, 'hints are not exposed during gameplay');
+  assert.equal(Object.prototype.hasOwnProperty.call(scene.progress, 'hintsUsed'), false, 'new scenes do not track hints');
 }
 
 {
@@ -193,7 +172,7 @@ function forceSegmentComplete(scene, segmentId) {
   const segmentsSource = read('js/MAREJIG_segments.js');
   assert.match(inputSource, /pointercancel: MAREJIG_onPointerCancel/, 'pointercancel is wired');
   assert.match(inputSource, /MAREJIG_resetState\(true\)/, 'pointer cancel/up paths reset input state');
-  assert.match(inputSource, /gamePhase === 'completing' \|\| scene\.progress\.gamePhase === 'completed'/, 'input blocks during victory/completion');
+  assert.match(inputSource, /gamePhase !== 'playing'/, 'input blocks during victory/completion');
   assert.match(groupsSource, /MAREJIG_getAdjacencyEdges\(scene, pieceId\)/, 'snap is based on adjacency edges');
   assert.match(groupsSource, /!neighborSegment \|\| !neighborSegment\.revealed/, 'snap ignores unrevealed future pieces');
   assert.match(segmentsSource, /if \(activeSegment\.completed\) return/, 'completed segments cannot fire twice');
@@ -249,13 +228,9 @@ function forceSegmentComplete(scene, segmentId) {
   assert.equal(after.id, before.id, 'resize keeps groupId stable');
   assert.equal(scene.ui.activeSegmentId, before.segment, 'resize keeps active segment stable');
   assert.equal(scene.puzzle.seed, before.seed, 'resize does not regenerate puzzle');
-  assert.ok(after.bounds.x + after.bounds.width >= 0 && after.bounds.y + after.bounds.height >= 0 && after.bounds.x <= 844 && after.bounds.y <= 390, 'moved group remains recoverably visible after resize');
-  assert.ok(Math.abs(after.x - before.x) < 520 && Math.abs(after.y - before.y) < 520, 'resize preserves relative position without chaotic jump');
-  const mainGroupId = scene.pieces[scene.puzzle.segments.items[scene.ui.activeSegmentId].pieceIds[0]].groupId;
-  scene.groups[mainGroupId].lockedToBoard = true;
-  const anchor = scene.puzzle.pieces[scene.groups[mainGroupId].anchorPieceId];
-  sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
-  assert.equal(Math.round(scene.groups[mainGroupId].x), Math.round(scene.board.x + anchor.solution.gridX * scene.board.cellSize), 'locked/completed groups stay aligned to board on reflow');
+  assert.equal(after.x, before.x, 'resize preserves absolute group world x');
+  assert.equal(after.y, before.y, 'resize preserves absolute group world y');
+  assert.ok(after.bounds.x + after.bounds.width >= scene.world.x && after.bounds.y + after.bounds.height >= scene.world.y, 'moved group remains recoverably inside the world after resize');
 }
 
 {
@@ -268,8 +243,8 @@ function forceSegmentComplete(scene, segmentId) {
   scene.groups[groupId].x = -5000;
   scene.groups[groupId].y = -5000;
   sandbox.MAREJIG_Scene.ensureVisibleGroups(scene);
-  assert.ok(scene.groups[groupId].bounds.x >= -1 && scene.groups[groupId].bounds.y >= -1, 'ensureVisibleGroups recovers a group outside the playfield');
-  assert.ok(scene.staging.height < 170, 'compact staging avoids a giant empty pieces panel on mobile');
+  assert.ok(scene.groups[groupId].bounds.x + scene.groups[groupId].bounds.width >= scene.world.safePadding * 0.4, 'ensureVisibleGroups recovers a group outside the world');
+  assert.ok(scene.world.width > scene.viewport.width && scene.world.height > scene.viewport.height, 'sandbox world is larger than viewport');
 }
 
 {
@@ -277,7 +252,7 @@ function forceSegmentComplete(scene, segmentId) {
   const gameMarkup = html.replace(/[\s\S]*<section class="marejig-screen" id="marejig-screen-game"/, '').replace(/<section class="marejig-screen" id="marejig-screen-error"[\s\S]*/, '');
   assert.doesNotMatch(gameMarkup, />[^<]*(Tiempo|Movs|conectadas|Board|Seed|Generador|Imagen runtime|RC Fase|Piezas)[^<]*</, 'normal gameplay markup avoids stats, technical labels and pieces panel copy');
   assert.match(gameMarkup, /marejig-game-overlay/, 'gameplay uses a floating controls overlay');
-  assert.match(gameMarkup, /id="marejig-hint-button"/, 'hint remains available as a minimal floating control');
+  assert.doesNotMatch(gameMarkup, /id="marejig-hint-button"/, 'hint control is absent');
   assert.match(html, /class="marejig-level-details marejig-debug-only"[^>]*hidden/, 'technical details are hidden debug-only markup');
   assert.match(html, /class="marejig-ready-overlay marejig-debug-only"[^>]*hidden/, 'debug overlay is hidden by default');
   const mainSource = read('js/MAREJIG_main.js');
@@ -321,7 +296,7 @@ function forceSegmentComplete(scene, segmentId) {
   const inputSource = read('js/MAREJIG_input.js');
   const moveBody = inputSource.slice(inputSource.indexOf('function MAREJIG_onPointerMove'), inputSource.indexOf('function MAREJIG_tryHaptic'));
   assert.doesNotMatch(moveBody, /Storage|saveActiveSave|saveLevelProgress|advanceIfSegmentComplete|Economy|findSnapCandidate|recalculateGroupBounds|getGroupOutline|buildCellsOutline/, 'pointermove avoids storage, segments, economy, snap and outline/bounds recalculation');
-  assert.match(moveBody, /requestAnimationFrame\(MAREJIG_applyPendingDrag\)/, 'pointermove coalesces drag updates with RAF');
+  assert.match(moveBody, /requestAnimationFrame\(MAREJIG_applyPendingMove\)/, 'pointermove coalesces drag updates with RAF');
 }
 
 console.log('phase8 audit tests ok');

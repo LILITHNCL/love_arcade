@@ -8,8 +8,6 @@
             targetPieceCount: 24,
             segmentPlan: Object.freeze([6, 6, 6, 6]),
             rewardRange: Object.freeze([35, 45]),
-            hintPieceLimit: 4,
-            hintDurationMs: 4200
         }),
         standard: Object.freeze({
             label: 'Estándar',
@@ -17,8 +15,6 @@
             targetPieceCount: 32,
             segmentPlan: Object.freeze([8, 8, 8, 8]),
             rewardRange: Object.freeze([50, 65]),
-            hintPieceLimit: 3,
-            hintDurationMs: 3600
         }),
         hard: Object.freeze({
             label: 'Difícil',
@@ -26,8 +22,6 @@
             targetPieceCount: 60,
             segmentPlan: Object.freeze([8, 8, 8, 8, 8, 10, 10]),
             rewardRange: Object.freeze([70, 90]),
-            hintPieceLimit: 2,
-            hintDurationMs: 3000
         })
     });
 

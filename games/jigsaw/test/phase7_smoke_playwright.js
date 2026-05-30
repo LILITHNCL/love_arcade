@@ -36,10 +36,10 @@ try {
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });
     const completedId = await page.evaluate(() => window.MAREJIG_State.getState().selectedLevelId);
-    await page.locator('#marejig-hint-button').click();
+    if (await page.locator('#marejig-hint-button').count()) throw new Error('No debe existir botón Pista');
     await page.waitForFunction(() => {
         const state = window.MAREJIG_State.getState();
-        return state.scene && state.scene.ui.hint && state.scene.progress.hintsUsed === 1;
+        return state.scene && !state.scene.ui.hint && !Object.prototype.hasOwnProperty.call(state.scene.progress, 'hintsUsed');
     }, null, { timeout: 5000 });
     await page.evaluate(() => window.MAREJIG_Main.completeCurrentForDebug());
     await page.waitForSelector('#marejig-victory-modal:not([hidden])', { timeout: 10000 });

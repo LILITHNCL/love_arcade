@@ -1074,15 +1074,6 @@
     font-size: 1.2rem;
 }
 
-.marejig-floating-button-hint {
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(14px, env(safe-area-inset-bottom));
-    min-height: 44px;
-    padding-inline: 16px;
-    color: #07121d;
-    border-color: rgba(255, 255, 255, 0.34);
-    background: linear-gradient(135deg, rgba(119, 247, 228, 0.94), rgba(255, 209, 102, 0.94));
-}
 
 .marejig-segment-pill {
     top: max(14px, calc(env(safe-area-inset-top) + 4px));
@@ -1117,4 +1108,34 @@
 
 .marejig-is-playing .marejig-ready-overlay:not([hidden]) {
     display: block;
+}
+
+.marejig-is-playing,
+.marejig-is-playing .marejig-shell,
+.marejig-is-playing .marejig-main {
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.marejig-is-playing #marejig-screen-game,
+.marejig-is-playing .marejig-game-layout,
+.marejig-is-playing .marejig-canvas-wrap {
+    position: fixed;
+    inset: 0;
+    width: 100dvw;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #050711;
+    box-shadow: none;
+}
+
+.marejig-is-playing .marejig-canvas {
+    width: 100dvw;
+    height: 100dvh;
+    touch-action: none;
 }

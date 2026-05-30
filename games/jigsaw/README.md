@@ -29,11 +29,11 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 
 ### Fase 3 — renderer y escena visual
 
-- `MAREJIG_scene.js` crea una escena fullscreen/mobile-first con board 4:3 dependiente del nivel, staging compacto, reflow estable y `hitBounds`;
+- `MAREJIG_scene.js` crea una escena sandbox fullscreen/mobile-first con mundo mayor que el viewport, cámara con pan, dispersión determinística, reflow estable y `hitBounds`;
 - `MAREJIG_renderer.js` dibuja en Canvas 2D con DPR capado a `Math.min(devicePixelRatio, 2)`;
-- el tablero muestra una silueta premium tenue de la imagen completa;
-- solo las piezas del segmento inicial `s_0` aparecen reveladas en la bandeja visual;
-- cada pieza visible dibuja el fragmento correcto de la imagen runtime dentro de su máscara poliminó;
+- el área lógica de solución conserva como máximo un borde exterior sutil, sin preview, guía translúcida ni cuadrícula;
+- solo las piezas del segmento inicial `s_0` aparecen reveladas y dispersas naturalmente alrededor del área lógica de solución;
+- cada grupo visible dibuja una sola vez el fragmento correcto de la imagen runtime bajo su clip poliminó exterior, sin seams internos;
 - si Cloudinary falla, el renderer usa un patrón premium de fallback sin romper el flujo;
 - el render funciona por dirty frames con `requestAnimationFrame`, no con loop continuo.
 
@@ -87,7 +87,7 @@ El renderer usa una única imagen decodificada por nivel activo y cachea únicam
 - Se añadió `MAREJIG_Input` con Pointer Events para seleccionar, traer al frente y arrastrar grupos visibles sin iniciar un render loop continuo.
 - `MAREJIG_Groups` ahora contiene hit testing, bounds inflados para móvil, búsqueda de snap basada exclusivamente en adjacency real y fusión de grupos de escena/puzzle.
 - `MAREJIG_Segments` controla la progresión: `s_0` define el grupo principal al completarse, los segmentos posteriores se revelan de uno en uno y el último solo marca `puzzleCompletedLocal`.
-- Durante partida la UI normal queda reducida a controles flotantes, pista/opciones y un indicador mínimo de segmento; métricas, estado técnico y detalles quedan ocultos salvo `?debug=1`. La persistencia ligera solo se actualiza en eventos discretos.
+- Durante partida la UI normal queda reducida a controles flotantes de pausa/opciones y un indicador mínimo de segmento; métricas, estado técnico y detalles quedan ocultos salvo `?debug=1`. La persistencia ligera solo se actualiza en eventos discretos.
 - Esta fase no reporta economía, no llama `GameCenter.completeLevel` y no marca niveles como completados finales.
 
 ## Fase 5 — loop completo, persistencia y economía
@@ -156,11 +156,11 @@ Para producción, reemplaza `demo` por el cloud name real. Las URLs usan `f_auto
 
 ### Balance de dificultad y recompensas
 
-Las dificultades válidas son `easy`, `standard` y `hard`. `easy` y `standard` usan board `12×9`; `hard` usa `16×12` para sostener 60 piezas reales sin piezas ridículamente pequeñas. Los rangos validados son 22–28, 28–34 y 56–64. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
+Las dificultades válidas son `easy`, `standard` y `hard`. `easy` y `standard` usan board `12×9`; `hard` usa `16×12` para sostener 60 piezas reales sin piezas ridículamente pequeñas. Los rangos validados son 22–28, 28–34 y 56–64. El balance se aplica con planes de segmentos y recompensa fija:
 
 - `easy`: 24 piezas objetivo, segmentos `[6, 6, 6, 6]` y recompensas 35–45 monedas.
 - `standard`: 32 piezas objetivo, segmentos `[8, 8, 8, 8]` y recompensas 50–65 monedas.
-- `hard`: 60 piezas objetivo, segmentos `[8, 8, 8, 8, 8, 10, 10]`, máximo 10 piezas nuevas por segmento, pistas menos generosas y recompensas 70–90 monedas.
+- `hard`: 60 piezas objetivo, segmentos `[8, 8, 8, 8, 8, 10, 10]`, máximo 10 piezas nuevas por segmento y recompensas 70–90 monedas.
 
 La recompensa sigue siendo fija por nivel y se reporta una sola vez. Love Arcade es el banco: el juego solo llama `window.GameCenter.completeLevel("jigsaw", "level_" + level.id, coins)` desde `MAREJIG_economy.js`, no modifica saldos globales.
 
@@ -220,9 +220,10 @@ node games/jigsaw/test/phase5_unit.js
 node games/jigsaw/test/phase6_unit.js
 node games/jigsaw/test/phase7_unit.mjs
 node games/jigsaw/test/phase8_audit.mjs
+node games/jigsaw/test/phase9_sandbox_unit.mjs
 ```
 
-`phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de pistas/segmentos y restricciones críticas de namespace.
+`phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de sandbox/segmentos y restricciones críticas de namespace. `phase9_sandbox_unit.mjs` añade cobertura directa de mundo mayor que viewport, cámara acotada, pan por fondo vacío, drag por pieza, dispersión, clamp recuperable, resize estable, renderer sin guía ni seams internos y hard con 60 piezas en segmentos de hasta 10.
 
 ### Smoke Playwright reproducible
 
@@ -237,7 +238,7 @@ python3 -m http.server 4173
 MAREJIG_REQUIRE_PLAYWRIGHT=1 node games/jigsaw/test/phase7_smoke_playwright.js
 ```
 
-Flujo cubierto: menú → filtro → seleccionar nivel → usar pista → completar con helper debug → victoria → volver a niveles → verificar que el nivel completado desaparece.
+Flujo cubierto: menú → filtro → seleccionar nivel → completar con helper debug → victoria → volver a niveles → verificar que el nivel completado desaparece.
 
 ### Troubleshooting
 
