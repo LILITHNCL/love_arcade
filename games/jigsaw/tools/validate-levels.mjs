@@ -60,7 +60,7 @@ function validatePuzzle(level, puzzle) {
   if (!puzzle.validation.cellCoverageOk) errors.push(`${level.id}: cobertura de celdas inválida`);
   if (!puzzle.validation.adjacencyOk) errors.push(`${level.id}: adjacency inválida`);
   if (!puzzle.validation.segmentsOk) errors.push(`${level.id}: segmentos inválidos`);
-  const ranges = { easy: [28, 34], standard: [36, 42], hard: [44, 50] };
+  const ranges = { easy: [22, 28], standard: [28, 34], hard: [36, 42] };
   const [minPieces, maxPieces] = ranges[level.difficulty] || ranges.standard;
   if (puzzle.validation.pieceCount < minPieces || puzzle.validation.pieceCount > maxPieces) errors.push(`${level.id}: piece count ${puzzle.validation.pieceCount} fuera de ${minPieces}–${maxPieces}`);
   const variety = puzzle.validation.variety;

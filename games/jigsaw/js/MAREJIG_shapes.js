@@ -143,18 +143,18 @@
         return true;
     }
 
-    function MAREJIG_buildPieceOutline(piece) {
+    function MAREJIG_buildCellsOutline(cells) {
         var cellSet = Object.create(null);
-        var absoluteCells = piece.cells.map(function MAREJIG_absoluteCell(cell) {
-            return { x: piece.solution.gridX + cell.x, y: piece.solution.gridY + cell.y };
+        var normalizedCells = (cells || []).map(function MAREJIG_outlineCell(cell) {
+            return { x: Number(cell.x) || 0, y: Number(cell.y) || 0 };
         });
         var segments = [];
 
-        absoluteCells.forEach(function MAREJIG_markCell(cell) {
+        normalizedCells.forEach(function MAREJIG_markCell(cell) {
             cellSet[MAREJIG_getCellKey(cell.x, cell.y)] = true;
         });
 
-        absoluteCells.forEach(function MAREJIG_addEdges(cell) {
+        normalizedCells.forEach(function MAREJIG_addEdges(cell) {
             if (!cellSet[MAREJIG_getCellKey(cell.x, cell.y - 1)]) {
                 segments.push({ x1: cell.x, y1: cell.y, x2: cell.x + 1, y2: cell.y, side: 'top' });
             }
@@ -169,7 +169,19 @@
             }
         });
 
+        segments.sort(function MAREJIG_sortOutline(a, b) {
+            if (a.y1 !== b.y1) return a.y1 - b.y1;
+            if (a.x1 !== b.x1) return a.x1 - b.x1;
+            return a.side.localeCompare(b.side);
+        });
         return { segments: segments };
+    }
+
+    function MAREJIG_buildPieceOutline(piece) {
+        var absoluteCells = piece.cells.map(function MAREJIG_absoluteCell(cell) {
+            return { x: piece.solution.gridX + cell.x, y: piece.solution.gridY + cell.y };
+        });
+        return MAREJIG_buildCellsOutline(absoluteCells);
     }
 
     windowObject.MAREJIG_Shapes = Object.freeze({
@@ -180,6 +192,7 @@
         getShapeSignature: MAREJIG_getShapeSignature,
         getCellKey: MAREJIG_getCellKey,
         isRectangularCells: MAREJIG_isRectangularCells,
+        buildCellsOutline: MAREJIG_buildCellsOutline,
         buildPieceOutline: MAREJIG_buildPieceOutline
     });
 })(window);

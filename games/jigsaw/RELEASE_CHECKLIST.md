@@ -56,6 +56,7 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 - [ ] La imagen full se libera al volver a pendientes.
 - [ ] Canvas usa DPR capado.
 - [ ] Renderer usa dirty rendering y no loop continuo.
+- [ ] `pointermove` solo actualiza posición/coalescea RAF; no guarda, no recalcula segmentos/economía ni outlines.
 - [ ] No se crean imágenes grandes por pieza.
 
 ## 6. Gameplay QA
@@ -64,6 +65,8 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 - [ ] `pointercancel` limpia el estado de input.
 - [ ] Snap ocurre solo por adjacency real.
 - [ ] Piezas ocultas o de segmentos futuros no hacen snap.
+- [ ] Grupos unidos no muestran bordes internos; solo outline externo.
+- [ ] Hit testing evita huecos de piezas L/U/T y limita padding táctil a `min(8px, 18% celda)`.
 - [ ] Un segmento completado revela solo el siguiente segmento.
 - [ ] El último segmento dispara victoria una sola vez.
 - [ ] Input queda bloqueado durante completar/victoria.
@@ -83,7 +86,8 @@ Probar estas vistas:
 
 En cada vista verificar:
 
-- [ ] HUD legible y usable.
+- [ ] HUD legible, compacto y sin datos técnicos fuera de `?debug=1`.
+- [ ] Tablero 4:3 maximizado y bandeja compacta sin panel vacío.
 - [ ] Botones sin solapes.
 - [ ] Canvas visible y zona de puzzle principal.
 - [ ] Filtros del menú usable con teclado/touch.

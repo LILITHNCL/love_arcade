@@ -10,6 +10,8 @@
         dragStart: { x: 0, y: 0 },
         groupStart: { x: 0, y: 0 },
         lastPointer: { x: 0, y: 0 },
+        pendingPoint: null,
+        rafId: 0,
         moved: false
     };
 
@@ -37,6 +39,9 @@
         MAREJIG_inputState.dragStart = { x: 0, y: 0 };
         MAREJIG_inputState.groupStart = { x: 0, y: 0 };
         MAREJIG_inputState.lastPointer = { x: 0, y: 0 };
+        MAREJIG_inputState.pendingPoint = null;
+        if (MAREJIG_inputState.rafId) windowObject.cancelAnimationFrame(MAREJIG_inputState.rafId);
+        MAREJIG_inputState.rafId = 0;
         MAREJIG_inputState.moved = false;
     }
 
@@ -90,14 +95,11 @@
         MAREJIG_inputState.moved = false;
     }
 
-    function MAREJIG_onPointerMove(event) {
+    function MAREJIG_applyPendingDrag() {
+        MAREJIG_inputState.rafId = 0;
         var scene = MAREJIG_context.scene;
-        if (!scene) return;
-        if (scene.progress && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'completed')) return;
-        var point = MAREJIG_canvasPoint(event);
-        MAREJIG_context.pointers.set(event.pointerId, point);
-        if (MAREJIG_inputState.mode === 'pinching') return;
-        if (event.pointerId !== MAREJIG_inputState.pointerId || MAREJIG_inputState.mode !== 'dragging') return;
+        var point = MAREJIG_inputState.pendingPoint;
+        if (!scene || !point || MAREJIG_inputState.mode !== 'dragging') return;
         var group = scene.groups[MAREJIG_inputState.selectedGroupId];
         if (!group) return;
         var dx = point.x - MAREJIG_inputState.dragStart.x;
@@ -107,8 +109,21 @@
         group.x = MAREJIG_inputState.groupStart.x + dx;
         group.y = MAREJIG_inputState.groupStart.y + dy;
         MAREJIG_inputState.lastPointer = point;
-        MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         if (MAREJIG_context.renderer) MAREJIG_context.renderer.markDirty('drag');
+    }
+
+    function MAREJIG_onPointerMove(event) {
+        var scene = MAREJIG_context.scene;
+        if (!scene) return;
+        if (scene.progress && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'completed')) return;
+        var point = MAREJIG_canvasPoint(event);
+        MAREJIG_context.pointers.set(event.pointerId, point);
+        if (MAREJIG_inputState.mode === 'pinching') return;
+        if (event.pointerId !== MAREJIG_inputState.pointerId || MAREJIG_inputState.mode !== 'dragging') return;
+        MAREJIG_inputState.pendingPoint = point;
+        if (!MAREJIG_inputState.rafId) {
+            MAREJIG_inputState.rafId = windowObject.requestAnimationFrame(MAREJIG_applyPendingDrag);
+        }
         event.preventDefault();
     }
 
@@ -136,12 +151,17 @@
         }
         if (event.pointerId !== MAREJIG_inputState.pointerId || MAREJIG_inputState.mode !== 'dragging') return;
         var groupId = MAREJIG_inputState.selectedGroupId;
-        var didMove = MAREJIG_inputState.moved;
         var candidate = null;
         var merged = null;
+        if (MAREJIG_inputState.rafId) {
+            windowObject.cancelAnimationFrame(MAREJIG_inputState.rafId);
+            MAREJIG_applyPendingDrag();
+        }
+        var didMove = MAREJIG_inputState.moved;
         if (didMove && groupId && scene.groups[groupId]) {
             scene.progress.startedAt = scene.progress.startedAt || Date.now();
             scene.progress.moves += 1;
+            MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
             candidate = MAREJIG_Groups.findSnapCandidate(scene, groupId, { isTouch: event.pointerType !== 'mouse' });
             if (candidate) {
                 var previousIds = [candidate.sourceGroupId, candidate.targetGroupId];

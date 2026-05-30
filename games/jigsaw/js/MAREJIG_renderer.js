@@ -230,7 +230,7 @@
         context.stroke();
         context.fillStyle = 'rgba(220, 231, 255, 0.52)';
         context.font = '700 12px system-ui, sans-serif';
-        context.fillText('Piezas reveladas · arrastra y une vecinas reales', staging.x + 16, staging.y + 24);
+        if (staging.height > 46) context.fillText('Piezas', staging.x + 14, staging.y + 22);
         context.restore();
     }
 
@@ -244,11 +244,13 @@
         });
 
         groupList.forEach(function MAREJIG_drawGroup(group) {
+            MAREJIG_drawGroupShadow(context, scene, group);
             group.pieceIds.forEach(function MAREJIG_drawGroupPiece(pieceId) {
                 if (scene.pieces[pieceId] && scene.pieces[pieceId].visible) {
-                    MAREJIG_drawPiece(context, scene, scene.puzzle.pieces[pieceId], group);
+                    MAREJIG_drawPieceFill(context, scene, scene.puzzle.pieces[pieceId], group);
                 }
             });
+            MAREJIG_drawGroupOutline(context, scene, group);
         });
     }
 
@@ -270,7 +272,57 @@
         }
     }
 
-    function MAREJIG_drawPiece(context, scene, puzzlePiece, group) {
+    function MAREJIG_getPathForGroup(context, scene, group, scale) {
+        var outline = MAREJIG_Groups && MAREJIG_Groups.getGroupOutline ? MAREJIG_Groups.getGroupOutline(scene, group.id) : null;
+        var anchorPiece = scene.puzzle.pieces[group.anchorPieceId || group.pieceIds[0]];
+        if (!outline || !anchorPiece) return null;
+        var cacheKey = group.id + ':' + scale.toFixed(3) + ':' + (outline.segments ? outline.segments.length : 0) + ':' + (group.outlineDirty ? 'dirty' : 'clean');
+        if (group.groupOutlinePath && group.groupOutlinePathKey === cacheKey) return group.groupOutlinePath;
+        if (typeof windowObject.Path2D !== 'function') return null;
+        try {
+            var path = new Path2D();
+            (outline.segments || []).forEach(function MAREJIG_groupPathSegment(segment) {
+                path.moveTo((segment.x1 - anchorPiece.solution.gridX) * scale, (segment.y1 - anchorPiece.solution.gridY) * scale);
+                path.lineTo((segment.x2 - anchorPiece.solution.gridX) * scale, (segment.y2 - anchorPiece.solution.gridY) * scale);
+            });
+            group.groupOutlinePath = path;
+            group.groupOutlinePathKey = cacheKey;
+            return path;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function MAREJIG_strokeGroupOutlineBySegments(context, scene, group, scale) {
+        var outline = MAREJIG_Groups && MAREJIG_Groups.getGroupOutline ? MAREJIG_Groups.getGroupOutline(scene, group.id) : null;
+        var anchorPiece = scene.puzzle.pieces[group.anchorPieceId || group.pieceIds[0]];
+        if (!outline || !anchorPiece) return;
+        (outline.segments || []).forEach(function MAREJIG_strokeGroupSegment(segment) {
+            context.beginPath();
+            context.moveTo((segment.x1 - anchorPiece.solution.gridX) * scale, (segment.y1 - anchorPiece.solution.gridY) * scale);
+            context.lineTo((segment.x2 - anchorPiece.solution.gridX) * scale, (segment.y2 - anchorPiece.solution.gridY) * scale);
+            context.stroke();
+        });
+    }
+
+    function MAREJIG_drawGroupShadow(context, scene, group) {
+        var anchorPiece = scene.puzzle.pieces[group.anchorPieceId || group.pieceIds[0]];
+        if (!anchorPiece) return;
+        var scale = scene.staging.pieceScale;
+        var path = MAREJIG_getPathForGroup(context, scene, group, scale);
+        var isDragging = scene.ui && scene.ui.selectedGroupId === group.id;
+        context.save();
+        context.translate(group.x, group.y);
+        context.shadowColor = 'rgba(0, 0, 0, 0.36)';
+        context.shadowBlur = isDragging ? 6 : 12;
+        context.shadowOffsetY = isDragging ? 4 : 8;
+        context.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        if (path) context.stroke(path);
+        else MAREJIG_strokeGroupOutlineBySegments(context, scene, group, scale);
+        context.restore();
+    }
+
+    function MAREJIG_drawPieceFill(context, scene, puzzlePiece, group) {
         var scenePiece = scene.pieces[puzzlePiece.id];
         var rect = MAREJIG_Groups ? MAREJIG_Groups.getPieceWorldRect(scene, puzzlePiece.id, group) : null;
         var scale = rect ? rect.scale : scene.staging.pieceScale;
@@ -278,22 +330,8 @@
         var pieceH = puzzlePiece.bounds.h * scale;
         var path = MAREJIG_getPathForPiece(scenePiece, puzzlePiece, scale);
 
-        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         context.save();
         context.translate(rect ? rect.x : group.x, rect ? rect.y : group.y);
-        context.shadowColor = 'rgba(0, 0, 0, 0.42)';
-        context.shadowBlur = 16;
-        context.shadowOffsetY = 9;
-        if (path) {
-            context.fillStyle = 'rgba(0, 0, 0, 0.24)';
-            context.fill(path);
-        } else {
-            MAREJIG_fillPieceByCells(context, puzzlePiece, scale, 'rgba(0, 0, 0, 0.24)');
-        }
-        context.shadowColor = 'transparent';
-        context.shadowBlur = 0;
-        context.shadowOffsetY = 0;
-
         context.save();
         if (path) {
             context.clip(path);
@@ -306,21 +344,34 @@
             MAREJIG_drawFallbackInsidePiece(context, puzzlePiece, scale);
         }
         if (puzzlePiece.segmentId === scene.ui.activeSegmentId) {
-            context.fillStyle = 'rgba(119, 247, 228, 0.09)';
+            context.fillStyle = 'rgba(119, 247, 228, 0.06)';
             context.fillRect(0, 0, pieceW, pieceH);
         }
         context.restore();
+        context.restore();
+    }
 
+    function MAREJIG_drawGroupOutline(context, scene, group) {
+        var scale = scene.staging.pieceScale;
+        var path = MAREJIG_getPathForGroup(context, scene, group, scale);
         var isSelected = scene.ui.selectedGroupId === group.id;
+        var firstPiece = scene.puzzle.pieces[group.pieceIds[0]];
+        var isActive = firstPiece && firstPiece.segmentId === scene.ui.activeSegmentId;
         var snapFeedback = scene.ui.snapFeedback && scene.ui.snapFeedback.groupId === group.id ? scene.ui.snapFeedback : null;
         var pulse = snapFeedback ? Math.max(0, 1 - ((Date.now() - snapFeedback.startedAt) / snapFeedback.durationMs)) : 0;
-        context.strokeStyle = isSelected ? 'rgba(255, 209, 102, 0.98)' : (puzzlePiece.segmentId === scene.ui.activeSegmentId ? 'rgba(119, 247, 228, 0.92)' : 'rgba(255, 255, 255, 0.72)');
+        context.save();
+        context.translate(group.x, group.y);
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        context.strokeStyle = isSelected ? 'rgba(255, 209, 102, 0.98)' : (isActive ? 'rgba(119, 247, 228, 0.92)' : 'rgba(255, 255, 255, 0.72)');
         context.lineWidth = isSelected ? 2.8 : 1.5;
-        MAREJIG_strokePieceByCells(context, puzzlePiece, scale);
+        if (path) context.stroke(path);
+        else MAREJIG_strokeGroupOutlineBySegments(context, scene, group, scale);
         if (pulse > 0) {
             context.strokeStyle = 'rgba(255, 209, 102, ' + (0.25 + pulse * 0.55).toFixed(3) + ')';
             context.lineWidth = 3 + pulse * 4;
-            MAREJIG_strokePieceByCells(context, puzzlePiece, scale);
+            if (path) context.stroke(path);
+            else MAREJIG_strokeGroupOutlineBySegments(context, scene, group, scale);
             MAREJIG_markDirty('snap-feedback');
         }
         context.restore();
