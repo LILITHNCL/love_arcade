@@ -13,7 +13,6 @@
     var MAREJIG_Input = windowObject.MAREJIG_Input;
     var MAREJIG_Segments = windowObject.MAREJIG_Segments;
     var MAREJIG_Economy = windowObject.MAREJIG_Economy;
-    var MAREJIG_Hints = windowObject.MAREJIG_Hints;
 
     var MAREJIG_currentLevelId = null;
     var MAREJIG_rendererReady = false;
@@ -151,7 +150,6 @@
             generatorVersion: scene.puzzle.generatorVersion,
             elapsedMs: MAREJIG_getElapsed(scene),
             moves: scene.progress.moves,
-            hintsUsed: scene.progress.hintsUsed || 0,
             currentSegmentIndex: scene.puzzle.segments.currentSegmentIndex || 0,
             completedSegmentIds: MAREJIG_getCompletedSegmentIds(scene),
             revealedSegmentIds: MAREJIG_getRevealedSegmentIds(scene),
@@ -182,7 +180,6 @@
         MAREJIG_Storage.saveLevelProgress(state.selectedLevelId, {
             elapsedMs: save.elapsedMs,
             moves: save.moves,
-            hintsUsed: save.hintsUsed,
             currentSegmentIndex: save.currentSegmentIndex,
             completedSegmentCount: save.completedSegmentIds.length,
             placedPieceCount: MAREJIG_countPlacedPieces(state.scene),
@@ -316,26 +313,6 @@
         MAREJIG_showToast('Preferencia guardada');
     }
 
-    function MAREJIG_useHint() {
-        var state = MAREJIG_State.getState();
-        if (!state.scene) return false;
-        var result = MAREJIG_Hints.showHint(state.scene, { reducedMotion: MAREJIG_getReducedMotion() });
-        if (!result.ok) {
-            state.scene.ui.message = result.reason;
-            state.scene.ui.messageStartedAt = Date.now();
-            state.scene.ui.dirty = true;
-            MAREJIG_showToast(result.reason);
-            MAREJIG_Renderer.markDirty('hint-unavailable');
-            return false;
-        }
-        MAREJIG_saveGame('hint');
-        MAREJIG_updateHud(state.scene.level, state.puzzle, state.loadedImageResult, state.scene);
-        MAREJIG_Renderer.markDirty('hint');
-        windowObject.setTimeout(function MAREJIG_hintAutoClear() {
-            if (MAREJIG_Hints.clearHint(state.scene)) MAREJIG_Renderer.markDirty('hint-timeout');
-        }, state.scene.ui.hint ? state.scene.ui.hint.durationMs : 3000);
-        return true;
-    }
 
     function MAREJIG_confirmResetLevel() {
         var state = MAREJIG_State.getState();
@@ -459,8 +436,7 @@
             var metrics = {
                 elapsedMs: scene.progress.elapsedMs,
                 moves: scene.progress.moves,
-                hintsUsed: scene.progress.hintsUsed || 0,
-                rewardReported: scene.progress.rewardReported || scene.progress.rewardSkipped
+                    rewardReported: scene.progress.rewardReported || scene.progress.rewardSkipped
             };
             var economy = MAREJIG_Economy.reportLevelCompleted(scene.level, metrics);
             scene.progress.rewardReported = economy.ok && economy.mode === 'gamecenter';
@@ -469,7 +445,6 @@
             MAREJIG_Storage.markLevelCompleted(scene.level, {
                 elapsedMs: metrics.elapsedMs,
                 moves: metrics.moves,
-                hintsUsed: metrics.hintsUsed,
                 rewardReported: scene.progress.rewardReported,
                 rewardLevelId: economy.rewardLevelId,
                 rewardCoins: economy.coins
@@ -491,7 +466,6 @@
         MAREJIG_byId('marejig-victory-pack').textContent = scene.level.pack;
         MAREJIG_byId('marejig-victory-time').textContent = MAREJIG_formatTime(scene.progress.elapsedMs);
         MAREJIG_byId('marejig-victory-moves').textContent = String(scene.progress.moves);
-        MAREJIG_byId('marejig-victory-hints').textContent = String(scene.progress.hintsUsed || 0);
         MAREJIG_byId('marejig-victory-coins').textContent = '+' + economy.coins;
         MAREJIG_byId('marejig-victory-status').textContent = economy.mode === 'gamecenter' ? 'Monedas acreditadas' : 'Modo standalone: monedas no acreditadas';
         modal.hidden = false;
@@ -549,7 +523,6 @@
         var errorBack = MAREJIG_byId('marejig-error-back');
         var retry = MAREJIG_byId('marejig-retry-level');
         var center = MAREJIG_byId('marejig-center-view');
-        var hint = MAREJIG_byId('marejig-hint-button');
         var pause = MAREJIG_byId('marejig-pause-button');
         var next = MAREJIG_byId('marejig-victory-next');
         var levels = MAREJIG_byId('marejig-victory-levels');
@@ -571,7 +544,6 @@
         if (back) back.addEventListener('click', MAREJIG_backToMenu);
         if (errorBack) errorBack.addEventListener('click', MAREJIG_backToMenu);
         if (retry) retry.addEventListener('click', MAREJIG_retryCurrentLevel);
-        if (hint) hint.addEventListener('click', MAREJIG_useHint);
         if (pause) pause.addEventListener('click', MAREJIG_openPause);
         if (next) next.addEventListener('click', MAREJIG_startNextPending);
         if (levels) levels.addEventListener('click', function MAREJIG_levelsClick() { MAREJIG_hideVictory(); MAREJIG_backToMenu(); });
@@ -635,7 +607,6 @@
         startLevel: MAREJIG_startLevel,
         backToMenu: MAREJIG_backToMenu,
         saveGame: MAREJIG_saveGame,
-        useHint: MAREJIG_useHint,
         resetCurrentLevelForDebug: MAREJIG_confirmResetLevel,
         completeCurrentForDebug: function MAREJIG_completeCurrentForDebug() {
             var state = MAREJIG_State.getState();

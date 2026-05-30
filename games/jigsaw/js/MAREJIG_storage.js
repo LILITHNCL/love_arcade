@@ -96,7 +96,6 @@
         var previous = completed.levels[level.id] || {};
         var elapsedMs = Math.max(0, Number(metrics && metrics.elapsedMs) || Number(previous.bestTimeMs) || 0);
         var moves = Math.max(0, Number(metrics && metrics.moves) || Number(previous.fewestMoves) || 0);
-        var hintsUsed = Math.max(0, Number(metrics && metrics.hintsUsed) || Number(previous.hintsUsed) || 0);
         var rewardLevelId = (metrics && metrics.rewardLevelId) || 'level_' + level.id;
         var rewardCoins = Math.max(1, Math.floor(Number((metrics && metrics.rewardCoins) || level.rewardCoins) || 1));
         var rewardReported = Boolean(metrics && metrics.rewardReported) || Boolean(previous.rewardReported);
@@ -106,7 +105,6 @@
             lastCompletedAt: new Date().toISOString(),
             bestTimeMs: previous.bestTimeMs ? Math.min(previous.bestTimeMs, elapsedMs || previous.bestTimeMs) : elapsedMs,
             fewestMoves: previous.fewestMoves ? Math.min(previous.fewestMoves, moves || previous.fewestMoves) : moves,
-            hintsUsed: hintsUsed,
             rewardReported: rewardReported,
             rewardLevelId: rewardLevelId,
             rewardCoins: rewardCoins
@@ -132,7 +130,6 @@
             updatedAt: new Date().toISOString(),
             elapsedMs: Math.max(0, Number(summary && summary.elapsedMs) || 0),
             moves: Math.max(0, Number(summary && summary.moves) || 0),
-            hintsUsed: Math.max(0, Number(summary && summary.hintsUsed) || 0),
             currentSegmentIndex: Math.max(0, Number(summary && summary.currentSegmentIndex) || 0),
             completedSegmentCount: Math.max(0, Number(summary && summary.completedSegmentCount) || 0),
             placedPieceCount: Math.max(0, Number(summary && summary.placedPieceCount) || 0),
@@ -177,7 +174,6 @@
             generatorVersion: String(save.generatorVersion || ''),
             elapsedMs: Math.max(0, Number(save.elapsedMs) || 0),
             moves: Math.max(0, Number(save.moves) || 0),
-            hintsUsed: Math.max(0, Number(save.hintsUsed) || 0),
             currentSegmentIndex: Math.max(0, Number(save.currentSegmentIndex) || 0),
             completedSegmentIds: Array.isArray(save.completedSegmentIds) ? save.completedSegmentIds.slice() : [],
             revealedSegmentIds: Array.isArray(save.revealedSegmentIds) ? save.revealedSegmentIds.slice() : [],

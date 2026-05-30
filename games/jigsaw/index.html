@@ -110,7 +110,6 @@
                             <button class="marejig-floating-button marejig-floating-button-back" type="button" id="marejig-back-to-menu" aria-label="Pausar y volver a niveles">←</button>
                             <span class="marejig-segment-pill" id="marejig-hud-segment" aria-label="Segmento actual">1/1</span>
                             <button class="marejig-floating-button marejig-floating-button-options" type="button" id="marejig-pause-button" aria-label="Abrir opciones">⋯</button>
-                            <button class="marejig-floating-button marejig-floating-button-hint" type="button" id="marejig-hint-button" aria-label="Mostrar una pista">Pista</button>
                             <span class="marejig-segment-progress" id="marejig-segment-progress" aria-hidden="true"></span>
                         </div>
                         <div class="marejig-ready-overlay marejig-debug-only" id="marejig-ready-overlay" hidden>
@@ -147,7 +146,6 @@
             <div class="marejig-victory-stats" aria-label="Métricas finales">
                 <div class="marejig-victory-stat"><span>Tiempo</span><strong id="marejig-victory-time">00:00</strong></div>
                 <div class="marejig-victory-stat"><span>Movimientos</span><strong id="marejig-victory-moves">0</strong></div>
-                <div class="marejig-victory-stat"><span>Pistas</span><strong id="marejig-victory-hints">0</strong></div>
                 <div class="marejig-victory-stat"><span>Monedas</span><strong id="marejig-victory-coins">+0</strong></div>
             </div>
             <p class="marejig-victory-status" id="marejig-victory-status" aria-live="polite">Modo standalone: monedas no acreditadas</p>
@@ -168,10 +166,10 @@
             <p class="marejig-kicker">Ayuda</p>
             <h2 class="marejig-title" id="marejig-help-title">Cómo jugar</h2>
             <ul class="marejig-help-list">
-                <li>Arrastra piezas desde la zona inferior y suéltalas cerca de su vecina.</li>
+                <li>Arrastra piezas por el área de juego y suéltalas cerca de su vecina.</li>
                 <li>Las piezas correctas se pegan automáticamente cuando quedan suficientemente cerca.</li>
                 <li>El puzzle aparece por segmentos: completa el segmento activo para desbloquear el siguiente.</li>
-                <li>Usa <strong>Pista</strong> si te atoras; muestra una referencia temporal sin mover piezas.</li>
+                <li>Arrastra el fondo vacío para desplazarte por el área de juego.</li>
                 <li>Los niveles completados desaparecen del menú de pendientes.</li>
             </ul>
             <div class="marejig-menu-actions">
@@ -220,7 +218,6 @@
     <script src="./js/MAREJIG_shapes.js"></script>
     <script src="./js/MAREJIG_groups.js"></script>
     <script src="./js/MAREJIG_segments.js"></script>
-    <script src="./js/MAREJIG_hints.js"></script>
     <script src="./js/MAREJIG_generator.js"></script>
     <script src="./js/MAREJIG_scene.js"></script>
     <script src="./js/MAREJIG_renderer.js"></script>

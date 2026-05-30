@@ -264,26 +264,14 @@
         });
     }
 
-    function MAREJIG_placeRevealedGroup(scene, group, segmentId, index, count) {
-        var rng = MAREJIG_createRng(String(scene.puzzle.seed) + ':' + segmentId + ':' + group.id);
-        var columns = Math.max(2, Math.min(scene.staging.columns || 5, count || 2));
-        var rows = Math.max(1, Math.ceil(count / columns));
-        var slotW = scene.staging.width / columns;
-        var slotH = Math.max(1, (scene.staging.height - 20) / rows);
-        var piece = scene.puzzle.pieces[group.pieceIds[0]];
-        var scale = scene.staging.pieceScale || scene.board.cellSize || 24;
-        var col = index % columns;
-        var row = Math.floor(index / columns);
-        var pieceW = piece.bounds.w * scale;
-        var pieceH = piece.bounds.h * scale;
-        group.x = scene.staging.x + col * slotW + Math.max(10, (slotW - pieceW) / 2) + (rng() - 0.5) * Math.min(16, slotW * 0.12);
-        group.y = scene.staging.y + 18 + row * slotH + Math.max(0, (slotH - pieceH) / 2) + (rng() - 0.5) * Math.min(6, slotH * 0.06);
-        group.zIndex = (scene.progress.nextZIndex += 1);
-        group.laneIndex = index;
+    function MAREJIG_placeRevealedGroup(scene, group, segmentId, index) {
         group.visible = true;
-        group.positioned = true;
+        group.positioned = false;
         group.outlineDirty = true;
         group.groupOutline = null;
+        if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.placeGroupNaturally) {
+            windowObject.MAREJIG_Scene.placeGroupNaturally(scene, group, segmentId + ':' + index + ':' + group.id);
+        }
     }
 
     function MAREJIG_revealSegment(scene, segmentId) {

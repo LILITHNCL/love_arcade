@@ -13,12 +13,12 @@ const { chromium } = require('playwright');
     await page.locator('.marejig-level-card').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });
-    await page.locator('#marejig-hint-button').click();
+    if (await page.locator('#marejig-hint-button').count()) throw new Error('No debe existir botón Pista');
     await page.waitForFunction(() => {
         const state = window.MAREJIG_State.getState();
-        return state.scene && state.scene.ui.hint && state.scene.progress.hintsUsed === 1;
+        return state.scene && !state.scene.ui.hint && !Object.prototype.hasOwnProperty.call(state.scene.progress, 'hintsUsed');
     }, null, { timeout: 5000 });
-    await page.screenshot({ path: 'games/jigsaw/phase6-hud-hint-390x844.png', fullPage: false });
+    await page.screenshot({ path: 'games/jigsaw/phase6-sandbox-390x844.png', fullPage: false });
 
     await page.locator('#marejig-pause-button').click();
     await page.locator('#marejig-pause-reset').click();
@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => {
         const state = window.MAREJIG_State.getState();
-        return state.scene && state.scene.progress.hintsUsed === 0 && state.scene.progress.moves === 0;
+        return state.scene && !Object.prototype.hasOwnProperty.call(state.scene.progress, 'hintsUsed') && state.scene.progress.moves === 0;
     }, null, { timeout: 10000 });
 
     await page.locator('#marejig-pause-button').click();
