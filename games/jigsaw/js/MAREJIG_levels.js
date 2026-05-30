@@ -4,24 +4,24 @@
     var MAREJIG_DIFFICULTY_CONFIG = Object.freeze({
         easy: Object.freeze({
             label: 'Fácil',
-            targetPieceCount: 30,
-            segmentPlan: Object.freeze([6, 6, 8, 10]),
+            targetPieceCount: 24,
+            segmentPlan: Object.freeze([6, 6, 6, 6]),
             rewardRange: Object.freeze([35, 45]),
             hintPieceLimit: 4,
             hintDurationMs: 4200
         }),
         standard: Object.freeze({
             label: 'Estándar',
-            targetPieceCount: 40,
-            segmentPlan: Object.freeze([8, 8, 8, 8, 8]),
+            targetPieceCount: 32,
+            segmentPlan: Object.freeze([8, 8, 8, 8]),
             rewardRange: Object.freeze([50, 65]),
             hintPieceLimit: 3,
             hintDurationMs: 3600
         }),
         hard: Object.freeze({
             label: 'Difícil',
-            targetPieceCount: 48,
-            segmentPlan: Object.freeze([9, 9, 10, 10, 10]),
+            targetPieceCount: 40,
+            segmentPlan: Object.freeze([8, 8, 8, 8, 8]),
             rewardRange: Object.freeze([70, 90]),
             hintPieceLimit: 2,
             hintDurationMs: 3000
@@ -30,7 +30,7 @@
 
     var MAREJIG_LEVEL_SPECS = Object.freeze([
         Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf']),
-        Object.freeze(['raiden_shogun_002', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf'])
+        Object.freeze(['raiden_shogun_002', 2, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
@@ -104,9 +104,9 @@
         if (level.aspectRatio !== '4:3') return false;
         if (!level.master || level.master.width !== 2400 || level.master.height !== 1800) return false;
         if (!level.board || level.board.cols !== 12 || level.board.rows !== 9) return false;
-        if (level.difficulty === 'easy' && (level.targetPieceCount < 28 || level.targetPieceCount > 34)) return false;
-        if (level.difficulty === 'standard' && (level.targetPieceCount < 36 || level.targetPieceCount > 42)) return false;
-        if (level.difficulty === 'hard' && (level.targetPieceCount < 44 || level.targetPieceCount > 50)) return false;
+        if (level.difficulty === 'easy' && (level.targetPieceCount < 22 || level.targetPieceCount > 28)) return false;
+        if (level.difficulty === 'standard' && (level.targetPieceCount < 28 || level.targetPieceCount > 34)) return false;
+        if (level.difficulty === 'hard' && (level.targetPieceCount < 36 || level.targetPieceCount > 42)) return false;
         if (!MAREJIG_validateSegmentPlan(level)) return false;
         if (!MAREJIG_isPositiveInteger(level.rewardCoins)) return false;
 

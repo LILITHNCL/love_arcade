@@ -68,6 +68,21 @@
         return '<div class="marejig-detail-row"><span>' + MAREJIG_escape(label) + '</span><span>' + MAREJIG_escape(value) + '</span></div>';
     }
 
+    function MAREJIG_isDebugEnabled() {
+        var configDebug = windowObject.MAREJIG_Config && windowObject.MAREJIG_Config.debug && windowObject.MAREJIG_Config.debug.enabled;
+        var queryDebug = false;
+        try { queryDebug = new URL(windowObject.location && windowObject.location.href || 'https://local/').searchParams.get('debug') === '1'; } catch (error) { queryDebug = false; }
+        return Boolean(configDebug || queryDebug);
+    }
+
+    function MAREJIG_applyDebugVisibility() {
+        var enabled = MAREJIG_isDebugEnabled();
+        documentObject.querySelectorAll('.marejig-debug-only').forEach(function MAREJIG_toggleDebug(element) {
+            element.hidden = !enabled;
+        });
+        return enabled;
+    }
+
     function MAREJIG_formatTime(ms) {
         var totalSeconds = Math.floor(Math.max(0, ms || 0) / 1000);
         var minutes = Math.floor(totalSeconds / 60);
@@ -187,12 +202,13 @@
         var visibleCount = scene ? MAREJIG_Scene.getVisiblePieceIds(scene).length : 0;
         var moves = scene && scene.progress ? scene.progress.moves : 0;
         var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
+        MAREJIG_applyDebugVisibility();
         var saveStatus = MAREJIG_Storage.getLastSaveStatus();
         var values = {
             'marejig-hud-time': 'Tiempo ' + MAREJIG_formatTime(MAREJIG_getElapsed(scene)),
-            'marejig-hud-reward': moves + ' movimientos · ' + ((scene && scene.progress && scene.progress.hintsUsed) || 0) + ' pistas',
+            'marejig-hud-reward': 'Movs ' + moves,
             'marejig-hud-segment': activeSegmentId ? 'Segmento ' + (stats.activeSegmentIndex + 1) + '/' + puzzle.segments.order.length : 'Segmento —',
-            'marejig-hud-visible': activeSegment ? stats.connectedInSegment + '/' + activeSegment.pieceIds.length + ' conectadas · ' + visibleCount + ' visibles' : '0 visibles',
+            'marejig-hud-visible': activeSegment ? stats.connectedInSegment + '/' + activeSegment.pieceIds.length + ' conectadas' : '0/0 conectadas',
             'marejig-hud-total': puzzle && puzzle.validation ? puzzle.validation.pieceCount + ' piezas' : '0 piezas',
             'marejig-hud-image': imageStatus,
             'marejig-hud-save': saveStatus.label || 'Sin guardar'
@@ -212,11 +228,16 @@
         var profile = imageResult ? imageResult.profile : MAREJIG_Cloudinary.getRuntimeProfile();
         var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
         var validation = puzzle && puzzle.validation ? puzzle.validation : null;
+        var debugEnabled = MAREJIG_applyDebugVisibility();
         if (title) title.textContent = level.title;
         if (pack) pack.textContent = level.pack + ' · ' + level.difficulty;
-        if (badge) badge.textContent = 'RC Fase 8';
-        if (readyCopy) readyCopy.textContent = imageStatus + '. Release candidate: catálogo validado, Cloudinary real y QA final activos.';
+        if (badge) badge.textContent = 'Debug';
+        if (readyCopy) readyCopy.textContent = imageStatus + '. Datos técnicos visibles solo en modo debug.';
         if (!details) return;
+        if (!debugEnabled) {
+            details.innerHTML = '';
+            return;
+        }
         details.innerHTML = [
             MAREJIG_detailRow('Nivel', level.id),
             MAREJIG_detailRow('Pack', level.pack),
@@ -587,6 +608,7 @@
         if (!validation.valid) console.warn('[MAREJIG] Catálogo con advertencias', validation.errors);
         MAREJIG_Storage.getSettings();
         MAREJIG_getUsableActiveSave();
+        MAREJIG_applyDebugVisibility();
         MAREJIG_wireUi();
         MAREJIG_Menu.mountPendingLevels();
         MAREJIG_showScreen('menu');

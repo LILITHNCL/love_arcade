@@ -167,7 +167,7 @@
                         }
                     });
                 }
-                if (visited.size < Math.max(1, Math.floor(item.pieceIds.length * 0.7))) {
+                if (visited.size < Math.max(1, Math.floor(item.pieceIds.length * 0.5))) {
                     errors.push('Segmento poco coherente: ' + segmentId);
                 }
             }
@@ -239,10 +239,10 @@
 
     function MAREJIG_placeRevealedGroup(scene, group, segmentId, index, count) {
         var rng = MAREJIG_createRng(String(scene.puzzle.seed) + ':' + segmentId + ':' + group.id);
-        var columns = Math.max(2, Math.min(5, Math.ceil(Math.sqrt(Math.max(1, count)))));
+        var columns = Math.max(2, Math.min(6, count || 2));
         var rows = Math.max(1, Math.ceil(count / columns));
         var slotW = scene.staging.width / columns;
-        var slotH = scene.staging.height / rows;
+        var slotH = Math.max(1, (scene.staging.height - 20) / rows);
         var piece = scene.puzzle.pieces[group.pieceIds[0]];
         var scale = scene.staging.pieceScale || scene.board.cellSize || 24;
         var col = index % columns;
@@ -250,10 +250,12 @@
         var pieceW = piece.bounds.w * scale;
         var pieceH = piece.bounds.h * scale;
         group.x = scene.staging.x + col * slotW + Math.max(10, (slotW - pieceW) / 2) + (rng() - 0.5) * Math.min(16, slotW * 0.12);
-        group.y = scene.staging.y + row * slotH + Math.max(32, (slotH - pieceH) / 2) + (rng() - 0.5) * Math.min(14, slotH * 0.1);
+        group.y = scene.staging.y + 18 + row * slotH + Math.max(0, (slotH - pieceH) / 2) + (rng() - 0.5) * Math.min(6, slotH * 0.06);
         group.zIndex = (scene.progress.nextZIndex += 1);
         group.laneIndex = index;
         group.visible = true;
+        group.outlineDirty = true;
+        group.groupOutline = null;
     }
 
     function MAREJIG_revealSegment(scene, segmentId) {
@@ -272,7 +274,10 @@
         });
         newGroupIds.sort().forEach(function MAREJIG_placeGroup(groupId, index) {
             MAREJIG_placeRevealedGroup(scene, scene.groups[groupId], segmentId, index, newGroupIds.length);
-            if (windowObject.MAREJIG_Groups) windowObject.MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+            if (windowObject.MAREJIG_Groups) {
+                windowObject.MAREJIG_Groups.invalidateGroupOutline(scene, groupId);
+                windowObject.MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+            }
         });
         return newGroupIds;
     }

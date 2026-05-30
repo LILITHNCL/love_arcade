@@ -49,9 +49,9 @@ function loadSandbox(files, extra = {}) {
 function createFixtureLevel(index) {
   const packs = ['Océano', 'Bosque', 'Ciudad', 'Fantasía', 'Espacio', 'Postres', 'Mascotas', 'Arte'];
   const difficulties = ['easy', 'standard', 'hard'];
-  const plans = { easy: [6, 6, 8, 10], standard: [8, 8, 8, 8, 8], hard: [9, 9, 10, 10, 10] };
+  const plans = { easy: [6, 6, 6, 6], standard: [8, 8, 8, 8], hard: [8, 8, 8, 8, 8] };
   const rewards = { easy: 40, standard: 58, hard: 80 };
-  const targetCounts = { easy: 30, standard: 40, hard: 48 };
+  const targetCounts = { easy: 24, standard: 32, hard: 40 };
   const difficulty = difficulties[index % difficulties.length];
   const id = `fixture_${String(index + 1).padStart(3, '0')}`;
   return Object.freeze({
@@ -79,7 +79,7 @@ function validatePuzzle(level, puzzle) {
   assert.ok(puzzle.validation.cellCoverageOk, `${level.id} coverage`);
   assert.ok(puzzle.validation.adjacencyOk, `${level.id} adjacency`);
   assert.ok(puzzle.validation.segmentsOk, `${level.id} segments`);
-  const ranges = { easy: [28, 34], standard: [36, 42], hard: [44, 50] };
+  const ranges = { easy: [22, 28], standard: [28, 34], hard: [36, 42] };
   const [minPieces, maxPieces] = ranges[level.difficulty] || ranges.standard;
   assert.ok(puzzle.validation.pieceCount >= minPieces && puzzle.validation.pieceCount <= maxPieces, `${level.id} piece count`);
   assert.equal(puzzle.segments.items.s_0.revealed, true, `${level.id} s_0 revealed`);

@@ -198,4 +198,63 @@ function forceSegmentComplete(scene, segmentId) {
   assert.match(segmentsSource, /if \(activeSegment\.completed\) return/, 'completed segments cannot fire twice');
 }
 
+{
+  const sandbox = loadGameplaySandbox({ Date });
+  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const puzzle = sandbox.MAREJIG_Generator.generate(level);
+  assert.equal(level.difficulty, 'standard', 'Raiden Shogun remains standard difficulty');
+  assert.ok(puzzle.validation.pieceCount >= 28 && puzzle.validation.pieceCount <= 34, 'Raiden Shogun standard puzzle uses larger 28–34 piece range');
+  assert.equal(puzzle.validation.ok, true, `Raiden Shogun puzzle validates: ${puzzle.validation.errors.join('; ')}`);
+}
+
+{
+  const html = read('index.html');
+  const normalHud = html.replace(/[\s\S]*<div class="marejig-game-hud" aria-label="Estado del puzzle">/, '').replace(/<div class="marejig-canvas-wrap">[\s\S]*/, '');
+  assert.doesNotMatch(normalHud, />[^<]*(Seed|Generador|Imagen runtime|Board|RC Fase)[^<]*</, 'normal HUD does not expose technical labels');
+  assert.match(html, /class="marejig-level-details marejig-debug-only"[^>]*hidden/, 'technical details are hidden debug-only markup');
+  assert.match(html, /class="marejig-ready-overlay marejig-debug-only"[^>]*hidden/, 'debug overlay is hidden by default');
+  const mainSource = read('js/MAREJIG_main.js');
+  assert.match(mainSource, /searchParams\.get\('debug'\) === '1'/, 'debug panel can be enabled by ?debug=1');
+  assert.match(mainSource, /MAREJIG_Config\.debug\.enabled/, 'debug panel can be enabled by config flag');
+}
+
+{
+  const sandbox = loadSandbox(['MAREJIG_shapes.js']);
+  const outline = sandbox.MAREJIG_Shapes.buildCellsOutline([{ x: 0, y: 0 }, { x: 1, y: 0 }]);
+  const segments = outline.segments.map((segment) => `${segment.x1},${segment.y1}>${segment.x2},${segment.y2}`);
+  assert.equal(outline.segments.length, 6, 'two merged adjacent cells have only external perimeter segments');
+  assert.equal(segments.includes('1,0>1,1') || segments.includes('1,1>1,0'), false, 'shared internal edge is absent from group outline');
+}
+
+{
+  const sandbox = loadSandbox(['MAREJIG_shapes.js', 'MAREJIG_groups.js']);
+  const scene = {
+    board: { cellSize: 40 },
+    staging: { pieceScale: 40 },
+    puzzle: { pieces: {
+      p_001: { id: 'p_001', cells: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }], solution: { gridX: 0, gridY: 0 }, bounds: { w: 2, h: 2 }, segmentId: 's_0' },
+      p_002: { id: 'p_002', cells: [{ x: 0, y: 0 }], solution: { gridX: 4, gridY: 0 }, bounds: { w: 1, h: 1 }, segmentId: 's_0' }
+    } },
+    pieces: {
+      p_001: { id: 'p_001', visible: true, groupId: 'g_001' },
+      p_002: { id: 'p_002', visible: false, groupId: 'g_002' }
+    },
+    groups: {
+      g_001: { id: 'g_001', pieceIds: ['p_001'], anchorPieceId: 'p_001', x: 10, y: 10, zIndex: 2, visible: true, lockedToBoard: false },
+      g_002: { id: 'g_002', pieceIds: ['p_002'], anchorPieceId: 'p_002', x: 10, y: 10, zIndex: 10, visible: true, lockedToBoard: false }
+    }
+  };
+  assert.equal(sandbox.MAREJIG_Groups.hitTest(scene, { x: 20, y: 20 }).pieceId, 'p_001', 'point inside visible L piece selects it');
+  assert.equal(sandbox.MAREJIG_Groups.hitTest(scene, { x: 62, y: 22 }), null, 'point in L-piece hole does not select by large bounds');
+  assert.equal(sandbox.MAREJIG_Groups.hitTest(scene, { x: 172, y: 22 }), null, 'hidden piece is never selected');
+  assert.equal(sandbox.MAREJIG_Groups.getTouchPadding(scene) <= Math.min(8, scene.board.cellSize * 0.18), true, 'touch fallback padding is capped');
+}
+
+{
+  const inputSource = read('js/MAREJIG_input.js');
+  const moveBody = inputSource.slice(inputSource.indexOf('function MAREJIG_onPointerMove'), inputSource.indexOf('function MAREJIG_tryHaptic'));
+  assert.doesNotMatch(moveBody, /Storage|saveActiveSave|saveLevelProgress|advanceIfSegmentComplete|Economy|findSnapCandidate|recalculateGroupBounds|getGroupOutline|buildCellsOutline/, 'pointermove avoids storage, segments, economy, snap and outline/bounds recalculation');
+  assert.match(moveBody, /requestAnimationFrame\(MAREJIG_applyPendingDrag\)/, 'pointermove coalesces drag updates with RAF');
+}
+
 console.log('phase8 audit tests ok');

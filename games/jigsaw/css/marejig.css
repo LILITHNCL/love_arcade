@@ -898,3 +898,91 @@
     outline: 3px solid #77f7e4;
     outline-offset: 2px;
 }
+
+.marejig-body #marejig-screen-game .marejig-game-layout {
+    margin-inline: calc(-1 * min(10px, 2vw));
+    padding: 8px;
+    gap: 8px;
+    border-radius: 20px;
+    background: rgba(6, 10, 22, 0.58);
+}
+
+.marejig-body #marejig-screen-game .marejig-game-head {
+    gap: 8px;
+}
+
+.marejig-body #marejig-screen-game .marejig-game-head .marejig-button {
+    min-width: auto;
+    min-height: 36px;
+    padding-inline: 12px;
+    font-size: 0.8rem;
+}
+
+.marejig-body #marejig-screen-game .marejig-kicker {
+    margin-bottom: 2px;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+}
+
+.marejig-body #marejig-screen-game .marejig-game-title {
+    font-size: clamp(1.1rem, 6vw, 1.7rem);
+}
+
+.marejig-body #marejig-screen-game .marejig-game-hud {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+    gap: 6px;
+    margin: 0;
+}
+
+.marejig-body #marejig-screen-game .marejig-hud-pill,
+.marejig-body #marejig-screen-game .marejig-button-compact {
+    min-height: 32px;
+    padding-inline: 9px;
+    font-size: 0.74rem;
+}
+
+.marejig-body #marejig-screen-game .marejig-canvas-wrap {
+    height: min(70svh, calc(100svh - 178px));
+    min-height: 610px;
+    border-radius: 18px;
+}
+
+.marejig-debug-only[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 520px) {
+    .marejig-body .marejig-shell {
+        padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+    }
+
+    .marejig-body .marejig-topbar {
+        margin-bottom: 8px;
+    }
+
+    .marejig-body .marejig-brand-copy small {
+        display: none;
+    }
+
+    .marejig-body #marejig-screen-game .marejig-game-hud {
+        grid-template-columns: repeat(3, auto);
+    }
+
+    .marejig-body #marejig-screen-game .marejig-canvas-wrap {
+        height: calc(100svh - 172px);
+        min-height: 650px;
+    }
+}
+
+@media (min-width: 980px) {
+    .marejig-body #marejig-screen-game .marejig-game-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .marejig-body #marejig-screen-game .marejig-level-details:not([hidden]) {
+        grid-column: 1 / 2;
+        grid-row: auto;
+    }
+}

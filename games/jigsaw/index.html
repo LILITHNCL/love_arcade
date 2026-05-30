@@ -98,24 +98,24 @@
                     </div>
                     <div class="marejig-game-hud" aria-label="Estado del puzzle">
                         <span class="marejig-hud-pill" id="marejig-hud-time">Tiempo 00:00</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-reward">0 movimientos</span>
+                        <span class="marejig-hud-pill" id="marejig-hud-reward">Movs 0</span>
                         <span class="marejig-hud-pill" id="marejig-hud-segment">Segmento 1/1</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-visible">0 visibles</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-total">0 piezas</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-image">Imagen pendiente</span>
-                        <span class="marejig-hud-pill" id="marejig-hud-save">Sin guardar</span>
+                        <span class="marejig-hud-pill" id="marejig-hud-visible">0/0 conectadas</span>
+                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-total" hidden>0 piezas</span>
+                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-image" hidden>Imagen pendiente</span>
+                        <span class="marejig-hud-pill marejig-debug-only" id="marejig-hud-save" hidden>Sin guardar</span>
                         <button class="marejig-button marejig-button-primary marejig-button-compact" type="button" id="marejig-hint-button" aria-label="Mostrar una pista del segmento activo">Pista</button>
                         <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-pause-button" aria-label="Abrir opciones de pausa">Opciones</button>
                         <button class="marejig-button marejig-button-secondary marejig-button-compact" type="button" id="marejig-center-view" aria-label="Centrar vista del puzzle">Centrar</button>
                     </div>
                     <div class="marejig-canvas-wrap">
                         <canvas id="marejig-canvas" class="marejig-canvas" width="1280" height="960" aria-label="Escena del puzzle"></canvas>
-                        <div class="marejig-ready-overlay" id="marejig-ready-overlay">
+                        <div class="marejig-ready-overlay marejig-debug-only" id="marejig-ready-overlay" hidden>
                             <span class="marejig-ready-badge">Fase 4</span>
                             <p class="marejig-section-note" id="marejig-ready-copy">Puzzle visual listo.</p>
                         </div>
                     </div>
-                    <aside class="marejig-level-details" id="marejig-level-details" aria-label="Detalles del nivel seleccionado"></aside>
+                    <aside class="marejig-level-details marejig-debug-only" id="marejig-level-details" aria-label="Detalles técnicos del nivel seleccionado" hidden></aside>
                 </div>
             </section>
 

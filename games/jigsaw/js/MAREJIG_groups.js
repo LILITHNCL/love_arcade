@@ -1,6 +1,8 @@
 (function MAREJIG_groupsModule(windowObject) {
     'use strict';
 
+    var MAREJIG_Shapes = windowObject.MAREJIG_Shapes;
+
     function MAREJIG_createInitialGroups(pieces) {
         var groups = {};
         Object.keys(pieces).forEach(function MAREJIG_createGroup(pieceId) {
@@ -16,7 +18,9 @@
                 bounds: { x: 0, y: 0, width: 0, height: 0 },
                 hitBounds: { x: 0, y: 0, width: 0, height: 0 },
                 lockedToBoard: false,
-                visible: true
+                visible: true,
+                outlineDirty: true,
+                groupOutline: null
             };
         });
         return groups;
@@ -72,7 +76,7 @@
         var minY = Infinity;
         var maxX = -Infinity;
         var maxY = -Infinity;
-        var inflate = Math.max(12, (scene.board.cellSize || scene.staging.pieceScale || 24) * 0.28);
+        var inflate = Math.min(8, (scene.board.cellSize || scene.staging.pieceScale || 24) * 0.18);
 
         group.pieceIds.forEach(function MAREJIG_measurePiece(pieceId) {
             var scenePiece = scene.pieces[pieceId];
@@ -118,50 +122,95 @@
         return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
     }
 
-    function MAREJIG_hitTestPieceByCells(scene, pieceId, point) {
+    function MAREJIG_getTouchPadding(scene) {
+        var base = scene && scene.board ? scene.board.cellSize || scene.staging.pieceScale || 24 : 24;
+        return Math.min(8, base * 0.18);
+    }
+
+    function MAREJIG_distanceToRect(point, rect) {
+        var dx = Math.max(rect.x - point.x, 0, point.x - (rect.x + rect.width));
+        var dy = Math.max(rect.y - point.y, 0, point.y - (rect.y + rect.height));
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function MAREJIG_hitTestPieceByCells(scene, pieceId, point, allowPadding) {
         var puzzlePiece = scene.puzzle.pieces[pieceId];
         var scenePiece = scene.pieces[pieceId];
+        if (!puzzlePiece || !scenePiece || !scenePiece.visible) return null;
         var group = scene.groups[scenePiece.groupId];
         var rect = MAREJIG_getPieceWorldRect(scene, pieceId, group);
-        if (!rect) return false;
-        if (!MAREJIG_pointInRect(point, scenePiece.hitBounds || rect)) return false;
+        if (!rect) return null;
         var scale = rect.scale;
-        return puzzlePiece.cells.some(function MAREJIG_cellContains(cell) {
-            var cellX = rect.x + cell.x * scale;
-            var cellY = rect.y + cell.y * scale;
-            return point.x >= cellX && point.x <= cellX + scale && point.y >= cellY && point.y <= cellY + scale;
-        });
+        var padding = allowPadding ? MAREJIG_getTouchPadding(scene) : 0;
+        var bestDistance = Infinity;
+        for (var index = 0; index < puzzlePiece.cells.length; index += 1) {
+            var cell = puzzlePiece.cells[index];
+            var cellRect = { x: rect.x + cell.x * scale, y: rect.y + cell.y * scale, width: scale, height: scale };
+            if (MAREJIG_pointInRect(point, cellRect)) return { exact: true, distance: 0 };
+            bestDistance = Math.min(bestDistance, MAREJIG_distanceToRect(point, cellRect));
+        }
+        if (allowPadding && bestDistance <= padding) return { exact: false, distance: bestDistance };
+        return null;
     }
 
     function MAREJIG_hitTest(scene, point, options) {
         if (!scene || !point) return null;
-        MAREJIG_recalculateAllGroupBounds(scene);
         var includeLocked = Boolean(options && options.includeLocked);
         var groups = Object.keys(scene.groups).map(function MAREJIG_getGroup(groupId) {
             return scene.groups[groupId];
         }).filter(function MAREJIG_canHitGroup(group) {
-            return group.visible && (includeLocked || !group.lockedToBoard) && MAREJIG_pointInRect(point, group.hitBounds || group.bounds || { x: 0, y: 0, width: 0, height: 0 });
+            return group.visible && (includeLocked || !group.lockedToBoard);
         }).sort(function MAREJIG_sortTopFirst(a, b) {
             return (b.zIndex || 0) - (a.zIndex || 0);
         });
+        var fallback = null;
 
         for (var i = 0; i < groups.length; i += 1) {
             var group = groups[i];
-            var pieceIds = group.pieceIds.slice().sort(function MAREJIG_sortPieceHit(a, b) {
-                return String(b).localeCompare(String(a));
-            });
+            var pieceIds = group.pieceIds.slice().sort();
             for (var p = 0; p < pieceIds.length; p += 1) {
                 var pieceId = pieceIds[p];
-                if (!scene.pieces[pieceId] || !scene.pieces[pieceId].visible) continue;
-                if (MAREJIG_hitTestPieceByCells(scene, pieceId, point)) {
-                    return { groupId: group.id, pieceId: pieceId, group: group };
+                var exactHit = MAREJIG_hitTestPieceByCells(scene, pieceId, point, false);
+                if (exactHit && exactHit.exact) return { groupId: group.id, pieceId: pieceId, group: group, distance: exactHit.distance };
+                var paddedHit = MAREJIG_hitTestPieceByCells(scene, pieceId, point, true);
+                if (paddedHit && (!fallback || (group.zIndex || 0) > (fallback.group.zIndex || 0) || ((group.zIndex || 0) === (fallback.group.zIndex || 0) && paddedHit.distance < fallback.distance))) {
+                    fallback = { groupId: group.id, pieceId: pieceId, group: group, distance: paddedHit.distance };
                 }
             }
-            if (MAREJIG_pointInRect(point, group.hitBounds || group.bounds)) {
-                return { groupId: group.id, pieceId: group.pieceIds[0], group: group };
-            }
         }
-        return null;
+        return fallback;
+    }
+
+    function MAREJIG_getGroupAbsoluteCells(scene, group) {
+        var cells = [];
+        if (!scene || !group || !MAREJIG_Shapes) return cells;
+        group.pieceIds.forEach(function MAREJIG_collectGroupCells(pieceId) {
+            var scenePiece = scene.pieces[pieceId];
+            var piece = scene.puzzle.pieces[pieceId];
+            if (!scenePiece || !scenePiece.visible || !piece) return;
+            piece.cells.forEach(function MAREJIG_collectPieceCell(cell) {
+                cells.push({ x: piece.solution.gridX + cell.x, y: piece.solution.gridY + cell.y });
+            });
+        });
+        return cells;
+    }
+
+    function MAREJIG_getGroupOutline(scene, groupId) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group || !MAREJIG_Shapes) return null;
+        if (!group.outlineDirty && group.groupOutline) return group.groupOutline;
+        group.groupOutline = MAREJIG_Shapes.buildCellsOutline(MAREJIG_getGroupAbsoluteCells(scene, group));
+        group.outlineDirty = false;
+        return group.groupOutline;
+    }
+
+    function MAREJIG_invalidateGroupOutline(scene, groupId) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group) return;
+        group.outlineDirty = true;
+        group.groupOutline = null;
+        group.groupOutlinePath = null;
+        group.groupOutlinePathKey = null;
     }
 
     function MAREJIG_getAdjacencyEdges(scene, pieceId) {
@@ -240,6 +289,10 @@
         target.pieceIds.sort();
         target.anchorPieceId = target.anchorPieceId || target.pieceIds[0];
         target.zIndex = Math.max(Number(target.zIndex) || 0, Number(source.zIndex) || 0);
+        target.outlineDirty = true;
+        target.groupOutline = null;
+        target.groupOutlinePath = null;
+        target.groupOutlinePathKey = null;
         delete groups[sourceGroupId];
         return groups;
     }
@@ -256,6 +309,7 @@
         if (merged) {
             merged.visible = true;
             merged.zIndex = MAREJIG_getMaxZ(scene.groups) + 1;
+            MAREJIG_invalidateGroupOutline(scene, targetGroupId);
             MAREJIG_recalculateGroupBounds(scene, targetGroupId);
         }
         return merged;
@@ -317,6 +371,9 @@
         recalculateAllGroupBounds: MAREJIG_recalculateAllGroupBounds,
         bringGroupToFront: MAREJIG_bringGroupToFront,
         hitTest: MAREJIG_hitTest,
+        getTouchPadding: MAREJIG_getTouchPadding,
+        getGroupOutline: MAREJIG_getGroupOutline,
+        invalidateGroupOutline: MAREJIG_invalidateGroupOutline,
         findSnapCandidate: MAREJIG_findSnapCandidate,
         applySnap: MAREJIG_applySnap,
         mergeSceneGroups: MAREJIG_mergeSceneGroups,

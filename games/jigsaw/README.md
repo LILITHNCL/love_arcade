@@ -21,7 +21,7 @@ Scaffold y motor geométrico inicial para el juego `marejigweb`, alojado en `gam
 - biblioteca de formas poliminó ortogonales en `MAREJIG_shapes.js`;
 - generador determinístico por `level.id` en `MAREJIG_generator.js`;
 - board estándar `12×9` con cobertura exacta de 108 celdas;
-- target estándar de 40 piezas, validado dentro del rango 36–42;
+- target estándar de 32 piezas, validado dentro del rango 28–34;
 - grafo de adyacencia real por lados compartidos;
 - `neighborIds`, `segmentId`, `groupId` y contornos serializables por pieza;
 - segmentos progresivos con `s_0` revelado inicialmente;
@@ -126,7 +126,7 @@ Formato exacto del objeto `Level` exportado por el catálogo:
   aspectRatio: '4:3',
   master: { width: 2400, height: 1800 },
   board: { cols: 12, rows: 9 },
-  targetPieceCount: 40,
+  targetPieceCount: 32,
   segmentPlan: [10, 10, 12, 12, 16],
   rewardCoins: 55
 }
@@ -156,7 +156,7 @@ Para producción, reemplaza `demo` por el cloud name real. Las URLs usan `f_auto
 
 ### Balance de dificultad y recompensas
 
-Las dificultades válidas son `easy`, `standard` y `hard`. En v1 todas conservan board `12×9`; los targets son 30 piezas para `easy`, 40 para `standard` y 48 para `hard` con rangos validados por dificultad. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
+Las dificultades válidas son `easy`, `standard` y `hard`. En v1 todas conservan board `12×9`; los targets son 24 piezas para `easy`, 32 para `standard` y 40 para `hard` con rangos validados por dificultad: 22–28, 28–34 y 36–42. El balance se aplica con planes de segmentos, duración/límite de pistas y recompensa fija:
 
 - `easy`: segmentos más generosos y recompensas 35–45 monedas.
 - `standard`: segmentos estándar y recompensas 50–65 monedas.

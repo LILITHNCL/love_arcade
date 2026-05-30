@@ -6,10 +6,10 @@
     var MAREJIG_Groups = windowObject.MAREJIG_Groups;
     var MAREJIG_GENERATOR_VERSION = 2;
     var MAREJIG_PIECE_RANGES = Object.freeze({
-        easy: Object.freeze([28, 34]),
-        standard: Object.freeze([36, 42]),
-        hard: Object.freeze([44, 50]),
-        test: Object.freeze([28, 50])
+        easy: Object.freeze([22, 28]),
+        standard: Object.freeze([28, 34]),
+        hard: Object.freeze([36, 42]),
+        test: Object.freeze([22, 42])
     });
 
     function MAREJIG_hashSeed(input) {
@@ -200,7 +200,7 @@
             return { minNonRectangularRatio: 0.55, maxRectangularRatio: 0.40, maxMonominoCount: 2 };
         }
         if (difficulty === 'easy') {
-            return { minNonRectangularRatio: 0.50, maxRectangularRatio: 0.50, maxMonominoCount: 2 };
+            return { minNonRectangularRatio: 0.30, maxRectangularRatio: 0.70, maxMonominoCount: 2 };
         }
         return { minNonRectangularRatio: 0.16, maxRectangularRatio: 0.84, maxMonominoCount: 2 };
     }
@@ -258,7 +258,7 @@
     }
 
     function MAREJIG_buildPremiumBlockPieces(cols, rows, targetPieceCount, rng) {
-        if (cols !== 12 || rows !== 9 || targetPieceCount < 30 || targetPieceCount > 48) return null;
+        if (cols !== 12 || rows !== 9 || targetPieceCount < 22 || targetPieceCount > 42) return null;
         var blocks = [];
         for (var y = 0; y < rows; y += 2) {
             if (y + 1 >= rows) break;
@@ -499,7 +499,7 @@
         var cols = level.board.cols;
         var rows = level.board.rows;
         var cellCount = cols * rows;
-        var targetPieceCount = level.targetPieceCount || 40;
+        var targetPieceCount = level.targetPieceCount || 32;
         var lastPuzzle = null;
 
         for (var attempt = 0; attempt < maxAttempts; attempt += 1) {

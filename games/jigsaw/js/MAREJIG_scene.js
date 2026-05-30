@@ -53,6 +53,7 @@
             groups[groupId] = {
                 id: groupId,
                 pieceIds: group.pieceIds.slice(),
+                anchorPieceId: group.anchorPieceId || firstPieceId,
                 x: 0,
                 y: 0,
                 zIndex: visible ? Math.floor(rng() * 1000) : 0,
@@ -62,7 +63,9 @@
                 bounds: { x: 0, y: 0, width: 0, height: 0 },
                 hitBounds: { x: 0, y: 0, width: 0, height: 0 },
                 laneIndex: activeSegment.pieceIds.indexOf(firstPieceId),
-                jitter: { x: rng() - 0.5, y: rng() - 0.5 }
+                jitter: { x: rng() - 0.5, y: rng() - 0.5 },
+                outlineDirty: true,
+                groupOutline: null
             };
         });
 
@@ -126,16 +129,14 @@
     }
 
     function MAREJIG_layoutScene(scene, viewportWidth, viewportHeight) {
-        var margin = Math.max(14, Math.min(28, viewportWidth * 0.045));
-        var gap = Math.max(14, Math.min(24, viewportHeight * 0.035));
+        var margin = Math.max(8, Math.min(12, viewportWidth * 0.032));
+        var gap = Math.max(8, Math.min(14, viewportHeight * 0.018));
         var availableWidth = Math.max(1, viewportWidth - margin * 2);
-        var boardMaxHeight = Math.max(160, viewportHeight * 0.55);
-        var boardWidth = Math.min(availableWidth, boardMaxHeight * 4 / 3);
+        var boardMaxHeight = Math.max(180, viewportHeight * (viewportWidth < 680 ? 0.46 : 0.58));
+        var boardWidth = Math.min(availableWidth, viewportWidth * 0.96, boardMaxHeight * 4 / 3);
         var boardHeight = boardWidth * 3 / 4;
         var boardX = (viewportWidth - boardWidth) / 2;
         var boardY = margin;
-        var stagingY = boardY + boardHeight + gap;
-        var stagingHeight = Math.max(120, viewportHeight - stagingY - margin);
         var visibleGroups = Object.keys(scene.groups).map(function MAREJIG_groupById(groupId) {
             return scene.groups[groupId];
         }).filter(function MAREJIG_visibleGroup(group) {
@@ -143,12 +144,20 @@
         }).sort(function MAREJIG_sortGroups(a, b) {
             return a.laneIndex - b.laneIndex;
         });
-        var columns = Math.max(2, Math.min(5, Math.ceil(Math.sqrt(Math.max(1, visibleGroups.length) * (viewportWidth > 720 ? 1.4 : 1)))));
+        var boardCell = boardWidth / scene.board.cols;
+        var columns = Math.max(2, Math.min(viewportWidth > 720 ? 8 : 6, visibleGroups.length || 2));
         var rows = Math.max(1, Math.ceil(visibleGroups.length / columns));
         var slotW = availableWidth / columns;
-        var slotH = stagingHeight / rows;
-        var boardCell = boardWidth / scene.board.cols;
-        var pieceScale = Math.max(12, Math.min(boardCell * 0.92, slotW * 0.44, slotH * 0.50));
+        var pieceScale = Math.max(18, Math.min(boardCell * 0.98, slotW * 0.62));
+        var maxPieceRows = visibleGroups.reduce(function MAREJIG_maxPieceRows(max, group) {
+            var piece = scene.puzzle.pieces[group.pieceIds[0]];
+            return Math.max(max, piece ? piece.bounds.h : 1);
+        }, 1);
+        var slotH = Math.max(pieceScale * (maxPieceRows + 0.65), pieceScale * 2.25);
+        var stagingY = boardY + boardHeight + gap;
+        var availableStagingHeight = Math.max(72, viewportHeight - stagingY - margin);
+        var stagingHeight = Math.min(availableStagingHeight, Math.max(72, rows * slotH + 28));
+        slotH = Math.max(1, (stagingHeight - 20) / rows);
 
         scene.board.x = boardX;
         scene.board.y = boardY;
@@ -170,8 +179,8 @@
             var pieceW = piece.bounds.w * pieceScale;
             var pieceH = piece.bounds.h * pieceScale;
             if (!group.positioned) {
-                group.x = margin + col * slotW + (slotW - pieceW) / 2 + group.jitter.x * Math.min(12, slotW * 0.08);
-                group.y = stagingY + row * slotH + (slotH - pieceH) / 2 + group.jitter.y * Math.min(10, slotH * 0.08);
+                group.x = margin + col * slotW + (slotW - pieceW) / 2 + group.jitter.x * Math.min(8, slotW * 0.06);
+                group.y = stagingY + 18 + row * slotH + Math.max(0, (slotH - pieceH) / 2) + group.jitter.y * Math.min(6, slotH * 0.06);
                 group.positioned = true;
             }
             if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
@@ -216,12 +225,15 @@
             nextGroups[groupId] = Object.assign({}, scene.groups[groupId] || {}, {
                 id: groupId,
                 pieceIds: saved.pieceIds.slice(),
+                anchorPieceId: saved.anchorPieceId || (saved.pieceIds && saved.pieceIds[0]) || groupId.replace('g_', 'p_'),
                 x: Number(saved.x) || 0,
                 y: Number(saved.y) || 0,
                 zIndex: Number(saved.zIndex) || 0,
                 lockedToBoard: Boolean(saved.lockedToBoard),
                 visible: Boolean(saved.visible),
-                positioned: true
+                positioned: true,
+                outlineDirty: true,
+                groupOutline: null
             });
         });
         if (!Object.keys(nextGroups).length) return false;
