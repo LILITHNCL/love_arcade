@@ -80,7 +80,8 @@
                 puzzleCompletedLocal: false, completionStarted: false, rewardReported: false,
                 rewardSkipped: false, status: 'Jugando', gamePhase: 'playing', nextZIndex: 1000
             },
-            ui: { activeSegmentId: activeSegmentId, selectedGroupId: null, snapFeedback: null, lastSnapCandidate: null, message: 'Jugando', messageStartedAt: Date.now(), dirty: true }
+            ui: { activeSegmentId: activeSegmentId, selectedGroupId: null, snapFeedback: null, lastSnapCandidate: null, message: 'Jugando', messageStartedAt: Date.now(), dirty: true },
+            feedback: { invalidContact: null }
         };
     }
 
@@ -92,8 +93,8 @@
 
     function MAREJIG_getWorldDimensions(scene, viewportWidth, viewportHeight, boardWidth, boardHeight) {
         return {
-            width: Math.ceil(Math.max(viewportWidth * 1.8, boardWidth * 1.4 + viewportWidth * 0.52)),
-            height: Math.ceil(Math.max(viewportHeight * 1.5, boardHeight * 1.8 + viewportHeight * 0.52))
+            width: Math.ceil(Math.max(viewportWidth * 2.08, boardWidth + viewportWidth * 0.92)),
+            height: Math.ceil(Math.max(viewportHeight * 1.78, boardHeight + viewportHeight * 1.02))
         };
     }
 
@@ -117,8 +118,10 @@
     function MAREJIG_centerScene(scene) {
         if (!scene || !scene.viewport) return scene;
         scene.camera.zoom = 1;
-        scene.camera.x = scene.board.x + scene.board.width / 2 - scene.viewport.width / 2;
-        scene.camera.y = scene.board.y + scene.board.height / 2 - scene.viewport.height * 0.43;
+        var initialBounds = MAREJIG_getSegmentBounds(scene, scene.ui && scene.ui.activeSegmentId);
+        var focus = initialBounds || { x: scene.board.x, y: scene.board.y, width: scene.board.width, height: scene.board.height };
+        scene.camera.x = focus.x + focus.width / 2 - scene.viewport.width / 2;
+        scene.camera.y = focus.y + focus.height / 2 - scene.viewport.height / 2;
         scene.ui.selectedGroupId = null;
         MAREJIG_clampCamera(scene);
         scene.ui.dirty = true;
@@ -136,6 +139,109 @@
     function MAREJIG_getOccupiedBounds(scene, ignoredId) {
         return MAREJIG_getVisibleGroups(scene).filter(function MAREJIG_positioned(group) { return group.positioned && group.id !== ignoredId; }).map(function MAREJIG_groupBounds(group) { return group.bounds; });
     }
+
+    function MAREJIG_unionBounds(boundsList) {
+        var filtered = (boundsList || []).filter(function MAREJIG_validBounds(bounds) { return bounds && bounds.width >= 0 && bounds.height >= 0; });
+        if (!filtered.length) return null;
+        var minX = Infinity;
+        var minY = Infinity;
+        var maxX = -Infinity;
+        var maxY = -Infinity;
+        filtered.forEach(function MAREJIG_includeBounds(bounds) {
+            minX = Math.min(minX, bounds.x);
+            minY = Math.min(minY, bounds.y);
+            maxX = Math.max(maxX, bounds.x + bounds.width);
+            maxY = Math.max(maxY, bounds.y + bounds.height);
+        });
+        return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    function MAREJIG_getSegmentGroupIds(scene, segmentId) {
+        var segment = scene && scene.puzzle && scene.puzzle.segments ? scene.puzzle.segments.items[segmentId] : null;
+        var ids = [];
+        if (!segment) return ids;
+        segment.pieceIds.forEach(function MAREJIG_segmentGroup(pieceId) {
+            var groupId = scene.pieces[pieceId] && scene.pieces[pieceId].groupId;
+            if (groupId && ids.indexOf(groupId) === -1) ids.push(groupId);
+        });
+        return ids;
+    }
+
+    function MAREJIG_getSegmentBounds(scene, segmentId) {
+        var bounds = MAREJIG_getSegmentGroupIds(scene, segmentId).map(function MAREJIG_segmentBounds(groupId) {
+            var group = scene.groups[groupId];
+            if (group && group.visible && MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+            return group && group.visible ? group.bounds : null;
+        });
+        return MAREJIG_unionBounds(bounds);
+    }
+
+    function MAREJIG_getMainFocusBounds(scene) {
+        if (scene && scene.progress && scene.progress.mainGroupId && scene.groups[scene.progress.mainGroupId]) {
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, scene.progress.mainGroupId);
+            return scene.groups[scene.progress.mainGroupId].bounds;
+        }
+        var revealed = MAREJIG_getVisibleGroups(scene).filter(function MAREJIG_alreadyPositioned(group) { return group.positioned; }).map(function MAREJIG_focusBounds(group) {
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+            return group.bounds;
+        });
+        return MAREJIG_unionBounds(revealed) || { x: scene.board.x, y: scene.board.y, width: scene.board.width, height: scene.board.height };
+    }
+
+    function MAREJIG_overlapArea(a, b) {
+        var width = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+        var height = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+        return width * height;
+    }
+
+    function MAREJIG_boundsNear(a, b, gap) {
+        return !(a.x + a.width + gap < b.x || b.x + b.width + gap < a.x || a.y + a.height + gap < b.y || b.y + b.height + gap < a.y);
+    }
+
+    function MAREJIG_moveGroupByBounds(scene, group, x, y) {
+        if (!group) return group;
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        var bounds = group.bounds || { x: group.x, y: group.y, width: 0, height: 0 };
+        group.x += x - bounds.x;
+        group.y += y - bounds.y;
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        return group;
+    }
+
+    function MAREJIG_isFreeBounds(scene, bounds, ignoredIds, gap, allowBoard) {
+        var ignore = ignoredIds || [];
+        var world = scene.world;
+        if (bounds.x < world.x || bounds.y < world.y || bounds.x + bounds.width > world.x + world.width || bounds.y + bounds.height > world.y + world.height) return false;
+        if (!allowBoard && MAREJIG_isInsideSolution(scene, bounds, gap * 0.5)) return false;
+        return !MAREJIG_getVisibleGroups(scene).some(function MAREJIG_collidesExisting(group) {
+            return group.positioned && ignore.indexOf(group.id) === -1 && MAREJIG_boundsOverlap(bounds, group.bounds, gap);
+        });
+    }
+
+    function MAREJIG_findFreePosition(scene, width, height, origin, ignoredIds, options) {
+        var gap = Math.max(10, Number(options && options.gap) || scene.staging.pieceScale * 0.28);
+        var allowBoard = Boolean(options && options.allowBoard);
+        var candidates = [];
+        var radiusStep = Math.max(scene.staging.pieceScale * 1.2, Math.min(scene.viewport.width, scene.viewport.height) * 0.12);
+        candidates.push({ x: origin.x - width / 2, y: origin.y - height / 2 });
+        for (var ring = 1; ring <= 7; ring += 1) {
+            var r = radiusStep * ring;
+            candidates.push({ x: origin.x - width / 2 + r, y: origin.y - height / 2 });
+            candidates.push({ x: origin.x - width / 2 - r, y: origin.y - height / 2 });
+            candidates.push({ x: origin.x - width / 2, y: origin.y - height / 2 + r });
+            candidates.push({ x: origin.x - width / 2, y: origin.y - height / 2 - r });
+            candidates.push({ x: origin.x - width / 2 + r * 0.72, y: origin.y - height / 2 + r * 0.72 });
+            candidates.push({ x: origin.x - width / 2 - r * 0.72, y: origin.y - height / 2 + r * 0.72 });
+        }
+        for (var i = 0; i < candidates.length; i += 1) {
+            var c = candidates[i];
+            c.x = MAREJIG_clamp(c.x, scene.world.x, scene.world.x + scene.world.width - width);
+            c.y = MAREJIG_clamp(c.y, scene.world.y, scene.world.y + scene.world.height - height);
+            if (MAREJIG_isFreeBounds(scene, { x: c.x, y: c.y, width: width, height: height }, ignoredIds, gap, allowBoard)) return c;
+        }
+        return { x: MAREJIG_clamp(origin.x - width / 2, scene.world.x, scene.world.x + scene.world.width - width), y: MAREJIG_clamp(origin.y - height / 2, scene.world.y, scene.world.y + scene.world.height - height) };
+    }
+
 
     function MAREJIG_candidateForZone(scene, zone, width, height, rng) {
         return { x: zone.x + rng() * Math.max(1, zone.width - width), y: zone.y + rng() * Math.max(1, zone.height - height) };
@@ -193,11 +299,10 @@
         if (!scene || !group || !scene.world || group.lockedToBoard) return group;
         if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         var bounds = group.bounds || { x: group.x, y: group.y, width: 0, height: 0 };
-        var pad = Math.max(8, scene.world.safePadding * 0.45);
-        var minX = scene.world.x - bounds.width + pad;
-        var maxX = scene.world.x + scene.world.width - pad;
-        var minY = scene.world.y - bounds.height + pad;
-        var maxY = scene.world.y + scene.world.height - pad;
+        var minX = scene.world.x;
+        var maxX = scene.world.x + Math.max(0, scene.world.width - bounds.width);
+        var minY = scene.world.y;
+        var maxY = scene.world.y + Math.max(0, scene.world.height - bounds.height);
         var nextX = MAREJIG_clamp(bounds.x, minX, maxX);
         var nextY = MAREJIG_clamp(bounds.y, minY, maxY);
         group.x += nextX - bounds.x;
@@ -217,11 +322,176 @@
         return scene;
     }
 
+
+    function MAREJIG_placeInitialSegmentCentered(scene) {
+        var groupIds = MAREJIG_getSegmentGroupIds(scene, scene.ui.activeSegmentId).filter(function MAREJIG_initialVisible(groupId) { return scene.groups[groupId] && scene.groups[groupId].visible && !scene.groups[groupId].positioned; });
+        if (!groupIds.length) return null;
+        var columns = Math.max(2, Math.ceil(Math.sqrt(groupIds.length)));
+        var scale = scene.staging.pieceScale;
+        var gap = Math.max(14, scale * 0.38);
+        var visibleCenter = { x: scene.camera.x + scene.viewport.width / 2, y: scene.camera.y + scene.viewport.height / 2 };
+        if (!scene.camera.x && !scene.camera.y) visibleCenter = { x: scene.world.width / 2, y: scene.world.height * 0.48 };
+        var sizes = groupIds.map(function MAREJIG_measureInitial(groupId) {
+            var group = scene.groups[groupId];
+            var anchor = scene.puzzle.pieces[group.anchorPieceId || group.pieceIds[0]];
+            return { id: groupId, width: Math.max(scale, anchor.bounds.w * scale), height: Math.max(scale, anchor.bounds.h * scale) };
+        });
+        var maxW = sizes.reduce(function MAREJIG_maxW(max, item) { return Math.max(max, item.width); }, scale);
+        var maxH = sizes.reduce(function MAREJIG_maxH(max, item) { return Math.max(max, item.height); }, scale);
+        var totalRows = Math.ceil(sizes.length / columns);
+        var startX = visibleCenter.x - (columns * (maxW + gap) - gap) / 2;
+        var startY = visibleCenter.y - (totalRows * (maxH + gap) - gap) / 2;
+        sizes.forEach(function MAREJIG_placeInitial(item, index) {
+            var group = scene.groups[item.id];
+            var col = index % columns;
+            var row = Math.floor(index / columns);
+            var wobble = ((index % 2) - 0.5) * gap * 0.42;
+            MAREJIG_moveGroupByBounds(scene, group, startX + col * (maxW + gap) + (maxW - item.width) / 2 + wobble, startY + row * (maxH + gap) + (maxH - item.height) / 2 - wobble);
+            group.positioned = true;
+            group.zIndex = (scene.progress.nextZIndex += 1);
+            MAREJIG_clampGroupToWorld(scene, group);
+        });
+        return MAREJIG_getSegmentBounds(scene, scene.ui.activeSegmentId);
+    }
+
+    function MAREJIG_placeRevealedSegmentNearFocus(scene, segmentId, options) {
+        var groupIds = MAREJIG_getSegmentGroupIds(scene, segmentId).filter(function MAREJIG_newVisible(groupId) { return scene.groups[groupId] && scene.groups[groupId].visible; });
+        if (!groupIds.length) return null;
+        var focus = MAREJIG_getMainFocusBounds(scene);
+        var gap = Math.max(14, scene.staging.pieceScale * 0.34);
+        var spacing = Math.max(scene.staging.pieceScale * 1.15, 48);
+        var candidates = [
+            { x: focus.x + focus.width + spacing, y: focus.y + focus.height * 0.45 },
+            { x: focus.x + focus.width * 0.55, y: focus.y + focus.height + spacing },
+            { x: focus.x - spacing, y: focus.y + focus.height * 0.45 },
+            { x: focus.x + focus.width * 0.55, y: focus.y - spacing },
+            { x: focus.x + focus.width + spacing, y: focus.y + focus.height + spacing }
+        ];
+        var placedBounds = [];
+        groupIds.sort().forEach(function MAREJIG_placeRevealed(groupId, index) {
+            var group = scene.groups[groupId];
+            group.positioned = false;
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+            var anchor = scene.puzzle.pieces[group.anchorPieceId || group.pieceIds[0]];
+            var width = Math.max(scene.staging.pieceScale, anchor.bounds.w * scene.staging.pieceScale);
+            var height = Math.max(scene.staging.pieceScale, anchor.bounds.h * scene.staging.pieceScale);
+            var base = candidates[index % candidates.length];
+            var origin = { x: base.x + (index % 3) * (width + gap) * 0.42, y: base.y + Math.floor(index / 3) * (height + gap) * 0.8 };
+            var free = MAREJIG_findFreePosition(scene, width, height, origin, [groupId], { gap: gap, allowBoard: Boolean(options && options.allowBoard) });
+            MAREJIG_moveGroupByBounds(scene, group, free.x, free.y);
+            group.positioned = true;
+            group.zIndex = (scene.progress.nextZIndex += 1);
+            MAREJIG_clampGroupToWorld(scene, group);
+            placedBounds.push(group.bounds);
+        });
+        MAREJIG_resolveAllPassiveOverlaps(scene, { limit: 2, ignoredDragging: null });
+        return MAREJIG_unionBounds(placedBounds.concat([focus]));
+    }
+
+    function MAREJIG_focusCameraOnBounds(scene, bounds, options) {
+        if (!scene || !bounds) return scene && scene.camera;
+        var padding = Math.max(scene.staging.pieceScale * 0.75, Number(options && options.padding) || 42);
+        var target = {
+            x: bounds.x + bounds.width / 2 - scene.viewport.width / (2 * scene.camera.zoom),
+            y: bounds.y + bounds.height / 2 - scene.viewport.height / (2 * scene.camera.zoom),
+            zoom: scene.camera.zoom
+        };
+        target.x = MAREJIG_clamp(target.x - padding * 0.12, scene.world.x, Math.max(scene.world.x, scene.world.x + scene.world.width - scene.viewport.width / target.zoom));
+        target.y = MAREJIG_clamp(target.y - padding * 0.06, scene.world.y, Math.max(scene.world.y, scene.world.y + scene.world.height - scene.viewport.height / target.zoom));
+        scene.cameraTarget = target;
+        return target;
+    }
+
+    function MAREJIG_resolveGroupOverlap(scene, groupId, options) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group || !group.visible || (options && options.draggingGroupId === groupId)) return false;
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+        var bounds = group.bounds;
+        var minArea = Math.max(1, bounds.width * bounds.height);
+        var blockers = MAREJIG_getVisibleGroups(scene).filter(function MAREJIG_overlapBlocker(other) {
+            if (!other.positioned || other.id === groupId || (options && options.draggingGroupId === other.id)) return false;
+            var area = MAREJIG_overlapArea(bounds, other.bounds);
+            var otherArea = Math.max(1, other.bounds.width * other.bounds.height);
+            return area / Math.min(minArea, otherArea) > 0.10;
+        });
+        if (!blockers.length) return false;
+        var union = MAREJIG_unionBounds(blockers.map(function MAREJIG_blockerBounds(other) { return other.bounds; }).concat([bounds]));
+        var origins = [
+            { x: union.x + union.width + bounds.width * 0.55, y: bounds.y + bounds.height / 2 },
+            { x: union.x - bounds.width * 0.55, y: bounds.y + bounds.height / 2 },
+            { x: bounds.x + bounds.width / 2, y: union.y + union.height + bounds.height * 0.55 },
+            { x: bounds.x + bounds.width / 2, y: union.y - bounds.height * 0.55 }
+        ];
+        for (var i = 0; i < origins.length; i += 1) {
+            var free = MAREJIG_findFreePosition(scene, bounds.width, bounds.height, origins[i], [groupId], { gap: Math.max(12, scene.staging.pieceScale * 0.28), allowBoard: true });
+            var testBounds = { x: free.x, y: free.y, width: bounds.width, height: bounds.height };
+            if (MAREJIG_isFreeBounds(scene, testBounds, [groupId], Math.max(8, scene.staging.pieceScale * 0.2), true)) {
+                MAREJIG_moveGroupByBounds(scene, group, free.x, free.y);
+                MAREJIG_clampGroupToWorld(scene, group);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function MAREJIG_resolveAllPassiveOverlaps(scene, options) {
+        var changed = false;
+        var limit = Math.max(1, Number(options && options.limit) || 3);
+        for (var pass = 0; pass < limit; pass += 1) {
+            var passChanged = false;
+            MAREJIG_getVisibleGroups(scene).sort(function MAREJIG_smallFirst(a, b) { return (a.pieceIds.length || 0) - (b.pieceIds.length || 0); }).forEach(function MAREJIG_resolvePassive(group) {
+                if (MAREJIG_resolveGroupOverlap(scene, group.id, { draggingGroupId: options && options.draggingGroupId })) passChanged = true;
+            });
+            changed = changed || passChanged;
+            if (!passChanged) break;
+        }
+        return changed;
+    }
+
+    function MAREJIG_getIncorrectContact(scene, groupId) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group || !group.visible) return null;
+        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+        var gap = Math.max(8, scene.staging.pieceScale * 0.22);
+        var near = MAREJIG_getVisibleGroups(scene).filter(function MAREJIG_badContact(other) {
+            return other.id !== groupId && other.visible && MAREJIG_boundsNear(group.bounds, other.bounds, gap);
+        }).sort(function MAREJIG_contactSort(a, b) {
+            return MAREJIG_overlapArea(group.bounds, b.bounds) - MAREJIG_overlapArea(group.bounds, a.bounds);
+        })[0];
+        if (!near) return null;
+        return { groupId: groupId, targetGroupId: near.id, bounds: MAREJIG_unionBounds([group.bounds, near.bounds]), groupBounds: group.bounds, targetBounds: near.bounds };
+    }
+
+    function MAREJIG_markInvalidContact(scene, groupId, targetGroupId, options) {
+        if (!scene.feedback) scene.feedback = {};
+        scene.feedback.invalidContact = {
+            groupId: groupId,
+            targetGroupId: targetGroupId,
+            startedAt: Date.now(),
+            durationMs: Math.max(120, Number(options && options.durationMs) || 520),
+            shakeDurationMs: Math.max(120, Number(options && options.shakeDurationMs) || 160),
+            color: 'rgba(220, 95, 105, 0.85)'
+        };
+        scene.ui.dirty = true;
+        return scene.feedback.invalidContact;
+    }
+
+    function MAREJIG_clearInvalidContact(scene, groupId) {
+        if (!scene || !scene.feedback || !scene.feedback.invalidContact) return;
+        var feedback = scene.feedback.invalidContact;
+        if (!groupId || feedback.groupId === groupId || feedback.targetGroupId === groupId) {
+            scene.feedback.invalidContact = null;
+            scene.ui.dirty = true;
+        }
+    }
+
     function MAREJIG_layoutScene(scene, viewportWidth, viewportHeight) {
         var firstLayout = !scene.viewport.width || !scene.board.width;
         var oldCenter = firstLayout ? null : MAREJIG_screenToWorld(scene, { x: scene.viewport.width / 2, y: scene.viewport.height / 2 });
         var ratio = scene.board.cols / scene.board.rows;
-        var boardWidth = Math.min(viewportWidth * 0.84, viewportHeight * 0.46 * ratio, 720);
+        var portrait = viewportHeight >= viewportWidth;
+        var boardWidth = portrait ? Math.max(viewportWidth * 1.25, Math.min(viewportWidth * 1.45, viewportWidth * 1.35)) : Math.max(viewportWidth * 0.82, viewportHeight * 0.78 * ratio);
+        boardWidth = Math.min(boardWidth, 980);
         var boardHeight = boardWidth / ratio;
         var dims = MAREJIG_getWorldDimensions(scene, viewportWidth, viewportHeight, boardWidth, boardHeight);
         scene.viewport.width = viewportWidth;
@@ -236,13 +506,14 @@
         scene.board.sourceCellH = scene.imageMeta.height / scene.board.rows;
         if (firstLayout) {
             scene.board.x = (scene.world.width - boardWidth) / 2;
-            scene.board.y = Math.max(scene.world.safePadding * 2.2, scene.world.height * 0.19);
+            scene.board.y = Math.max(scene.world.safePadding * 2.2, scene.world.height * 0.14);
         }
         scene.staging.x = 0;
         scene.staging.y = 0;
         scene.staging.width = scene.world.width;
         scene.staging.height = scene.world.height;
-        scene.staging.pieceScale = Math.max(18, scene.board.cellSize * 0.86);
+        scene.staging.pieceScale = Math.max(28, scene.board.cellSize * 0.98);
+        if (firstLayout) MAREJIG_placeInitialSegmentCentered(scene);
         MAREJIG_getVisibleGroups(scene).forEach(function MAREJIG_placeVisibleGroup(group, index) {
             if (!group.positioned) MAREJIG_placeGroupNaturally(scene, group, scene.ui.activeSegmentId + ':' + index + ':' + group.id);
             else if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
@@ -291,6 +562,8 @@
         scene.ui.messageStartedAt = Date.now();
         scene.ui.dirty = true;
         if (MAREJIG_Groups) MAREJIG_Groups.recalculateAllGroupBounds(scene);
+        MAREJIG_ensureVisibleGroups(scene);
+        MAREJIG_resolveAllPassiveOverlaps(scene);
         return true;
     }
 
@@ -300,7 +573,11 @@
         createScene: MAREJIG_createScene, layoutScene: MAREJIG_layoutScene, reflowScene: MAREJIG_reflowScene,
         ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld,
         clampCamera: MAREJIG_clampCamera, screenToWorld: MAREJIG_screenToWorld, worldToScreen: MAREJIG_worldToScreen,
-        placeGroupNaturally: MAREJIG_placeGroupNaturally, getVisiblePieceIds: MAREJIG_getVisiblePieceIds,
-        centerScene: MAREJIG_centerScene, applySave: MAREJIG_applySave
+        placeGroupNaturally: MAREJIG_placeGroupNaturally, placeRevealedSegmentNearFocus: MAREJIG_placeRevealedSegmentNearFocus,
+        focusCameraOnBounds: MAREJIG_focusCameraOnBounds, getMainFocusBounds: MAREJIG_getMainFocusBounds,
+        getSegmentBounds: MAREJIG_getSegmentBounds, resolveGroupOverlap: MAREJIG_resolveGroupOverlap,
+        resolveAllPassiveOverlaps: MAREJIG_resolveAllPassiveOverlaps, getIncorrectContact: MAREJIG_getIncorrectContact,
+        markInvalidContact: MAREJIG_markInvalidContact, clearInvalidContact: MAREJIG_clearInvalidContact,
+        centerScene: MAREJIG_centerScene, applySave: MAREJIG_applySave, getVisiblePieceIds: MAREJIG_getVisiblePieceIds
     });
 })(window);
