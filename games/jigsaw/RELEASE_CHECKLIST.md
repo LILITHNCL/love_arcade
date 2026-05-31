@@ -119,6 +119,9 @@ node games/jigsaw/test/phase5_unit.js
 node games/jigsaw/test/phase6_unit.js
 node games/jigsaw/test/phase7_unit.mjs
 node games/jigsaw/test/phase8_audit.mjs
+node games/jigsaw/test/phase9_sandbox_unit.mjs
+node games/jigsaw/test/phase10_gamefeel_unit.mjs
+node games/jigsaw/test/phase11_corrective_unit.mjs
 node games/jigsaw/test/phase7_smoke_playwright.js
 ```
 

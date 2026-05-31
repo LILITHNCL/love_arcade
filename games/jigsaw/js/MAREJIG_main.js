@@ -32,6 +32,7 @@
             element.hidden = !visible;
             element.classList.toggle('marejig-screen-current', visible);
         });
+        documentObject.documentElement.classList.toggle('marejig-is-playing', name === 'game');
         documentObject.body.classList.toggle('marejig-is-playing', name === 'game');
         MAREJIG_State.setState({ currentScreen: name });
     }
@@ -394,7 +395,7 @@
                     var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
                     if (segmentResult.completed) {
                         MAREJIG_showToast(segmentResult.revealed ? 'Segmento desbloqueado' : 'Segmento completado');
-                        if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 280);
+                        if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 200);
                         MAREJIG_saveGame('segment');
                     }
                     if (segmentResult.puzzleComplete) MAREJIG_completePuzzle(scene);
