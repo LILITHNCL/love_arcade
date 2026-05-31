@@ -11,7 +11,11 @@
     <div class="marejig-shell" data-marejig-app>
         <header class="marejig-topbar" aria-label="Cabecera de marejigweb">
             <a class="marejig-exit-link" href="../../index.html" aria-label="Salir al menú principal de Love Arcade">
-                <span class="marejig-exit-icon" aria-hidden="true">←</span>
+                <span class="marejig-exit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </span>
                 <span>Salir</span>
             </a>
             <div class="marejig-brand" aria-label="marejigweb">
@@ -26,10 +30,7 @@
         <main class="marejig-main" id="marejig-main">
             <section class="marejig-screen marejig-screen-current" id="marejig-screen-menu" aria-labelledby="marejig-menu-title">
                 <section class="marejig-menu-hero">
-                    <p class="marejig-menu-kicker">Marejig</p>
                     <h1 class="marejig-menu-title" id="marejig-menu-title">Elige un puzzle</h1>
-                    <p class="marejig-menu-subtitle">Toca una imagen para empezar.</p>
-                    <p class="marejig-menu-count" id="marejig-total-pending" aria-live="polite">Cargando puzzles…</p>
                 </section>
 
                 <div class="marejig-menu-toolbar">
@@ -71,7 +72,11 @@
                     <div class="marejig-canvas-wrap">
                         <canvas id="marejig-canvas" class="marejig-canvas" width="1280" height="960" aria-label="Escena del puzzle"></canvas>
                         <div class="marejig-game-overlay" aria-label="Controles de partida">
-                            <button class="marejig-floating-button marejig-floating-button-back" type="button" id="marejig-back-to-menu" aria-label="Pausar y volver a niveles">←</button>
+                            <button class="marejig-floating-button marejig-floating-button-back" type="button" id="marejig-back-to-menu" aria-label="Pausar y volver a niveles">
+                                <svg class="marejig-nav-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M15 18l-6-6 6-6" />
+                                </svg>
+                            </button>
                             <span class="marejig-segment-pill" id="marejig-hud-segment" aria-label="Segmento actual">1/1</span>
                             <button class="marejig-floating-button marejig-floating-button-options" type="button" id="marejig-pause-button" aria-label="Abrir opciones">⋯</button>
                             <span class="marejig-segment-progress" id="marejig-segment-progress" aria-hidden="true"></span>

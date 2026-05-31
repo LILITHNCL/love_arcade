@@ -58,10 +58,27 @@
 .marejig-exit-icon {
     display: inline-grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.12);
+}
+
+.marejig-exit-icon svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+
+.marejig-exit-icon path,
+.marejig-action-arrow path,
+.marejig-nav-arrow path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .marejig-brand {
@@ -1015,8 +1032,8 @@
 .marejig-floating-button {
     display: inline-grid;
     place-items: center;
-    min-width: 42px;
-    min-height: 42px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0 12px;
     border-radius: 999px;
     font: 900 0.86rem/1 Inter, ui-sans-serif, system-ui, sans-serif;
@@ -1213,7 +1230,6 @@
 .marejig-hero .marejig-kicker { margin-bottom: 6px; }
 .marejig-title { font-size: clamp(2.35rem, 13vw, 4.8rem); line-height: 0.96; }
 .marejig-subtitle { margin-top: 8px; color: #d0d8ee; line-height: 1.45; }
-.marejig-menu-count { margin: 10px 0 0; color: #ffd166; font-size: 0.86rem; font-weight: 900; }
 .marejig-hero-metrics { display: none; }
 
 .marejig-panel,
@@ -1328,10 +1344,7 @@
 }
 
 .marejig-menu-hero { padding: 16px 2px 14px; }
-.marejig-menu-kicker { margin: 0 0 6px; color: #77f7e4; font-size: 0.7rem; font-weight: 950; letter-spacing: 0.2em; text-transform: uppercase; }
 .marejig-menu-title { margin: 0; color: #f8fbff; font-size: clamp(2.25rem, 13vw, 4.7rem); line-height: 0.94; letter-spacing: -0.075em; }
-.marejig-menu-subtitle { margin: 9px 0 0; color: #c7d3eb; font-size: 1rem; line-height: 1.45; }
-.marejig-menu-count { margin: 8px 0 0; color: #ffd166; font-size: 0.78rem; font-weight: 850; }
 .marejig-menu-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
 .marejig-menu-section-title { margin: 0; color: #f8fbff; font-size: 1.03rem; letter-spacing: -0.025em; }
 .marejig-featured-level { min-height: 1px; }
@@ -1348,7 +1361,12 @@
 .marejig-level-poster__media::after { position: absolute; inset: 0; content: ""; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); pointer-events: none; }
 .marejig-level-poster__copy { display: grid; min-width: 0; }
 .marejig-level-poster__title { overflow: hidden; color: #f8fbff; font-weight: 950; letter-spacing: -0.03em; text-overflow: ellipsis; white-space: nowrap; }
-.marejig-level-poster__action { display: inline-flex; align-items: center; width: max-content; min-height: 32px; color: #07101f; background: #ffd166; font-size: 0.82rem; font-weight: 950; }
+.marejig-level-poster__action,
+.marejig-button-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.45em; }
+.marejig-level-poster__action { width: max-content; min-height: 32px; color: #07101f; background: #ffd166; font-size: 0.82rem; font-weight: 950; }
+.marejig-action-arrow { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: 0 0 auto; }
+.marejig-action-arrow svg { display: block; width: 24px; height: 24px; }
+.marejig-nav-arrow { display: block; width: 22px; height: 22px; }
 .marejig-level-poster__progress { display: block; overflow: hidden; height: 3px; border-radius: 999px; background: #263f6c; }
 .marejig-level-poster__progress > span:first-child { display: block; width: 34%; height: 100%; border-radius: inherit; background: #77f7e4; }
 .marejig-level-poster-featured .marejig-level-poster__copy { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px 12px; padding: 13px 14px 14px; }
