@@ -7,7 +7,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'); cons
 function read(p){return fs.readFileSync(path.join(root,p),'utf8');}
 function load(files,extra={}){ const sandbox={console,Date,Math,Set,Map,JSON,Object,Array,Number,String,Boolean,window:null,...extra}; sandbox.window=sandbox; vm.createContext(sandbox); files.forEach(f=>vm.runInContext(fs.readFileSync(path.join(jsDir,f),'utf8'),sandbox,{filename:f})); return sandbox; }
 const files=['MAREJIG_config.js','MAREJIG_levels.js','MAREJIG_shapes.js','MAREJIG_groups.js','MAREJIG_segments.js','MAREJIG_generator.js','MAREJIG_scene.js'];
-function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001'); const puzzle=sandbox.MAREJIG_Generator.generate(level); const scene=sandbox.MAREJIG_Scene.createScene(level,puzzle,{drawable:null,failed:true}); sandbox.MAREJIG_Scene.layoutScene(scene,390,844); return {sandbox,scene}; }
+function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox.MAREJIG_LevelCatalog.getById('nivel_003'); const puzzle=sandbox.MAREJIG_Generator.generate(level); const scene=sandbox.MAREJIG_Scene.createScene(level,puzzle,{drawable:null,failed:true}); sandbox.MAREJIG_Scene.layoutScene(scene,390,844); return {sandbox,scene}; }
 {
  const html=read('index.html'); const renderer=read('js/MAREJIG_renderer.js'); const input=read('js/MAREJIG_input.js');
  assert.doesNotMatch(html,/marejig-hint-button|MAREJIG_hints\.js|>Pistas?</,'DOM and scripts omit hints');

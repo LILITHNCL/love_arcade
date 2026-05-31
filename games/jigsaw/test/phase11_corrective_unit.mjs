@@ -7,7 +7,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'); cons
 const files=['MAREJIG_config.js','MAREJIG_levels.js','MAREJIG_shapes.js','MAREJIG_groups.js','MAREJIG_segments.js','MAREJIG_generator.js','MAREJIG_scene.js'];
 function read(file){return fs.readFileSync(path.join(root,file),'utf8');}
 function load(list=files,extra={}){const x={console,Date,Math,Set,Map,JSON,Object,Array,Number,String,Boolean,window:null,...extra};x.window=x;vm.createContext(x);list.forEach(f=>vm.runInContext(fs.readFileSync(path.join(js,f),'utf8'),x,{filename:f}));return x;}
-function fixture(levelId='raiden_shogun_001'){const x=load();const level=x.MAREJIG_LevelCatalog.getById(levelId);const puzzle=x.MAREJIG_Generator.generate(level);const scene=x.MAREJIG_Scene.createScene(level,puzzle,{drawable:null,failed:true});x.MAREJIG_Scene.layoutScene(scene,390,844);return{x,scene};}
+function fixture(levelId='nivel_003'){const x=load();const level=x.MAREJIG_LevelCatalog.getById(levelId);const puzzle=x.MAREJIG_Generator.generate(level);const scene=x.MAREJIG_Scene.createScene(level,puzzle,{drawable:null,failed:true});x.MAREJIG_Scene.layoutScene(scene,390,844);return{x,scene};}
 function groups(scene){return Object.values(scene.groups).filter(g=>g.visible);}
 function ratio(a,b){const w=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x));const h=Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));return w*h/Math.max(1,Math.min(a.width*a.height,b.width*b.height));}
 {

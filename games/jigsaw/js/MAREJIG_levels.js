@@ -26,8 +26,17 @@
     });
 
     var MAREJIG_LEVEL_SPECS = Object.freeze([
-        Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 'raiden-af545xdf']),
-        Object.freeze(['raiden_shogun_002', 2, 'Raiden Shogun', 'Personajes', 'standard', 'raiden-af545xdf'])
+        Object.freeze(['nivel_001', 1, 'Nivel 001', 'Producción', 'easy', 'nivel001']),
+        Object.freeze(['nivel_002', 2, 'Nivel 002', 'Producción', 'easy', 'nivel002']),
+        Object.freeze(['nivel_003', 3, 'Nivel 003', 'Producción', 'standard', 'nivel003']),
+        Object.freeze(['nivel_004', 4, 'Nivel 004', 'Producción', 'standard', 'nivel004']),
+        Object.freeze(['nivel_005', 5, 'Nivel 005', 'Producción', 'standard', 'nivel005']),
+        Object.freeze(['nivel_006', 6, 'Nivel 006', 'Producción', 'hard', 'nivel006']),
+        Object.freeze(['nivel_007', 7, 'Nivel 007', 'Producción', 'hard', 'nivel007']),
+        Object.freeze(['nivel_008', 8, 'Nivel 008', 'Producción', 'hard', 'nivel008']),
+        Object.freeze(['nivel_009', 9, 'Nivel 009', 'Producción', 'hard', 'nivel009']),
+        Object.freeze(['nivel_010', 10, 'Nivel 010', 'Producción', 'hard', 'nivel010']),
+        Object.freeze(['nivel_011', 11, 'Nivel 011', 'Producción', 'hard', 'nivel011'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
