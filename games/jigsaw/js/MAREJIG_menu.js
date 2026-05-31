@@ -26,15 +26,20 @@
             pendingTotal: documentObject.getElementById('marejig-total-pending'),
             filterBar: documentObject.getElementById('marejig-filter-bar'),
             packFilter: documentObject.getElementById('marejig-filter-pack'),
-            difficultyFilter: documentObject.getElementById('marejig-filter-difficulty')
+            difficultyFilter: documentObject.getElementById('marejig-filter-difficulty'),
+            panelHead: documentObject.querySelector('.marejig-panel-head')
         };
         return MAREJIG_menuState.elements;
     }
 
-    function MAREJIG_getFilterLabel() {
-        var pack = MAREJIG_menuState.filters.pack || 'todos los packs';
-        var difficulty = MAREJIG_menuState.filters.difficulty || 'todas las dificultades';
-        return pack + ' · ' + difficulty;
+    function MAREJIG_getDifficultyLabel(difficulty) {
+        return { easy: 'Fácil', standard: 'Normal', hard: 'Difícil' }[difficulty] || difficulty;
+    }
+
+    function MAREJIG_getUnfilteredPendingCount() {
+        return MAREJIG_LevelCatalog.getOrdered().filter(function MAREJIG_countPending(level) {
+            return !MAREJIG_Storage.isLevelCompleted(level.id);
+        }).length;
     }
 
     function MAREJIG_applyFilters(levels) {
@@ -56,7 +61,7 @@
         values.forEach(function MAREJIG_addOption(value) {
             var option = documentObject.createElement('option');
             option.value = value;
-            option.textContent = value;
+            option.textContent = MAREJIG_getDifficultyLabel(value);
             select.appendChild(option);
         });
         select.value = values.indexOf(existingValue) !== -1 ? existingValue : '';
@@ -127,12 +132,12 @@
             '  <span class="marejig-card-title">' + MAREJIG_escape(level.title) + '</span>',
             '  <span class="marejig-card-meta">',
             '    <span>' + MAREJIG_escape(level.pack) + '</span>',
-            '    <span>' + MAREJIG_escape(level.difficulty) + '</span>',
-            '    <span>+' + String(level.rewardCoins) + ' monedas</span>',
+            '    <span class="marejig-difficulty marejig-difficulty-' + MAREJIG_escape(level.difficulty) + '">' + MAREJIG_escape(MAREJIG_getDifficultyLabel(level.difficulty)) + '</span>',
             '  </span>',
             '  <span class="marejig-card-status">',
-            '    <span class="' + (progress ? 'marejig-card-continue' : 'marejig-card-new') + '">' + (progress ? 'Continuar' : 'Nuevo') + '</span>',
-            progressText ? '    <span>' + MAREJIG_escape(progressText) + '</span>' : '',
+            '    <span class="marejig-card-reward" aria-label="Recompensa">● +' + String(level.rewardCoins) + '</span>',
+            progressText ? '    <span class="marejig-card-progress">' + MAREJIG_escape(progressText) + '</span>' : '',
+            '    <span class="marejig-card-cta ' + (progress ? 'marejig-card-continue' : 'marejig-card-new') + '">' + (progress ? 'Continuar' : 'Jugar') + ' <b aria-hidden="true">→</b></span>',
             '  </span>',
             '</span>'
         ].join('');
@@ -224,7 +229,13 @@
         var hasMore = MAREJIG_menuState.renderedCount < MAREJIG_menuState.levels.length;
         elements.loadMore.hidden = !hasMore;
         elements.empty.hidden = MAREJIG_menuState.levels.length > 0;
-        elements.pendingTotal.textContent = MAREJIG_menuState.levels.length + ' niveles pendientes · ' + MAREJIG_getFilterLabel();
+        var totalPending = MAREJIG_getUnfilteredPendingCount();
+        var showFilters = totalPending > 8;
+        elements.filterBar.hidden = !showFilters;
+        if (elements.panelHead) elements.panelHead.classList.toggle('marejig-panel-head-compact', !showFilters);
+        elements.grid.classList.toggle('marejig-level-grid-featured', totalPending === 1);
+        elements.pendingTotal.textContent = totalPending > 8 ? totalPending + ' puzzles disponibles' : '';
+        elements.pendingTotal.hidden = totalPending <= 8;
     }
 
     function MAREJIG_setupSentinel() {

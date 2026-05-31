@@ -273,6 +273,42 @@
         return Boolean(settings.reducedMotion || mediaReduce);
     }
 
+    function MAREJIG_playSnapJuice() {
+        if (MAREJIG_getReducedMotion()) return;
+        var layer = MAREJIG_byId('marejig-juice-layer');
+        var wrap = layer && layer.parentElement;
+        if (!layer || !wrap) return;
+        wrap.classList.remove('marejig-snap-pulse');
+        void wrap.offsetWidth;
+        wrap.classList.add('marejig-snap-pulse');
+        Array.from({ length: 8 }).forEach(function MAREJIG_createSnapDot(_, index) {
+            var angle = (Math.PI * 2 * index) / 8;
+            var dot = documentObject.createElement('span');
+            dot.className = 'marejig-juice-dot';
+            dot.style.setProperty('--marejig-dot-x', Math.round(Math.cos(angle) * 48) + 'px');
+            dot.style.setProperty('--marejig-dot-y', Math.round(Math.sin(angle) * 48) + 'px');
+            layer.appendChild(dot);
+            windowObject.setTimeout(function MAREJIG_removeSnapDot() { dot.remove(); }, 520);
+        });
+        windowObject.setTimeout(function MAREJIG_clearSnapPulse() { wrap.classList.remove('marejig-snap-pulse'); }, 300);
+    }
+
+    function MAREJIG_playVictoryStars() {
+        var layer = MAREJIG_byId('marejig-victory-stars');
+        if (!layer) return;
+        layer.textContent = '';
+        if (MAREJIG_getReducedMotion()) return;
+        Array.from({ length: 12 }).forEach(function MAREJIG_createVictoryStar(_, index) {
+            var angle = (Math.PI * 2 * index) / 12;
+            var star = documentObject.createElement('span');
+            star.className = 'marejig-victory-star';
+            star.textContent = index % 2 ? '✦' : '★';
+            star.style.setProperty('--marejig-star-x', Math.round(Math.cos(angle) * (42 + index % 3 * 7)) + 'px');
+            star.style.setProperty('--marejig-star-y', Math.round(Math.sin(angle) * (20 + index % 3 * 4)) + 'px');
+            layer.appendChild(star);
+        });
+    }
+
     function MAREJIG_openModal(id, focusId) {
         var modal = MAREJIG_byId(id);
         if (!modal) return;
@@ -374,7 +410,7 @@
         MAREJIG_startOptions = options || {};
         MAREJIG_State.setState({ selectedLevelId: levelId, loading: true, lastError: null });
         MAREJIG_showScreen('loading');
-        MAREJIG_setProgress(8, save ? 'Preparando reanudación' : 'Preparando metadatos');
+        MAREJIG_setProgress(8, save ? 'Retomando tu puzzle' : 'Preparando piezas');
         MAREJIG_setLoadingPreview(level);
 
         var profile = MAREJIG_Cloudinary.getRuntimeProfile();
@@ -391,10 +427,11 @@
             MAREJIG_Renderer.setScene(scene);
             MAREJIG_Input.attach(MAREJIG_byId('marejig-canvas'), scene, MAREJIG_Renderer, {
                 onSelect: function MAREJIG_inputSelect() { MAREJIG_updateHud(level, puzzle, imageResult, scene); },
-                onMoveEnd: function MAREJIG_inputMoveEnd() {
+                onMoveEnd: function MAREJIG_inputMoveEnd(result) {
+                    if (result && result.mergedGroupId) MAREJIG_playSnapJuice();
                     var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
                     if (segmentResult.completed) {
-                        MAREJIG_showToast(segmentResult.revealed ? 'Segmento desbloqueado' : 'Segmento completado');
+                        MAREJIG_showToast(segmentResult.revealed ? '¡Nuevo grupo!' : 'Segmento listo');
                         if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 200);
                         MAREJIG_saveGame('segment');
                     }
@@ -464,7 +501,8 @@
         var modal = MAREJIG_byId('marejig-victory-modal');
         if (!modal) return;
         MAREJIG_lastFocus = documentObject.activeElement;
-        MAREJIG_byId('marejig-victory-title').textContent = '¡Nivel completado!';
+        MAREJIG_byId('marejig-victory-title').textContent = '¡Puzzle completo!';
+        MAREJIG_playVictoryStars();
         MAREJIG_byId('marejig-victory-level').textContent = scene.level.title;
         MAREJIG_byId('marejig-victory-pack').textContent = scene.level.pack;
         MAREJIG_byId('marejig-victory-time').textContent = MAREJIG_formatTime(scene.progress.elapsedMs);
@@ -584,8 +622,18 @@
         });
         windowObject.addEventListener('pagehide', function MAREJIG_pageHide() { MAREJIG_pauseTimer(); MAREJIG_saveGame('pagehide'); });
         documentObject.addEventListener('keydown', function MAREJIG_keydown(event) {
+            var openModal = documentObject.querySelector('.marejig-modal:not([hidden])');
+            if (event.key === 'Tab' && openModal) {
+                var focusable = Array.prototype.slice.call(openModal.querySelectorAll('button:not([disabled])'));
+                var first = focusable[0];
+                var last = focusable[focusable.length - 1];
+                if (event.shiftKey && documentObject.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && documentObject.activeElement === last) { event.preventDefault(); first.focus(); }
+                return;
+            }
             if (event.key !== 'Escape') return;
-            if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
+            if (!MAREJIG_byId('marejig-confirm-reset-modal').hidden) MAREJIG_closeResetConfirm();
+            else if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
             else if (!MAREJIG_byId('marejig-pause-modal').hidden) MAREJIG_closePause();
             else MAREJIG_hideVictory();
         });

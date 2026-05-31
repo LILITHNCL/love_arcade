@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#080a14">
-    <title>Marejigweb — Love Arcade Jigsaw</title>
+    <meta name="theme-color" content="#101632">
+    <title>Marejig — Puzzles</title>
     <link rel="stylesheet" href="./css/marejig.css">
 </head>
 <body class="marejig-body">
@@ -14,33 +14,25 @@
                 <span class="marejig-exit-icon" aria-hidden="true">←</span>
                 <span>Salir</span>
             </a>
-            <div class="marejig-brand" aria-label="marejigweb">
-                <span class="marejig-brand-mark" aria-hidden="true">▧</span>
-                <span class="marejig-brand-copy">
-                    <strong>MAREJIG</strong>
-                    <small>premium jigsaw</small>
-                </span>
+            <div class="marejig-brand" aria-label="Marejig">
+                <span class="marejig-brand-mark" aria-hidden="true">✦</span>
+                <span class="marejig-brand-copy"><strong>MAREJIG</strong></span>
             </div>
         </header>
 
         <main class="marejig-main" id="marejig-main">
             <section class="marejig-screen marejig-screen-current" id="marejig-screen-menu" aria-labelledby="marejig-menu-title">
                 <div class="marejig-hero">
-                    <p class="marejig-kicker">Love Arcade · Jigsaw</p>
-                    <h1 class="marejig-title" id="marejig-menu-title">Niveles pendientes</h1>
-                    <p class="marejig-subtitle">Arma imágenes 4:3 premium con piezas ortogonales y segmentos progresivos.</p>
-                    <div class="marejig-hero-metrics" aria-label="Resumen del catálogo">
-                        <span class="marejig-chip" id="marejig-total-pending">0 niveles pendientes · todos los packs</span>
-                        <span class="marejig-chip">12×9 / 16×12</span>
-                        <span class="marejig-chip">24–60 piezas</span>
-                    </div>
+                    <p class="marejig-kicker">Puzzles</p>
+                    <h1 class="marejig-title" id="marejig-menu-title">Elige un puzzle</h1>
+                    <p class="marejig-subtitle">Arma imágenes por segmentos</p>
+                    <p class="marejig-pending-copy" id="marejig-total-pending" aria-live="polite"></p>
                 </div>
 
                 <div class="marejig-panel" aria-live="polite">
                     <div class="marejig-panel-head">
                         <div>
-                            <h2 class="marejig-section-title">Catálogo</h2>
-                            <p class="marejig-section-note">Solo aparecen niveles no completados.</p>
+                            <h2 class="marejig-section-title">Tu próxima aventura</h2>
                         </div>
                         <form class="marejig-filter-bar" id="marejig-filter-bar" aria-label="Filtros de niveles pendientes">
                             <label class="marejig-filter-field" for="marejig-filter-pack">
@@ -76,8 +68,8 @@
                         <span class="marejig-loading-shimmer"></span>
                     </div>
                     <p class="marejig-kicker">Preparando nivel</p>
-                    <h1 class="marejig-title" id="marejig-loading-title">Cargando imagen premium…</h1>
-                    <p class="marejig-subtitle" id="marejig-loading-copy">Optimizando resolución para tu dispositivo.</p>
+                    <h1 class="marejig-title" id="marejig-loading-title">Preparando puzzle…</h1>
+                    <p class="marejig-subtitle" id="marejig-loading-copy">Un momento…</p>
                     <div class="marejig-progress" aria-label="Progreso de carga">
                         <span class="marejig-progress-bar" id="marejig-progress-bar"></span>
                     </div>
@@ -112,6 +104,7 @@
                             <button class="marejig-floating-button marejig-floating-button-options" type="button" id="marejig-pause-button" aria-label="Abrir opciones">⋯</button>
                             <span class="marejig-segment-progress" id="marejig-segment-progress" aria-hidden="true"></span>
                         </div>
+                        <div class="marejig-juice-layer" id="marejig-juice-layer" aria-hidden="true"></div>
                         <div class="marejig-ready-overlay marejig-debug-only" id="marejig-ready-overlay" hidden>
                             <span class="marejig-ready-badge">Debug</span>
                             <p class="marejig-section-note" id="marejig-ready-copy"></p>
@@ -141,7 +134,8 @@
         <section class="marejig-victory-card" role="document">
             <button class="marejig-modal-close" type="button" id="marejig-victory-close" aria-label="Cerrar pantalla de victoria">×</button>
             <p class="marejig-kicker">Victoria</p>
-            <h2 class="marejig-title" id="marejig-victory-title">¡Nivel completado!</h2>
+            <div class="marejig-victory-stars" id="marejig-victory-stars" aria-hidden="true"></div>
+            <h2 class="marejig-title" id="marejig-victory-title">¡Puzzle completo!</h2>
             <p class="marejig-subtitle" id="marejig-victory-summary"><strong id="marejig-victory-level">Nivel</strong> · <span id="marejig-victory-pack">Pack</span></p>
             <div class="marejig-victory-stats" aria-label="Métricas finales">
                 <div class="marejig-victory-stat"><span>Tiempo</span><strong id="marejig-victory-time">00:00</strong></div>
@@ -150,9 +144,9 @@
             </div>
             <p class="marejig-victory-status" id="marejig-victory-status" aria-live="polite">Modo standalone: monedas no acreditadas</p>
             <div class="marejig-menu-actions marejig-victory-actions">
-                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next" aria-label="Abrir siguiente nivel pendiente">Siguiente nivel</button>
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next" aria-label="Abrir siguiente nivel pendiente">Siguiente</button>
                 <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels" aria-label="Volver a niveles pendientes">Volver a niveles</button>
-                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay" aria-label="Repetir nivel completado sin duplicar recompensa">Repetir nivel</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay" aria-label="Repetir nivel completado sin duplicar recompensa">Repetir</button>
             </div>
         </section>
     </div>
