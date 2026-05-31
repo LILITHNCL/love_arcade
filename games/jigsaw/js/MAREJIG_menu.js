@@ -21,8 +21,7 @@
             next: documentObject.getElementById('marejig-next-levels'),
             grid: documentObject.getElementById('marejig-level-grid'),
             empty: documentObject.getElementById('marejig-empty-state'),
-            loadMore: documentObject.getElementById('marejig-load-more'),
-            pendingTotal: documentObject.getElementById('marejig-total-pending')
+            loadMore: documentObject.getElementById('marejig-load-more')
         };
         return MAREJIG_menuState.elements;
     }
@@ -85,7 +84,7 @@
             '</span>',
             '<span class="marejig-level-poster__copy">',
             '  <span class="marejig-level-poster__title">' + MAREJIG_escape(level.title) + '</span>',
-            '  <span class="marejig-level-poster__action">' + action + '<span aria-hidden="true"> →</span></span>',
+            '  <span class="marejig-level-poster__action">' + action + '<span class="marejig-action-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 12h12" /><path d="M13 6l6 6-6 6" /></svg></span></span>',
             progress ? '  <span class="marejig-level-poster__progress"><span></span><span class="marejig-visually-hidden">Progreso guardado</span></span>' : '',
             '</span>'
         ].join('');
@@ -139,7 +138,6 @@
         elements.loadMore.hidden = !hasMore;
         if (elements.next) elements.next.hidden = pendingCount <= 1;
         elements.empty.hidden = pendingCount !== 0;
-        elements.pendingTotal.textContent = pendingCount === 0 ? 'No quedan puzzles pendientes' : (pendingCount === 1 ? 'Un puzzle listo para armar' : pendingCount + ' puzzles listos para armar');
     }
 
     function MAREJIG_mountPendingLevels() {

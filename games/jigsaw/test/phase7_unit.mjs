@@ -171,7 +171,7 @@ function makeElement(id = '') {
 
 function makeDocument() {
   const elements = new Map();
-  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-load-more', 'marejig-menu-sentinel', 'marejig-total-pending']) {
+  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-load-more', 'marejig-menu-sentinel']) {
     elements.set(id, makeElement(id));
   }
   return {
@@ -214,7 +214,7 @@ function makeDocument() {
   assert.equal(sandbox.MAREJIG_Menu.getRenderedCount(), 12, 'only initial batch rendered');
   assert.equal(grid.children.length, 12, 'only initial cards are nodes');
   assert.equal(calls.full, 0, 'no full images requested from menu');
-  assert.ok(document.getElementById('marejig-total-pending').textContent.includes('197 puzzles listos para armar'));
+  assert.match(grid.children[0].innerHTML, /class="marejig-action-arrow" aria-hidden="true"><svg[^>]*focusable="false"/, 'menu action uses a hidden inline SVG arrow');
   assert.equal(document.getElementById('marejig-empty-state').hidden, true, 'completed catalog stays hidden while pending levels remain');
   sandbox.MAREJIG_Menu.renderNextBatch();
   assert.equal(grid.children.length, 24, 'load more appends one batch, not all 200');
