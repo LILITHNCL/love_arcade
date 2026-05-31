@@ -39,15 +39,32 @@ assert.equal(catalog.validateLevel(makeLevel(catalog, 'easy', 74)), false, 'easy
 assert.equal(catalog.validateLevel(makeLevel(catalog, 'standard', 55)), false, 'standard rejects legacy 55 reward');
 assert.equal(catalog.validateLevel(makeLevel(catalog, 'hard', 199)), false, 'hard rejects rewards below 200');
 for (const level of catalog.levels) assert.equal(level.rewardCoins, expectedRewards[level.difficulty], `${level.id} derives reward from difficulty`);
-assert.equal(catalog.getById('raiden_shogun_001').rewardCoins, 125, 'Raiden Shogun standard reward is 125');
+const expectedIds = Array.from({ length: 11 }, (_, index) => `nivel_${String(index + 1).padStart(3, '0')}`);
+const expectedOrders = Array.from({ length: 11 }, (_, index) => index + 1);
+const expectedPublicIds = Array.from({ length: 11 }, (_, index) => `nivel${String(index + 1).padStart(3, '0')}`);
+const expectedDifficulties = ['easy', 'easy', 'standard', 'standard', 'standard', 'hard', 'hard', 'hard', 'hard', 'hard', 'hard'];
+assert.equal(catalog.levels.length, 11, 'production catalog has exactly 11 levels');
+assert.deepEqual(Array.from(catalog.levels, (level) => level.id), expectedIds, 'production catalog has stable sequential ids');
+assert.equal(new Set(Array.from(catalog.levels, (level) => level.id)).size, 11, 'production catalog ids are unique');
+assert.deepEqual(Array.from(catalog.levels, (level) => level.order), expectedOrders, 'production catalog orders are 1 through 11');
+assert.deepEqual(Array.from(catalog.levels, (level) => level.cloudinaryPublicId), expectedPublicIds, 'production catalog uses exact Cloudinary public ids');
+assert.deepEqual(Array.from(catalog.levels, (level) => level.difficulty), expectedDifficulties, 'production catalog difficulty distribution is exact');
+assert.equal(catalog.levels.every((level) => level.pack === 'Producción'), true, 'production catalog uses generic Producción pack');
+assert.equal(catalog.levels.every((level) => !/^https?:\/\//.test(level.cloudinaryPublicId)), true, 'catalog public ids are not full URLs');
+assert.deepEqual(catalog.levels.reduce((counts, level) => ({ ...counts, [level.difficulty]: counts[level.difficulty] + 1 }), { easy: 0, standard: 0, hard: 0 }), { easy: 2, standard: 3, hard: 6 }, 'catalog has 2 easy, 3 standard and 6 hard levels');
+assert.deepEqual(Array.from(catalog.levels, (level) => [level.board.cols, level.board.rows, level.targetPieceCount]), [
+  [12, 9, 24], [12, 9, 24],
+  [12, 9, 32], [12, 9, 32], [12, 9, 32],
+  [16, 12, 60], [16, 12, 60], [16, 12, 60], [16, 12, 60], [16, 12, 60], [16, 12, 60]
+], 'production metadata derives exact boards and target piece counts');
 
 const economySandbox = loadSandbox(['MAREJIG_economy.js']);
 const calls = [];
 economySandbox.GameCenter = { completeLevel(gameId, rewardLevelId, coins) { calls.push({ gameId, rewardLevelId, coins }); } };
-const raiden = catalog.getById('raiden_shogun_001');
-assert.equal(economySandbox.MAREJIG_Economy.reportLevelCompleted(raiden, {}).coins, 125, 'economy reports balanced reward');
-assert.equal(economySandbox.MAREJIG_Economy.reportLevelCompleted(raiden, { rewardReported: true }).mode, 'already-reported');
-assert.deepEqual(calls, [{ gameId: 'jigsaw', rewardLevelId: 'level_raiden_shogun_001', coins: 125 }], 'repeat completion does not call completeLevel again');
+const productionLevel = catalog.getById('nivel_003');
+assert.equal(economySandbox.MAREJIG_Economy.reportLevelCompleted(productionLevel, {}).coins, 125, 'economy reports balanced reward');
+assert.equal(economySandbox.MAREJIG_Economy.reportLevelCompleted(productionLevel, { rewardReported: true }).mode, 'already-reported');
+assert.deepEqual(calls, [{ gameId: 'jigsaw', rewardLevelId: 'level_nivel_003', coins: 125 }], 'repeat completion does not call completeLevel again');
 
 const sources = fs.readdirSync(jsDir).filter((file) => file.endsWith('.js')).map((file) => [file, fs.readFileSync(path.join(jsDir, file), 'utf8')]);
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

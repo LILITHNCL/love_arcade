@@ -143,7 +143,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   assert.equal(sandbox.MAREJIG_Hints, undefined, 'hints are not exposed during gameplay');
@@ -152,7 +152,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   const lastIndex = scene.puzzle.segments.order.length - 1;
@@ -180,11 +180,11 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
-  assert.equal(level.difficulty, 'standard', 'Raiden Shogun remains standard difficulty');
-  assert.ok(puzzle.validation.pieceCount >= 28 && puzzle.validation.pieceCount <= 34, 'Raiden Shogun standard puzzle uses larger 28–34 piece range');
-  assert.equal(puzzle.validation.ok, true, `Raiden Shogun puzzle validates: ${puzzle.validation.errors.join('; ')}`);
+  assert.equal(level.difficulty, 'standard', 'Nivel 003 remains standard difficulty');
+  assert.ok(puzzle.validation.pieceCount >= 28 && puzzle.validation.pieceCount <= 34, 'Nivel 003 standard puzzle uses 28–34 piece range');
+  assert.equal(puzzle.validation.ok, true, `Nivel 003 puzzle validates: ${puzzle.validation.errors.join('; ')}`);
 }
 
 {
@@ -214,7 +214,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
@@ -235,7 +235,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const sandbox = loadGameplaySandbox({ Date });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);

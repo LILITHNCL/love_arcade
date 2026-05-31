@@ -16,7 +16,7 @@ function load(files, extra = {}) {
 }
 function fixture(extra = {}) {
   const sandbox = load(sceneFiles, extra);
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   sandbox.MAREJIG_Scene.layoutScene(scene, 390, 844);
@@ -99,7 +99,7 @@ function overlapRatio(a, b) {
     devicePixelRatio: 1,
     matchMedia() { return { matches: true }; }
   });
-  const level = sandbox.MAREJIG_LevelCatalog.getById('raiden_shogun_001');
+  const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
   const scene = sandbox.MAREJIG_Scene.createScene(level, puzzle, { drawable: null, failed: true });
   const canvas = { width: 0, height: 0, clientWidth: 390, clientHeight: 844, getBoundingClientRect() { return { width: 390, height: 844 }; }, getContext() { return { save(){}, restore(){}, setTransform(){}, clearRect(){}, createLinearGradient(){ return { addColorStop(){} }; }, fillRect(){}, beginPath(){}, arc(){}, fill(){}, scale(){}, translate(){}, strokeRect(){}, setLineDash(){}, moveTo(){}, lineTo(){}, stroke(){}, rect(){}, clip(){}, drawImage(){}, fillText(){}, set fillStyle(v){}, set strokeStyle(v){}, set lineWidth(v){}, set shadowColor(v){}, set shadowBlur(v){}, set shadowOffsetY(v){}, set textAlign(v){}, set font(v){}, set lineJoin(v){}, set lineCap(v){}, set globalAlpha(v){} }; } };

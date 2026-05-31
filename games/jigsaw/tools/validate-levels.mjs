@@ -96,6 +96,22 @@ const catalog = sandbox.MAREJIG_LevelCatalog;
 const errors = [];
 const seenIds = new Set();
 const seenOrders = new Set();
+const expectedIds = Array.from({ length: 11 }, (_, index) => `nivel_${String(index + 1).padStart(3, '0')}`);
+const expectedOrders = Array.from({ length: 11 }, (_, index) => index + 1);
+const expectedPublicIds = Array.from({ length: 11 }, (_, index) => `nivel${String(index + 1).padStart(3, '0')}`);
+const expectedDifficulties = ['easy', 'easy', 'standard', 'standard', 'standard', 'hard', 'hard', 'hard', 'hard', 'hard', 'hard'];
+
+function assertExactList(actual, expected, label) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) errors.push(`${label}: esperado ${JSON.stringify(expected)}, recibido ${JSON.stringify(actual)}`);
+}
+
+if (catalog.levels.length !== 11) errors.push(`catálogo: deben existir exactamente 11 niveles, recibido ${catalog.levels.length}`);
+assertExactList(catalog.levels.map((level) => level.id), expectedIds, 'catálogo ids');
+assertExactList(catalog.levels.map((level) => level.order), expectedOrders, 'catálogo orders');
+assertExactList(catalog.levels.map((level) => level.cloudinaryPublicId), expectedPublicIds, 'catálogo cloudinaryPublicId');
+assertExactList(catalog.levels.map((level) => level.difficulty), expectedDifficulties, 'catálogo difficulties');
+if (catalog.levels.some((level) => level.pack !== 'Producción')) errors.push('catálogo: todos los niveles deben usar el pack Producción');
+if (catalog.levels.some((level) => /^https?:\/\//.test(level.cloudinaryPublicId))) errors.push('catálogo: cloudinaryPublicId no debe contener URLs completas');
 
 const expectedRewards = { easy: 75, standard: 125, hard: 200 };
 for (const [difficulty, rewardCoins] of Object.entries(expectedRewards)) {
