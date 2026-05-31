@@ -264,14 +264,11 @@
         });
     }
 
-    function MAREJIG_placeRevealedGroup(scene, group, segmentId, index) {
+    function MAREJIG_placeRevealedGroup(scene, group) {
         group.visible = true;
         group.positioned = false;
         group.outlineDirty = true;
         group.groupOutline = null;
-        if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.placeGroupNaturally) {
-            windowObject.MAREJIG_Scene.placeGroupNaturally(scene, group, segmentId + ':' + index + ':' + group.id);
-        }
     }
 
     function MAREJIG_revealSegment(scene, segmentId) {
@@ -288,13 +285,22 @@
                 if (newGroupIds.indexOf(groupId) === -1) newGroupIds.push(groupId);
             }
         });
-        newGroupIds.sort().forEach(function MAREJIG_placeGroup(groupId, index) {
-            MAREJIG_placeRevealedGroup(scene, scene.groups[groupId], segmentId, index, newGroupIds.length);
-            if (windowObject.MAREJIG_Groups) {
-                windowObject.MAREJIG_Groups.invalidateGroupOutline(scene, groupId);
-                windowObject.MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
-            }
+        newGroupIds.sort().forEach(function MAREJIG_placeGroup(groupId) {
+            MAREJIG_placeRevealedGroup(scene, scene.groups[groupId]);
+            if (windowObject.MAREJIG_Groups) windowObject.MAREJIG_Groups.invalidateGroupOutline(scene, groupId);
         });
+        var revealBounds = null;
+        if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.placeRevealedSegmentNearFocus) {
+            revealBounds = windowObject.MAREJIG_Scene.placeRevealedSegmentNearFocus(scene, segmentId, { groupIds: newGroupIds });
+        }
+        newGroupIds.forEach(function MAREJIG_recalcNewGroup(groupId) {
+            if (windowObject.MAREJIG_Groups) windowObject.MAREJIG_Groups.recalculateGroupBounds(scene, groupId);
+            if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.clampGroupToWorld) windowObject.MAREJIG_Scene.clampGroupToWorld(scene, scene.groups[groupId]);
+        });
+        if (scene.ui) scene.ui.lastRevealBounds = revealBounds;
+        if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.focusCameraOnBounds && revealBounds) {
+            windowObject.MAREJIG_Scene.focusCameraOnBounds(scene, revealBounds, { padding: 56 });
+        }
         return newGroupIds;
     }
 
@@ -331,6 +337,9 @@
         segments.currentSegmentIndex += 1;
         var nextSegmentId = segments.order[segments.currentSegmentIndex];
         MAREJIG_revealSegment(scene, nextSegmentId);
+        if (windowObject.MAREJIG_Scene && windowObject.MAREJIG_Scene.focusCameraOnBounds && scene.ui && scene.ui.lastRevealBounds) {
+            windowObject.MAREJIG_Scene.focusCameraOnBounds(scene, scene.ui.lastRevealBounds, { padding: 56 });
+        }
         scene.ui.activeSegmentId = nextSegmentId;
         scene.ui.message = 'Segmento desbloqueado';
         scene.ui.messageStartedAt = Date.now();

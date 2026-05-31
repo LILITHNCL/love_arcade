@@ -309,6 +309,7 @@
         var next = {};
         next[name] = settings[name] === false;
         MAREJIG_Storage.saveSettings(next);
+        if (name === 'sound' && windowObject.MAREJIG_Audio) windowObject.MAREJIG_Audio.setEnabled(next[name]);
         MAREJIG_syncSettingsButtons();
         MAREJIG_showToast('Preferencia guardada');
     }
@@ -393,6 +394,7 @@
                     var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
                     if (segmentResult.completed) {
                         MAREJIG_showToast(segmentResult.revealed ? 'Segmento desbloqueado' : 'Segmento completado');
+                        if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 280);
                         MAREJIG_saveGame('segment');
                     }
                     if (segmentResult.puzzleComplete) MAREJIG_completePuzzle(scene);
@@ -592,6 +594,7 @@
         var validation = MAREJIG_LevelCatalog.validateCatalog();
         if (!validation.valid) console.warn('[MAREJIG] Catálogo con advertencias', validation.errors);
         MAREJIG_Storage.getSettings();
+        if (windowObject.MAREJIG_Audio) windowObject.MAREJIG_Audio.init();
         MAREJIG_getUsableActiveSave();
         MAREJIG_applyDebugVisibility();
         MAREJIG_wireUi();
