@@ -200,7 +200,7 @@ function forceSegmentComplete(scene, segmentId) {
   const hardLevel = {
     id: 'hard_fixture', order: 99, title: 'Hard Fixture', pack: 'Tests', difficulty: 'hard', cloudinaryPublicId: 'fixture/hard',
     sourceFormat: 'avif', aspectRatio: '4:3', master: { width: 2400, height: 1800 }, board: { cols: hard.board.cols, rows: hard.board.rows },
-    targetPieceCount: hard.targetPieceCount, segmentPlan: hard.segmentPlan.slice(), rewardCoins: 80
+    targetPieceCount: hard.targetPieceCount, segmentPlan: hard.segmentPlan.slice(), rewardCoins: 200
   };
   assert.equal(sandbox.MAREJIG_LevelCatalog.validateLevel(hardLevel), true, 'future hard levels validate with 60 pieces');
   const hardPuzzle = sandbox.MAREJIG_Generator.generate(hardLevel);

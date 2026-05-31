@@ -50,7 +50,7 @@ function createFixtureLevel(index) {
   const packs = ['Océano', 'Bosque', 'Ciudad', 'Fantasía', 'Espacio', 'Postres', 'Mascotas', 'Arte'];
   const difficulties = ['easy', 'standard', 'hard'];
   const plans = { easy: [6, 6, 6, 6], standard: [8, 8, 8, 8], hard: [8, 8, 8, 8, 8, 10, 10] };
-  const rewards = { easy: 40, standard: 58, hard: 80 };
+  const rewards = { easy: 75, standard: 125, hard: 200 };
   const targetCounts = { easy: 24, standard: 32, hard: 60 };
   const difficulty = difficulties[index % difficulties.length];
   const id = `fixture_${String(index + 1).padStart(3, '0')}`;

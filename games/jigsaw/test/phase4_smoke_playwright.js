@@ -6,8 +6,8 @@ const { chromium } = require('playwright');
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
 
     await page.goto(`${baseUrl}/games/jigsaw/index.html`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.marejig-level-card', { timeout: 30000 });
-    await page.locator('.marejig-level-card').first().click();
+    await page.waitForSelector('.marejig-level-poster', { timeout: 30000 });
+    await page.locator('.marejig-level-poster').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => {
         const state = window.MAREJIG_State && window.MAREJIG_State.getState();

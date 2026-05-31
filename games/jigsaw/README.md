@@ -128,7 +128,7 @@ Formato exacto del objeto `Level` exportado por el catálogo:
   board: { cols: 12, rows: 9 },      // hard usa { cols: 16, rows: 12 }
   targetPieceCount: 32,
   segmentPlan: [8, 8, 8, 8],
-  rewardCoins: 55
+  rewardCoins: 125
 }
 ```
 
@@ -158,11 +158,11 @@ Para producción, reemplaza `demo` por el cloud name real. Las URLs usan `f_auto
 
 Las dificultades válidas son `easy`, `standard` y `hard`. `easy` y `standard` usan board `12×9`; `hard` usa `16×12` para sostener 60 piezas reales sin piezas ridículamente pequeñas. Los rangos validados son 22–28, 28–34 y 56–64. El balance se aplica con planes de segmentos y recompensa fija:
 
-- `easy`: 24 piezas objetivo, segmentos `[6, 6, 6, 6]` y recompensas 35–45 monedas.
-- `standard`: 32 piezas objetivo, segmentos `[8, 8, 8, 8]` y recompensas 50–65 monedas.
-- `hard`: 60 piezas objetivo, segmentos `[8, 8, 8, 8, 8, 10, 10]`, máximo 10 piezas nuevas por segmento y recompensas 70–90 monedas.
+- `easy` / Fácil: 24 piezas objetivo, segmentos `[6, 6, 6, 6]` y **75 monedas**.
+- `standard` / Normal: 32 piezas objetivo, segmentos `[8, 8, 8, 8]` y **125 monedas**.
+- `hard` / Difícil: 60 piezas objetivo, segmentos `[8, 8, 8, 8, 8, 10, 10]`, máximo 10 piezas nuevas por segmento y **200 monedas**.
 
-La recompensa sigue siendo fija por nivel y se reporta una sola vez. Love Arcade es el banco: el juego solo llama `window.GameCenter.completeLevel("jigsaw", "level_" + level.id, coins)` desde `MAREJIG_economy.js`, no modifica saldos globales.
+La recompensa se deriva siempre de la dificultad y se paga una sola vez por nivel completado. Repetir un nivel completado no vuelve a pagar. Love Arcade es el banco: el juego solo llama `window.GameCenter.completeLevel("jigsaw", "level_" + level.id, coins)` desde `MAREJIG_economy.js`, no modifica saldos globales. En standalone el nivel se completa localmente, pero no se acreditan monedas globales.
 
 ### Política de completados y menú
 

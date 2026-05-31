@@ -25,11 +25,6 @@
             initialPendingCards: 12,
             batchSize: 12
         }),
-        difficulty: Object.freeze({
-            easy: Object.freeze({ rewardRange: Object.freeze([35, 45]) }),
-            standard: Object.freeze({ rewardRange: Object.freeze([50, 65]) }),
-            hard: Object.freeze({ rewardRange: Object.freeze([70, 90]), activePieceTarget: 60 })
-        }),
         debug: Object.freeze({
             enabled: false
         }),
