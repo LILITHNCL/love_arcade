@@ -17,7 +17,7 @@ assert.doesNotMatch(css, /animation\s*:[^;]*infinite/, 'CSS omits permanent deco
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation-duration:\s*0\.01ms !important[\s\S]*\.marejig-snap-burst\s*\{\s*display:\s*none !important;/, 'reduced motion collapses animations and disables decorative snap effects');
 assert.match(html, /<h1 class="marejig-menu-title" id="marejig-menu-title">Elige un puzzle<\/h1>/, 'menu copy is playful and concise');
 assert.doesNotMatch(html, /12×9|16×12|24–60 piezas|Love Arcade · Jigsaw/, 'normal menu markup omits technical catalog copy');
-assert.match(menu, /elements\.filterOpen\.hidden = pendingCount <= MAREJIG_FILTER_THRESHOLD;/, 'compact filter trigger hides for small pending catalogs');
+assert.doesNotMatch(html + css + menu, /marejig-filter|setFilters|MAREJIG_FILTER_THRESHOLD/, 'main menu omits filter UI, styles, and logic');
 assert.match(menu, /MAREJIG_createCard\(MAREJIG_menuState\.levels\[0\], true, 0\)/, 'first pending puzzle gets a protagonist card');
 assert.match(main, /moveResult && moveResult\.mergedGroupId\) MAREJIG_showSnapBurst\(\)/, 'successful snap triggers event-driven juice');
 assert.match(main, /for \(var index = 0; index < 8; index \+= 1\)/, 'snap burst is capped to eight sparks');
