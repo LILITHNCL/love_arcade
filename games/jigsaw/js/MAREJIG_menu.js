@@ -114,9 +114,12 @@
         var progressText = MAREJIG_formatProgress(progress);
 
         card.type = 'button';
-        card.className = 'marejig-level-card';
+        card.className = 'marejig-level-card' + (MAREJIG_menuState.levels.length === 1 ? ' marejig-level-card-featured' : '');
         card.setAttribute('data-marejig-level-id', level.id);
         card.setAttribute('aria-label', (progress ? 'Continuar ' : 'Jugar ') + level.title);
+
+        var difficultyLabels = { easy: 'Fácil', standard: 'Normal', hard: 'Difícil' };
+        var difficultyLabel = difficultyLabels[level.difficulty] || level.difficulty;
 
         card.innerHTML = [
             '<span class="marejig-thumb-frame">',
@@ -127,11 +130,11 @@
             '  <span class="marejig-card-title">' + MAREJIG_escape(level.title) + '</span>',
             '  <span class="marejig-card-meta">',
             '    <span>' + MAREJIG_escape(level.pack) + '</span>',
-            '    <span>' + MAREJIG_escape(level.difficulty) + '</span>',
-            '    <span>+' + String(level.rewardCoins) + ' monedas</span>',
+            '    <span class="marejig-difficulty marejig-difficulty-' + MAREJIG_escape(level.difficulty) + '">' + MAREJIG_escape(difficultyLabel) + '</span>',
+            '    <span class="marejig-card-coins"><span aria-hidden="true">●</span> +' + String(level.rewardCoins) + ' monedas</span>',
             '  </span>',
             '  <span class="marejig-card-status">',
-            '    <span class="' + (progress ? 'marejig-card-continue' : 'marejig-card-new') + '">' + (progress ? 'Continuar' : 'Nuevo') + '</span>',
+            '    <span class="marejig-card-action ' + (progress ? 'marejig-card-continue' : 'marejig-card-new') + '">' + (progress ? 'Continuar' : 'Jugar') + '</span>',
             progressText ? '    <span>' + MAREJIG_escape(progressText) + '</span>' : '',
             '  </span>',
             '</span>'
@@ -224,7 +227,9 @@
         var hasMore = MAREJIG_menuState.renderedCount < MAREJIG_menuState.levels.length;
         elements.loadMore.hidden = !hasMore;
         elements.empty.hidden = MAREJIG_menuState.levels.length > 0;
-        elements.pendingTotal.textContent = MAREJIG_menuState.levels.length + ' niveles pendientes · ' + MAREJIG_getFilterLabel();
+        var count = MAREJIG_menuState.levels.length;
+        elements.pendingTotal.textContent = count === 1 ? 'Un puzzle listo para armar' : count + ' puzzles listos para armar';
+        elements.filterBar.hidden = MAREJIG_LevelCatalog.getOrdered().length <= 8;
     }
 
     function MAREJIG_setupSentinel() {

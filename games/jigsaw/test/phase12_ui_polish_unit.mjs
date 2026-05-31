@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+const css = read('css/marejig.css');
+const html = read('index.html');
+const menu = read('js/MAREJIG_menu.js');
+const main = read('js/MAREJIG_main.js');
+const economy = read('js/MAREJIG_economy.js');
+const sources = fs.readdirSync(path.join(root, 'js')).filter((file) => file.endsWith('.js')).map((file) => [file, read(path.join('js', file))]);
+
+assert.doesNotMatch(css, /backdrop-filter|filter\s*:\s*blur\s*\(/, 'CSS omits glassmorphism and blur filters');
+assert.doesNotMatch(css, /animation\s*:[^;]*infinite/, 'CSS omits permanent decorative animation loops');
+assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation-duration:\s*0\.01ms !important[\s\S]*\.marejig-snap-burst\s*\{\s*display:\s*none !important;/, 'reduced motion collapses animations and disables decorative snap effects');
+assert.match(html, /<h1 class="marejig-title" id="marejig-menu-title">Elige un puzzle<\/h1>/, 'menu copy is playful and concise');
+assert.doesNotMatch(html, /12×9|16×12|24–60 piezas|Love Arcade · Jigsaw/, 'normal menu markup omits technical catalog copy');
+assert.match(menu, /elements\.filterBar\.hidden = MAREJIG_LevelCatalog\.getOrdered\(\)\.length <= 8;/, 'filters hide for small catalogs');
+assert.match(menu, /marejig-level-card-featured/, 'single pending puzzle gets a protagonist card');
+assert.match(main, /moveResult && moveResult\.mergedGroupId\) MAREJIG_showSnapBurst\(\)/, 'successful snap triggers event-driven juice');
+assert.match(main, /for \(var index = 0; index < 8; index \+= 1\)/, 'snap burst is capped to eight sparks');
+assert.match(main, /MAREJIG_trapModalFocus\(event\)/, 'dialogs preserve keyboard focus containment');
+assert.match(main, /event\.key !== 'Escape'[\s\S]*marejig-confirm-reset-modal/, 'Escape closes the reset confirmation dialog');
+assert.equal((economy.match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
+sources.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not define or call completeLevel`));
+assert(html.lastIndexOf('../../js/app.js') > html.lastIndexOf('MAREJIG_main.js'), '../../js/app.js remains the final script');
+assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'scripts do not assign forbidden globals');
+assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /\b(?:CONFIG|ECONOMY|THEMES)\s*=/, 'scripts do not declare forbidden unnamespaced identifiers');
+assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /requestAnimationFrame\([^)]*requestAnimationFrame|setInterval\([^)]*render/i, 'scripts do not introduce permanent render loops');
+console.log('phase12 UI polish unit tests ok');
