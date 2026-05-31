@@ -35,6 +35,18 @@ try {
     await page.locator('.marejig-level-card').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });
+    const fullscreen = await page.evaluate(() => {
+        function read(selector) {
+            const element = document.querySelector(selector);
+            const rect = element.getBoundingClientRect();
+            return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, position: getComputedStyle(element).position };
+        }
+        return { viewport: { width: innerWidth, height: innerHeight }, layout: read('.marejig-game-layout'), wrap: read('.marejig-canvas-wrap'), canvas: read('.marejig-canvas'), scrollHeight: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) };
+    });
+    if (fullscreen.layout.position !== 'fixed' || fullscreen.wrap.position !== 'absolute' || fullscreen.canvas.position !== 'absolute') throw new Error(`layout gameplay no aislado: ${JSON.stringify(fullscreen)}`);
+    if ([fullscreen.layout, fullscreen.wrap, fullscreen.canvas].some((box) => box.x !== 0 || box.y !== 0 || box.width !== fullscreen.viewport.width || box.height !== fullscreen.viewport.height)) throw new Error(`canvas no ocupa viewport completo: ${JSON.stringify(fullscreen)}`);
+    if (fullscreen.scrollHeight > fullscreen.viewport.height) throw new Error(`scroll vertical durante gameplay: ${JSON.stringify(fullscreen)}`);
+    await page.screenshot({ path: '/tmp/marejig-gameplay-390x844.png', fullPage: false });
     const completedId = await page.evaluate(() => window.MAREJIG_State.getState().selectedLevelId);
     if (await page.locator('#marejig-hint-button').count()) throw new Error('No debe existir botón Pista');
     await page.waitForFunction(() => {
