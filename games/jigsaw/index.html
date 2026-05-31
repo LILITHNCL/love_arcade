@@ -34,7 +34,6 @@
 
                 <div class="marejig-menu-toolbar">
                     <h2 class="marejig-menu-section-title">Tu próximo puzzle</h2>
-                    <button class="marejig-filter-trigger" type="button" id="marejig-filter-open" aria-haspopup="dialog" aria-controls="marejig-filter-dialog" hidden>Filtrar</button>
                 </div>
                 <section class="marejig-featured-level" id="marejig-featured-level" aria-label="Puzzle recomendado"></section>
                 <section class="marejig-next-levels" id="marejig-next-levels" aria-labelledby="marejig-next-title" hidden>
@@ -50,53 +49,6 @@
                     <h2 class="marejig-section-title">Catálogo completado</h2>
                     <p class="marejig-section-note">Ya armaste todos los puzzles disponibles.</p>
                 </section>
-                <section class="marejig-empty marejig-filter-empty" id="marejig-filter-empty-state" aria-live="polite" hidden>
-                    <div class="marejig-empty-orb" aria-hidden="true">⌕</div>
-                    <h2 class="marejig-section-title">No hay puzzles con este filtro</h2>
-                    <p class="marejig-section-note">Prueba otra combinación para seguir jugando.</p>
-                    <button class="marejig-button marejig-button-secondary" type="button" id="marejig-clear-filters">Limpiar filtros</button>
-                </section>
-
-                <div class="marejig-filter-dialog" id="marejig-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="marejig-filter-title" hidden>
-                    <button class="marejig-filter-backdrop" type="button" aria-label="Cerrar filtros" data-marejig-close-filters></button>
-                    <section class="marejig-filter-sheet" role="document">
-                        <div class="marejig-filter-sheet-head">
-                            <div>
-                                <p class="marejig-menu-kicker">Explorar</p>
-                                <h2 class="marejig-menu-section-title" id="marejig-filter-title">Filtrar puzzles</h2>
-                            </div>
-                            <button class="marejig-filter-close" type="button" aria-label="Cerrar filtros" data-marejig-close-filters>×</button>
-                        </div>
-                        <form class="marejig-filter-bar" id="marejig-filter-bar" aria-label="Filtros de niveles pendientes">
-                            <label class="marejig-filter-field" for="marejig-filter-pack">
-                                <span>Pack</span>
-                                <select class="marejig-filter-select" id="marejig-filter-pack" name="pack"><option value="">Todos</option></select>
-                            </label>
-                            <label class="marejig-filter-field" for="marejig-filter-difficulty">
-                                <span>Dificultad</span>
-                                <select class="marejig-filter-select" id="marejig-filter-difficulty" name="difficulty"><option value="">Todas</option></select>
-                            </label>
-                        </form>
-                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-filter-done">Ver puzzles</button>
-                    </section>
-                </div>
-            </section>
-
-            <section class="marejig-screen" id="marejig-screen-loading" aria-labelledby="marejig-loading-title" hidden>
-                <div class="marejig-loading-card">
-                    <div class="marejig-loading-preview" id="marejig-loading-preview" aria-hidden="true">
-                        <span class="marejig-loading-shimmer"></span>
-                    </div>
-                    <p class="marejig-kicker">Preparando nivel</p>
-                    <h1 class="marejig-title" id="marejig-loading-title">Cargando imagen premium…</h1>
-                    <p class="marejig-subtitle" id="marejig-loading-copy">Optimizando resolución para tu dispositivo.</p>
-                    <div class="marejig-progress" aria-label="Progreso de carga">
-                        <span class="marejig-progress-bar" id="marejig-progress-bar"></span>
-                    </div>
-                    <div class="marejig-menu-actions">
-                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-cancel-loading" aria-label="Volver a niveles pendientes">Volver</button>
-                    </div>
-                </div>
             </section>
 
             <section class="marejig-screen" id="marejig-screen-game" aria-label="Partida Marejig" hidden>

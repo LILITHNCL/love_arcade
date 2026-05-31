@@ -171,7 +171,7 @@ function makeElement(id = '') {
 
 function makeDocument() {
   const elements = new Map();
-  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-load-more', 'marejig-menu-sentinel', 'marejig-total-pending', 'marejig-filter-bar', 'marejig-filter-pack', 'marejig-filter-difficulty']) {
+  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-load-more', 'marejig-menu-sentinel', 'marejig-total-pending']) {
     elements.set(id, makeElement(id));
   }
   return {
@@ -192,9 +192,7 @@ function makeDocument() {
     document,
     IntersectionObserver: function IntersectionObserver(callback) { this.observe = function observe() {}; this.unobserve = function unobserve() {}; this.disconnect = function disconnect() {}; this._callback = callback; },
     MAREJIG_LevelCatalog: {
-      getOrdered: () => fixture.slice(),
-      getPacks: () => ['Arte', 'Bosque', 'Ciudad', 'Espacio', 'Fantasía', 'Mascotas', 'Océano', 'Postres'],
-      getDifficulties: () => ['easy', 'standard', 'hard']
+      getOrdered: () => fixture.slice()
     },
     MAREJIG_Storage: {
       getActiveSave: () => null,
@@ -217,13 +215,17 @@ function makeDocument() {
   assert.equal(grid.children.length, 12, 'only initial cards are nodes');
   assert.equal(calls.full, 0, 'no full images requested from menu');
   assert.ok(document.getElementById('marejig-total-pending').textContent.includes('197 puzzles listos para armar'));
-  assert.equal(document.getElementById('marejig-filter-bar').hidden, false, 'large catalogs keep filters visible');
+  assert.equal(document.getElementById('marejig-empty-state').hidden, true, 'completed catalog stays hidden while pending levels remain');
   sandbox.MAREJIG_Menu.renderNextBatch();
   assert.equal(grid.children.length, 24, 'load more appends one batch, not all 200');
   completed.add(grid.children[0].attributes['data-marejig-level-id']);
   sandbox.MAREJIG_Menu.refreshAfterCompletion();
   assert.equal(sandbox.MAREJIG_Menu.getVisibleLevelCount(), 196, 'completed card disappears after refresh');
   assert.equal(calls.full, 0, 'still no full images after refresh');
+  fixture.forEach((level) => completed.add(level.id));
+  sandbox.MAREJIG_Menu.refreshAfterCompletion();
+  assert.equal(sandbox.MAREJIG_Menu.getVisibleLevelCount(), 0, 'no pending cards remain after completing the full catalog');
+  assert.equal(document.getElementById('marejig-empty-state').hidden, false, 'completed catalog renders only after every available level is complete');
 }
 
 {

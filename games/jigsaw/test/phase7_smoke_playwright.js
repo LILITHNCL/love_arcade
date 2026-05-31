@@ -31,7 +31,6 @@ try {
     await page.waitForSelector('.marejig-level-card', { timeout: 30000 });
     const initialCards = await page.locator('.marejig-level-card').count();
     if (initialCards > 12) throw new Error(`batch inicial demasiado grande: ${initialCards}`);
-    await page.locator('#marejig-filter-pack').selectOption({ label: 'Océano' }).catch(() => null);
     await page.locator('.marejig-level-card').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });

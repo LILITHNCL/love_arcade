@@ -5,17 +5,12 @@
     var MAREJIG_LevelCatalog = windowObject.MAREJIG_LevelCatalog;
     var MAREJIG_Cloudinary = windowObject.MAREJIG_Cloudinary;
     var MAREJIG_Storage = windowObject.MAREJIG_Storage;
-    var MAREJIG_FILTER_THRESHOLD = 8;
-
     var MAREJIG_menuState = {
         levels: [],
         pendingLevels: [],
         renderedCount: 0,
         observer: null,
-        filtersInitialized: false,
-        filters: { pack: '', difficulty: '' },
         elements: null,
-        filterReturnFocus: null,
         selectionTimer: 0
     };
 
@@ -26,107 +21,10 @@
             next: documentObject.getElementById('marejig-next-levels'),
             grid: documentObject.getElementById('marejig-level-grid'),
             empty: documentObject.getElementById('marejig-empty-state'),
-            filterEmpty: documentObject.getElementById('marejig-filter-empty-state'),
-            clearFilters: documentObject.getElementById('marejig-clear-filters'),
             loadMore: documentObject.getElementById('marejig-load-more'),
-            pendingTotal: documentObject.getElementById('marejig-total-pending'),
-            filterOpen: documentObject.getElementById('marejig-filter-open'),
-            filterDialog: documentObject.getElementById('marejig-filter-dialog'),
-            filterDone: documentObject.getElementById('marejig-filter-done'),
-            filterBar: documentObject.getElementById('marejig-filter-bar'),
-            packFilter: documentObject.getElementById('marejig-filter-pack'),
-            difficultyFilter: documentObject.getElementById('marejig-filter-difficulty')
+            pendingTotal: documentObject.getElementById('marejig-total-pending')
         };
         return MAREJIG_menuState.elements;
-    }
-
-    function MAREJIG_hasActiveFilters() {
-        return Boolean(MAREJIG_menuState.filters.pack || MAREJIG_menuState.filters.difficulty);
-    }
-
-    function MAREJIG_applyFilters(levels) {
-        return levels.filter(function MAREJIG_filterByMenu(level) {
-            if (MAREJIG_menuState.filters.pack && level.pack !== MAREJIG_menuState.filters.pack) return false;
-            if (MAREJIG_menuState.filters.difficulty && level.difficulty !== MAREJIG_menuState.filters.difficulty) return false;
-            return true;
-        });
-    }
-
-    function MAREJIG_fillSelect(select, values, currentValue, allLabel) {
-        if (!select) return;
-        select.textContent = '';
-        var all = documentObject.createElement('option');
-        all.value = '';
-        all.textContent = allLabel;
-        select.appendChild(all);
-        values.forEach(function MAREJIG_addOption(value) {
-            var option = documentObject.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            select.appendChild(option);
-        });
-        select.value = values.indexOf(currentValue) !== -1 ? currentValue : '';
-    }
-
-    function MAREJIG_closeFilters() {
-        var elements = MAREJIG_getElements();
-        if (!elements.filterDialog || elements.filterDialog.hidden) return;
-        elements.filterDialog.hidden = true;
-        documentObject.body.classList.remove('marejig-filter-dialog-open');
-        if (MAREJIG_menuState.filterReturnFocus) MAREJIG_menuState.filterReturnFocus.focus();
-    }
-
-    function MAREJIG_openFilters() {
-        var elements = MAREJIG_getElements();
-        if (!elements.filterDialog || !elements.filterOpen || elements.filterOpen.hidden) return;
-        MAREJIG_menuState.filterReturnFocus = documentObject.activeElement;
-        elements.filterDialog.hidden = false;
-        documentObject.body.classList.add('marejig-filter-dialog-open');
-        var first = elements.filterDialog.querySelector('.marejig-filter-sheet select, .marejig-filter-sheet button');
-        if (first) first.focus();
-    }
-
-    function MAREJIG_clearFilters() {
-        var elements = MAREJIG_getElements();
-        MAREJIG_menuState.filters.pack = '';
-        MAREJIG_menuState.filters.difficulty = '';
-        if (elements.packFilter) elements.packFilter.value = '';
-        if (elements.difficultyFilter) elements.difficultyFilter.value = '';
-        MAREJIG_mountPendingLevels();
-    }
-
-    function MAREJIG_initializeFilters() {
-        var elements = MAREJIG_getElements();
-        if (!elements.filterBar || MAREJIG_menuState.filtersInitialized) return;
-        MAREJIG_fillSelect(elements.packFilter, MAREJIG_LevelCatalog.getPacks ? MAREJIG_LevelCatalog.getPacks() : [], MAREJIG_menuState.filters.pack, 'Todos');
-        MAREJIG_fillSelect(elements.difficultyFilter, MAREJIG_LevelCatalog.getDifficulties ? MAREJIG_LevelCatalog.getDifficulties() : [], MAREJIG_menuState.filters.difficulty, 'Todas');
-        elements.filterBar.addEventListener('change', function MAREJIG_filterChanged() {
-            MAREJIG_menuState.filters.pack = elements.packFilter ? elements.packFilter.value : '';
-            MAREJIG_menuState.filters.difficulty = elements.difficultyFilter ? elements.difficultyFilter.value : '';
-            MAREJIG_mountPendingLevels();
-        });
-        if (elements.filterOpen) elements.filterOpen.addEventListener('click', MAREJIG_openFilters);
-        if (elements.filterDone) elements.filterDone.addEventListener('click', MAREJIG_closeFilters);
-        if (elements.clearFilters) elements.clearFilters.addEventListener('click', MAREJIG_clearFilters);
-        if (elements.filterDialog) Array.prototype.slice.call(elements.filterDialog.querySelectorAll('[data-marejig-close-filters]')).forEach(function MAREJIG_wireClose(button) {
-            button.addEventListener('click', MAREJIG_closeFilters);
-        });
-        documentObject.addEventListener('keydown', function MAREJIG_filterDialogKeydown(event) {
-            if (!elements.filterDialog || elements.filterDialog.hidden) return;
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                MAREJIG_closeFilters();
-                return;
-            }
-            if (event.key !== 'Tab') return;
-            var focusable = Array.prototype.slice.call(elements.filterDialog.querySelectorAll('button:not([disabled]), select:not([disabled])'));
-            if (!focusable.length) return;
-            var first = focusable[0];
-            var last = focusable[focusable.length - 1];
-            if (event.shiftKey && documentObject.activeElement === first) { event.preventDefault(); last.focus(); }
-            if (!event.shiftKey && documentObject.activeElement === last) { event.preventDefault(); first.focus(); }
-        });
-        MAREJIG_menuState.filtersInitialized = true;
     }
 
     function MAREJIG_getPendingLevels() {
@@ -144,7 +42,7 @@
                 if (progressA !== progressB) return progressB - progressA;
                 return a.order - b.order;
             });
-        return MAREJIG_applyFilters(MAREJIG_menuState.pendingLevels);
+        return MAREJIG_menuState.pendingLevels;
     }
 
     function MAREJIG_escape(value) {
@@ -236,20 +134,16 @@
 
     function MAREJIG_updateControls() {
         var elements = MAREJIG_getElements();
-        var filteredCount = MAREJIG_menuState.levels.length;
-        var pendingCount = MAREJIG_menuState.pendingLevels.length;
-        var hasMore = MAREJIG_menuState.renderedCount < Math.max(0, filteredCount - (elements.featured ? 1 : 0));
+        var pendingCount = MAREJIG_menuState.levels.length;
+        var hasMore = MAREJIG_menuState.renderedCount < Math.max(0, pendingCount - (elements.featured ? 1 : 0));
         elements.loadMore.hidden = !hasMore;
-        if (elements.next) elements.next.hidden = filteredCount <= 1;
+        if (elements.next) elements.next.hidden = pendingCount <= 1;
         elements.empty.hidden = pendingCount !== 0;
-        if (elements.filterEmpty) elements.filterEmpty.hidden = pendingCount === 0 || filteredCount !== 0;
-        if (elements.filterOpen) elements.filterOpen.hidden = pendingCount <= MAREJIG_FILTER_THRESHOLD;
         elements.pendingTotal.textContent = pendingCount === 0 ? 'No quedan puzzles pendientes' : (pendingCount === 1 ? 'Un puzzle listo para armar' : pendingCount + ' puzzles listos para armar');
     }
 
     function MAREJIG_mountPendingLevels() {
         var elements = MAREJIG_getElements();
-        MAREJIG_initializeFilters();
         MAREJIG_menuState.levels = MAREJIG_getPendingLevels();
         MAREJIG_menuState.renderedCount = 0;
         if (elements.featured) elements.featured.textContent = '';
@@ -279,11 +173,6 @@
         renderNextBatch: MAREJIG_renderNextBatch,
         observeThumbnailCards: MAREJIG_observeCardImages,
         getRenderedCount: function MAREJIG_getRenderedCount() { return MAREJIG_menuState.renderedCount; },
-        getVisibleLevelCount: function MAREJIG_getVisibleLevelCount() { return MAREJIG_menuState.levels.length; },
-        setFilters: function MAREJIG_setFilters(filters) {
-            MAREJIG_menuState.filters.pack = filters && filters.pack || '';
-            MAREJIG_menuState.filters.difficulty = filters && filters.difficulty || '';
-            MAREJIG_mountPendingLevels();
-        }
+        getVisibleLevelCount: function MAREJIG_getVisibleLevelCount() { return MAREJIG_menuState.levels.length; }
     });
 }(window, document));
