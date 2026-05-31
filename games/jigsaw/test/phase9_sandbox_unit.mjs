@@ -37,6 +37,6 @@ function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox
 {
  const sandbox=load(['MAREJIG_shapes.js']); const outline=sandbox.MAREJIG_Shapes.buildCellsOutline([{x:0,y:0},{x:1,y:0}]); assert.equal(outline.segments.length,6,'merged outline omits shared edge');
  const {scene}=fixture(); assert.equal(Object.keys(scene.puzzle.pieces).length>=22,true,'fixture has segmented pieces');
- const hardSandbox=load(files); const hard={id:'hard_fixture',title:'Hard',pack:'Unit',difficulty:'hard',rewardCoins:80,board:{cols:16,rows:12},targetPieceCount:60,segmentPlan:[8,8,8,8,8,10,10]}; const puzzle=hardSandbox.MAREJIG_Generator.generate(hard); assert.equal(Object.keys(puzzle.pieces).length,60,'hard keeps 60 pieces'); assert(Math.max(...puzzle.segments.order.map(id=>puzzle.segments.items[id].pieceIds.length))<=10,'hard reveals no more than 10 pieces per segment');
+ const hardSandbox=load(files); const hard={id:'hard_fixture',title:'Hard',pack:'Unit',difficulty:'hard',rewardCoins:200,board:{cols:16,rows:12},targetPieceCount:60,segmentPlan:[8,8,8,8,8,10,10]}; const puzzle=hardSandbox.MAREJIG_Generator.generate(hard); assert.equal(Object.keys(puzzle.pieces).length,60,'hard keeps 60 pieces'); assert(Math.max(...puzzle.segments.order.map(id=>puzzle.segments.items[id].pieceIds.length))<=10,'hard reveals no more than 10 pieces per segment');
 }
 console.log('phase9 sandbox unit tests ok');

@@ -3,7 +3,7 @@
 
     function MAREJIG_reportLevelCompleted(level, metrics) {
         var rewardLevelId = 'level_' + level.id;
-        var coins = Math.max(1, Math.floor(Number(level.rewardCoins) || 1));
+        const coins = Math.max(1, Math.floor(level.rewardCoins));
 
         if (metrics && metrics.rewardReported) {
             return { ok: true, mode: 'already-reported', coins: coins, rewardLevelId: rewardLevelId };

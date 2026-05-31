@@ -48,6 +48,9 @@ function assertLevelShape(level, index, catalog) {
   if (level.sourceFormat !== 'avif') errors.push(`${level.id}: sourceFormat debe ser avif`);
   if (!level.cloudinaryPublicId || typeof level.cloudinaryPublicId !== 'string') errors.push(`${level.id}: cloudinaryPublicId vacío`);
   if (!Number.isInteger(level.rewardCoins) || level.rewardCoins <= 0) errors.push(`${level.id}: rewardCoins debe ser entero positivo`);
+  const expectedRewards = { easy: 75, standard: 125, hard: 200 };
+  const expectedReward = expectedRewards[level.difficulty];
+  if (level.rewardCoins !== expectedReward) errors.push(`${level.id}: rewardCoins debe ser ${expectedReward} para dificultad ${level.difficulty}`);
   if (!catalog.getDifficulties().includes(level.difficulty)) errors.push(`${level.id}: difficulty no reconocida`);
   const segmentTotal = Array.isArray(level.segmentPlan) ? level.segmentPlan.reduce((sum, value) => sum + value, 0) : 0;
   if (segmentTotal !== level.targetPieceCount || !level.segmentPlan.every((value) => Number.isInteger(value) && value > 0)) {
@@ -93,6 +96,22 @@ const catalog = sandbox.MAREJIG_LevelCatalog;
 const errors = [];
 const seenIds = new Set();
 const seenOrders = new Set();
+
+const expectedRewards = { easy: 75, standard: 125, hard: 200 };
+for (const [difficulty, rewardCoins] of Object.entries(expectedRewards)) {
+  if (catalog.getDifficultyConfig(difficulty).rewardCoins !== rewardCoins) {
+    errors.push(`${difficulty}: difficultyConfig.rewardCoins debe ser ${rewardCoins}`);
+  }
+}
+
+const standardConfig = catalog.getDifficultyConfig('standard');
+const invalidStandardReward = {
+  id: 'invalid_standard_reward', order: 999, title: 'Inválido', pack: 'Validator', difficulty: 'standard',
+  cloudinaryPublicId: 'marejig/levels/invalid-standard-reward', sourceFormat: 'avif', aspectRatio: '4:3',
+  master: { width: 2400, height: 1800 }, board: { cols: standardConfig.board.cols, rows: standardConfig.board.rows },
+  targetPieceCount: standardConfig.targetPieceCount, segmentPlan: standardConfig.segmentPlan.slice(), rewardCoins: 55
+};
+if (catalog.validateLevel(invalidStandardReward)) errors.push('validateLevel debe rechazar standard con rewardCoins 55');
 
 const catalogResult = catalog.validateCatalog();
 if (!catalogResult.valid) errors.push(...catalogResult.errors);

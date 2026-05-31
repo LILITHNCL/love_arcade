@@ -7,27 +7,27 @@
             board: Object.freeze({ cols: 12, rows: 9 }),
             targetPieceCount: 24,
             segmentPlan: Object.freeze([6, 6, 6, 6]),
-            rewardRange: Object.freeze([35, 45]),
+            rewardCoins: 75,
         }),
         standard: Object.freeze({
-            label: 'Estándar',
+            label: 'Normal',
             board: Object.freeze({ cols: 12, rows: 9 }),
             targetPieceCount: 32,
             segmentPlan: Object.freeze([8, 8, 8, 8]),
-            rewardRange: Object.freeze([50, 65]),
+            rewardCoins: 125,
         }),
         hard: Object.freeze({
             label: 'Difícil',
             board: Object.freeze({ cols: 16, rows: 12 }),
             targetPieceCount: 60,
             segmentPlan: Object.freeze([8, 8, 8, 8, 8, 10, 10]),
-            rewardRange: Object.freeze([70, 90]),
+            rewardCoins: 200,
         })
     });
 
     var MAREJIG_LEVEL_SPECS = Object.freeze([
-        Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf']),
-        Object.freeze(['raiden_shogun_002', 2, 'Raiden Shogun', 'Personajes', 'standard', 55, 'raiden-af545xdf'])
+        Object.freeze(['raiden_shogun_001', 1, 'Raiden Shogun', 'Personajes', 'standard', 'raiden-af545xdf']),
+        Object.freeze(['raiden_shogun_002', 2, 'Raiden Shogun', 'Personajes', 'standard', 'raiden-af545xdf'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
@@ -43,7 +43,7 @@
         var difficulty = spec[4];
         var difficultyConfig = MAREJIG_DIFFICULTY_CONFIG[difficulty] || MAREJIG_DIFFICULTY_CONFIG.standard;
         var id = spec[0];
-        var publicId = spec[6] || ('marejig/levels/' + id);
+        var publicId = spec[5] || ('marejig/levels/' + id);
 
         return Object.freeze({
             id: id,
@@ -58,7 +58,7 @@
             board: Object.freeze({ cols: difficultyConfig.board.cols, rows: difficultyConfig.board.rows }),
             targetPieceCount: difficultyConfig.targetPieceCount,
             segmentPlan: MAREJIG_cloneArray(difficultyConfig.segmentPlan),
-            rewardCoins: spec[5]
+            rewardCoins: difficultyConfig.rewardCoins
         });
     }
 
@@ -109,6 +109,7 @@
         if (level.difficulty === 'hard' && (level.targetPieceCount < 56 || level.targetPieceCount > 64)) return false;
         if (!MAREJIG_validateSegmentPlan(level)) return false;
         if (!MAREJIG_isPositiveInteger(level.rewardCoins)) return false;
+        if (level.rewardCoins !== expectedDifficulty.rewardCoins) return false;
 
         return true;
     }

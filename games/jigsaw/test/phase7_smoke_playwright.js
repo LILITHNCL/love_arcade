@@ -28,10 +28,10 @@ try {
         ['MAREJIG_completedLevels_v1', 'MAREJIG_levelProgress_v1', 'MAREJIG_activeSave_v1', 'MAREJIG_settings_v1'].forEach((key) => localStorage.removeItem(key));
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.marejig-level-card', { timeout: 30000 });
-    const initialCards = await page.locator('.marejig-level-card').count();
+    await page.waitForSelector('.marejig-level-poster', { timeout: 30000 });
+    const initialCards = await page.locator('.marejig-level-poster').count();
     if (initialCards > 12) throw new Error(`batch inicial demasiado grande: ${initialCards}`);
-    await page.locator('.marejig-level-card').first().click();
+    await page.locator('.marejig-level-poster').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.waitForFunction(() => window.MAREJIG_State && window.MAREJIG_State.getState().scene, null, { timeout: 45000 });
     const fullscreen = await page.evaluate(() => {

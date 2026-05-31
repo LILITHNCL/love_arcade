@@ -31,7 +31,9 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 
 - [ ] La economía sigue centralizada en `js/MAREJIG_economy.js`.
 - [ ] No hay usos de `addCoins`, `spendCoins` ni `getBalance`.
-- [ ] La recompensa es entero positivo y fija por nivel.
+- [ ] La recompensa se deriva de la dificultad: Fácil `75`, Normal `125`, Difícil `200` monedas.
+- [ ] La recompensa se paga una sola vez por nivel completado; repetir un completado no vuelve a pagar.
+- [ ] En standalone el nivel se completa localmente, pero no se acreditan monedas globales.
 - [ ] La idempotencia local evita pagos repetidos por victoria, replay o reload.
 
 ## 4. Cloudinary producción
@@ -114,6 +116,7 @@ git diff --check
 git diff --cached --check
 for file in games/jigsaw/js/*.js; do node --check "$file" || exit 1; done
 node games/jigsaw/tools/validate-levels.mjs
+node games/jigsaw/test/reward_balance_unit.mjs
 node games/jigsaw/test/phase4_unit.js
 node games/jigsaw/test/phase5_unit.js
 node games/jigsaw/test/phase6_unit.js

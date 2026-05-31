@@ -23,9 +23,9 @@ const { chromium } = require('playwright');
         ['MAREJIG_completedLevels_v1', 'MAREJIG_levelProgress_v1', 'MAREJIG_activeSave_v1', 'MAREJIG_settings_v1'].forEach((key) => localStorage.removeItem(key));
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.marejig-level-card', { timeout: 30000 });
-    const firstLevelId = await page.locator('.marejig-level-card').first().getAttribute('data-marejig-level-id');
-    await page.locator('.marejig-level-card').first().click();
+    await page.waitForSelector('.marejig-level-poster', { timeout: 30000 });
+    const firstLevelId = await page.locator('.marejig-level-poster').first().getAttribute('data-marejig-level-id');
+    await page.locator('.marejig-level-poster').first().click();
     await page.waitForSelector('#marejig-screen-game:not([hidden])', { timeout: 45000 });
     await page.evaluate(() => {
         Object.defineProperty(window, 'GameCenter', {
@@ -48,7 +48,7 @@ const { chromium } = require('playwright');
     await page.screenshot({ path: 'games/jigsaw/phase5-victory-390x844.png', fullPage: false });
     await page.locator('#marejig-victory-levels').click();
     await page.waitForSelector('#marejig-screen-menu:not([hidden])', { timeout: 10000 });
-    const stillPresent = await page.locator(`.marejig-level-card[data-marejig-level-id="${firstLevelId}"]`).count();
+    const stillPresent = await page.locator(`.marejig-level-poster[data-marejig-level-id="${firstLevelId}"]`).count();
     if (stillPresent !== 0) throw new Error('completed level still appears in pending menu');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#marejig-screen-menu:not([hidden])', { timeout: 10000 });
