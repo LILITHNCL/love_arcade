@@ -25,44 +25,60 @@
 
         <main class="marejig-main" id="marejig-main">
             <section class="marejig-screen marejig-screen-current" id="marejig-screen-menu" aria-labelledby="marejig-menu-title">
-                <div class="marejig-hero">
-                    <p class="marejig-kicker">Marejig</p>
-                    <h1 class="marejig-title" id="marejig-menu-title">Elige un puzzle</h1>
-                    <p class="marejig-subtitle">Arma imágenes por segmentos.</p>
-                    <p class="marejig-menu-count" id="marejig-total-pending" aria-live="polite">Cargando niveles…</p>
-                </div>
+                <section class="marejig-menu-hero">
+                    <p class="marejig-menu-kicker">Marejig</p>
+                    <h1 class="marejig-menu-title" id="marejig-menu-title">Elige un puzzle</h1>
+                    <p class="marejig-menu-subtitle">Toca una imagen para empezar.</p>
+                    <p class="marejig-menu-count" id="marejig-total-pending" aria-live="polite">Cargando puzzles…</p>
+                </section>
 
-                <div class="marejig-panel" aria-live="polite">
-                    <div class="marejig-panel-head">
-                        <div>
-                            <h2 class="marejig-section-title">Tu próxima imagen</h2>
-                            <p class="marejig-section-note">Elige una y empieza a armar.</p>
-                        </div>
-                        <form class="marejig-filter-bar" id="marejig-filter-bar" aria-label="Filtros de niveles pendientes">
-                            <label class="marejig-filter-field" for="marejig-filter-pack">
-                                <span>Pack</span>
-                                <select class="marejig-filter-select" id="marejig-filter-pack" name="pack">
-                                    <option value="">Todos</option>
-                                </select>
-                            </label>
-                            <label class="marejig-filter-field" for="marejig-filter-difficulty">
-                                <span>Dificultad</span>
-                                <select class="marejig-filter-select" id="marejig-filter-difficulty" name="difficulty">
-                                    <option value="">Todas</option>
-                                </select>
-                            </label>
-                        </form>
-                    </div>
+                <div class="marejig-menu-toolbar">
+                    <h2 class="marejig-menu-section-title">Tu próximo puzzle</h2>
+                    <button class="marejig-filter-trigger" type="button" id="marejig-filter-open" aria-haspopup="dialog" aria-controls="marejig-filter-dialog" hidden>Filtrar</button>
+                </div>
+                <section class="marejig-featured-level" id="marejig-featured-level" aria-label="Puzzle recomendado"></section>
+                <section class="marejig-next-levels" id="marejig-next-levels" aria-labelledby="marejig-next-title" hidden>
+                    <h2 class="marejig-menu-section-title" id="marejig-next-title">Más puzzles</h2>
                     <div class="marejig-level-grid" id="marejig-level-grid" aria-label="Lista de niveles pendientes"></div>
                     <div class="marejig-menu-actions">
                         <button class="marejig-button marejig-button-secondary" type="button" id="marejig-load-more" aria-label="Ver más niveles pendientes" hidden>Ver más</button>
                     </div>
-                    <div class="marejig-empty" id="marejig-empty-state" hidden>
-                        <div class="marejig-empty-orb" aria-hidden="true">✓</div>
-                        <h2 class="marejig-section-title">Catálogo completado</h2>
-                        <p class="marejig-section-note">No tienes niveles pendientes por ahora. Vuelve cuando haya nuevos packs.</p>
-                    </div>
                     <div class="marejig-sentinel" id="marejig-menu-sentinel" aria-hidden="true"></div>
+                </section>
+                <section class="marejig-empty" id="marejig-empty-state" aria-live="polite" hidden>
+                    <div class="marejig-empty-orb" aria-hidden="true">✓</div>
+                    <h2 class="marejig-section-title">Catálogo completado</h2>
+                    <p class="marejig-section-note">Ya armaste todos los puzzles disponibles.</p>
+                </section>
+                <section class="marejig-empty marejig-filter-empty" id="marejig-filter-empty-state" aria-live="polite" hidden>
+                    <div class="marejig-empty-orb" aria-hidden="true">⌕</div>
+                    <h2 class="marejig-section-title">No hay puzzles con este filtro</h2>
+                    <p class="marejig-section-note">Prueba otra combinación para seguir jugando.</p>
+                    <button class="marejig-button marejig-button-secondary" type="button" id="marejig-clear-filters">Limpiar filtros</button>
+                </section>
+
+                <div class="marejig-filter-dialog" id="marejig-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="marejig-filter-title" hidden>
+                    <button class="marejig-filter-backdrop" type="button" aria-label="Cerrar filtros" data-marejig-close-filters></button>
+                    <section class="marejig-filter-sheet" role="document">
+                        <div class="marejig-filter-sheet-head">
+                            <div>
+                                <p class="marejig-menu-kicker">Explorar</p>
+                                <h2 class="marejig-menu-section-title" id="marejig-filter-title">Filtrar puzzles</h2>
+                            </div>
+                            <button class="marejig-filter-close" type="button" aria-label="Cerrar filtros" data-marejig-close-filters>×</button>
+                        </div>
+                        <form class="marejig-filter-bar" id="marejig-filter-bar" aria-label="Filtros de niveles pendientes">
+                            <label class="marejig-filter-field" for="marejig-filter-pack">
+                                <span>Pack</span>
+                                <select class="marejig-filter-select" id="marejig-filter-pack" name="pack"><option value="">Todos</option></select>
+                            </label>
+                            <label class="marejig-filter-field" for="marejig-filter-difficulty">
+                                <span>Dificultad</span>
+                                <select class="marejig-filter-select" id="marejig-filter-difficulty" name="difficulty"><option value="">Todas</option></select>
+                            </label>
+                        </form>
+                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-filter-done">Ver puzzles</button>
+                    </section>
                 </div>
             </section>
 
