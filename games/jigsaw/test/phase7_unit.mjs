@@ -216,7 +216,8 @@ function makeDocument() {
   assert.equal(sandbox.MAREJIG_Menu.getRenderedCount(), 12, 'only initial batch rendered');
   assert.equal(grid.children.length, 12, 'only initial cards are nodes');
   assert.equal(calls.full, 0, 'no full images requested from menu');
-  assert.ok(document.getElementById('marejig-total-pending').textContent.includes('197 niveles pendientes'));
+  assert.ok(document.getElementById('marejig-total-pending').textContent.includes('197 puzzles listos para armar'));
+  assert.equal(document.getElementById('marejig-filter-bar').hidden, false, 'large catalogs keep filters visible');
   sandbox.MAREJIG_Menu.renderNextBatch();
   assert.equal(grid.children.length, 24, 'load more appends one batch, not all 200');
   completed.add(grid.children[0].attributes['data-marejig-level-id']);

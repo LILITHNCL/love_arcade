@@ -223,9 +223,10 @@ node games/jigsaw/test/phase8_audit.mjs
 node games/jigsaw/test/phase9_sandbox_unit.mjs
 node games/jigsaw/test/phase10_gamefeel_unit.mjs
 node games/jigsaw/test/phase11_corrective_unit.mjs
+node games/jigsaw/test/phase12_ui_polish_unit.mjs
 ```
 
-`phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de sandbox/segmentos y restricciones críticas de namespace. `phase9_sandbox_unit.mjs` añade cobertura directa de mundo mayor que viewport, cámara acotada, pan por fondo vacío, drag por pieza, dispersión, clamp recuperable, resize estable, renderer sin guía ni seams internos y hard con 60 piezas en segmentos de hasta 10. `phase10_gamefeel_unit.mjs` y `phase11_corrective_unit.mjs` verifican clusters compactos guiados por foco, paredes del mundo, anti-solape cercano, cámara bajo demanda, audio seguro, fullscreen DOM real y overlays sin layout muerto.
+`phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de sandbox/segmentos y restricciones críticas de namespace. `phase9_sandbox_unit.mjs` añade cobertura directa de mundo mayor que viewport, cámara acotada, pan por fondo vacío, drag por pieza, dispersión, clamp recuperable, resize estable, renderer sin guía ni seams internos y hard con 60 piezas en segmentos de hasta 10. `phase10_gamefeel_unit.mjs` y `phase11_corrective_unit.mjs` verifican clusters compactos guiados por foco, paredes del mundo, anti-solape cercano, cámara bajo demanda, audio seguro, fullscreen DOM real y overlays sin layout muerto. `phase12_ui_polish_unit.mjs` audita el pulido visual barato: sin blur ni loops decorativos permanentes, filtros compactos, microfeedback acotado, reduced motion y contratos de integración.
 
 ### Smoke Playwright reproducible
 

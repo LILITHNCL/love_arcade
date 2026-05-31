@@ -273,6 +273,37 @@
         return Boolean(settings.reducedMotion || mediaReduce);
     }
 
+    function MAREJIG_showSnapBurst() {
+        var burst = MAREJIG_byId('marejig-snap-burst');
+        if (!burst || MAREJIG_getReducedMotion()) return;
+        burst.textContent = '';
+        for (var index = 0; index < 8; index += 1) {
+            var spark = documentObject.createElement('span');
+            spark.className = 'marejig-snap-spark';
+            spark.style.setProperty('--marejig-spark-angle', String(index * 45) + 'deg');
+            burst.appendChild(spark);
+        }
+        burst.classList.remove('marejig-snap-burst-active');
+        void burst.offsetWidth;
+        burst.classList.add('marejig-snap-burst-active');
+        windowObject.setTimeout(function MAREJIG_clearSnapBurst() {
+            burst.classList.remove('marejig-snap-burst-active');
+            burst.textContent = '';
+        }, 420);
+    }
+
+    function MAREJIG_trapModalFocus(event) {
+        if (event.key !== 'Tab') return;
+        var modal = documentObject.querySelector('.marejig-modal:not([hidden])');
+        if (!modal) return;
+        var focusable = Array.prototype.slice.call(modal.querySelectorAll('button:not([disabled]), [href], select:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && documentObject.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && documentObject.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+
     function MAREJIG_openModal(id, focusId) {
         var modal = MAREJIG_byId(id);
         if (!modal) return;
@@ -391,10 +422,11 @@
             MAREJIG_Renderer.setScene(scene);
             MAREJIG_Input.attach(MAREJIG_byId('marejig-canvas'), scene, MAREJIG_Renderer, {
                 onSelect: function MAREJIG_inputSelect() { MAREJIG_updateHud(level, puzzle, imageResult, scene); },
-                onMoveEnd: function MAREJIG_inputMoveEnd() {
+                onMoveEnd: function MAREJIG_inputMoveEnd(moveResult) {
+                    if (moveResult && moveResult.mergedGroupId) MAREJIG_showSnapBurst();
                     var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
                     if (segmentResult.completed) {
-                        MAREJIG_showToast(segmentResult.revealed ? 'Segmento desbloqueado' : 'Segmento completado');
+                        MAREJIG_showToast(segmentResult.revealed ? '¡Nuevo grupo!' : 'Segmento listo');
                         if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 200);
                         MAREJIG_saveGame('segment');
                     }
@@ -464,7 +496,7 @@
         var modal = MAREJIG_byId('marejig-victory-modal');
         if (!modal) return;
         MAREJIG_lastFocus = documentObject.activeElement;
-        MAREJIG_byId('marejig-victory-title').textContent = '¡Nivel completado!';
+        MAREJIG_byId('marejig-victory-title').textContent = '¡Puzzle completo!';
         MAREJIG_byId('marejig-victory-level').textContent = scene.level.title;
         MAREJIG_byId('marejig-victory-pack').textContent = scene.level.pack;
         MAREJIG_byId('marejig-victory-time').textContent = MAREJIG_formatTime(scene.progress.elapsedMs);
@@ -584,8 +616,10 @@
         });
         windowObject.addEventListener('pagehide', function MAREJIG_pageHide() { MAREJIG_pauseTimer(); MAREJIG_saveGame('pagehide'); });
         documentObject.addEventListener('keydown', function MAREJIG_keydown(event) {
+            MAREJIG_trapModalFocus(event);
             if (event.key !== 'Escape') return;
-            if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
+            if (!MAREJIG_byId('marejig-confirm-reset-modal').hidden) MAREJIG_closeResetConfirm();
+            else if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
             else if (!MAREJIG_byId('marejig-pause-modal').hidden) MAREJIG_closePause();
             else MAREJIG_hideVictory();
         });
