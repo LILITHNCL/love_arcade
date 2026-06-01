@@ -1285,6 +1285,7 @@
     margin: -4px auto 0;
     color: #ffd166;
     pointer-events: none;
+    z-index: 1;
 }
 .marejig-victory-celebration span {
     position: absolute;
@@ -1312,11 +1313,11 @@
 .marejig-victory-celebration span:nth-child(11) { --marejig-star-x: 136px; --marejig-star-y: 8px; --marejig-star-rotate: -18deg; --marejig-star-delay: 300ms; }
 .marejig-victory-celebration span:nth-child(12) { --marejig-star-x: -132px; --marejig-star-y: 30px; --marejig-star-rotate: 20deg; --marejig-star-delay: 90ms; }
 .marejig-victory-celebration span:nth-child(13) { --marejig-star-x: -78px; --marejig-star-y: 35px; --marejig-star-rotate: -24deg; --marejig-star-delay: 150ms; }
-.marejig-victory-celebration span:nth-child(14) { --marejig-star-x: 2px; --marejig-star-y: 32px; --marejig-star-rotate: 18deg; --marejig-star-delay: 210ms; }
+.marejig-victory-celebration span:nth-child(14) { --marejig-star-x: -108px; --marejig-star-y: 28px; --marejig-star-rotate: 18deg; --marejig-star-delay: 210ms; }
 .marejig-victory-celebration span:nth-child(15) { --marejig-star-x: 72px; --marejig-star-y: 35px; --marejig-star-rotate: -16deg; --marejig-star-delay: 270ms; --marejig-star-size: 0.65rem; }
 .marejig-victory-celebration span:nth-child(16) { --marejig-star-x: 128px; --marejig-star-y: 29px; --marejig-star-rotate: 22deg; --marejig-star-delay: 330ms; }
-.marejig-victory-kicker { margin: -2px 0 4px; color: #ffd166; font-size: 0.76rem; font-weight: 950; letter-spacing: 0.16em; text-transform: uppercase; }
-.marejig-victory-title { margin: 0; color: #fff9e9; font-size: clamp(2rem, 10vw, 3.25rem); line-height: 0.96; letter-spacing: -0.07em; }
+.marejig-victory-kicker { position: relative; z-index: 2; margin: -2px 0 4px; color: #ffd166; font-size: 0.76rem; font-weight: 950; letter-spacing: 0.16em; text-transform: uppercase; }
+.marejig-victory-title { max-width: 12ch; margin: 0 auto; color: #fff9e9; font-size: clamp(2rem, 9.5vw, 3.15rem); font-weight: 950; line-height: 0.92; letter-spacing: -0.015em; text-wrap: balance; }
 .marejig-victory-level { margin: 9px 0 0; color: #b8c9e6; font-size: 0.95rem; }
 .marejig-victory-reward {
     position: relative;

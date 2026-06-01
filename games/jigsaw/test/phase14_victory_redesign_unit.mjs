@@ -24,6 +24,11 @@ assert.match(main, /if \(next\) next\.focus\(\);/, 'primary CTA receives initial
 assert.match(victoryHtml, /marejig-victory-celebration" aria-hidden="true"/, 'decorative celebration is hidden from assistive technology');
 const celebrationHtml = victoryHtml.match(/<div class="marejig-victory-celebration"[\s\S]*?<\/div>/)?.[0] || '';
 assert.equal((celebrationHtml.match(/<span>/g) || []).length, 16, 'celebration has a limited number of sparks');
+assert.match(css, /\.marejig-victory-title \{[^}]*letter-spacing: -0\.015em;/, 'victory title uses readable, lightly tightened tracking');
+assert.doesNotMatch(css, /\.marejig-victory-title \{[^}]*letter-spacing: -(?:0\.0[3-9]|0\.[1-9])em;/, 'victory title avoids excessively negative tracking');
+assert.match(css, /\.marejig-victory-celebration \{[^}]*z-index: 1;/, 'decorative celebration stays below the victory kicker');
+assert.match(css, /\.marejig-victory-kicker \{[^}]*position: relative;[^}]*z-index: 2;/, 'victory kicker stays above decorative celebration');
+assert.match(css, /span:nth-child\(14\) \{[^}]*--marejig-star-x: -108px;/, 'central lower spark is shifted away from the kicker safe zone');
 assert.doesNotMatch(css, /backdrop-filter|filter\s*:\s*blur/i, 'victory CSS avoids expensive blur effects');
 assert.doesNotMatch(css, /animation[^;]*infinite/i, 'CSS avoids infinite animations');
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.marejig-victory-celebration/, 'reduced motion disables decorative victory sparks');
