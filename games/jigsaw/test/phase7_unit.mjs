@@ -171,7 +171,7 @@ function makeElement(id = '') {
 
 function makeDocument() {
   const elements = new Map();
-  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-load-more', 'marejig-menu-sentinel']) {
+  for (const id of ['marejig-level-grid', 'marejig-empty-state', 'marejig-menu-sentinel']) {
     elements.set(id, makeElement(id));
   }
   return {
@@ -186,11 +186,12 @@ function makeDocument() {
 {
   const document = makeDocument();
   const calls = { tiny: 0, thumbnail: 0, full: 0, starts: [] };
+  const observers = [];
   const fixture = Array.from({ length: 200 }, (_, index) => createFixtureLevel(index));
   const completed = new Set(['fixture_001', 'fixture_002', 'fixture_050']);
   const sandbox = loadSandbox(['MAREJIG_config.js', 'MAREJIG_menu.js'], {
     document,
-    IntersectionObserver: function IntersectionObserver(callback) { this.observe = function observe() {}; this.unobserve = function unobserve() {}; this.disconnect = function disconnect() {}; this._callback = callback; },
+    IntersectionObserver: function IntersectionObserver(callback) { this._observed = []; this.observe = (target) => { this._observed.push(target); }; this.unobserve = function unobserve() {}; this.disconnect = function disconnect() {}; this._callback = callback; observers.push(this); },
     MAREJIG_LevelCatalog: {
       getOrdered: () => fixture.slice()
     },
@@ -216,8 +217,12 @@ function makeDocument() {
   assert.equal(calls.full, 0, 'no full images requested from menu');
   assert.match(grid.children[0].innerHTML, /class="marejig-action-arrow" aria-hidden="true"><svg[^>]*focusable="false"/, 'menu action uses a hidden inline SVG arrow');
   assert.equal(document.getElementById('marejig-empty-state').hidden, true, 'completed catalog stays hidden while pending levels remain');
-  sandbox.MAREJIG_Menu.renderNextBatch();
-  assert.equal(grid.children.length, 24, 'load more appends one batch, not all 200');
+  assert.equal(document.getElementById('marejig-load-more'), null, 'menu does not require a visible load-more button');
+  const sentinel = document.getElementById('marejig-menu-sentinel');
+  const paginationObserver = observers.find((observer) => observer._observed.includes(sentinel));
+  assert.ok(paginationObserver, 'internal invisible sentinel is observed for incremental rendering');
+  assert.doesNotThrow(() => paginationObserver._callback([{ target: sentinel, isIntersecting: true }]), 'sentinel pagination works without a load-more button');
+  assert.equal(grid.children.length, 24, 'sentinel appends one batch, not all 200');
   completed.add(grid.children[0].attributes['data-marejig-level-id']);
   sandbox.MAREJIG_Menu.refreshAfterCompletion();
   assert.equal(sandbox.MAREJIG_Menu.getVisibleLevelCount(), 196, 'completed card disappears after refresh');

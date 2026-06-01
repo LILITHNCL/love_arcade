@@ -81,42 +81,6 @@
     stroke-linejoin: round;
 }
 
-.marejig-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-
-.marejig-brand-mark {
-    display: inline-grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 16px;
-    color: #09111f;
-    background: linear-gradient(135deg, #77f7e4, #b8a3ff 56%, #ffd166);
-    box-shadow: 0 16px 42px rgba(119, 247, 228, 0.22);
-    font-weight: 950;
-}
-
-.marejig-brand-copy {
-    display: grid;
-    line-height: 1;
-    text-align: right;
-}
-
-.marejig-brand-copy strong {
-    font-size: 0.9rem;
-    letter-spacing: 0.12em;
-}
-
-.marejig-brand-copy small {
-    color: #a7b0c7;
-    font-size: 0.72rem;
-    margin-top: 4px;
-}
-
 .marejig-main {
     position: relative;
 }
@@ -288,17 +252,6 @@
     opacity: 1;
 }
 
-.marejig-thumb-fallback {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: rgba(255, 255, 255, 0.68);
-    font-size: 2rem;
-    font-weight: 950;
-    letter-spacing: -0.08em;
-}
-
 .marejig-card-copy {
     display: grid;
     gap: 8px;
@@ -370,19 +323,6 @@
     place-items: center;
     padding: 42px 16px;
     text-align: center;
-}
-
-.marejig-empty-orb {
-    display: grid;
-    place-items: center;
-    width: 72px;
-    height: 72px;
-    margin-bottom: 16px;
-    border-radius: 24px;
-    color: #09111f;
-    background: linear-gradient(135deg, #77f7e4, #b8a3ff);
-    font-size: 2rem;
-    font-weight: 950;
 }
 
 .marejig-sentinel {
@@ -942,10 +882,6 @@
         margin-bottom: 8px;
     }
 
-    .marejig-body .marejig-brand-copy small {
-        display: none;
-    }
-
     .marejig-body #marejig-screen-game .marejig-game-hud {
         grid-template-columns: repeat(3, auto);
     }
@@ -1225,7 +1161,6 @@
 
 .marejig-shell { width: min(100%, 1060px); }
 .marejig-topbar { margin-bottom: 8px; }
-.marejig-brand-copy small { display: none; }
 .marejig-hero { padding: 14px 2px 16px; }
 .marejig-hero .marejig-kicker { margin-bottom: 6px; }
 .marejig-title { font-size: clamp(2.35rem, 13vw, 4.8rem); line-height: 0.96; }

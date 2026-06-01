@@ -10,6 +10,7 @@
         pendingLevels: [],
         renderedCount: 0,
         observer: null,
+        paginationObserver: null,
         elements: null,
         selectionTimer: 0
     };
@@ -21,7 +22,8 @@
             next: documentObject.getElementById('marejig-next-levels'),
             grid: documentObject.getElementById('marejig-level-grid'),
             empty: documentObject.getElementById('marejig-empty-state'),
-            loadMore: documentObject.getElementById('marejig-load-more')
+            loadMore: documentObject.getElementById('marejig-load-more'),
+            sentinel: documentObject.getElementById('marejig-menu-sentinel')
         };
         return MAREJIG_menuState.elements;
     }
@@ -80,7 +82,6 @@
         card.innerHTML = [
             '<span class="marejig-level-poster__media">',
             '  <img class="marejig-level-thumb" loading="lazy" decoding="async" alt="" src="' + tinyUrl + '" data-marejig-src="' + thumbnailUrl + '">',
-            '  <span class="marejig-thumb-fallback" aria-hidden="true">' + String(level.order).padStart(2, '0') + '</span>',
             '</span>',
             '<span class="marejig-level-poster__copy">',
             '  <span class="marejig-level-poster__title">' + MAREJIG_escape(level.title) + '</span>',
@@ -117,6 +118,20 @@
         });
     }
 
+    function MAREJIG_setupPaginationObserver() {
+        var elements = MAREJIG_getElements();
+        if (MAREJIG_menuState.paginationObserver) MAREJIG_menuState.paginationObserver.disconnect();
+        MAREJIG_menuState.paginationObserver = null;
+        if (!elements.sentinel || !('IntersectionObserver' in windowObject)) return null;
+        MAREJIG_menuState.paginationObserver = new IntersectionObserver(function MAREJIG_onPagination(entries) {
+            entries.forEach(function MAREJIG_onSentinel(entry) {
+                if (entry.isIntersecting) MAREJIG_renderNextBatch();
+            });
+        }, { rootMargin: '240px 0px' });
+        MAREJIG_menuState.paginationObserver.observe(elements.sentinel);
+        return MAREJIG_menuState.paginationObserver;
+    }
+
     function MAREJIG_renderNextBatch() {
         var elements = MAREJIG_getElements();
         var start = MAREJIG_menuState.renderedCount;
@@ -135,7 +150,7 @@
         var elements = MAREJIG_getElements();
         var pendingCount = MAREJIG_menuState.levels.length;
         var hasMore = MAREJIG_menuState.renderedCount < Math.max(0, pendingCount - (elements.featured ? 1 : 0));
-        elements.loadMore.hidden = !hasMore;
+        if (elements.loadMore) elements.loadMore.hidden = !hasMore;
         if (elements.next) elements.next.hidden = pendingCount <= 1;
         elements.empty.hidden = pendingCount !== 0;
     }
@@ -147,6 +162,7 @@
         if (elements.featured) elements.featured.textContent = '';
         elements.grid.textContent = '';
         MAREJIG_setupThumbObserver();
+        MAREJIG_setupPaginationObserver();
         MAREJIG_updateControls();
         if (!MAREJIG_menuState.levels.length) return;
         if (elements.featured) {
@@ -160,9 +176,6 @@
 
     function MAREJIG_refreshAfterCompletion() { MAREJIG_mountPendingLevels(); }
 
-    documentObject.addEventListener('click', function MAREJIG_menuClick(event) {
-        if (event.target && event.target.id === 'marejig-load-more') MAREJIG_renderNextBatch();
-    });
 
     windowObject.MAREJIG_Menu = Object.freeze({
         getPendingLevels: MAREJIG_getPendingLevels,
