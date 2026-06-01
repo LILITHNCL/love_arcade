@@ -13,6 +13,14 @@ const sources = fs.readdirSync(path.join(root, 'js')).filter((file) => file.ends
 const createCard = menu.slice(menu.indexOf('function MAREJIG_createCard'), menu.indexOf('function MAREJIG_setupThumbObserver'));
 
 assert.match(html, /class="marejig-menu-hero"[\s\S]*Elige un puzzle/, 'menu exposes a minimal hero hierarchy');
+assert.doesNotMatch(html, /marejig-brand(?:-mark|-copy)?|>MAREJIG<|premium jigsaw/, 'header omits redundant decorative branding');
+assert.doesNotMatch(html, /marejig-empty-orb/, 'empty and error states omit decorative orbs');
+assert.doesNotMatch(html, /id="marejig-load-more"|>Ver más<|Ver más niveles pendientes/, 'menu omits the redundant load-more button');
+assert.match(html, /id="marejig-menu-sentinel" aria-hidden="true"/, 'menu keeps an invisible internal pagination sentinel');
+assert.doesNotMatch(css, /\.marejig-(?:brand-mark|brand-copy|empty-orb|thumb-fallback)/, 'removed decorative elements leave no dead CSS selectors');
+assert.doesNotMatch(createCard, /marejig-thumb-fallback|padStart\(2, '0'\)/, 'thumbnail cards omit numeric overlay fallbacks');
+assert.match(menu, /if \(elements\.loadMore\) elements\.loadMore\.hidden = !hasMore;/, 'legacy load-more lookup is null-safe when the button is absent');
+assert.match(menu, /MAREJIG_setupPaginationObserver[\s\S]*observe\(elements\.sentinel\)/, 'incremental rendering uses the invisible sentinel');
 assert.doesNotMatch(html, /marejig-menu-(?:subtitle|count|kicker)|marejig-total-pending/, 'menu omits subtitle, count and kicker nodes');
 assert.doesNotMatch(menu, /pendingTotal|marejig-total-pending|puzzles listos para armar/, 'menu logic no longer renders a puzzle counter');
 assert.match(html, /id="marejig-featured-level"[\s\S]*id="marejig-next-levels"/, 'menu separates protagonist and following puzzles');

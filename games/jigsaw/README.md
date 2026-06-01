@@ -166,7 +166,7 @@ La recompensa se deriva siempre de la dificultad y se paga una sola vez por nive
 
 ### Política de completados y menú
 
-La pantalla principal muestra únicamente niveles pendientes. Los niveles completados se filtran antes de renderizar cards, por lo que desaparecen del catálogo principal tras la victoria. El menú renderiza un lote inicial (`initialPendingCards`) y después lotes de `batchSize` con el botón `Ver más`; no crea 200 cards de golpe. Las miniaturas se cargan lazy y las imágenes full solo se solicitan después de seleccionar un nivel.
+La pantalla principal muestra únicamente niveles pendientes. Los niveles completados se filtran antes de renderizar cards, por lo que desaparecen del catálogo principal tras la victoria. El menú renderiza un lote inicial (`initialPendingCards`) y después lotes de `batchSize` mediante un sentinel interno invisible; no muestra controles redundantes ni crea 200 cards de golpe. Las miniaturas se cargan lazy y las imágenes full solo se solicitan después de seleccionar un nivel.
 
 ### Validadores y smoke tests
 
@@ -224,6 +224,7 @@ node games/jigsaw/test/phase9_sandbox_unit.mjs
 node games/jigsaw/test/phase10_gamefeel_unit.mjs
 node games/jigsaw/test/phase11_corrective_unit.mjs
 node games/jigsaw/test/phase12_ui_polish_unit.mjs
+node games/jigsaw/test/phase13_menu_redesign_unit.mjs
 ```
 
 `phase8_audit.mjs` cubre integración Love Arcade, storage permitido, economía idempotente, checks estructurales de performance, comportamiento de sandbox/segmentos y restricciones críticas de namespace. `phase9_sandbox_unit.mjs` añade cobertura directa de mundo mayor que viewport, cámara acotada, pan por fondo vacío, drag por pieza, dispersión, clamp recuperable, resize estable, renderer sin guía ni seams internos y hard con 60 piezas en segmentos de hasta 10. `phase10_gamefeel_unit.mjs` y `phase11_corrective_unit.mjs` verifican clusters compactos guiados por foco, paredes del mundo, anti-solape cercano, cámara bajo demanda, audio seguro, fullscreen DOM real y overlays sin layout muerto. `phase12_ui_polish_unit.mjs` audita el pulido visual barato: sin blur ni loops decorativos permanentes, menú compacto, microfeedback acotado, reduced motion y contratos de integración.
