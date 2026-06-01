@@ -98,22 +98,28 @@
         <div class="marejig-modal-backdrop" aria-hidden="true"></div>
         <section class="marejig-victory-card" role="document">
             <button class="marejig-modal-close" type="button" id="marejig-victory-close" aria-label="Cerrar pantalla de victoria">×</button>
-            <div class="marejig-victory-stars" aria-hidden="true">
-                <span>★</span><span>✦</span><span>★</span><span>✦</span><span>★</span><span>✦</span><span>★</span><span>✦</span>
+            <div class="marejig-victory-celebration" aria-hidden="true">
+                <span>★</span><span>✦</span><span>★</span><span>✦</span><span>●</span><span>★</span><span>✦</span><span>★</span>
+                <span>✦</span><span>●</span><span>★</span><span>✦</span><span>★</span><span>✦</span><span>●</span><span>★</span>
             </div>
-            <p class="marejig-kicker">Victoria</p>
-            <h2 class="marejig-title" id="marejig-victory-title">¡Puzzle completo!</h2>
-            <p class="marejig-subtitle" id="marejig-victory-summary"><strong id="marejig-victory-level">Nivel</strong> · <span id="marejig-victory-pack">Pack</span></p>
-            <div class="marejig-victory-stats" aria-label="Métricas finales">
-                <div class="marejig-victory-stat"><span>Tiempo</span><strong id="marejig-victory-time">00:00</strong></div>
-                <div class="marejig-victory-stat"><span>Movimientos</span><strong id="marejig-victory-moves">0</strong></div>
-                <div class="marejig-victory-stat"><span>Monedas</span><strong id="marejig-victory-coins">+0</strong></div>
-            </div>
-            <p class="marejig-victory-status" id="marejig-victory-status" aria-live="polite">Modo standalone: monedas no acreditadas</p>
+            <p class="marejig-victory-kicker">¡Qué bien!</p>
+            <h2 class="marejig-victory-title" id="marejig-victory-title">¡Puzzle armado!</h2>
+            <p class="marejig-victory-level" id="marejig-victory-summary"><strong id="marejig-victory-level">Nivel</strong></p>
+            <section class="marejig-victory-reward" id="marejig-victory-reward" aria-labelledby="marejig-victory-reward-title" hidden>
+                <p class="marejig-victory-coins" id="marejig-victory-coins" aria-label="Recompensa: 0 monedas">+0 <span>monedas</span></p>
+                <p class="marejig-victory-reward-title" id="marejig-victory-reward-title">¡Recompensa conseguida!</p>
+            </section>
+            <section class="marejig-victory-notice" id="marejig-victory-notice" aria-live="polite" hidden>
+                <p class="marejig-victory-notice-title" id="marejig-victory-notice-title">Puzzle completado</p>
+                <p class="marejig-victory-notice-copy" id="marejig-victory-notice-copy">Progreso guardado</p>
+            </section>
+            <p class="marejig-victory-time">Tiempo: <strong id="marejig-victory-time">00:00</strong></p>
             <div class="marejig-menu-actions marejig-victory-actions">
-                <button class="marejig-button marejig-button-primary" type="button" id="marejig-victory-next" aria-label="Abrir siguiente nivel pendiente">Siguiente</button>
-                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels" aria-label="Volver a niveles pendientes">Volver a niveles</button>
-                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay" aria-label="Repetir nivel completado sin duplicar recompensa">Repetir</button>
+                <button class="marejig-button marejig-button-primary marejig-victory-primary" type="button" id="marejig-victory-next" aria-label="Abrir siguiente nivel pendiente">Siguiente</button>
+                <div class="marejig-victory-secondary-actions">
+                    <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-levels" aria-label="Volver a niveles pendientes">Niveles</button>
+                    <button class="marejig-button marejig-button-secondary" type="button" id="marejig-victory-replay" aria-label="Repetir nivel completado sin duplicar recompensa">Repetir</button>
+                </div>
             </div>
         </section>
     </div>

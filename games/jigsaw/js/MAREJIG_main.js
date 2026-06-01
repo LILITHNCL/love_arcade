@@ -443,7 +443,7 @@
             } else if (scene.progress.puzzleCompletedLocal && !scene.progress.rewardReported) {
                 MAREJIG_completePuzzle(scene);
             } else {
-                MAREJIG_showVictory(scene, { ok: true, mode: 'already-reported', coins: Math.max(1, Math.floor(level.rewardCoins)), rewardLevelId: 'level_' + level.id });
+                MAREJIG_showVictory(scene, { ok: true, mode: 'already-reported', coins: Math.max(1, Math.floor(level.rewardCoins)), rewardLevelId: 'level_' + level.id }, MAREJIG_createVictoryState(scene, { ok: true, mode: 'already-reported', coins: Math.max(1, Math.floor(level.rewardCoins)) }, false));
             }
         }).catch(function MAREJIG_levelLoadFatal(error) {
             console.warn('[MAREJIG] Error fatal al preparar nivel', error.message);
@@ -468,13 +468,15 @@
         MAREJIG_Renderer.markDirty('victory');
         var reduce = windowObject.matchMedia && windowObject.matchMedia('(prefers-reduced-motion: reduce)').matches;
         windowObject.setTimeout(function MAREJIG_afterVictoryAnimation() {
+            var isFirstCompletion = !MAREJIG_Storage.isLevelCompleted(scene.level.id) && !scene.progress.rewardSkipped;
             var metrics = {
                 elapsedMs: scene.progress.elapsedMs,
                 moves: scene.progress.moves,
-                    rewardReported: scene.progress.rewardReported || scene.progress.rewardSkipped
+                rewardReported: scene.progress.rewardReported || !isFirstCompletion
             };
             var economy = MAREJIG_Economy.reportLevelCompleted(scene.level, metrics);
-            scene.progress.rewardReported = economy.ok && economy.mode === 'gamecenter';
+            var victoryState = MAREJIG_createVictoryState(scene, economy, isFirstCompletion);
+            scene.progress.rewardReported = victoryState.rewardPaid;
             scene.progress.gamePhase = 'completed';
             scene.progress.status = 'Completado';
             MAREJIG_Storage.markLevelCompleted(scene.level, {
@@ -488,25 +490,61 @@
             MAREJIG_Storage.clearLevelProgress(scene.level.id);
             MAREJIG_Menu.refreshAfterCompletion();
             MAREJIG_updateHud(scene.level, scene.puzzle, MAREJIG_State.getState().loadedImageResult, scene);
-            MAREJIG_showVictory(scene, economy);
+            MAREJIG_showVictory(scene, economy, victoryState);
         }, reduce ? 0 : 520);
     }
 
-    function MAREJIG_showVictory(scene, economy) {
+    function MAREJIG_createVictoryState(scene, economy, isFirstCompletion) {
+        var rewardPaid = Boolean(isFirstCompletion && economy && economy.ok && economy.mode === 'gamecenter');
+        return {
+            isFirstCompletion: Boolean(isFirstCompletion),
+            rewardPaid: rewardPaid,
+            rewardAlreadyClaimed: !isFirstCompletion || Boolean(economy && economy.mode === 'already-reported'),
+            standalone: Boolean(economy && economy.mode === 'standalone'),
+            coins: economy && economy.coins || 0
+        };
+    }
+
+    function MAREJIG_showVictory(scene, economy, victoryState) {
         var modal = MAREJIG_byId('marejig-victory-modal');
         if (!modal) return;
+        var state = victoryState || MAREJIG_createVictoryState(scene, economy, false);
+        var showCoins = state.rewardPaid && state.isFirstCompletion;
+        var showAlreadyClaimed = !state.isFirstCompletion || state.rewardAlreadyClaimed;
+        var showStandaloneNotice = state.standalone && !showCoins;
+        var reward = MAREJIG_byId('marejig-victory-reward');
+        var notice = MAREJIG_byId('marejig-victory-notice');
+        var noticeTitle = MAREJIG_byId('marejig-victory-notice-title');
+        var noticeCopy = MAREJIG_byId('marejig-victory-notice-copy');
+        var coins = MAREJIG_byId('marejig-victory-coins');
+        var next = MAREJIG_byId('marejig-victory-next');
+        var levels = MAREJIG_byId('marejig-victory-levels');
+        var pending = MAREJIG_Menu.getPendingLevels ? MAREJIG_Menu.getPendingLevels() : [];
         MAREJIG_lastFocus = documentObject.activeElement;
-        MAREJIG_byId('marejig-victory-title').textContent = '¡Puzzle completo!';
+        MAREJIG_byId('marejig-victory-title').textContent = '¡Puzzle armado!';
         MAREJIG_byId('marejig-victory-level').textContent = scene.level.title;
-        MAREJIG_byId('marejig-victory-pack').textContent = scene.level.pack;
         MAREJIG_byId('marejig-victory-time').textContent = MAREJIG_formatTime(scene.progress.elapsedMs);
-        MAREJIG_byId('marejig-victory-moves').textContent = String(scene.progress.moves);
-        MAREJIG_byId('marejig-victory-coins').textContent = '+' + economy.coins;
-        MAREJIG_byId('marejig-victory-status').textContent = economy.mode === 'gamecenter' ? 'Monedas acreditadas' : 'Modo standalone: monedas no acreditadas';
+        reward.hidden = !showCoins;
+        notice.hidden = showCoins;
+        if (showCoins) {
+            coins.innerHTML = '+' + state.coins + ' <span>monedas</span>';
+            coins.setAttribute('aria-label', 'Recompensa: ' + state.coins + ' monedas');
+        } else if (showAlreadyClaimed) {
+            noticeTitle.textContent = '¡Lo armaste de nuevo!';
+            noticeCopy.textContent = 'Recompensa ya reclamada · Las recompensas se entregan una vez por nivel.';
+        } else if (showStandaloneNotice) {
+            noticeTitle.textContent = 'Puzzle completado';
+            noticeCopy.textContent = 'Progreso guardado';
+        } else {
+            noticeTitle.textContent = 'Puzzle completado';
+            noticeCopy.textContent = 'Progreso guardado';
+        }
+        next.textContent = pending.length ? 'Siguiente' : 'Volver a niveles';
+        next.setAttribute('aria-label', pending.length ? 'Abrir siguiente nivel pendiente' : 'Volver a niveles pendientes');
+        levels.hidden = !pending.length;
         modal.hidden = false;
         documentObject.body.classList.add('marejig-modal-open');
         MAREJIG_pauseTimer();
-        var next = MAREJIG_byId('marejig-victory-next');
         if (next) next.focus();
     }
 
