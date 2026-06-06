@@ -41,6 +41,35 @@
                 </section>
             </section>
 
+            <section class="marejig-screen marejig-preparing" id="marejig-screen-preparing" aria-labelledby="marejig-preparing-title" aria-describedby="marejig-preparing-step" aria-live="polite" aria-busy="true" hidden>
+                <div class="marejig-preparing-card" role="status">
+                    <div class="marejig-preparing-preview" id="marejig-preparing-preview" aria-hidden="true">
+                        <span class="marejig-preparing-preview-shine"></span>
+                    </div>
+                    <div class="marejig-preparing-copy">
+                        <p class="marejig-kicker">Nivel en camino</p>
+                        <h2 class="marejig-preparing-title" id="marejig-preparing-title">Preparando puzzle</h2>
+                        <p class="marejig-preparing-step" id="marejig-preparing-step">Cortando imagen…</p>
+                    </div>
+                    <div class="marejig-piece-loader" aria-hidden="true">
+                        <span class="marejig-loader-piece marejig-loader-piece-a"></span>
+                        <span class="marejig-loader-piece marejig-loader-piece-b"></span>
+                        <span class="marejig-loader-piece marejig-loader-piece-c"></span>
+                        <span class="marejig-loader-piece marejig-loader-piece-d"></span>
+                    </div>
+                    <ol class="marejig-preparing-steps" id="marejig-preparing-steps" aria-hidden="true">
+                        <li class="marejig-preparing-segment" data-marejig-step="image"><span>Imagen</span></li>
+                        <li class="marejig-preparing-segment" data-marejig-step="pieces"><span>Piezas</span></li>
+                        <li class="marejig-preparing-segment" data-marejig-step="scene"><span>Escena</span></li>
+                        <li class="marejig-preparing-segment" data-marejig-step="ready"><span>Listo</span></li>
+                    </ol>
+                    <div class="marejig-preparing-actions">
+                        <button class="marejig-button marejig-button-secondary" type="button" id="marejig-preparing-back" aria-label="Cancelar preparación y volver a niveles">Volver</button>
+                        <button class="marejig-button marejig-button-primary" type="button" id="marejig-preparing-retry" aria-label="Reintentar preparar el puzzle" hidden>Reintentar</button>
+                    </div>
+                </div>
+            </section>
+
             <section class="marejig-screen" id="marejig-screen-game" aria-label="Partida Marejig" hidden>
                 <div class="marejig-game-layout">
                     <div class="marejig-game-head marejig-debug-only" hidden>
