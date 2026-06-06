@@ -21,35 +21,92 @@
     var MAREJIG_lastFocus = null;
     var MAREJIG_startOptions = null;
     var MAREJIG_toastTimerId = 0;
+    var MAREJIG_preparingTimerId = 0;
+    var MAREJIG_preparingStage = 'image';
+    var MAREJIG_preparingExited = false;
 
     function MAREJIG_byId(id) { return documentObject.getElementById(id); }
 
     function MAREJIG_showScreen(name) {
-        ['menu', 'loading', 'game', 'error'].forEach(function MAREJIG_toggleScreen(screen) {
+        var preparing = name === 'preparing';
+        var playing = name === 'playing';
+        ['menu', 'preparing', 'game', 'error'].forEach(function MAREJIG_toggleScreen(screen) {
             var element = MAREJIG_byId('marejig-screen-' + screen);
             if (!element) return;
-            var visible = screen === name;
+            var visible = screen === name || (screen === 'game' && (preparing || playing));
             element.hidden = !visible;
-            element.classList.toggle('marejig-screen-current', visible);
+            element.classList.toggle('marejig-screen-current', visible && (screen === name || (screen === 'game' && playing)));
+            if (screen === 'game') {
+                element.setAttribute('aria-hidden', preparing ? 'true' : 'false');
+                if ('inert' in element) element.inert = preparing;
+            }
         });
-        documentObject.documentElement.classList.toggle('marejig-is-playing', name === 'game');
-        documentObject.body.classList.toggle('marejig-is-playing', name === 'game');
-        MAREJIG_State.setState({ currentScreen: name });
+        documentObject.documentElement.classList.toggle('marejig-is-playing', preparing || playing);
+        documentObject.body.classList.toggle('marejig-is-playing', preparing || playing);
+        documentObject.documentElement.classList.toggle('marejig-is-preparing', preparing);
+        documentObject.body.classList.toggle('marejig-is-preparing', preparing);
+        MAREJIG_State.setState({ currentScreen: name, appPhase: name });
+    }
+
+    function MAREJIG_getPreparingCopy(stage) {
+        return {
+            image: 'Cortando imagen…',
+            pieces: 'Mezclando piezas…',
+            scene: 'Acomodando la mesa…',
+            ready: 'Listo para armar…',
+            error: 'No pudimos preparar este puzzle'
+        }[stage] || 'Preparando puzzle…';
+    }
+
+    function MAREJIG_clearPreparingTimer() {
+        if (MAREJIG_preparingTimerId) windowObject.clearTimeout(MAREJIG_preparingTimerId);
+        MAREJIG_preparingTimerId = 0;
+    }
+
+    function MAREJIG_setPreparingStage(stage) {
+        MAREJIG_preparingStage = stage;
+        var copy = MAREJIG_byId('marejig-preparing-step');
+        var retry = MAREJIG_byId('marejig-preparing-retry');
+        var title = MAREJIG_byId('marejig-preparing-title');
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        if (copy) copy.textContent = MAREJIG_getPreparingCopy(stage);
+        if (title) title.textContent = stage === 'error' ? 'No pudimos preparar este puzzle' : 'Preparando puzzle';
+        if (retry) retry.hidden = stage !== 'error';
+        if (preparing) preparing.setAttribute('aria-busy', stage === 'error' ? 'false' : 'true');
+        documentObject.querySelectorAll('.marejig-preparing-segment').forEach(function MAREJIG_markPreparingSegment(segment) {
+            var order = ['image', 'pieces', 'scene', 'ready'];
+            var segmentStage = segment.getAttribute('data-marejig-step');
+            var activeIndex = Math.max(0, order.indexOf(stage));
+            var segmentIndex = order.indexOf(segmentStage);
+            segment.classList.toggle('marejig-preparing-segment-done', segmentIndex >= 0 && segmentIndex < activeIndex);
+            segment.classList.toggle('marejig-preparing-segment-active', segmentStage === stage);
+        });
+    }
+
+    function MAREJIG_startPreparingTicker() {
+        var softStages = ['image', 'pieces', 'scene'];
+        MAREJIG_clearPreparingTimer();
+        MAREJIG_preparingTimerId = windowObject.setTimeout(function MAREJIG_preparingTick() {
+            var state = MAREJIG_State.getState();
+            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'ready' || MAREJIG_preparingStage === 'error') return;
+            var index = softStages.indexOf(MAREJIG_preparingStage);
+            if (index >= 0 && index < softStages.length - 1) MAREJIG_setPreparingStage(softStages[index + 1]);
+            MAREJIG_startPreparingTicker();
+        }, 850);
     }
 
     function MAREJIG_setProgress(percent, label) {
-        var bar = MAREJIG_byId('marejig-progress-bar');
-        var copy = MAREJIG_byId('marejig-loading-copy');
-        if (bar) bar.style.width = Math.max(0, Math.min(100, percent)) + '%';
-        if (copy && label) copy.textContent = label;
+        if (percent >= 72) MAREJIG_setPreparingStage('scene');
+        else if (percent >= 36) MAREJIG_setPreparingStage('pieces');
+        else MAREJIG_setPreparingStage('image');
     }
 
-    function MAREJIG_setLoadingPreview(level) {
-        var preview = MAREJIG_byId('marejig-loading-preview');
+    function MAREJIG_setPreparingPreview(level) {
+        var preview = MAREJIG_byId('marejig-preparing-preview');
         if (!preview) return;
-        preview.innerHTML = '<span class="marejig-loading-shimmer"></span>';
+        preview.innerHTML = '<span class="marejig-preparing-preview-shine"></span>';
         var img = documentObject.createElement('img');
-        img.className = 'marejig-loading-preview-img';
+        img.className = 'marejig-preparing-preview-img';
         img.alt = '';
         img.decoding = 'async';
         img.loading = 'eager';
@@ -403,10 +460,13 @@
         MAREJIG_pauseTimer();
         MAREJIG_currentLevelId = levelId;
         MAREJIG_startOptions = options || {};
+        MAREJIG_preparingExited = false;
         MAREJIG_State.setState({ selectedLevelId: levelId, loading: true, lastError: null });
-        MAREJIG_showScreen('loading');
+        MAREJIG_setPreparingStage('image');
+        MAREJIG_setPreparingPreview(level);
+        MAREJIG_showScreen('preparing');
+        MAREJIG_startPreparingTicker();
         MAREJIG_setProgress(8, save ? 'Preparando reanudación' : 'Preparando metadatos');
-        MAREJIG_setLoadingPreview(level);
 
         var profile = MAREJIG_Cloudinary.getRuntimeProfile();
         MAREJIG_ImageLoader.loadPlayableImage(level, profile, MAREJIG_setProgress).then(function MAREJIG_levelLoaded(imageResult) {
@@ -416,10 +476,11 @@
             if (save) MAREJIG_Scene.applySave(scene, save);
             if (MAREJIG_Storage.isLevelCompleted(level.id) && MAREJIG_startOptions && MAREJIG_startOptions.replay) scene.progress.rewardSkipped = true;
             scene.progress.gamePhase = scene.progress.puzzleCompletedLocal ? 'completed' : 'playing';
+            MAREJIG_setPreparingStage('ready');
             MAREJIG_State.setState({ loading: false, selectedRuntimeProfile: profile, loadedImageResult: imageResult, puzzle: puzzle, scene: scene });
-            MAREJIG_showScreen('game');
             MAREJIG_ensureRenderer();
             MAREJIG_Renderer.setScene(scene);
+            MAREJIG_Renderer.render();
             MAREJIG_Input.attach(MAREJIG_byId('marejig-canvas'), scene, MAREJIG_Renderer, {
                 onSelect: function MAREJIG_inputSelect() { MAREJIG_updateHud(level, puzzle, imageResult, scene); },
                 onMoveEnd: function MAREJIG_inputMoveEnd(moveResult) {
@@ -437,6 +498,7 @@
             });
             MAREJIG_renderLevelDetails(level, imageResult, puzzle);
             MAREJIG_updateHud(level, puzzle, imageResult, scene);
+            MAREJIG_finishPreparingToGame();
             if (scene.progress.gamePhase === 'playing') {
                 MAREJIG_saveGame(save ? 'resume' : 'start');
                 MAREJIG_startTimer(scene);
@@ -447,9 +509,32 @@
             }
         }).catch(function MAREJIG_levelLoadFatal(error) {
             console.warn('[MAREJIG] Error fatal al preparar nivel', error.message);
+            MAREJIG_clearPreparingTimer();
             MAREJIG_State.setState({ loading: false, lastError: error.message });
-            MAREJIG_showError(error.message);
+            MAREJIG_showPreparingError();
         });
+    }
+
+    function MAREJIG_showPreparingError() {
+        MAREJIG_setPreparingStage('error');
+        MAREJIG_showScreen('preparing');
+    }
+
+    function MAREJIG_finishPreparingToGame() {
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        var delay = MAREJIG_getReducedMotion() ? 0 : 190;
+        MAREJIG_clearPreparingTimer();
+        if (MAREJIG_preparingExited) return;
+        MAREJIG_preparingExited = true;
+        if (!preparing || delay === 0) {
+            MAREJIG_showScreen('playing');
+            return;
+        }
+        preparing.classList.add('marejig-preparing-exit');
+        windowObject.setTimeout(function MAREJIG_revealGameplay() {
+            preparing.classList.remove('marejig-preparing-exit');
+            MAREJIG_showScreen('playing');
+        }, delay);
     }
 
     function MAREJIG_completePuzzle(scene) {
@@ -479,6 +564,7 @@
             scene.progress.rewardReported = victoryState.rewardPaid;
             scene.progress.gamePhase = 'completed';
             scene.progress.status = 'Completado';
+            MAREJIG_State.setState({ appPhase: 'completed' });
             MAREJIG_Storage.markLevelCompleted(scene.level, {
                 elapsedMs: metrics.elapsedMs,
                 moves: metrics.moves,
@@ -565,12 +651,14 @@
     function MAREJIG_showError(message) {
         var copy = MAREJIG_byId('marejig-error-copy');
         if (copy) copy.textContent = message || 'Puedes reintentar o volver al catálogo.';
+        MAREJIG_clearPreparingTimer();
         MAREJIG_showScreen('error');
     }
 
     function MAREJIG_backToMenu() {
         var state = MAREJIG_State.getState();
         var releaseLevelId = (state && state.selectedLevelId) || MAREJIG_currentLevelId;
+        MAREJIG_clearPreparingTimer();
         MAREJIG_pauseTimer();
         MAREJIG_saveGame('menu');
         MAREJIG_Input.detach();
@@ -591,7 +679,8 @@
     }
 
     function MAREJIG_wireUi() {
-        var cancel = MAREJIG_byId('marejig-cancel-loading');
+        var cancel = MAREJIG_byId('marejig-preparing-back');
+        var preparingRetry = MAREJIG_byId('marejig-preparing-retry');
         var back = MAREJIG_byId('marejig-back-to-menu');
         var errorBack = MAREJIG_byId('marejig-error-back');
         var retry = MAREJIG_byId('marejig-retry-level');
@@ -617,6 +706,7 @@
         if (back) back.addEventListener('click', MAREJIG_backToMenu);
         if (errorBack) errorBack.addEventListener('click', MAREJIG_backToMenu);
         if (retry) retry.addEventListener('click', MAREJIG_retryCurrentLevel);
+        if (preparingRetry) preparingRetry.addEventListener('click', MAREJIG_retryCurrentLevel);
         if (pause) pause.addEventListener('click', MAREJIG_openPause);
         if (next) next.addEventListener('click', MAREJIG_startNextPending);
         if (levels) levels.addEventListener('click', function MAREJIG_levelsClick() { MAREJIG_hideVictory(); MAREJIG_backToMenu(); });

@@ -3,6 +3,7 @@
 
     var MAREJIG_state = {
         currentScreen: 'menu',
+        appPhase: 'menu',
         selectedLevelId: null,
         selectedRuntimeProfile: null,
         loading: false,
