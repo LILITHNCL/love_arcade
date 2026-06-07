@@ -85,7 +85,7 @@
     }
 
     function MAREJIG_getPreparingStageForProgress(progress) {
-        if (progress >= 98) return 'ready';
+        if (progress >= 100) return 'ready';
         if (progress >= 72) return 'scene';
         if (progress >= 38) return 'pieces';
         return 'image';
@@ -112,9 +112,9 @@
         MAREJIG_clearPreparingTimer();
         MAREJIG_preparingTimerId = windowObject.setTimeout(function MAREJIG_preparingTick() {
             var state = MAREJIG_State.getState();
-            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'error' || MAREJIG_preparingStage === 'ready') return;
+            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'error') return;
             var elapsed = MAREJIG_preparingStartedAt ? Date.now() - MAREJIG_preparingStartedAt : 0;
-            var timeProgress = Math.min(96, (elapsed / MAREJIG_PREPARING_MIN_VISIBLE_MS) * 96);
+            var timeProgress = Math.min(99, (elapsed / MAREJIG_PREPARING_MIN_VISIBLE_MS) * 99);
             var assetProgress = Math.min(94, MAREJIG_preparingAssetProgress);
             var nextProgress = Math.max(MAREJIG_preparingVisualProgress, timeProgress, assetProgress);
             if (MAREJIG_preparingAssetsReady) nextProgress = Math.min(99, nextProgress);

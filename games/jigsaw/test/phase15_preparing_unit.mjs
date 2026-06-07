@@ -16,6 +16,7 @@ assert.match(state, /appPhase:\s*'menu'/, 'state exposes an application phase');
 assert.match(main, /currentScreen:\s*name, appPhase:\s*name/, 'screen changes update the visible app phase');
 assert.match(main, /MAREJIG_PREPARING_MIN_VISIBLE_MS\s*=\s*5000/, 'preparing has a five second minimum visible duration');
 assert.match(main, /MAREJIG_PREPARING_PROGRESS_TICK_MS\s*=\s*250/, 'preparing placebo progress updates at a controlled cadence');
+assert.match(main, /Math\.min\(99, \(elapsed \/ MAREJIG_PREPARING_MIN_VISIBLE_MS\) \* 99\)/, 'placebo progress can advance past 96 before reveal');
 assert.match(html, /class="marejig-screen marejig-preparing" id="marejig-screen-preparing"/, 'preparing screen exists');
 assert.match(html, /id="marejig-screen-preparing"[\s\S]*aria-live="polite"[\s\S]*aria-busy="true"/, 'preparing screen politely announces busy state');
 assert.match(html, /id="marejig-preparing-step">Cortando imagen…<\/p>/, 'preparing has visible human loading copy');
@@ -27,6 +28,7 @@ assert.match(main, /MAREJIG_showScreen\('preparing'\)[\s\S]*MAREJIG_ImageLoader\
 assert.match(main, /MAREJIG_Renderer\.setScene\(scene\)[\s\S]*MAREJIG_Renderer\.render\(\)[\s\S]*MAREJIG_finishPreparingToGame\(\)/, 'gameplay reveal waits for scene setup and first render');
 assert.match(main, /Math\.max\(0, MAREJIG_PREPARING_MIN_VISIBLE_MS - elapsed\)/, 'fast level loads wait until the five second minimum has elapsed');
 assert.doesNotMatch(main, /READY_HOLD_MS/, 'loads that exceed the minimum do not wait for an extra ready hold');
+assert.match(main, /if \(progress >= 100\) return 'ready'/, 'ready stage is reserved for the final 100 percent reveal');
 assert.match(main, /MAREJIG_updatePreparingMeter\(100\)[\s\S]*MAREJIG_setPreparingStage\('ready'\)/, 'progress reaches 100 only when reveal begins');
 assert.match(main, /marejig-preparing-ready/, 'ready state adds a visual completion class');
 assert.doesNotMatch(main, /querySelectorAll\('\.marejig-preparing-segment'\)/, 'preparing no longer manages removed stage labels');
