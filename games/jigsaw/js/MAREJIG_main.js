@@ -26,9 +26,12 @@
     var MAREJIG_preparingExited = false;
     var MAREJIG_preparingStartedAt = 0;
     var MAREJIG_preparingRevealTimerId = 0;
-    var MAREJIG_PREPARING_MIN_VISIBLE_MS = 1350;
-    var MAREJIG_PREPARING_READY_HOLD_MS = 620;
-    var MAREJIG_PREPARING_EXIT_MS = 190;
+    var MAREJIG_preparingAssetsReady = false;
+    var MAREJIG_preparingVisualProgress = 0;
+    var MAREJIG_preparingAssetProgress = 0;
+    var MAREJIG_PREPARING_MIN_VISIBLE_MS = 5000;
+    var MAREJIG_PREPARING_EXIT_MS = 220;
+    var MAREJIG_PREPARING_PROGRESS_TICK_MS = 250;
 
     function MAREJIG_byId(id) { return documentObject.getElementById(id); }
 
@@ -70,6 +73,24 @@
         MAREJIG_preparingRevealTimerId = 0;
     }
 
+    function MAREJIG_updatePreparingMeter(value) {
+        MAREJIG_preparingVisualProgress = Math.max(0, Math.min(100, value || 0));
+        var fill = MAREJIG_byId('marejig-preparing-progress-fill');
+        var percent = MAREJIG_byId('marejig-preparing-percent');
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        var rounded = Math.round(MAREJIG_preparingVisualProgress);
+        if (fill) fill.style.width = rounded + '%';
+        if (preparing) preparing.style.setProperty('--marejig-preparing-progress', rounded + '%');
+        if (percent) percent.textContent = rounded + '%';
+    }
+
+    function MAREJIG_getPreparingStageForProgress(progress) {
+        if (progress >= 98) return 'ready';
+        if (progress >= 72) return 'scene';
+        if (progress >= 38) return 'pieces';
+        return 'image';
+    }
+
     function MAREJIG_setPreparingStage(stage) {
         MAREJIG_preparingStage = stage;
         var copy = MAREJIG_byId('marejig-preparing-step');
@@ -96,27 +117,28 @@
     }
 
     function MAREJIG_startPreparingTicker() {
-        var softStages = ['image', 'pieces', 'scene'];
         MAREJIG_clearPreparingTimer();
         MAREJIG_preparingTimerId = windowObject.setTimeout(function MAREJIG_preparingTick() {
             var state = MAREJIG_State.getState();
-            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'ready' || MAREJIG_preparingStage === 'error') return;
-            var index = softStages.indexOf(MAREJIG_preparingStage);
-            if (index >= 0 && index < softStages.length - 1) MAREJIG_setPreparingStage(softStages[index + 1]);
-            MAREJIG_startPreparingTicker();
-        }, 850);
+            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'error') return;
+            var elapsed = MAREJIG_preparingStartedAt ? Date.now() - MAREJIG_preparingStartedAt : 0;
+            var timeProgress = Math.min(96, (elapsed / MAREJIG_PREPARING_MIN_VISIBLE_MS) * 96);
+            var assetProgress = Math.min(94, MAREJIG_preparingAssetProgress);
+            var nextProgress = MAREJIG_preparingAssetsReady ? 100 : Math.max(MAREJIG_preparingVisualProgress, timeProgress, assetProgress);
+            MAREJIG_updatePreparingMeter(nextProgress);
+            MAREJIG_setPreparingStage(MAREJIG_getPreparingStageForProgress(nextProgress));
+            if (!MAREJIG_preparingAssetsReady) MAREJIG_startPreparingTicker();
+        }, MAREJIG_PREPARING_PROGRESS_TICK_MS);
     }
 
     function MAREJIG_setProgress(percent, label) {
-        if (percent >= 72) MAREJIG_setPreparingStage('scene');
-        else if (percent >= 36) MAREJIG_setPreparingStage('pieces');
-        else MAREJIG_setPreparingStage('image');
+        MAREJIG_preparingAssetProgress = Math.max(MAREJIG_preparingAssetProgress, Math.max(0, Math.min(94, percent || 0)));
     }
 
     function MAREJIG_setPreparingPreview(level) {
         var preview = MAREJIG_byId('marejig-preparing-preview');
         if (!preview) return;
-        preview.innerHTML = '<span class="marejig-preparing-preview-shine"></span>';
+        preview.innerHTML = '<span class="marejig-preparing-preview-shine"></span><span class="marejig-preparing-preview-frame"></span>';
         var img = documentObject.createElement('img');
         img.className = 'marejig-preparing-preview-img';
         img.alt = '';
@@ -473,9 +495,13 @@
         MAREJIG_currentLevelId = levelId;
         MAREJIG_startOptions = options || {};
         MAREJIG_preparingExited = false;
+        MAREJIG_preparingAssetsReady = false;
+        MAREJIG_preparingVisualProgress = 0;
+        MAREJIG_preparingAssetProgress = 0;
         MAREJIG_preparingStartedAt = Date.now();
         MAREJIG_State.setState({ selectedLevelId: levelId, loading: true, lastError: null });
         MAREJIG_setPreparingStage('image');
+        MAREJIG_updatePreparingMeter(0);
         MAREJIG_setPreparingPreview(level);
         MAREJIG_showScreen('preparing');
         MAREJIG_startPreparingTicker();
@@ -489,6 +515,8 @@
             if (save) MAREJIG_Scene.applySave(scene, save);
             if (MAREJIG_Storage.isLevelCompleted(level.id) && MAREJIG_startOptions && MAREJIG_startOptions.replay) scene.progress.rewardSkipped = true;
             scene.progress.gamePhase = scene.progress.puzzleCompletedLocal ? 'completed' : 'playing';
+            MAREJIG_preparingAssetsReady = true;
+            MAREJIG_updatePreparingMeter(100);
             MAREJIG_setPreparingStage('ready');
             MAREJIG_State.setState({ loading: false, selectedRuntimeProfile: profile, loadedImageResult: imageResult, puzzle: puzzle, scene: scene });
             MAREJIG_ensureRenderer();
@@ -538,9 +566,7 @@
         var reduce = MAREJIG_getReducedMotion();
         var exitDelay = reduce ? 0 : MAREJIG_PREPARING_EXIT_MS;
         var elapsed = MAREJIG_preparingStartedAt ? Date.now() - MAREJIG_preparingStartedAt : MAREJIG_PREPARING_MIN_VISIBLE_MS;
-        var minimumWait = reduce ? 0 : Math.max(0, MAREJIG_PREPARING_MIN_VISIBLE_MS - elapsed);
-        var readyHold = reduce ? 0 : MAREJIG_PREPARING_READY_HOLD_MS;
-        var revealDelay = Math.max(minimumWait, readyHold);
+        var revealDelay = reduce ? 0 : Math.max(0, MAREJIG_PREPARING_MIN_VISIBLE_MS - elapsed);
         MAREJIG_clearPreparingTimer();
         if (MAREJIG_preparingExited) return;
         MAREJIG_preparingExited = true;

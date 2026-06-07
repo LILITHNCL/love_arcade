@@ -43,19 +43,34 @@
 
             <section class="marejig-screen marejig-preparing" id="marejig-screen-preparing" aria-labelledby="marejig-preparing-title" aria-describedby="marejig-preparing-step" aria-live="polite" aria-busy="true" hidden>
                 <div class="marejig-preparing-card" role="status">
-                    <div class="marejig-preparing-preview" id="marejig-preparing-preview" aria-hidden="true">
-                        <span class="marejig-preparing-preview-shine"></span>
+                    <div class="marejig-preparing-stage" aria-hidden="true">
+                        <span class="marejig-preparing-chip">Puzzle Studio</span>
+                        <div class="marejig-preparing-preview" id="marejig-preparing-preview">
+                            <span class="marejig-preparing-preview-shine"></span>
+                            <span class="marejig-preparing-preview-frame"></span>
+                        </div>
+                        <div class="marejig-piece-loader">
+                            <span class="marejig-loader-piece marejig-loader-piece-a"></span>
+                            <span class="marejig-loader-piece marejig-loader-piece-b"></span>
+                            <span class="marejig-loader-piece marejig-loader-piece-c"></span>
+                            <span class="marejig-loader-piece marejig-loader-piece-d"></span>
+                            <span class="marejig-loader-piece marejig-loader-piece-e"></span>
+                        </div>
                     </div>
                     <div class="marejig-preparing-copy">
                         <p class="marejig-kicker">Nivel en camino</p>
                         <h2 class="marejig-preparing-title" id="marejig-preparing-title">Preparando puzzle</h2>
                         <p class="marejig-preparing-step" id="marejig-preparing-step">Cortando imagen…</p>
                     </div>
-                    <div class="marejig-piece-loader" aria-hidden="true">
-                        <span class="marejig-loader-piece marejig-loader-piece-a"></span>
-                        <span class="marejig-loader-piece marejig-loader-piece-b"></span>
-                        <span class="marejig-loader-piece marejig-loader-piece-c"></span>
-                        <span class="marejig-loader-piece marejig-loader-piece-d"></span>
+                    <div class="marejig-preparing-meter" aria-hidden="true">
+                        <div class="marejig-preparing-meter-head">
+                            <span>Ensamblando experiencia</span>
+                            <strong id="marejig-preparing-percent">0%</strong>
+                        </div>
+                        <span class="marejig-preparing-progress-track">
+                            <span class="marejig-preparing-progress-fill" id="marejig-preparing-progress-fill"></span>
+                            <span class="marejig-preparing-progress-spark"></span>
+                        </span>
                     </div>
                     <ol class="marejig-preparing-steps" id="marejig-preparing-steps" aria-hidden="true">
                         <li class="marejig-preparing-segment" data-marejig-step="image"><span>Imagen</span></li>
