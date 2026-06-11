@@ -26,17 +26,17 @@
     });
 
     var MAREJIG_LEVEL_SPECS = Object.freeze([
-        Object.freeze(['nivel_001', 1, 'Nivel 001', 'Producción', 'easy', 'nivel001']),
-        Object.freeze(['nivel_002', 2, 'Nivel 002', 'Producción', 'easy', 'nivel002']),
-        Object.freeze(['nivel_003', 3, 'Nivel 003', 'Producción', 'standard', 'nivel003']),
-        Object.freeze(['nivel_004', 4, 'Nivel 004', 'Producción', 'standard', 'nivel004']),
-        Object.freeze(['nivel_005', 5, 'Nivel 005', 'Producción', 'standard', 'nivel005']),
-        Object.freeze(['nivel_006', 6, 'Nivel 006', 'Producción', 'hard', 'nivel006']),
-        Object.freeze(['nivel_007', 7, 'Nivel 007', 'Producción', 'hard', 'nivel007']),
-        Object.freeze(['nivel_008', 8, 'Nivel 008', 'Producción', 'hard', 'nivel008']),
-        Object.freeze(['nivel_009', 9, 'Nivel 009', 'Producción', 'hard', 'nivel009']),
-        Object.freeze(['nivel_010', 10, 'Nivel 010', 'Producción', 'hard', 'nivel010']),
-        Object.freeze(['nivel_011', 11, 'Nivel 011', 'Producción', 'hard', 'nivel011'])
+        Object.freeze(['nivel_001', 1, 'A medio decir', 'Producción', 'easy', 'nivel001']),
+        Object.freeze(['nivel_002', 2, 'El pez no parpadea', 'Producción', 'easy', 'nivel002']),
+        Object.freeze(['nivel_003', 3, 'Orejitas', 'Producción', 'standard', 'nivel003']),
+        Object.freeze(['nivel_004', 4, 'Casi humano', 'Producción', 'standard', 'nivel004']),
+        Object.freeze(['nivel_005', 5, 'Travesura bajo faroles rojos', 'Producción', 'standard', 'nivel005']),
+        Object.freeze(['nivel_006', 6, 'Guiño dorado', 'Producción', 'hard', 'nivel006']),
+        Object.freeze(['nivel_007', 7, 'Brisa escarlata', 'Producción', 'hard', 'nivel007']),
+        Object.freeze(['nivel_008', 8, 'Devoradora de Mochi', 'Producción', 'hard', 'nivel008']),
+        Object.freeze(['nivel_009', 9, 'No era por aquí', 'Producción', 'hard', 'nivel009']),
+        Object.freeze(['nivel_010', 10, 'Todavía no', 'Producción', 'hard', 'nivel010']),
+        Object.freeze(['nivel_011', 11, 'La noche en que no llovió', 'Producción', 'hard', 'nivel011'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
