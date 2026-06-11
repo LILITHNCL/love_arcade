@@ -170,6 +170,23 @@
 
     <div class="marejig-toast" id="marejig-toast" role="status" aria-live="polite" hidden></div>
 
+    <div class="marejig-modal" id="marejig-active-save-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-active-save-title" aria-describedby="marejig-active-save-copy" hidden>
+        <div class="marejig-modal-backdrop" aria-hidden="true"></div>
+        <section class="marejig-victory-card marejig-dialog-card marejig-active-save-card" role="document">
+            <p class="marejig-kicker">Puzzle en curso</p>
+            <h2 class="marejig-title" id="marejig-active-save-title">Tienes una partida en curso</h2>
+            <div class="marejig-active-save-copy" id="marejig-active-save-copy">
+                <p>Tienes una partida guardada en <strong id="marejig-active-save-current">este nivel</strong>.</p>
+                <p>Empezar <strong id="marejig-active-save-next">otro puzzle</strong> reemplazará ese progreso.</p>
+            </div>
+            <div class="marejig-menu-actions marejig-active-save-actions">
+                <button class="marejig-button marejig-button-primary" type="button" id="marejig-active-save-continue" aria-label="Continuar partida guardada">Continuar partida</button>
+                <button class="marejig-button marejig-button-warning" type="button" id="marejig-active-save-replace" aria-label="Empezar nuevo puzzle y reemplazar la partida guardada">Empezar nuevo</button>
+                <button class="marejig-button marejig-button-secondary" type="button" id="marejig-active-save-cancel" aria-label="Cancelar cambio de puzzle">Cancelar</button>
+            </div>
+        </section>
+    </div>
+
     <div class="marejig-modal" id="marejig-help-modal" role="dialog" aria-modal="true" aria-labelledby="marejig-help-title" hidden>
         <div class="marejig-modal-backdrop" aria-hidden="true"></div>
         <section class="marejig-victory-card marejig-dialog-card" role="document">

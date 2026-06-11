@@ -20,6 +20,7 @@
     var MAREJIG_timerStartedAt = 0;
     var MAREJIG_lastFocus = null;
     var MAREJIG_startOptions = null;
+    var MAREJIG_activeSaveChoice = null;
     var MAREJIG_toastTimerId = 0;
     var MAREJIG_preparingTimerId = 0;
     var MAREJIG_preparingStage = 'image';
@@ -419,6 +420,57 @@
     function MAREJIG_openResetConfirm() { MAREJIG_closePause(); MAREJIG_openModal('marejig-confirm-reset-modal', 'marejig-reset-cancel'); }
     function MAREJIG_closeResetConfirm() { MAREJIG_closeModal('marejig-confirm-reset-modal'); }
 
+    function MAREJIG_setActiveSaveChoiceText(activeLevel, selectedLevel) {
+        var current = MAREJIG_byId('marejig-active-save-current');
+        var next = MAREJIG_byId('marejig-active-save-next');
+        if (current) current.textContent = activeLevel ? activeLevel.title : 'tu puzzle actual';
+        if (next) next.textContent = selectedLevel ? selectedLevel.title : 'otro puzzle';
+    }
+
+    function MAREJIG_closeActiveSaveChoiceModal() {
+        MAREJIG_activeSaveChoice = null;
+        MAREJIG_closeModal('marejig-active-save-modal');
+    }
+
+    function MAREJIG_cancelActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        var onCancel = choice && choice.callbacks && choice.callbacks.onCancel;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onCancel) onCancel(choice.activeSave, choice.selectedLevel);
+    }
+
+    function MAREJIG_continueActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        if (!choice || !choice.activeSave) { MAREJIG_closeActiveSaveChoiceModal(); return; }
+        var activeLevelId = choice.activeSave.levelId;
+        var onContinue = choice.callbacks && choice.callbacks.onContinue;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onContinue) onContinue(choice.activeSave, choice.selectedLevel);
+        else MAREJIG_startLevel(activeLevelId, { resume: true });
+    }
+
+    function MAREJIG_replaceActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        if (!choice || !choice.selectedLevel) { MAREJIG_closeActiveSaveChoiceModal(); return; }
+        var selectedLevelId = choice.selectedLevel.id;
+        var onReplace = choice.callbacks && choice.callbacks.onReplace;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onReplace) onReplace(choice.activeSave, choice.selectedLevel);
+        else MAREJIG_startLevel(selectedLevelId, { forceNew: true });
+    }
+
+    function MAREJIG_showActiveSaveChoiceModal(activeSave, selectedLevel, callbacks) {
+        var activeLevel = MAREJIG_LevelCatalog.getById(activeSave && activeSave.levelId);
+        MAREJIG_activeSaveChoice = {
+            activeSave: activeSave,
+            activeLevel: activeLevel,
+            selectedLevel: selectedLevel,
+            callbacks: callbacks || {}
+        };
+        MAREJIG_setActiveSaveChoiceText(activeLevel, selectedLevel);
+        MAREJIG_openModal('marejig-active-save-modal', 'marejig-active-save-continue');
+    }
+
     function MAREJIG_syncSettingsButtons() {
         var settings = MAREJIG_Storage.getSettings();
         var haptics = MAREJIG_byId('marejig-toggle-haptics');
@@ -469,25 +521,32 @@
         return !levelId || save.levelId === levelId ? save : null;
     }
 
-    function MAREJIG_confirmReplacingActiveSave(levelId) {
-        var active = MAREJIG_getUsableActiveSave();
-        if (!active || active.levelId === levelId) return 'start';
-        var currentLevel = MAREJIG_LevelCatalog.getById(active.levelId);
-        var message = 'Hay una partida activa en "' + (currentLevel ? currentLevel.title : active.levelId) + '".\n\nAceptar: Continuar partida actual\nCancelar: elegir opciones para reemplazar o cancelar.';
-        if (windowObject.confirm(message)) return 'continue-active';
-        if (windowObject.confirm('Empezar nuevo nivel y reemplazar progreso?')) return 'replace';
-        return 'cancel';
+    function MAREJIG_shouldOfferActiveSaveChoice(activeSave, selectedLevelId) {
+        var selectedLevelCompleted = MAREJIG_Storage.isLevelCompleted(selectedLevelId);
+        if (activeSave && activeSave.levelId !== selectedLevelId && !selectedLevelCompleted) {
+            return true;
+        }
+        return false;
     }
 
     function MAREJIG_startLevel(levelId, options) {
-        var decision = options && options.forceNew ? 'replace' : MAREJIG_confirmReplacingActiveSave(levelId);
-        var active = MAREJIG_getUsableActiveSave();
-        if (decision === 'cancel') return;
-        if (decision === 'continue-active' && active) { levelId = active.levelId; options = { resume: true }; }
-        if (decision === 'replace') { MAREJIG_Storage.clearActiveSave(); MAREJIG_Storage.clearLevelProgress(levelId); options = Object.assign({}, options || {}, { forceNew: true }); }
-
         var level = MAREJIG_LevelCatalog.getById(levelId);
         if (!level) { console.warn('[MAREJIG] Nivel no encontrado', levelId); return; }
+        var active = MAREJIG_getUsableActiveSave();
+        if (!(options && options.forceNew) && MAREJIG_shouldOfferActiveSaveChoice(active, levelId)) {
+            MAREJIG_showActiveSaveChoiceModal(active, level, {
+                onContinue: function MAREJIG_resumeActiveSave(activeSave) { MAREJIG_startLevel(activeSave.levelId, { resume: true }); },
+                onReplace: function MAREJIG_replaceSelectedSave(activeSave, selectedLevel) { MAREJIG_startLevel(selectedLevel.id, { forceNew: true }); },
+                onCancel: function MAREJIG_keepCurrentMenuChoice() {}
+            });
+            return;
+        }
+        if (options && options.forceNew) {
+            MAREJIG_Storage.clearActiveSave();
+            MAREJIG_Storage.clearLevelProgress(levelId);
+            options = Object.assign({}, options || {}, { forceNew: true });
+        }
+
         var save = options && options.forceNew ? null : MAREJIG_getUsableActiveSave(levelId);
         if (MAREJIG_Storage.isLevelCompleted(levelId) && !(options && options.replay)) save = null;
 
@@ -748,6 +807,9 @@
         var recoverPieces = MAREJIG_byId('marejig-recover-pieces');
         var resetConfirm = MAREJIG_byId('marejig-reset-confirm');
         var resetCancel = MAREJIG_byId('marejig-reset-cancel');
+        var activeSaveContinue = MAREJIG_byId('marejig-active-save-continue');
+        var activeSaveReplace = MAREJIG_byId('marejig-active-save-replace');
+        var activeSaveCancel = MAREJIG_byId('marejig-active-save-cancel');
         var haptics = MAREJIG_byId('marejig-toggle-haptics');
         var sound = MAREJIG_byId('marejig-toggle-sound');
         if (cancel) cancel.addEventListener('click', MAREJIG_backToMenu);
@@ -776,6 +838,9 @@
         });
         if (resetConfirm) resetConfirm.addEventListener('click', MAREJIG_confirmResetLevel);
         if (resetCancel) resetCancel.addEventListener('click', MAREJIG_closeResetConfirm);
+        if (activeSaveContinue) activeSaveContinue.addEventListener('click', MAREJIG_continueActiveSaveChoice);
+        if (activeSaveReplace) activeSaveReplace.addEventListener('click', MAREJIG_replaceActiveSaveChoice);
+        if (activeSaveCancel) activeSaveCancel.addEventListener('click', MAREJIG_cancelActiveSaveChoice);
         if (haptics) haptics.addEventListener('click', function MAREJIG_hapticsClick() { MAREJIG_toggleSetting('haptics'); });
         if (sound) sound.addEventListener('click', function MAREJIG_soundClick() { MAREJIG_toggleSetting('sound'); });
         if (center) center.addEventListener('click', function MAREJIG_centerView() {
@@ -794,7 +859,8 @@
         documentObject.addEventListener('keydown', function MAREJIG_keydown(event) {
             MAREJIG_trapModalFocus(event);
             if (event.key !== 'Escape') return;
-            if (!MAREJIG_byId('marejig-confirm-reset-modal').hidden) MAREJIG_closeResetConfirm();
+            if (!MAREJIG_byId('marejig-active-save-modal').hidden) MAREJIG_cancelActiveSaveChoice();
+            else if (!MAREJIG_byId('marejig-confirm-reset-modal').hidden) MAREJIG_closeResetConfirm();
             else if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
             else if (!MAREJIG_byId('marejig-pause-modal').hidden) MAREJIG_closePause();
             else MAREJIG_hideVictory();
@@ -819,6 +885,7 @@
 
     windowObject.MAREJIG_Main = Object.freeze({
         startLevel: MAREJIG_startLevel,
+        showActiveSaveChoiceModal: MAREJIG_showActiveSaveChoiceModal,
         backToMenu: MAREJIG_backToMenu,
         saveGame: MAREJIG_saveGame,
         resetCurrentLevelForDebug: MAREJIG_confirmResetLevel,
