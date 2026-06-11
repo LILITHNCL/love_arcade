@@ -21,6 +21,15 @@
         canvas: Object.freeze({
             maxDpr: 2
         }),
+        completionShowcase: Object.freeze({
+            durationMs: 8000,
+            cameraMs: 1200,
+            reducedDurationMs: 3000,
+            reducedCameraMs: 160,
+            testDurationMs: 300,
+            particlesStartMs: 1600,
+            particleCount: 24
+        }),
         menu: Object.freeze({
             initialPendingCards: 12,
             batchSize: 12
