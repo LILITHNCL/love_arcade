@@ -1835,3 +1835,27 @@
         animation: none;
     }
 }
+
+.marejig-is-showcase .marejig-game-overlay {
+    pointer-events: none;
+}
+
+.marejig-is-showcase .marejig-floating-button,
+.marejig-is-showcase .marejig-segment-pill,
+.marejig-is-showcase .marejig-segment-progress {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.marejig-is-showcase .marejig-segment-pill {
+    transform: translate(-50%, -6px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marejig-is-showcase .marejig-floating-button,
+    .marejig-is-showcase .marejig-segment-pill,
+    .marejig-is-showcase .marejig-segment-progress {
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -13,6 +13,7 @@
     var MAREJIG_Input = windowObject.MAREJIG_Input;
     var MAREJIG_Segments = windowObject.MAREJIG_Segments;
     var MAREJIG_Economy = windowObject.MAREJIG_Economy;
+    var MAREJIG_Config = windowObject.MAREJIG_Config;
 
     var MAREJIG_currentLevelId = null;
     var MAREJIG_rendererReady = false;
@@ -264,7 +265,7 @@
     function MAREJIG_saveGame(reason) {
         var state = MAREJIG_State.getState();
         if (!state.scene || !state.puzzle || !state.selectedLevelId) return false;
-        if (state.scene.progress && state.scene.progress.gamePhase === 'completed') return true;
+        if (state.scene.progress && (state.scene.progress.gamePhase === 'completed' || state.scene.progress.gamePhase === 'victory')) return true;
         MAREJIG_commitElapsed(state.scene);
         var savePill = MAREJIG_byId('marejig-hud-save');
         if (savePill) savePill.textContent = 'Guardando…';
@@ -415,7 +416,7 @@
 
     function MAREJIG_openHelp() { MAREJIG_openModal('marejig-help-modal', 'marejig-help-ok'); }
     function MAREJIG_closeHelp() { MAREJIG_closeModal('marejig-help-modal'); }
-    function MAREJIG_openPause() { MAREJIG_syncSettingsButtons(); MAREJIG_openModal('marejig-pause-modal', 'marejig-pause-continue'); }
+    function MAREJIG_openPause() { var state = MAREJIG_State.getState(); if (state.scene && state.scene.progress && state.scene.progress.gamePhase === 'showcase') return; MAREJIG_syncSettingsButtons(); MAREJIG_openModal('marejig-pause-modal', 'marejig-pause-continue'); }
     function MAREJIG_closePause() { MAREJIG_closeModal('marejig-pause-modal'); }
     function MAREJIG_openResetConfirm() { MAREJIG_closePause(); MAREJIG_openModal('marejig-confirm-reset-modal', 'marejig-reset-cancel'); }
     function MAREJIG_closeResetConfirm() { MAREJIG_closeModal('marejig-confirm-reset-modal'); }
@@ -644,9 +645,20 @@
         }, revealDelay);
     }
 
+    function MAREJIG_setShowcaseControls(active) {
+        documentObject.body.classList.toggle('marejig-is-showcase', Boolean(active));
+        documentObject.documentElement.classList.toggle('marejig-is-showcase', Boolean(active));
+        ['marejig-pause-button', 'marejig-back-to-menu', 'marejig-center-view'].forEach(function MAREJIG_toggleShowcaseControl(id) {
+            var control = MAREJIG_byId(id);
+            if (!control) return;
+            control.disabled = Boolean(active);
+            control.setAttribute('aria-disabled', active ? 'true' : 'false');
+        });
+    }
+
     function MAREJIG_completePuzzle(scene) {
         if (!scene || !scene.progress) return;
-        if (scene.progress.completionStarted && scene.progress.gamePhase === 'completing') return;
+        if (scene.progress.completionStarted && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'showcase' || scene.progress.gamePhase === 'victory')) return;
         if (scene.progress.completionStarted && scene.progress.gamePhase === 'completed' && (scene.progress.rewardReported || scene.progress.rewardSkipped || MAREJIG_Storage.isLevelCompleted(scene.level.id))) return;
         scene.progress.completionStarted = true;
         scene.progress.gamePhase = 'completing';
@@ -655,36 +667,55 @@
         MAREJIG_commitElapsed(scene);
         MAREJIG_stopHudTimer(false);
         MAREJIG_saveGame('complete');
-        scene.ui.message = '¡Puzzle completado!';
+        scene.ui.message = '¡Completado!';
+        scene.ui.messageStartedAt = Date.now();
         scene.ui.dirty = true;
-        MAREJIG_Renderer.markDirty('victory');
+        MAREJIG_setShowcaseControls(true);
         var reduce = windowObject.matchMedia && windowObject.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        windowObject.setTimeout(function MAREJIG_afterVictoryAnimation() {
-            var isFirstCompletion = !MAREJIG_Storage.isLevelCompleted(scene.level.id) && !scene.progress.rewardSkipped;
-            var metrics = {
-                elapsedMs: scene.progress.elapsedMs,
-                moves: scene.progress.moves,
-                rewardReported: scene.progress.rewardReported || !isFirstCompletion
-            };
-            var economy = MAREJIG_Economy.reportLevelCompleted(scene.level, metrics);
-            var victoryState = MAREJIG_createVictoryState(scene, economy, isFirstCompletion);
-            scene.progress.rewardReported = victoryState.rewardPaid;
-            scene.progress.gamePhase = 'completed';
-            scene.progress.status = 'Completado';
-            MAREJIG_State.setState({ appPhase: 'completed' });
-            MAREJIG_Storage.markLevelCompleted(scene.level, {
-                elapsedMs: metrics.elapsedMs,
-                moves: metrics.moves,
-                rewardReported: scene.progress.rewardReported,
-                rewardLevelId: economy.rewardLevelId,
-                rewardCoins: economy.coins
-            });
-            MAREJIG_Storage.clearActiveSave();
-            MAREJIG_Storage.clearLevelProgress(scene.level.id);
-            MAREJIG_Menu.refreshAfterCompletion();
-            MAREJIG_updateHud(scene.level, scene.puzzle, MAREJIG_State.getState().loadedImageResult, scene);
-            MAREJIG_showVictory(scene, economy, victoryState);
-        }, reduce ? 0 : 520);
+        var showcase = MAREJIG_Scene.startCompletionShowcase(scene, {
+            reducedMotion: reduce,
+            testMode: Boolean(windowObject.__MAREJIG_TEST_MODE),
+            testDurationMs: MAREJIG_Config.completionShowcase && MAREJIG_Config.completionShowcase.testDurationMs
+        });
+        MAREJIG_State.setState({ appPhase: 'showcase' });
+        MAREJIG_Renderer.markDirty('completion-showcase-start');
+        if (!showcase || !MAREJIG_Renderer.animateCompletionShowcase) {
+            windowObject.setTimeout(function MAREJIG_showcaseFallback() { MAREJIG_finishPuzzleCompletion(scene); }, reduce ? 0 : 8000);
+            return;
+        }
+        MAREJIG_Renderer.animateCompletionShowcase(scene, {
+            onComplete: function MAREJIG_completionShowcaseDone() { MAREJIG_finishPuzzleCompletion(scene); }
+        });
+    }
+
+    function MAREJIG_finishPuzzleCompletion(scene) {
+        if (!scene || !scene.progress) return;
+        if (scene.progress.gamePhase === 'victory' || (scene.progress.gamePhase === 'completed' && scene.progress.rewardReported)) return;
+        MAREJIG_setShowcaseControls(false);
+        var isFirstCompletion = !MAREJIG_Storage.isLevelCompleted(scene.level.id) && !scene.progress.rewardSkipped;
+        var metrics = {
+            elapsedMs: scene.progress.elapsedMs,
+            moves: scene.progress.moves,
+            rewardReported: scene.progress.rewardReported || !isFirstCompletion
+        };
+        var economy = MAREJIG_Economy.reportLevelCompleted(scene.level, metrics);
+        var victoryState = MAREJIG_createVictoryState(scene, economy, isFirstCompletion);
+        scene.progress.rewardReported = victoryState.rewardPaid;
+        scene.progress.gamePhase = 'victory';
+        scene.progress.status = 'Victoria';
+        MAREJIG_State.setState({ appPhase: 'victory' });
+        MAREJIG_Storage.markLevelCompleted(scene.level, {
+            elapsedMs: metrics.elapsedMs,
+            moves: metrics.moves,
+            rewardReported: scene.progress.rewardReported,
+            rewardLevelId: economy.rewardLevelId,
+            rewardCoins: economy.coins
+        });
+        MAREJIG_Storage.clearActiveSave();
+        MAREJIG_Storage.clearLevelProgress(scene.level.id);
+        MAREJIG_Menu.refreshAfterCompletion();
+        MAREJIG_updateHud(scene.level, scene.puzzle, MAREJIG_State.getState().loadedImageResult, scene);
+        MAREJIG_showVictory(scene, economy, victoryState);
     }
 
     function MAREJIG_createVictoryState(scene, economy, isFirstCompletion) {
@@ -738,6 +769,7 @@
         modal.hidden = false;
         documentObject.body.classList.add('marejig-modal-open');
         MAREJIG_pauseTimer();
+        scene.progress.gamePhase = 'victory';
         if (next) next.focus();
     }
 

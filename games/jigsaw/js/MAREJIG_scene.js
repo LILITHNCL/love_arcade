@@ -618,6 +618,109 @@
 
     function MAREJIG_getVisiblePieceIds(scene) { return Object.keys(scene.pieces).filter(function MAREJIG_isVisible(pieceId) { return scene.pieces[pieceId].visible; }); }
 
+
+    function MAREJIG_getCompletedPuzzleBounds(scene) {
+        if (!scene) return null;
+        var mainGroup = scene.progress && scene.progress.mainGroupId ? scene.groups[scene.progress.mainGroupId] : null;
+        if (mainGroup && mainGroup.visible) {
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, mainGroup.id);
+            if (mainGroup.bounds && mainGroup.bounds.width > 0 && mainGroup.bounds.height > 0) return Object.assign({}, mainGroup.bounds);
+        }
+        var visibleBounds = MAREJIG_getVisibleGroups(scene).map(function MAREJIG_completedVisibleBounds(group) {
+            if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+            return group.bounds;
+        });
+        return MAREJIG_unionBounds(visibleBounds) || { x: scene.board.x, y: scene.board.y, width: scene.board.width, height: scene.board.height };
+    }
+
+    function MAREJIG_computeShowcaseCamera(scene, bounds, options) {
+        if (!scene || !scene.viewport) return { x: 0, y: 0, zoom: 1 };
+        var focus = bounds || MAREJIG_getCompletedPuzzleBounds(scene) || { x: scene.board.x, y: scene.board.y, width: scene.board.width, height: scene.board.height };
+        var viewportW = Math.max(1, scene.viewport.width || 1);
+        var viewportH = Math.max(1, scene.viewport.height || 1);
+        var portrait = viewportH >= viewportW;
+        var margin = MAREJIG_clamp(Math.min(viewportW, viewportH) * 0.07, 24, 40);
+        if (options && Number(options.marginPx)) margin = Number(options.marginPx);
+        var availableW = Math.max(1, viewportW - margin * 2);
+        var availableH = Math.max(1, viewportH - margin * 2);
+        var widthTarget = portrait ? 0.88 : 0.86;
+        var heightTarget = portrait ? 0.72 : 0.70;
+        var fitZoom = Math.min(availableW / Math.max(1, focus.width), availableH / Math.max(1, focus.height));
+        var targetZoom = Math.min((viewportW * widthTarget) / Math.max(1, focus.width), (viewportH * heightTarget) / Math.max(1, focus.height), fitZoom);
+        targetZoom = MAREJIG_clamp(targetZoom, 0.45, scene.camera.maxZoom || 1.8);
+        var camera = {
+            x: focus.x + focus.width / 2 - viewportW / targetZoom / 2,
+            y: focus.y + focus.height / 2 - viewportH / targetZoom / 2,
+            zoom: targetZoom,
+            marginPx: margin,
+            bounds: Object.assign({}, focus)
+        };
+        camera.x = MAREJIG_clamp(camera.x, scene.world.x, Math.max(scene.world.x, scene.world.x + scene.world.width - viewportW / camera.zoom));
+        camera.y = MAREJIG_clamp(camera.y, scene.world.y, Math.max(scene.world.y, scene.world.y + scene.world.height - viewportH / camera.zoom));
+        return camera;
+    }
+
+    function MAREJIG_buildCompletionParticles(count) {
+        var palette = ['#ffd166', '#77f7e4', '#f8fbff', '#ff8f70'];
+        var total = Math.max(0, Math.min(28, count || 24));
+        var particles = [];
+        for (var index = 0; index < total; index += 1) {
+            var ratio = index / total;
+            particles.push({
+                angle: ratio * Math.PI * 2 - Math.PI / 2,
+                radiusOffset: 12 + (index % 4) * 5,
+                size: 3.5 + (index % 5) * 0.9,
+                color: palette[index % palette.length],
+                delay: (index % 8) * 58 + Math.floor(index / 8) * 90,
+                lifetime: 1150 + (index % 6) * 140,
+                spin: index % 2 === 0 ? 1 : -1,
+                kind: index % 3 === 0 ? 'star' : 'dot'
+            });
+        }
+        return particles;
+    }
+
+    function MAREJIG_startCompletionShowcase(scene, options) {
+        if (!scene || !scene.progress) return null;
+        var config = (MAREJIG_Config && MAREJIG_Config.completionShowcase) || {};
+        var reduced = Boolean(options && options.reducedMotion);
+        var testMode = Boolean(options && options.testMode);
+        var durationMs = testMode ? (options.testDurationMs || config.testDurationMs || 300) : (reduced ? (config.reducedDurationMs || 3000) : (options && options.durationMs || config.durationMs || 8000));
+        var cameraDurationMs = reduced ? Math.min(config.reducedCameraMs || 160, 200) : (options && options.cameraMs || config.cameraMs || 1200);
+        var particlesStartMs = reduced ? durationMs + 1 : Math.min(durationMs - 400, options && options.particlesStartMs || config.particlesStartMs || 1600);
+        var bounds = MAREJIG_getCompletedPuzzleBounds(scene);
+        var targetCamera = MAREJIG_computeShowcaseCamera(scene, bounds, options || {});
+        scene.progress.gamePhase = 'showcase';
+        scene.progress.status = 'Celebrando';
+        scene.ui.selectedGroupId = null;
+        scene.ui.message = '¡Completado!';
+        scene.ui.messageStartedAt = Date.now();
+        scene.ui.dirty = true;
+        scene.feedback.completionShowcase = {
+            startedAt: 0,
+            durationMs: durationMs,
+            cameraDurationMs: cameraDurationMs,
+            particlesStartMs: particlesStartMs,
+            bounds: bounds,
+            targetCamera: targetCamera,
+            particles: reduced ? [] : MAREJIG_buildCompletionParticles(config.particleCount || 24),
+            reducedMotion: reduced
+        };
+        if (scene.performance) {
+            scene.performance.isDragging = false;
+            scene.performance.isPanning = false;
+            scene.performance.isCameraAnimating = cameraDurationMs > 0;
+        }
+        return scene.feedback.completionShowcase;
+    }
+
+    function MAREJIG_finishCompletionShowcase(scene) {
+        if (!scene || !scene.feedback) return;
+        scene.feedback.completionShowcase = null;
+        if (scene.performance) scene.performance.isCameraAnimating = false;
+        if (scene.ui) scene.ui.dirty = true;
+    }
+
     windowObject.MAREJIG_Scene = Object.freeze({
         createScene: MAREJIG_createScene, layoutScene: MAREJIG_layoutScene, reflowScene: MAREJIG_reflowScene,
         ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld,
@@ -627,6 +730,8 @@
         getSegmentBounds: MAREJIG_getSegmentBounds, findNearbyFreePosition: MAREJIG_findNearbyFreePosition, resolveGroupOverlap: MAREJIG_resolveGroupOverlap,
         resolveAllPassiveOverlaps: MAREJIG_resolveAllPassiveOverlaps, getIncorrectContact: MAREJIG_getIncorrectContact,
         markInvalidContact: MAREJIG_markInvalidContact, clearInvalidContact: MAREJIG_clearInvalidContact,
-        centerScene: MAREJIG_centerScene, applySave: MAREJIG_applySave, getVisiblePieceIds: MAREJIG_getVisiblePieceIds
+        centerScene: MAREJIG_centerScene, applySave: MAREJIG_applySave, getVisiblePieceIds: MAREJIG_getVisiblePieceIds,
+        getCompletedPuzzleBounds: MAREJIG_getCompletedPuzzleBounds, computeShowcaseCamera: MAREJIG_computeShowcaseCamera,
+        startCompletionShowcase: MAREJIG_startCompletionShowcase, finishCompletionShowcase: MAREJIG_finishCompletionShowcase
     });
 })(window);
