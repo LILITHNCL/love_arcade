@@ -162,7 +162,11 @@
     function MAREJIG_getActiveSave() {
         var save = MAREJIG_safeGet(MAREJIG_KEYS.activeSave, MAREJIG_DEFAULTS.activeSave);
         var valid = MAREJIG_validateActiveSave(save);
-        if (save && !valid) console.warn('[MAREJIG] Active save corrupto o incompatible ignorado');
+        if (save && !valid) {
+            console.warn('[MAREJIG] Active save corrupto o incompatible limpiado');
+            MAREJIG_clearActiveSave();
+            return null;
+        }
         return valid;
     }
 
