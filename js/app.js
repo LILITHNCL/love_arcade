@@ -154,7 +154,7 @@ const SYNC_SALT = 'love_arcade_v75_integrity_2026';
 // ECONOMÍA — Editar aquí para eventos especiales
 // =====================================================
 const ECONOMY = {
-    isSaleActive:   true,
+    isSaleActive:   false,
     saleMultiplier: 0.9,
     saleLabel:      '10% OFF',
     cashbackRate:   0.1
@@ -1751,9 +1751,12 @@ function getLastMailRecipient() {
  * @returns {{ uri: string, tooLong: boolean }}
  */
 function buildMailtoLink(item, absoluteUrl, email) {
-    const tipo = Array.isArray(item.tags) && item.tags.includes('Mobile')
-        ? 'Wallpaper Mobile'
-        : 'Wallpaper PC';
+    const tags = Array.isArray(item.tags) ? item.tags : [];
+    const tipo = tags.includes('Sticker')
+        ? 'Sticker'
+        : tags.includes('Mobile')
+            ? 'Wallpaper Mobile'
+            : 'Wallpaper PC';
 
     const subject = encodeURIComponent(`Tu ${tipo} de Love Arcade: ${item.name}`);
 
@@ -2500,6 +2503,8 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 //  Ollin Smash:    OS_highscore
 //  Jungle Dash:    JD_highscore, JD_muted
 //  Dodger:         dodger_highscore, dodger_skin, dodger_muted
+//  Marejig:        MAREJIG_completedLevels_v1, MAREJIG_levelProgress_v1,
+//                  MAREJIG_activeSave_v1, MAREJIG_settings_v1
 //
 // Supabase SQL (ejecutar una sola vez en el editor de Supabase):
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2534,6 +2539,10 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         'dodger_highscore',        // Dodger — récord
         'dodger_skin',             // Dodger — skin activa
         'dodger_muted',            // Dodger — silencio
+        'MAREJIG_completedLevels_v1', // Marejig — niveles completados y métricas finales
+        'MAREJIG_levelProgress_v1',   // Marejig — resumen ligero por nivel pendiente
+        'MAREJIG_activeSave_v1',      // Marejig — partida activa compacta
+        'MAREJIG_settings_v1',        // Marejig — preferencias locales
     ]);
 
     // Clave del registro de marca de tiempo local (para Last Write Wins)
@@ -2559,11 +2568,15 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         'love_arcade_inventory',
         'LUMINA_bestScore',
         'love_arcade_settings',
+        'MAREJIG_completedLevels_v1',
     ]);
 
     const PASSIVE_PRIORITY_KEYS = new Set([
         'love_arcade_missions',
         'LUMINA_gameState',
+        'MAREJIG_levelProgress_v1',
+        'MAREJIG_activeSave_v1',
+        'MAREJIG_settings_v1',
         SENTINEL_TS_KEY,
     ]);
 
@@ -2894,9 +2907,17 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     // ── StorageInterceptor ────────────────────────────────────────────────────
 
-    // Referencia al setItem ORIGINAL antes de ser interceptado.
-    // Se usa en _applySnapshot() para evitar re-disparar el debounce.
+    // Referencias a los métodos ORIGINALES antes de ser interceptados.
+    // _originalSetItem se usa en _applySnapshot() para evitar re-disparar el debounce.
     const _originalSetItem = localStorage.setItem.bind(localStorage);
+    const _originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+    function _markWatchedKeyDirty(key, prevValue = null, nextValue = null) {
+        if (!SENTINEL_WATCHED_KEYS.has(key) || !_sbSession || _isRestoringSession) return;
+        _hasUnsyncedChanges = true;
+        _originalSetItem(SENTINEL_TS_KEY, new Date().toISOString());
+        _sentinelScheduleSyncForKey(key, prevValue, nextValue);
+    }
 
     /**
      * Intercepta localStorage.setItem.
@@ -2907,11 +2928,19 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     localStorage.setItem = function interceptedSetItem(key, value) {
         const prevValue = localStorage.getItem(key);
         _originalSetItem(key, value);
-        if (SENTINEL_WATCHED_KEYS.has(key) && _sbSession && !_isRestoringSession) {
-            _hasUnsyncedChanges = true;
-            _originalSetItem(SENTINEL_TS_KEY, new Date().toISOString());
-            _sentinelScheduleSyncForKey(key, prevValue, value);
-        }
+        _markWatchedKeyDirty(key, prevValue, value);
+    };
+
+    /**
+     * Intercepta localStorage.removeItem para que los borrados de claves
+     * vigiladas también lleguen a la nube. Esto es especialmente importante
+     * para guardados transitorios como MAREJIG_activeSave_v1, que se elimina
+     * al completar, reiniciar o reemplazar una partida.
+     */
+    localStorage.removeItem = function interceptedRemoveItem(key) {
+        const prevValue = localStorage.getItem(key);
+        _originalRemoveItem(key);
+        _markWatchedKeyDirty(key, prevValue, null);
     };
 
     // ── Cross-tab bridge: detectar writes desde otras pestañas ───────────────

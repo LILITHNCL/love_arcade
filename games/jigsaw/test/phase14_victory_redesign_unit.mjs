@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../css/marejig.css', import.meta.url), 'utf8');
+const main = fs.readFileSync(new URL('../js/MAREJIG_main.js', import.meta.url), 'utf8');
+const economy = fs.readFileSync(new URL('../js/MAREJIG_economy.js', import.meta.url), 'utf8');
+const scripts = fs.readdirSync(new URL('../js/', import.meta.url)).filter((file) => file.endsWith('.js')).map((file) => [file, fs.readFileSync(new URL(`../js/${file}`, import.meta.url), 'utf8')]);
+const victoryHtml = html.match(/<div class="marejig-modal" id="marejig-victory-modal"[\s\S]*?<div class="marejig-toast"/)?.[0] || '';
+
+assert.ok(victoryHtml, 'victory modal exists');
+assert.match(victoryHtml, /role="dialog"[\s\S]*aria-labelledby="marejig-victory-title"/, 'victory modal is an accessible labelled dialog');
+assert.doesNotMatch(victoryHtml, /Movimientos|marejig-victory-moves/, 'victory modal does not expose move metrics');
+assert.doesNotMatch(`${html}\n${main}`, /Monedas acreditadas|Modo standalone|monedas no acreditadas/i, 'technical economy copy is absent');
+assert.match(victoryHtml, /id="marejig-victory-reward"[\s\S]*hidden/, 'reward block starts hidden and is opt-in');
+assert.match(main, /var showCoins = state\.rewardPaid && state\.isFirstCompletion;/, 'coins are only shown after a paid first completion');
+assert.match(main, /coins\.innerHTML = '\+' \+ state\.coins \+ ' <span>monedas<\/span>'/, 'paid state renders the reward amount');
+assert.match(`${html}\n${main}`, /¡Recompensa conseguida!/, 'paid reward uses emotional copy');
+assert.match(main, /¡Lo armaste de nuevo!/, 'repeat state uses human copy');
+assert.match(main, /Recompensa ya reclamada/, 'repeat state explains one-time reward');
+assert.match(main, /var showStandaloneNotice = state\.standalone && !showCoins;/, 'local progress state is explicitly separated');
+assert.match(main, /Progreso guardado/, 'local progress state uses clean copy');
+assert.match(main, /if \(next\) next\.focus\(\);/, 'primary CTA receives initial focus');
+assert.match(victoryHtml, /marejig-victory-celebration" aria-hidden="true"/, 'decorative celebration is hidden from assistive technology');
+const celebrationHtml = victoryHtml.match(/<div class="marejig-victory-celebration"[\s\S]*?<\/div>/)?.[0] || '';
+assert.equal((celebrationHtml.match(/<span>/g) || []).length, 16, 'celebration has a limited number of sparks');
+assert.match(css, /\.marejig-victory-title \{[^}]*letter-spacing: -0\.015em;/, 'victory title uses readable, lightly tightened tracking');
+assert.doesNotMatch(css, /\.marejig-victory-title \{[^}]*letter-spacing: -(?:0\.0[3-9]|0\.[1-9])em;/, 'victory title avoids excessively negative tracking');
+assert.match(css, /\.marejig-victory-celebration \{[^}]*z-index: 1;/, 'decorative celebration stays below the victory kicker');
+assert.match(css, /\.marejig-victory-kicker \{[^}]*position: relative;[^}]*z-index: 2;/, 'victory kicker stays above decorative celebration');
+assert.match(css, /span:nth-child\(14\) \{[^}]*--marejig-star-x: -108px;/, 'central lower spark is shifted away from the kicker safe zone');
+assert.doesNotMatch(css, /backdrop-filter|filter\s*:\s*blur/i, 'victory CSS avoids expensive blur effects');
+assert.doesNotMatch(css, /animation[^;]*infinite/i, 'CSS avoids infinite animations');
+assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.marejig-victory-celebration/, 'reduced motion disables decorative victory sparks');
+assert.equal((economy.match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
+scripts.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not call completeLevel`));
+assert.match(main, /rewardReported: scene\.progress\.rewardReported \|\| !isFirstCompletion/, 'repeat completion is sent through the idempotent economy path');
+assert.match(html, /<script src="\.\.\/\.\.\/js\/app\.js"><\/script>\s*<\/body>/, 'shared app script remains last');
+assert.doesNotMatch(scripts.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'forbidden window assignments stay absent');
+assert.doesNotMatch(scripts.map(([, source]) => source).join('\n'), /\b(?:addCoins|spendCoins|getBalance)\s*\(/, 'forbidden economy helpers stay absent');
+
+console.log('phase14 victory redesign unit tests ok');

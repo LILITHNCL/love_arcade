@@ -1225,20 +1225,110 @@
   },
   {
     "id": 115,
-    "name": "Komi San",
-    "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/komi-san-62bfdf79",
-    "file": "komi-san-62bfdf79.avif",
+    "name": "Hitori Gotoh",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hitori-gotoh-f44d577d",
+    "file": "stk-hitori-gotoh-f44d577d.jpg",
     "tags": [
-      "Mobile"
+      "Stickers"
     ]
   },
   {
     "id": 116,
-    "name": "Snow Pea",
-    "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/snow-pea-030ab9b7",
-    "file": "snow-pea-030ab9b7.avif",
+    "name": "Ellen Joe",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-ellen-joe-86f8544b",
+    "file": "stk-ellen-joe-86f8544b.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 117,
+    "name": "Hu Tao",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hu-tao-352611f6",
+    "file": "stk-hu-tao-352611f6.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 118,
+    "name": "Furina",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-furina-17dd95d4",
+    "file": "stk-furina-17dd95d4.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 119,
+    "name": "Mona",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-mona-a9207eae",
+    "file": "stk-mona-a9207eae.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 120,
+    "name": "Furina",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-furina-49ebc023",
+    "file": "stk-furina-49ebc023.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 121,
+    "name": "Shadow",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-shadow-8d4b9a82",
+    "file": "stk-shadow-8d4b9a82.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 122,
+    "name": "Goku",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-goku-f6efb8be",
+    "file": "stk-goku-f6efb8be.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 123,
+    "name": "Shadow",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-shadow-e0c3cb17",
+    "file": "stk-shadow-e0c3cb17.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 124,
+    "name": "Hatsune Miku",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hatsune-miku-d0173a28",
+    "file": "stk-hatsune-miku-d0173a28.jpg",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 125,
+    "name": "Bocchi the Cat",
+    "price": 2500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/bocchi-the-cat-073d42ad",
+    "file": "bocchi-the-cat-073d42ad.avif",
     "tags": [
       "Mobile"
     ]

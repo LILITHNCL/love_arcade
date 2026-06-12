@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" href="/assets/icon/apple-touch-icon.png">
 
     <!-- Preload critical above-the-fold game card images -->
+    <link rel="preload" as="image" href="assets/images/games/cover/marejig-cover-art-3-2.avif" fetchpriority="high">
     <link rel="preload" as="image" href="assets/images/games/cover/rompecabezas-cover-art.avif" fetchpriority="high">
     <link rel="preload" as="image" href="assets/images/games/cover/word-hunt-cover-art.avif" fetchpriority="high">
     <link rel="preload" as="image" href="assets/images/games/cover/ollin-smash-cover-art.avif" fetchpriority="high">
@@ -394,6 +395,28 @@
             </div>
 
             <section id="games" class="games-grid">
+
+                <article class="game-card">
+                    <div class="card-cover">
+                        <img
+                            class="card-cover-img"
+                            src="assets/images/games/cover/marejig-cover-art-3-2.avif"
+                            alt="Portada de Marejig"
+                            width="1920"
+                            height="1280"
+                            loading="eager"
+                            fetchpriority="high"
+                            decoding="sync"
+                        >
+                    </div>
+                    <div class="card-info">
+                        <h3 class="card-title">Marejig</h3>
+                        <p class="card-desc">Une todos los segmentos.</p>
+                        <a href="games/jigsaw" class="btn-primary w-full" style="justify-content:center;">
+                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        </a>
+                    </div>
+                </article>
 
                 <article class="game-card">
                     <div class="card-cover">

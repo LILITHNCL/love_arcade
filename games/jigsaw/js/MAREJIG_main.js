@@ -1,0 +1,933 @@
+(function MAREJIG_mainModule(windowObject, documentObject) {
+    'use strict';
+
+    var MAREJIG_LevelCatalog = windowObject.MAREJIG_LevelCatalog;
+    var MAREJIG_Cloudinary = windowObject.MAREJIG_Cloudinary;
+    var MAREJIG_ImageLoader = windowObject.MAREJIG_ImageLoader;
+    var MAREJIG_Menu = windowObject.MAREJIG_Menu;
+    var MAREJIG_State = windowObject.MAREJIG_State;
+    var MAREJIG_Storage = windowObject.MAREJIG_Storage;
+    var MAREJIG_Generator = windowObject.MAREJIG_Generator;
+    var MAREJIG_Scene = windowObject.MAREJIG_Scene;
+    var MAREJIG_Renderer = windowObject.MAREJIG_Renderer;
+    var MAREJIG_Input = windowObject.MAREJIG_Input;
+    var MAREJIG_Segments = windowObject.MAREJIG_Segments;
+    var MAREJIG_Economy = windowObject.MAREJIG_Economy;
+    var MAREJIG_Config = windowObject.MAREJIG_Config;
+
+    var MAREJIG_currentLevelId = null;
+    var MAREJIG_rendererReady = false;
+    var MAREJIG_timerId = 0;
+    var MAREJIG_timerStartedAt = 0;
+    var MAREJIG_lastFocus = null;
+    var MAREJIG_startOptions = null;
+    var MAREJIG_activeSaveChoice = null;
+    var MAREJIG_toastTimerId = 0;
+    var MAREJIG_preparingTimerId = 0;
+    var MAREJIG_preparingStage = 'image';
+    var MAREJIG_preparingExited = false;
+    var MAREJIG_preparingStartedAt = 0;
+    var MAREJIG_preparingRevealTimerId = 0;
+    var MAREJIG_preparingAssetsReady = false;
+    var MAREJIG_preparingVisualProgress = 0;
+    var MAREJIG_preparingAssetProgress = 0;
+    var MAREJIG_PREPARING_MIN_VISIBLE_MS = 5000;
+    var MAREJIG_PREPARING_EXIT_MS = 220;
+    var MAREJIG_PREPARING_PROGRESS_TICK_MS = 250;
+
+    function MAREJIG_byId(id) { return documentObject.getElementById(id); }
+
+    function MAREJIG_showScreen(name) {
+        var preparing = name === 'preparing';
+        var playing = name === 'playing';
+        ['menu', 'preparing', 'game', 'error'].forEach(function MAREJIG_toggleScreen(screen) {
+            var element = MAREJIG_byId('marejig-screen-' + screen);
+            if (!element) return;
+            var visible = screen === name || (screen === 'game' && (preparing || playing));
+            element.hidden = !visible;
+            element.classList.toggle('marejig-screen-current', visible && (screen === name || (screen === 'game' && playing)));
+            if (screen === 'game') {
+                element.setAttribute('aria-hidden', preparing ? 'true' : 'false');
+                if ('inert' in element) element.inert = preparing;
+            }
+        });
+        documentObject.documentElement.classList.toggle('marejig-is-playing', preparing || playing);
+        documentObject.body.classList.toggle('marejig-is-playing', preparing || playing);
+        documentObject.documentElement.classList.toggle('marejig-is-preparing', preparing);
+        documentObject.body.classList.toggle('marejig-is-preparing', preparing);
+        MAREJIG_State.setState({ currentScreen: name, appPhase: name });
+    }
+
+    function MAREJIG_getPreparingCopy(stage) {
+        return {
+            image: 'Cortando imagen…',
+            pieces: 'Mezclando piezas…',
+            scene: 'Acomodando la mesa…',
+            ready: 'Listo para armar…',
+            error: 'No pudimos preparar este puzzle'
+        }[stage] || 'Preparando puzzle…';
+    }
+
+    function MAREJIG_clearPreparingTimer() {
+        if (MAREJIG_preparingTimerId) windowObject.clearTimeout(MAREJIG_preparingTimerId);
+        if (MAREJIG_preparingRevealTimerId) windowObject.clearTimeout(MAREJIG_preparingRevealTimerId);
+        MAREJIG_preparingTimerId = 0;
+        MAREJIG_preparingRevealTimerId = 0;
+    }
+
+    function MAREJIG_updatePreparingMeter(value) {
+        MAREJIG_preparingVisualProgress = Math.max(0, Math.min(100, value || 0));
+        var fill = MAREJIG_byId('marejig-preparing-progress-fill');
+        var percent = MAREJIG_byId('marejig-preparing-percent');
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        var rounded = Math.round(MAREJIG_preparingVisualProgress);
+        if (fill) fill.style.width = rounded + '%';
+        if (preparing) preparing.style.setProperty('--marejig-preparing-progress', rounded + '%');
+        if (percent) percent.textContent = rounded + '%';
+    }
+
+    function MAREJIG_getPreparingStageForProgress(progress) {
+        if (progress >= 98) return 'ready';
+        if (progress >= 72) return 'scene';
+        if (progress >= 38) return 'pieces';
+        return 'image';
+    }
+
+    function MAREJIG_setPreparingStage(stage) {
+        MAREJIG_preparingStage = stage;
+        var copy = MAREJIG_byId('marejig-preparing-step');
+        var retry = MAREJIG_byId('marejig-preparing-retry');
+        var title = MAREJIG_byId('marejig-preparing-title');
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        if (copy) copy.textContent = MAREJIG_getPreparingCopy(stage);
+        if (title) title.textContent = stage === 'error' ? 'No pudimos preparar este puzzle' : 'Preparando puzzle';
+        if (retry) retry.hidden = stage !== 'error';
+        if (preparing) {
+            preparing.setAttribute('aria-busy', stage === 'error' ? 'false' : 'true');
+            preparing.classList.toggle('marejig-preparing-ready', stage === 'ready');
+            preparing.classList.toggle('marejig-preparing-error', stage === 'error');
+            if (stage !== 'ready') preparing.classList.remove('marejig-preparing-exit');
+        }
+        documentObject.querySelectorAll('.marejig-preparing-segment').forEach(function MAREJIG_markPreparingSegment(segment) {
+            var order = ['image', 'pieces', 'scene', 'ready'];
+            var segmentStage = segment.getAttribute('data-marejig-step');
+            var activeIndex = Math.max(0, order.indexOf(stage));
+            var segmentIndex = order.indexOf(segmentStage);
+            segment.classList.toggle('marejig-preparing-segment-done', segmentIndex >= 0 && segmentIndex < activeIndex);
+            segment.classList.toggle('marejig-preparing-segment-active', segmentStage === stage);
+        });
+    }
+
+    function MAREJIG_startPreparingTicker() {
+        MAREJIG_clearPreparingTimer();
+        MAREJIG_preparingTimerId = windowObject.setTimeout(function MAREJIG_preparingTick() {
+            var state = MAREJIG_State.getState();
+            if (state.currentScreen !== 'preparing' || MAREJIG_preparingStage === 'error') return;
+            var elapsed = MAREJIG_preparingStartedAt ? Date.now() - MAREJIG_preparingStartedAt : 0;
+            var timeProgress = Math.min(96, (elapsed / MAREJIG_PREPARING_MIN_VISIBLE_MS) * 96);
+            var assetProgress = Math.min(94, MAREJIG_preparingAssetProgress);
+            var nextProgress = MAREJIG_preparingAssetsReady ? 100 : Math.max(MAREJIG_preparingVisualProgress, timeProgress, assetProgress);
+            MAREJIG_updatePreparingMeter(nextProgress);
+            MAREJIG_setPreparingStage(MAREJIG_getPreparingStageForProgress(nextProgress));
+            if (!MAREJIG_preparingAssetsReady) MAREJIG_startPreparingTicker();
+        }, MAREJIG_PREPARING_PROGRESS_TICK_MS);
+    }
+
+    function MAREJIG_setProgress(percent, label) {
+        MAREJIG_preparingAssetProgress = Math.max(MAREJIG_preparingAssetProgress, Math.max(0, Math.min(94, percent || 0)));
+    }
+
+    function MAREJIG_setPreparingPreview(level) {
+        var preview = MAREJIG_byId('marejig-preparing-preview');
+        if (!preview) return;
+        preview.innerHTML = '<span class="marejig-preparing-preview-shine"></span><span class="marejig-preparing-preview-frame"></span>';
+        var img = documentObject.createElement('img');
+        img.className = 'marejig-preparing-preview-img';
+        img.alt = '';
+        img.decoding = 'async';
+        img.loading = 'eager';
+        img.crossOrigin = 'anonymous';
+        img.onerror = function MAREJIG_previewError() { img.remove(); };
+        img.src = MAREJIG_Cloudinary.buildTinyPlaceholderUrl(level);
+        preview.appendChild(img);
+    }
+
+    function MAREJIG_escape(value) {
+        return String(value).replace(/[&<>'"]/g, function MAREJIG_replaceUnsafe(char) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\'': '&#39;', '"': '&quot;' }[char];
+        });
+    }
+
+    function MAREJIG_detailRow(label, value) {
+        return '<div class="marejig-detail-row"><span>' + MAREJIG_escape(label) + '</span><span>' + MAREJIG_escape(value) + '</span></div>';
+    }
+
+    function MAREJIG_isDebugEnabled() {
+        var configDebug = windowObject.MAREJIG_Config && windowObject.MAREJIG_Config.debug && windowObject.MAREJIG_Config.debug.enabled;
+        var queryDebug = false;
+        try { queryDebug = new URL(windowObject.location && windowObject.location.href || 'https://local/').searchParams.get('debug') === '1'; } catch (error) { queryDebug = false; }
+        return Boolean(configDebug || queryDebug);
+    }
+
+    function MAREJIG_applyDebugVisibility() {
+        var enabled = MAREJIG_isDebugEnabled();
+        documentObject.querySelectorAll('.marejig-debug-only').forEach(function MAREJIG_toggleDebug(element) {
+            element.hidden = !enabled;
+        });
+        return enabled;
+    }
+
+    function MAREJIG_formatTime(ms) {
+        var totalSeconds = Math.floor(Math.max(0, ms || 0) / 1000);
+        var minutes = Math.floor(totalSeconds / 60);
+        var seconds = totalSeconds % 60;
+        return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    }
+
+    function MAREJIG_getElapsed(scene) {
+        var base = scene && scene.progress ? Number(scene.progress.elapsedMs) || 0 : 0;
+        if (MAREJIG_timerStartedAt && scene && scene.progress && scene.progress.gamePhase === 'playing') {
+            return base + Date.now() - MAREJIG_timerStartedAt;
+        }
+        return base;
+    }
+
+    function MAREJIG_commitElapsed(scene) {
+        if (!scene || !scene.progress || !MAREJIG_timerStartedAt) return;
+        scene.progress.elapsedMs = MAREJIG_getElapsed(scene);
+        MAREJIG_timerStartedAt = 0;
+    }
+
+    function MAREJIG_startTimer(scene) {
+        MAREJIG_stopHudTimer(false);
+        if (!scene || !scene.progress || scene.progress.gamePhase !== 'playing') return;
+        MAREJIG_timerStartedAt = Date.now();
+        MAREJIG_timerId = windowObject.setInterval(function MAREJIG_timerTick() {
+            var state = MAREJIG_State.getState();
+            if (state.scene) MAREJIG_updateHud(state.scene.level, state.puzzle, state.loadedImageResult, state.scene);
+        }, 1000);
+    }
+
+    function MAREJIG_pauseTimer() {
+        var state = MAREJIG_State.getState();
+        if (state.scene) MAREJIG_commitElapsed(state.scene);
+        MAREJIG_stopHudTimer(false);
+    }
+
+    function MAREJIG_stopHudTimer(commit) {
+        if (commit) MAREJIG_pauseTimer();
+        if (MAREJIG_timerId) windowObject.clearInterval(MAREJIG_timerId);
+        MAREJIG_timerId = 0;
+        MAREJIG_timerStartedAt = 0;
+    }
+
+    function MAREJIG_getCompletedSegmentIds(scene) {
+        return scene.puzzle.segments.order.filter(function MAREJIG_completedSegment(segmentId) {
+            return scene.puzzle.segments.items[segmentId] && scene.puzzle.segments.items[segmentId].completed;
+        });
+    }
+
+    function MAREJIG_getRevealedSegmentIds(scene) {
+        return scene.puzzle.segments.order.filter(function MAREJIG_revealedSegment(segmentId) {
+            return scene.puzzle.segments.items[segmentId] && scene.puzzle.segments.items[segmentId].revealed;
+        });
+    }
+
+    function MAREJIG_countPlacedPieces(scene) {
+        return scene.progress.mainGroupId && scene.groups[scene.progress.mainGroupId] ? scene.groups[scene.progress.mainGroupId].pieceIds.length : MAREJIG_Segments.getSegmentStats(scene).connectedInSegment;
+    }
+
+    function MAREJIG_buildActiveSave(scene) {
+        return {
+            levelId: scene.level.id,
+            puzzleSeed: scene.puzzle.seed,
+            generatorVersion: scene.puzzle.generatorVersion,
+            elapsedMs: MAREJIG_getElapsed(scene),
+            moves: scene.progress.moves,
+            currentSegmentIndex: scene.puzzle.segments.currentSegmentIndex || 0,
+            completedSegmentIds: MAREJIG_getCompletedSegmentIds(scene),
+            revealedSegmentIds: MAREJIG_getRevealedSegmentIds(scene),
+            mainGroupId: scene.progress.mainGroupId,
+            puzzleCompletedLocal: scene.progress.puzzleCompletedLocal,
+            completionStarted: scene.progress.completionStarted,
+            rewardReported: scene.progress.rewardReported,
+            pieces: Object.keys(scene.pieces).sort().map(function MAREJIG_pieceSave(pieceId) {
+                var piece = scene.pieces[pieceId];
+                return { pieceId: pieceId, groupId: piece.groupId, revealed: Boolean(piece.visible), locked: Boolean(piece.locked) };
+            }),
+            groups: Object.keys(scene.groups).sort().map(function MAREJIG_groupSave(groupId) {
+                var group = scene.groups[groupId];
+                return { groupId: groupId, pieceIds: group.pieceIds.slice(), x: group.x, y: group.y, zIndex: group.zIndex, lockedToBoard: Boolean(group.lockedToBoard), visible: Boolean(group.visible) };
+            })
+        };
+    }
+
+    function MAREJIG_saveGame(reason) {
+        var state = MAREJIG_State.getState();
+        if (!state.scene || !state.puzzle || !state.selectedLevelId) return false;
+        if (state.scene.progress && (state.scene.progress.gamePhase === 'completed' || state.scene.progress.gamePhase === 'victory')) return true;
+        MAREJIG_commitElapsed(state.scene);
+        var savePill = MAREJIG_byId('marejig-hud-save');
+        if (savePill) savePill.textContent = 'Guardando…';
+        var save = MAREJIG_buildActiveSave(state.scene);
+        var ok = MAREJIG_Storage.saveActiveSave(save);
+        MAREJIG_Storage.saveLevelProgress(state.selectedLevelId, {
+            elapsedMs: save.elapsedMs,
+            moves: save.moves,
+            currentSegmentIndex: save.currentSegmentIndex,
+            completedSegmentCount: save.completedSegmentIds.length,
+            placedPieceCount: MAREJIG_countPlacedPieces(state.scene),
+            totalPieceCount: Object.keys(state.puzzle.pieces).length,
+            puzzleSeed: save.puzzleSeed,
+            generatorVersion: save.generatorVersion
+        });
+        if (state.scene.progress) state.scene.progress.status = ok ? 'Guardado' : 'Sin guardar';
+        MAREJIG_updateHud(state.scene.level, state.puzzle, state.loadedImageResult, state.scene);
+        if (state.scene.progress && state.scene.progress.gamePhase === 'playing') MAREJIG_timerStartedAt = Date.now();
+        return ok;
+    }
+
+    function MAREJIG_updateHud(level, puzzle, imageResult, scene) {
+        var stats = scene && MAREJIG_Segments ? MAREJIG_Segments.getSegmentStats(scene) : null;
+        var activeSegmentId = stats ? stats.activeSegmentId : null;
+        var activeSegment = activeSegmentId ? puzzle.segments.items[activeSegmentId] : null;
+        var moves = scene && scene.progress ? scene.progress.moves : 0;
+        var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
+        MAREJIG_applyDebugVisibility();
+        var saveStatus = MAREJIG_Storage.getLastSaveStatus();
+        var values = {
+            'marejig-hud-time': 'Tiempo ' + MAREJIG_formatTime(MAREJIG_getElapsed(scene)),
+            'marejig-hud-reward': 'Movs ' + moves,
+            'marejig-hud-segment': activeSegmentId ? (stats.activeSegmentIndex + 1) + '/' + puzzle.segments.order.length : '—',
+            'marejig-hud-visible': activeSegment ? stats.connectedInSegment + '/' + activeSegment.pieceIds.length + ' conectadas' : '0/0 conectadas',
+            'marejig-hud-total': puzzle && puzzle.validation ? puzzle.validation.pieceCount + ' piezas' : '0 piezas',
+            'marejig-hud-image': imageStatus,
+            'marejig-hud-save': saveStatus.label || 'Sin guardar'
+        };
+        Object.keys(values).forEach(function MAREJIG_setHudValue(id) {
+            var element = MAREJIG_byId(id);
+            if (element) element.textContent = values[id];
+        });
+        var progress = MAREJIG_byId('marejig-segment-progress');
+        if (progress && activeSegment) {
+            var ratio = activeSegment.pieceIds.length ? stats.connectedInSegment / activeSegment.pieceIds.length : 0;
+            progress.style.setProperty('--marejig-progress', Math.max(0, Math.min(100, ratio * 100)).toFixed(1) + '%');
+        }
+    }
+
+    function MAREJIG_renderLevelDetails(level, imageResult, puzzle) {
+        var details = MAREJIG_byId('marejig-level-details');
+        var title = MAREJIG_byId('marejig-game-title');
+        var pack = MAREJIG_byId('marejig-game-pack');
+        var readyCopy = MAREJIG_byId('marejig-ready-copy');
+        var badge = documentObject.querySelector('.marejig-ready-badge');
+        var profile = imageResult ? imageResult.profile : MAREJIG_Cloudinary.getRuntimeProfile();
+        var imageStatus = imageResult && imageResult.failed ? 'Fallback visual' : 'Imagen cargada';
+        var validation = puzzle && puzzle.validation ? puzzle.validation : null;
+        var debugEnabled = MAREJIG_applyDebugVisibility();
+        if (title) title.textContent = level.title;
+        if (pack) pack.textContent = level.pack + ' · ' + level.difficulty;
+        if (badge) badge.textContent = 'Debug';
+        if (readyCopy) readyCopy.textContent = imageStatus + '. Datos técnicos visibles solo en modo debug.';
+        if (!details) return;
+        if (!debugEnabled) {
+            details.innerHTML = '';
+            return;
+        }
+        details.innerHTML = [
+            MAREJIG_detailRow('Nivel', level.id),
+            MAREJIG_detailRow('Pack', level.pack),
+            MAREJIG_detailRow('Board', level.board.cols + '×' + level.board.rows),
+            MAREJIG_detailRow('Recompensa', '+' + level.rewardCoins + ' monedas'),
+            MAREJIG_detailRow('Imagen runtime', profile),
+            MAREJIG_detailRow('Seed', puzzle ? String(puzzle.seed) : '—'),
+            MAREJIG_detailRow('Generador', puzzle ? String(puzzle.generatorVersion) : '—'),
+            MAREJIG_detailRow('Piezas', validation ? String(validation.pieceCount) : '—'),
+            MAREJIG_detailRow('Segmentos', puzzle ? String(puzzle.segments.order.length) : '—')
+        ].join('');
+    }
+
+
+    function MAREJIG_showToast(message) {
+        var toast = MAREJIG_byId('marejig-toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.hidden = false;
+        if (MAREJIG_toastTimerId) windowObject.clearTimeout(MAREJIG_toastTimerId);
+        MAREJIG_toastTimerId = windowObject.setTimeout(function MAREJIG_hideToastLater() {
+            toast.hidden = true;
+            MAREJIG_toastTimerId = 0;
+        }, 1800);
+    }
+
+    function MAREJIG_getReducedMotion() {
+        var settings = MAREJIG_Storage.getSettings();
+        var mediaReduce = windowObject.matchMedia && windowObject.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return Boolean(settings.reducedMotion || mediaReduce);
+    }
+
+    function MAREJIG_showSnapBurst() {
+        var burst = MAREJIG_byId('marejig-snap-burst');
+        if (!burst || MAREJIG_getReducedMotion()) return;
+        burst.textContent = '';
+        for (var index = 0; index < 8; index += 1) {
+            var spark = documentObject.createElement('span');
+            spark.className = 'marejig-snap-spark';
+            spark.style.setProperty('--marejig-spark-angle', String(index * 45) + 'deg');
+            burst.appendChild(spark);
+        }
+        burst.classList.remove('marejig-snap-burst-active');
+        void burst.offsetWidth;
+        burst.classList.add('marejig-snap-burst-active');
+        windowObject.setTimeout(function MAREJIG_clearSnapBurst() {
+            burst.classList.remove('marejig-snap-burst-active');
+            burst.textContent = '';
+        }, 420);
+    }
+
+    function MAREJIG_trapModalFocus(event) {
+        if (event.key !== 'Tab') return;
+        var modal = documentObject.querySelector('.marejig-modal:not([hidden])');
+        if (!modal) return;
+        var focusable = Array.prototype.slice.call(modal.querySelectorAll('button:not([disabled]), [href], select:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && documentObject.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && documentObject.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+
+    function MAREJIG_openModal(id, focusId) {
+        var modal = MAREJIG_byId(id);
+        if (!modal) return;
+        MAREJIG_lastFocus = documentObject.activeElement;
+        modal.hidden = false;
+        documentObject.body.classList.add('marejig-modal-open');
+        var target = focusId ? MAREJIG_byId(focusId) : modal.querySelector('button');
+        if (target && target.focus) target.focus();
+    }
+
+    function MAREJIG_closeModal(id) {
+        var modal = MAREJIG_byId(id);
+        if (modal) modal.hidden = true;
+        if (!documentObject.querySelector('.marejig-modal:not([hidden])')) documentObject.body.classList.remove('marejig-modal-open');
+        if (MAREJIG_lastFocus && MAREJIG_lastFocus.focus) MAREJIG_lastFocus.focus();
+    }
+
+    function MAREJIG_openHelp() { MAREJIG_openModal('marejig-help-modal', 'marejig-help-ok'); }
+    function MAREJIG_closeHelp() { MAREJIG_closeModal('marejig-help-modal'); }
+    function MAREJIG_openPause() { var state = MAREJIG_State.getState(); if (state.scene && state.scene.progress && state.scene.progress.gamePhase === 'showcase') return; MAREJIG_syncSettingsButtons(); MAREJIG_openModal('marejig-pause-modal', 'marejig-pause-continue'); }
+    function MAREJIG_closePause() { MAREJIG_closeModal('marejig-pause-modal'); }
+    function MAREJIG_openResetConfirm() { MAREJIG_closePause(); MAREJIG_openModal('marejig-confirm-reset-modal', 'marejig-reset-cancel'); }
+    function MAREJIG_closeResetConfirm() { MAREJIG_closeModal('marejig-confirm-reset-modal'); }
+
+    function MAREJIG_setActiveSaveChoiceText(activeLevel, selectedLevel) {
+        var current = MAREJIG_byId('marejig-active-save-current');
+        var next = MAREJIG_byId('marejig-active-save-next');
+        if (current) current.textContent = activeLevel ? activeLevel.title : 'tu puzzle actual';
+        if (next) next.textContent = selectedLevel ? selectedLevel.title : 'otro puzzle';
+    }
+
+    function MAREJIG_closeActiveSaveChoiceModal() {
+        MAREJIG_activeSaveChoice = null;
+        MAREJIG_closeModal('marejig-active-save-modal');
+    }
+
+    function MAREJIG_cancelActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        var onCancel = choice && choice.callbacks && choice.callbacks.onCancel;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onCancel) onCancel(choice.activeSave, choice.selectedLevel);
+    }
+
+    function MAREJIG_continueActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        if (!choice || !choice.activeSave) { MAREJIG_closeActiveSaveChoiceModal(); return; }
+        var activeLevelId = choice.activeSave.levelId;
+        var onContinue = choice.callbacks && choice.callbacks.onContinue;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onContinue) onContinue(choice.activeSave, choice.selectedLevel);
+        else MAREJIG_startLevel(activeLevelId, { resume: true });
+    }
+
+    function MAREJIG_replaceActiveSaveChoice() {
+        var choice = MAREJIG_activeSaveChoice;
+        if (!choice || !choice.selectedLevel) { MAREJIG_closeActiveSaveChoiceModal(); return; }
+        var selectedLevelId = choice.selectedLevel.id;
+        var onReplace = choice.callbacks && choice.callbacks.onReplace;
+        MAREJIG_closeActiveSaveChoiceModal();
+        if (onReplace) onReplace(choice.activeSave, choice.selectedLevel);
+        else MAREJIG_startLevel(selectedLevelId, { forceNew: true });
+    }
+
+    function MAREJIG_showActiveSaveChoiceModal(activeSave, selectedLevel, callbacks) {
+        var activeLevel = MAREJIG_LevelCatalog.getById(activeSave && activeSave.levelId);
+        MAREJIG_activeSaveChoice = {
+            activeSave: activeSave,
+            activeLevel: activeLevel,
+            selectedLevel: selectedLevel,
+            callbacks: callbacks || {}
+        };
+        MAREJIG_setActiveSaveChoiceText(activeLevel, selectedLevel);
+        MAREJIG_openModal('marejig-active-save-modal', 'marejig-active-save-continue');
+    }
+
+    function MAREJIG_syncSettingsButtons() {
+        var settings = MAREJIG_Storage.getSettings();
+        var haptics = MAREJIG_byId('marejig-toggle-haptics');
+        var sound = MAREJIG_byId('marejig-toggle-sound');
+        if (haptics) haptics.textContent = 'Haptics: ' + (settings.haptics === false ? 'off' : 'on');
+        if (sound) sound.textContent = 'Sonido: ' + (settings.sound === false ? 'off' : 'on');
+    }
+
+    function MAREJIG_toggleSetting(name) {
+        var settings = MAREJIG_Storage.getSettings();
+        var next = {};
+        next[name] = settings[name] === false;
+        MAREJIG_Storage.saveSettings(next);
+        if (name === 'sound' && windowObject.MAREJIG_Audio) windowObject.MAREJIG_Audio.setEnabled(next[name]);
+        MAREJIG_syncSettingsButtons();
+        MAREJIG_showToast('Preferencia guardada');
+    }
+
+
+    function MAREJIG_confirmResetLevel() {
+        var state = MAREJIG_State.getState();
+        var levelId = state.selectedLevelId || MAREJIG_currentLevelId;
+        if (!levelId) return;
+        MAREJIG_closeResetConfirm();
+        MAREJIG_pauseTimer();
+        MAREJIG_Input.detach();
+        MAREJIG_Storage.clearActiveSave();
+        MAREJIG_Storage.clearLevelProgress(levelId);
+        MAREJIG_showToast('Nivel reiniciado');
+        MAREJIG_startLevel(levelId, { forceNew: true, replay: MAREJIG_Storage.isLevelCompleted(levelId) });
+    }
+
+    function MAREJIG_ensureRenderer() {
+        var canvas = MAREJIG_byId('marejig-canvas');
+        if (!canvas || MAREJIG_rendererReady) return;
+        MAREJIG_Renderer.init(canvas);
+        MAREJIG_rendererReady = true;
+    }
+
+    function MAREJIG_getUsableActiveSave(levelId) {
+        var save = MAREJIG_Storage.getActiveSave();
+        if (!save) return null;
+        if (MAREJIG_Storage.isLevelCompleted(save.levelId)) {
+            MAREJIG_Storage.clearActiveSave();
+            MAREJIG_Storage.clearLevelProgress(save.levelId);
+            return null;
+        }
+        return !levelId || save.levelId === levelId ? save : null;
+    }
+
+    function MAREJIG_shouldOfferActiveSaveChoice(activeSave, selectedLevelId) {
+        var selectedLevelCompleted = MAREJIG_Storage.isLevelCompleted(selectedLevelId);
+        if (activeSave && activeSave.levelId !== selectedLevelId && !selectedLevelCompleted) {
+            return true;
+        }
+        return false;
+    }
+
+    function MAREJIG_startLevel(levelId, options) {
+        var level = MAREJIG_LevelCatalog.getById(levelId);
+        if (!level) { console.warn('[MAREJIG] Nivel no encontrado', levelId); return; }
+        var active = MAREJIG_getUsableActiveSave();
+        if (!(options && options.forceNew) && MAREJIG_shouldOfferActiveSaveChoice(active, levelId)) {
+            MAREJIG_showActiveSaveChoiceModal(active, level, {
+                onContinue: function MAREJIG_resumeActiveSave(activeSave) { MAREJIG_startLevel(activeSave.levelId, { resume: true }); },
+                onReplace: function MAREJIG_replaceSelectedSave(activeSave, selectedLevel) { MAREJIG_startLevel(selectedLevel.id, { forceNew: true }); },
+                onCancel: function MAREJIG_keepCurrentMenuChoice() {}
+            });
+            return;
+        }
+        if (options && options.forceNew) {
+            MAREJIG_Storage.clearActiveSave();
+            MAREJIG_Storage.clearLevelProgress(levelId);
+            options = Object.assign({}, options || {}, { forceNew: true });
+        }
+
+        var save = options && options.forceNew ? null : MAREJIG_getUsableActiveSave(levelId);
+        if (MAREJIG_Storage.isLevelCompleted(levelId) && !(options && options.replay)) save = null;
+
+        MAREJIG_pauseTimer();
+        MAREJIG_currentLevelId = levelId;
+        MAREJIG_startOptions = options || {};
+        MAREJIG_preparingExited = false;
+        MAREJIG_preparingAssetsReady = false;
+        MAREJIG_preparingVisualProgress = 0;
+        MAREJIG_preparingAssetProgress = 0;
+        MAREJIG_preparingStartedAt = Date.now();
+        MAREJIG_State.setState({ selectedLevelId: levelId, loading: true, lastError: null });
+        MAREJIG_setPreparingStage('image');
+        MAREJIG_updatePreparingMeter(0);
+        MAREJIG_setPreparingPreview(level);
+        MAREJIG_showScreen('preparing');
+        MAREJIG_startPreparingTicker();
+        MAREJIG_setProgress(8, save ? 'Preparando reanudación' : 'Preparando metadatos');
+
+        var profile = MAREJIG_Cloudinary.getRuntimeProfile();
+        MAREJIG_ImageLoader.loadPlayableImage(level, profile, MAREJIG_setProgress).then(function MAREJIG_levelLoaded(imageResult) {
+            if (MAREJIG_currentLevelId !== levelId) return;
+            var puzzle = MAREJIG_Generator.generate(level);
+            var scene = MAREJIG_Scene.createScene(level, puzzle, imageResult);
+            if (save) MAREJIG_Scene.applySave(scene, save);
+            if (MAREJIG_Storage.isLevelCompleted(level.id) && MAREJIG_startOptions && MAREJIG_startOptions.replay) scene.progress.rewardSkipped = true;
+            scene.progress.gamePhase = scene.progress.puzzleCompletedLocal ? 'completed' : 'playing';
+            MAREJIG_preparingAssetsReady = true;
+            MAREJIG_updatePreparingMeter(100);
+            MAREJIG_setPreparingStage('ready');
+            MAREJIG_State.setState({ loading: false, selectedRuntimeProfile: profile, loadedImageResult: imageResult, puzzle: puzzle, scene: scene });
+            MAREJIG_ensureRenderer();
+            MAREJIG_Renderer.setScene(scene);
+            MAREJIG_Renderer.render();
+            MAREJIG_Input.attach(MAREJIG_byId('marejig-canvas'), scene, MAREJIG_Renderer, {
+                onSelect: function MAREJIG_inputSelect() { MAREJIG_updateHud(level, puzzle, imageResult, scene); },
+                onMoveEnd: function MAREJIG_inputMoveEnd(moveResult) {
+                    if (moveResult && moveResult.mergedGroupId) MAREJIG_showSnapBurst();
+                    var segmentResult = MAREJIG_Segments.advanceIfSegmentComplete(scene);
+                    if (segmentResult.completed) {
+                        MAREJIG_showToast(segmentResult.revealed ? '¡Nuevo grupo!' : 'Segmento listo');
+                        if (segmentResult.revealed && scene.cameraTarget && MAREJIG_Renderer.animateCameraTo) MAREJIG_Renderer.animateCameraTo(scene.cameraTarget, MAREJIG_getReducedMotion() ? 0 : 200);
+                        MAREJIG_saveGame('segment');
+                    }
+                    if (segmentResult.puzzleComplete) MAREJIG_completePuzzle(scene);
+                    else MAREJIG_updateHud(level, puzzle, imageResult, scene);
+                    MAREJIG_Renderer.markDirty('input-end');
+                }
+            });
+            MAREJIG_renderLevelDetails(level, imageResult, puzzle);
+            MAREJIG_updateHud(level, puzzle, imageResult, scene);
+            MAREJIG_finishPreparingToGame();
+            if (scene.progress.gamePhase === 'playing') {
+                MAREJIG_saveGame(save ? 'resume' : 'start');
+                MAREJIG_startTimer(scene);
+            } else if (scene.progress.puzzleCompletedLocal && !scene.progress.rewardReported) {
+                MAREJIG_completePuzzle(scene);
+            } else {
+                MAREJIG_showVictory(scene, { ok: true, mode: 'already-reported', coins: Math.max(1, Math.floor(level.rewardCoins)), rewardLevelId: 'level_' + level.id }, MAREJIG_createVictoryState(scene, { ok: true, mode: 'already-reported', coins: Math.max(1, Math.floor(level.rewardCoins)) }, false));
+            }
+        }).catch(function MAREJIG_levelLoadFatal(error) {
+            console.warn('[MAREJIG] Error fatal al preparar nivel', error.message);
+            MAREJIG_clearPreparingTimer();
+            MAREJIG_State.setState({ loading: false, lastError: error.message });
+            MAREJIG_showPreparingError();
+        });
+    }
+
+    function MAREJIG_showPreparingError() {
+        MAREJIG_setPreparingStage('error');
+        MAREJIG_showScreen('preparing');
+    }
+
+    function MAREJIG_finishPreparingToGame() {
+        var preparing = MAREJIG_byId('marejig-screen-preparing');
+        var reduce = MAREJIG_getReducedMotion();
+        var exitDelay = reduce ? 0 : MAREJIG_PREPARING_EXIT_MS;
+        var elapsed = MAREJIG_preparingStartedAt ? Date.now() - MAREJIG_preparingStartedAt : MAREJIG_PREPARING_MIN_VISIBLE_MS;
+        var revealDelay = reduce ? 0 : Math.max(0, MAREJIG_PREPARING_MIN_VISIBLE_MS - elapsed);
+        MAREJIG_clearPreparingTimer();
+        if (MAREJIG_preparingExited) return;
+        MAREJIG_preparingExited = true;
+        MAREJIG_preparingRevealTimerId = windowObject.setTimeout(function MAREJIG_startGameplayReveal() {
+            MAREJIG_preparingRevealTimerId = 0;
+            if (!preparing || exitDelay === 0) {
+                MAREJIG_showScreen('playing');
+                return;
+            }
+            preparing.classList.add('marejig-preparing-exit');
+            MAREJIG_preparingRevealTimerId = windowObject.setTimeout(function MAREJIG_revealGameplay() {
+                MAREJIG_preparingRevealTimerId = 0;
+                preparing.classList.remove('marejig-preparing-exit');
+                MAREJIG_showScreen('playing');
+            }, exitDelay);
+        }, revealDelay);
+    }
+
+    function MAREJIG_setShowcaseControls(active) {
+        documentObject.body.classList.toggle('marejig-is-showcase', Boolean(active));
+        documentObject.documentElement.classList.toggle('marejig-is-showcase', Boolean(active));
+        ['marejig-pause-button', 'marejig-back-to-menu', 'marejig-center-view'].forEach(function MAREJIG_toggleShowcaseControl(id) {
+            var control = MAREJIG_byId(id);
+            if (!control) return;
+            control.disabled = Boolean(active);
+            control.setAttribute('aria-disabled', active ? 'true' : 'false');
+        });
+    }
+
+    function MAREJIG_completePuzzle(scene) {
+        if (!scene || !scene.progress) return;
+        if (scene.progress.completionStarted && (scene.progress.gamePhase === 'completing' || scene.progress.gamePhase === 'showcase' || scene.progress.gamePhase === 'victory')) return;
+        if (scene.progress.completionStarted && scene.progress.gamePhase === 'completed' && (scene.progress.rewardReported || scene.progress.rewardSkipped || MAREJIG_Storage.isLevelCompleted(scene.level.id))) return;
+        scene.progress.completionStarted = true;
+        scene.progress.gamePhase = 'completing';
+        scene.progress.status = 'Completando';
+        MAREJIG_Input.cancelInteraction();
+        MAREJIG_commitElapsed(scene);
+        MAREJIG_stopHudTimer(false);
+        MAREJIG_saveGame('complete');
+        scene.ui.message = '¡Completado!';
+        scene.ui.messageStartedAt = Date.now();
+        scene.ui.dirty = true;
+        MAREJIG_setShowcaseControls(true);
+        var reduce = windowObject.matchMedia && windowObject.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var showcase = MAREJIG_Scene.startCompletionShowcase(scene, {
+            reducedMotion: reduce,
+            testMode: Boolean(windowObject.__MAREJIG_TEST_MODE),
+            testDurationMs: MAREJIG_Config.completionShowcase && MAREJIG_Config.completionShowcase.testDurationMs
+        });
+        MAREJIG_State.setState({ appPhase: 'showcase' });
+        MAREJIG_Renderer.markDirty('completion-showcase-start');
+        if (!showcase || !MAREJIG_Renderer.animateCompletionShowcase) {
+            windowObject.setTimeout(function MAREJIG_showcaseFallback() { MAREJIG_finishPuzzleCompletion(scene); }, reduce ? 0 : 8000);
+            return;
+        }
+        MAREJIG_Renderer.animateCompletionShowcase(scene, {
+            onComplete: function MAREJIG_completionShowcaseDone() { MAREJIG_finishPuzzleCompletion(scene); }
+        });
+    }
+
+    function MAREJIG_finishPuzzleCompletion(scene) {
+        if (!scene || !scene.progress) return;
+        if (scene.progress.gamePhase === 'victory' || (scene.progress.gamePhase === 'completed' && scene.progress.rewardReported)) return;
+        MAREJIG_setShowcaseControls(false);
+        var isFirstCompletion = !MAREJIG_Storage.isLevelCompleted(scene.level.id) && !scene.progress.rewardSkipped;
+        var metrics = {
+            elapsedMs: scene.progress.elapsedMs,
+            moves: scene.progress.moves,
+            rewardReported: scene.progress.rewardReported || !isFirstCompletion
+        };
+        var economy = MAREJIG_Economy.reportLevelCompleted(scene.level, metrics);
+        var victoryState = MAREJIG_createVictoryState(scene, economy, isFirstCompletion);
+        scene.progress.rewardReported = victoryState.rewardPaid;
+        scene.progress.gamePhase = 'victory';
+        scene.progress.status = 'Victoria';
+        MAREJIG_State.setState({ appPhase: 'victory' });
+        MAREJIG_Storage.markLevelCompleted(scene.level, {
+            elapsedMs: metrics.elapsedMs,
+            moves: metrics.moves,
+            rewardReported: scene.progress.rewardReported,
+            rewardLevelId: economy.rewardLevelId,
+            rewardCoins: economy.coins
+        });
+        MAREJIG_Storage.clearActiveSave();
+        MAREJIG_Storage.clearLevelProgress(scene.level.id);
+        MAREJIG_Menu.refreshAfterCompletion();
+        MAREJIG_updateHud(scene.level, scene.puzzle, MAREJIG_State.getState().loadedImageResult, scene);
+        MAREJIG_showVictory(scene, economy, victoryState);
+    }
+
+    function MAREJIG_createVictoryState(scene, economy, isFirstCompletion) {
+        var rewardPaid = Boolean(isFirstCompletion && economy && economy.ok && economy.mode === 'gamecenter');
+        return {
+            isFirstCompletion: Boolean(isFirstCompletion),
+            rewardPaid: rewardPaid,
+            rewardAlreadyClaimed: !isFirstCompletion || Boolean(economy && economy.mode === 'already-reported'),
+            standalone: Boolean(economy && economy.mode === 'standalone'),
+            coins: economy && economy.coins || 0
+        };
+    }
+
+    function MAREJIG_showVictory(scene, economy, victoryState) {
+        var modal = MAREJIG_byId('marejig-victory-modal');
+        if (!modal) return;
+        var state = victoryState || MAREJIG_createVictoryState(scene, economy, false);
+        var showCoins = state.rewardPaid && state.isFirstCompletion;
+        var showAlreadyClaimed = !state.isFirstCompletion || state.rewardAlreadyClaimed;
+        var showStandaloneNotice = state.standalone && !showCoins;
+        var reward = MAREJIG_byId('marejig-victory-reward');
+        var notice = MAREJIG_byId('marejig-victory-notice');
+        var noticeTitle = MAREJIG_byId('marejig-victory-notice-title');
+        var noticeCopy = MAREJIG_byId('marejig-victory-notice-copy');
+        var coins = MAREJIG_byId('marejig-victory-coins');
+        var next = MAREJIG_byId('marejig-victory-next');
+        var levels = MAREJIG_byId('marejig-victory-levels');
+        var pending = MAREJIG_Menu.getPendingLevels ? MAREJIG_Menu.getPendingLevels() : [];
+        MAREJIG_lastFocus = documentObject.activeElement;
+        MAREJIG_byId('marejig-victory-title').textContent = '¡Puzzle armado!';
+        MAREJIG_byId('marejig-victory-level').textContent = scene.level.title;
+        MAREJIG_byId('marejig-victory-time').textContent = MAREJIG_formatTime(scene.progress.elapsedMs);
+        reward.hidden = !showCoins;
+        notice.hidden = showCoins;
+        if (showCoins) {
+            coins.innerHTML = '+' + state.coins + ' <span>monedas</span>';
+            coins.setAttribute('aria-label', 'Recompensa: ' + state.coins + ' monedas');
+        } else if (showAlreadyClaimed) {
+            noticeTitle.textContent = '¡Lo armaste de nuevo!';
+            noticeCopy.textContent = 'Recompensa ya reclamada · Las recompensas se entregan una vez por nivel.';
+        } else if (showStandaloneNotice) {
+            noticeTitle.textContent = 'Puzzle completado';
+            noticeCopy.textContent = 'Progreso guardado';
+        } else {
+            noticeTitle.textContent = 'Puzzle completado';
+            noticeCopy.textContent = 'Progreso guardado';
+        }
+        next.textContent = pending.length ? 'Siguiente' : 'Volver a niveles';
+        next.setAttribute('aria-label', pending.length ? 'Abrir siguiente nivel pendiente' : 'Volver a niveles pendientes');
+        levels.hidden = !pending.length;
+        modal.hidden = false;
+        documentObject.body.classList.add('marejig-modal-open');
+        MAREJIG_pauseTimer();
+        scene.progress.gamePhase = 'victory';
+        if (next) next.focus();
+    }
+
+    function MAREJIG_hideVictory() {
+        var modal = MAREJIG_byId('marejig-victory-modal');
+        if (modal) modal.hidden = true;
+        if (!documentObject.querySelector('.marejig-modal:not([hidden])')) documentObject.body.classList.remove('marejig-modal-open');
+        if (MAREJIG_lastFocus && MAREJIG_lastFocus.focus) MAREJIG_lastFocus.focus();
+    }
+
+    function MAREJIG_startNextPending() {
+        MAREJIG_hideVictory();
+        var pending = MAREJIG_Menu.getPendingLevels ? MAREJIG_Menu.getPendingLevels() : [];
+        if (pending.length) MAREJIG_startLevel(pending[0].id, { forceNew: true });
+        else MAREJIG_backToMenu();
+    }
+
+    function MAREJIG_showError(message) {
+        var copy = MAREJIG_byId('marejig-error-copy');
+        if (copy) copy.textContent = message || 'Puedes reintentar o volver al catálogo.';
+        MAREJIG_clearPreparingTimer();
+        MAREJIG_showScreen('error');
+    }
+
+    function MAREJIG_backToMenu() {
+        var state = MAREJIG_State.getState();
+        var releaseLevelId = (state && state.selectedLevelId) || MAREJIG_currentLevelId;
+        MAREJIG_clearPreparingTimer();
+        MAREJIG_pauseTimer();
+        MAREJIG_saveGame('menu');
+        MAREJIG_Input.detach();
+        if (releaseLevelId && MAREJIG_ImageLoader && typeof MAREJIG_ImageLoader.releaseFullImage === 'function') {
+            MAREJIG_ImageLoader.releaseFullImage(releaseLevelId);
+        }
+        MAREJIG_currentLevelId = null;
+        MAREJIG_State.setState({ selectedLevelId: null, selectedRuntimeProfile: null, loadedImageResult: null, puzzle: null, scene: null, loading: false });
+        MAREJIG_Menu.mountPendingLevels();
+        MAREJIG_showScreen('menu');
+    }
+
+    function MAREJIG_retryCurrentLevel() {
+        var state = MAREJIG_State.getState();
+        var levelId = state.selectedLevelId || MAREJIG_currentLevelId;
+        if (levelId) MAREJIG_startLevel(levelId, { forceNew: true, replay: true });
+        else MAREJIG_backToMenu();
+    }
+
+    function MAREJIG_wireUi() {
+        var cancel = MAREJIG_byId('marejig-preparing-back');
+        var preparingRetry = MAREJIG_byId('marejig-preparing-retry');
+        var back = MAREJIG_byId('marejig-back-to-menu');
+        var errorBack = MAREJIG_byId('marejig-error-back');
+        var retry = MAREJIG_byId('marejig-retry-level');
+        var center = MAREJIG_byId('marejig-center-view');
+        var pause = MAREJIG_byId('marejig-pause-button');
+        var next = MAREJIG_byId('marejig-victory-next');
+        var levels = MAREJIG_byId('marejig-victory-levels');
+        var replay = MAREJIG_byId('marejig-victory-replay');
+        var close = MAREJIG_byId('marejig-victory-close');
+        var helpClose = MAREJIG_byId('marejig-help-close');
+        var helpOk = MAREJIG_byId('marejig-help-ok');
+        var pauseClose = MAREJIG_byId('marejig-pause-close');
+        var pauseContinue = MAREJIG_byId('marejig-pause-continue');
+        var pauseHelp = MAREJIG_byId('marejig-pause-help');
+        var pauseLevels = MAREJIG_byId('marejig-pause-levels');
+        var pauseReset = MAREJIG_byId('marejig-pause-reset');
+        var recoverPieces = MAREJIG_byId('marejig-recover-pieces');
+        var resetConfirm = MAREJIG_byId('marejig-reset-confirm');
+        var resetCancel = MAREJIG_byId('marejig-reset-cancel');
+        var activeSaveContinue = MAREJIG_byId('marejig-active-save-continue');
+        var activeSaveReplace = MAREJIG_byId('marejig-active-save-replace');
+        var activeSaveCancel = MAREJIG_byId('marejig-active-save-cancel');
+        var haptics = MAREJIG_byId('marejig-toggle-haptics');
+        var sound = MAREJIG_byId('marejig-toggle-sound');
+        if (cancel) cancel.addEventListener('click', MAREJIG_backToMenu);
+        if (back) back.addEventListener('click', MAREJIG_backToMenu);
+        if (errorBack) errorBack.addEventListener('click', MAREJIG_backToMenu);
+        if (retry) retry.addEventListener('click', MAREJIG_retryCurrentLevel);
+        if (preparingRetry) preparingRetry.addEventListener('click', MAREJIG_retryCurrentLevel);
+        if (pause) pause.addEventListener('click', MAREJIG_openPause);
+        if (next) next.addEventListener('click', MAREJIG_startNextPending);
+        if (levels) levels.addEventListener('click', function MAREJIG_levelsClick() { MAREJIG_hideVictory(); MAREJIG_backToMenu(); });
+        if (replay) replay.addEventListener('click', function MAREJIG_replayClick() { var state = MAREJIG_State.getState(); MAREJIG_hideVictory(); if (state.selectedLevelId) MAREJIG_startLevel(state.selectedLevelId, { forceNew: true, replay: true }); });
+        if (close) close.addEventListener('click', function MAREJIG_closeClick() { MAREJIG_hideVictory(); });
+        if (helpClose) helpClose.addEventListener('click', MAREJIG_closeHelp);
+        if (helpOk) helpOk.addEventListener('click', MAREJIG_closeHelp);
+        if (pauseClose) pauseClose.addEventListener('click', MAREJIG_closePause);
+        if (pauseContinue) pauseContinue.addEventListener('click', MAREJIG_closePause);
+        if (pauseHelp) pauseHelp.addEventListener('click', function MAREJIG_pauseHelpClick() { MAREJIG_closePause(); MAREJIG_openHelp(); });
+        if (pauseLevels) pauseLevels.addEventListener('click', function MAREJIG_pauseLevelsClick() { MAREJIG_closePause(); MAREJIG_backToMenu(); });
+        if (pauseReset) pauseReset.addEventListener('click', MAREJIG_openResetConfirm);
+        if (recoverPieces) recoverPieces.addEventListener('click', function MAREJIG_recoverPiecesClick() {
+            var state = MAREJIG_State.getState();
+            if (state.scene) MAREJIG_Scene.ensureVisibleGroups(state.scene);
+            MAREJIG_closePause();
+            MAREJIG_Input.cancelInteraction();
+            MAREJIG_Renderer.markDirty('recover');
+        });
+        if (resetConfirm) resetConfirm.addEventListener('click', MAREJIG_confirmResetLevel);
+        if (resetCancel) resetCancel.addEventListener('click', MAREJIG_closeResetConfirm);
+        if (activeSaveContinue) activeSaveContinue.addEventListener('click', MAREJIG_continueActiveSaveChoice);
+        if (activeSaveReplace) activeSaveReplace.addEventListener('click', MAREJIG_replaceActiveSaveChoice);
+        if (activeSaveCancel) activeSaveCancel.addEventListener('click', MAREJIG_cancelActiveSaveChoice);
+        if (haptics) haptics.addEventListener('click', function MAREJIG_hapticsClick() { MAREJIG_toggleSetting('haptics'); });
+        if (sound) sound.addEventListener('click', function MAREJIG_soundClick() { MAREJIG_toggleSetting('sound'); });
+        if (center) center.addEventListener('click', function MAREJIG_centerView() {
+            var state = MAREJIG_State.getState();
+            if (state.scene) MAREJIG_Scene.centerScene(state.scene);
+            MAREJIG_Input.cancelInteraction();
+            MAREJIG_Renderer.resize();
+            MAREJIG_Renderer.markDirty('center');
+        });
+        documentObject.addEventListener('visibilitychange', function MAREJIG_visibilityChanged() {
+            var state = MAREJIG_State.getState();
+            if (documentObject.hidden) { MAREJIG_pauseTimer(); MAREJIG_saveGame('hidden'); }
+            else if (state.scene && state.scene.progress && state.scene.progress.gamePhase === 'playing') MAREJIG_startTimer(state.scene);
+        });
+        windowObject.addEventListener('pagehide', function MAREJIG_pageHide() { MAREJIG_pauseTimer(); MAREJIG_saveGame('pagehide'); });
+        documentObject.addEventListener('keydown', function MAREJIG_keydown(event) {
+            MAREJIG_trapModalFocus(event);
+            if (event.key !== 'Escape') return;
+            if (!MAREJIG_byId('marejig-active-save-modal').hidden) MAREJIG_cancelActiveSaveChoice();
+            else if (!MAREJIG_byId('marejig-confirm-reset-modal').hidden) MAREJIG_closeResetConfirm();
+            else if (!MAREJIG_byId('marejig-help-modal').hidden) MAREJIG_closeHelp();
+            else if (!MAREJIG_byId('marejig-pause-modal').hidden) MAREJIG_closePause();
+            else MAREJIG_hideVictory();
+        });
+    }
+
+    function MAREJIG_init() {
+        var validation = MAREJIG_LevelCatalog.validateCatalog();
+        if (!validation.valid) console.warn('[MAREJIG] Catálogo con advertencias', validation.errors);
+        MAREJIG_Storage.getSettings();
+        if (windowObject.MAREJIG_Audio) windowObject.MAREJIG_Audio.init();
+        MAREJIG_getUsableActiveSave();
+        MAREJIG_applyDebugVisibility();
+        MAREJIG_wireUi();
+        MAREJIG_Menu.mountPendingLevels();
+        MAREJIG_showScreen('menu');
+        console.info('[MAREJIG] Fase 8 RC inicializada');
+    }
+
+    if (documentObject.readyState === 'loading') documentObject.addEventListener('DOMContentLoaded', MAREJIG_init, { once: true });
+    else MAREJIG_init();
+
+    windowObject.MAREJIG_Main = Object.freeze({
+        startLevel: MAREJIG_startLevel,
+        showActiveSaveChoiceModal: MAREJIG_showActiveSaveChoiceModal,
+        backToMenu: MAREJIG_backToMenu,
+        saveGame: MAREJIG_saveGame,
+        resetCurrentLevelForDebug: MAREJIG_confirmResetLevel,
+        completeCurrentForDebug: function MAREJIG_completeCurrentForDebug() {
+            var state = MAREJIG_State.getState();
+            if (!state.scene) return false;
+            state.scene.puzzle.segments.order.forEach(function MAREJIG_debugCompleteSegment(segmentId) { state.scene.puzzle.segments.items[segmentId].completed = true; state.scene.puzzle.segments.items[segmentId].revealed = true; });
+            state.scene.progress.puzzleCompletedLocal = true;
+            MAREJIG_completePuzzle(state.scene);
+            return true;
+        }
+    });
+})(window, document);
