@@ -70,7 +70,7 @@ function forceSegmentComplete(scene, segmentId) {
 
 {
   const html = read('index.html');
-  assert.match(html, /<a class="marejig-exit-link" href="\.\.\/\.\.\/index\.html"/, 'exit button points to Love Arcade root');
+  assert.match(html, /<a class="marejig-exit-link" href="\.\.\/\.\.\/"/, 'exit button points to the same Love Arcade root URL used by other games');
   const scriptSources = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((match) => match[1]);
   assert.equal(scriptSources.at(-1), '../../js/app.js', 'Love Arcade app.js remains the final body script');
   assert.equal([...html.matchAll(/role="dialog"/g)].length, [...html.matchAll(/aria-modal="true"/g)].length, 'dialogs are modal and labelled');

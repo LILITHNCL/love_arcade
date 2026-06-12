@@ -4,7 +4,7 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 
 ## 1. Integración Love Arcade
 
-- [ ] El botón **Salir** apunta a `../../index.html`.
+- [ ] El botón **Salir** apunta a `../../`.
 - [ ] `../../js/app.js` es el último script del `<body>`.
 - [ ] El juego arranca standalone sin `GameCenter`.
 - [ ] Con mock de `GameCenter`, completar un nivel reporta una sola recompensa.
