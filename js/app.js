@@ -1751,9 +1751,12 @@ function getLastMailRecipient() {
  * @returns {{ uri: string, tooLong: boolean }}
  */
 function buildMailtoLink(item, absoluteUrl, email) {
-    const tipo = Array.isArray(item.tags) && item.tags.includes('Mobile')
-        ? 'Wallpaper Mobile'
-        : 'Wallpaper PC';
+    const tags = Array.isArray(item.tags) ? item.tags : [];
+    const tipo = tags.includes('Sticker')
+        ? 'Sticker'
+        : tags.includes('Mobile')
+            ? 'Wallpaper Mobile'
+            : 'Wallpaper PC';
 
     const subject = encodeURIComponent(`Tu ${tipo} de Love Arcade: ${item.name}`);
 
