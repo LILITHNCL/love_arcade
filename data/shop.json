@@ -1342,5 +1342,15 @@
     "tags": [
       "Mobile"
     ]
+  },
+  {
+    "id": 127,
+    "name": "Anya Forger",
+    "price": 1500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/anya-forger-e46cc4d7",
+    "file": "anya-forger-e46cc4d7.avif",
+    "tags": [
+      "Mobile"
+    ]
   }
 ]
