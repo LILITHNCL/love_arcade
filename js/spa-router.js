@@ -48,7 +48,8 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'events'];
+    const VIEWS = ['hub', 'games', 'shop', 'profile', 'events'];
+    const VIEW_ALIASES = { home: 'hub' };
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
@@ -58,7 +59,7 @@
     let bottomNavItems = [];
     
     /** @type {string} */
-    let currentView = 'home';
+    let currentView = 'hub';
 
     const scheduleIdle = window.requestIdleCallback
         ? (cb) => window.requestIdleCallback(cb, { timeout: 120 })
@@ -226,7 +227,25 @@
      * Diseño (por qué): pipeline en fases (scroll inmediato, rAF, idle queue) para
      * priorizar Time-to-Visual-Response y desacoplar trabajo no crítico del primer frame.
      */
+    function normalizeViewId(viewId) {
+        const raw = String(viewId || '').replace(/^view-/, '');
+        return VIEW_ALIASES[raw] || raw;
+    }
+
+    function parseHashState() {
+        const hash = window.location.hash || '';
+        const match = hash.match(/(?:^#|[?&])view=([^&]+)/);
+        if (!match) return null;
+        const viewId = normalizeViewId(decodeURIComponent(match[1]));
+        const anchorMatch = hash.match(/[?&]anchor=([^&]+)/);
+        return {
+            viewId,
+            anchor: anchorMatch ? decodeURIComponent(anchorMatch[1]) : null
+        };
+    }
+
     function _applyView(viewId, anchor) {
+        viewId = normalizeViewId(viewId);
         if (!viewEls[viewId]) return;
         const previousView = currentView;
         
@@ -269,14 +288,15 @@
                 // no según la vista destino. De lo contrario, transiciones como
                 // shop -> events no liberan recursos de ShopView.
                 if (previousView !== viewId) {
-                    if (previousView === 'home') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
+                    if (previousView === 'hub') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
                     if (previousView === 'shop') lifecycleTasks.push(() => window.ShopView?.onLeave?.());
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
+                if (viewId === 'profile') lifecycleTasks.push(() => _profileViewCallback('ProfileView.onEnter', () => window.ProfileView?.onEnter?.()));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
                 if (viewId === 'events') lifecycleTasks.push(() => _profileViewCallback('EventView.onEnter', () => window.EventView?.onEnter?.()));
 
@@ -304,14 +324,16 @@
      * acoplamiento: cualquier caller obtiene transición + URL state consistentes.
      */
     function navigateTo(viewId, anchor, replace) {
+        viewId = normalizeViewId(viewId);
+        if (!viewEls[viewId]) viewId = 'hub';
         const state = { viewId, anchor: anchor || null };
         
         if (replace) {
-            history.replaceState(state, '');
+            history.replaceState(state, '', `#view=${encodeURIComponent(viewId)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`);
         } else if (viewId !== currentView) {
             // Solo pushState si realmente cambiamos de vista; evita duplicados
             // al pulsar repetidamente el mismo enlace de nav.
-            history.pushState(state, '');
+            history.pushState(state, '', `#view=${encodeURIComponent(viewId)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`);
         }
         
         _applyView(viewId, anchor);
@@ -326,17 +348,23 @@
     
     function _syncNavHighlight(viewId) {
         navLinks.forEach(link => {
-            link.classList.toggle('active', link.dataset.view === viewId && !link.dataset.anchor);
+            const active = normalizeViewId(link.dataset.view) === viewId && !link.dataset.anchor;
+            link.classList.toggle('active', active);
+            if (active) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
         });
         bottomNavItems.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === viewId && !item.dataset.anchor);
+            const active = normalizeViewId(item.dataset.view) === viewId && !item.dataset.anchor;
+            item.classList.toggle('active', active);
+            if (active) item.setAttribute('aria-current', 'page');
+            else item.removeAttribute('aria-current');
         });
     }
     
     function _bindNavItem(el) {
         el.addEventListener('click', (e) => {
             e.preventDefault();
-            const viewId = el.dataset.view;
+            const viewId = normalizeViewId(el.dataset.view);
             const anchor = el.dataset.anchor || null;
             
             if (viewId === currentView && !anchor) {
@@ -364,29 +392,40 @@
 
         // Registrar listeners de navegación
         document.querySelectorAll('[data-view]').forEach(el => {
-            if (viewEls[el.dataset.view]) _bindNavItem(el);
+            if (viewEls[normalizeViewId(el.dataset.view)]) _bindNavItem(el);
+        });
+
+        document.querySelectorAll('[data-profile-shop-tab]').forEach(el => {
+            el.addEventListener('click', () => {
+                const tab = el.dataset.profileShopTab || 'catalog';
+                navigateTo('shop');
+                setTimeout(() => window.ShopView?.openTab?.(tab), 0);
+            });
         });
         
-        _syncNavHighlight('home');
+        _syncNavHighlight('hub');
         
         // ── History API: estado inicial ───────────────────────────────────────
         // replaceState (no pushState) para que la entrada inicial quede en el
         // historial sin crear un salto extra hacia "atrás".
-        navigateTo('home', null, /* replace= */ true);
+        const initialState = parseHashState();
+        navigateTo(initialState?.viewId || 'hub', initialState?.anchor || null, /* replace= */ true);
         
         // ── Popstate: botón Atrás / Adelante ─────────────────────────────────
         // El navegador restaura el state y dispara 'popstate'. Usamos _applyView
         // directamente para NO generar una nueva entrada (evita bucle infinito).
         window.addEventListener('popstate', (e) => {
             const state = e.state;
-            const viewId = VIEWS.includes(state?.viewId) ? state.viewId : 'home';
-            const anchor = state?.anchor || null;
+            const hashState = parseHashState();
+            const rawViewId = normalizeViewId(state?.viewId || hashState?.viewId || 'hub');
+            const viewId = VIEWS.includes(rawViewId) ? rawViewId : 'hub';
+            const anchor = state?.anchor || hashState?.anchor || null;
             _applyView(viewId, anchor);
         });
     });
     
     // ── Exposición global ─────────────────────────────────────────────────────
     
-    window.SpaRouter = { navigateTo, getCurrentView };
+    window.SpaRouter = { navigateTo, getCurrentView, normalizeViewId };
     
 })();

@@ -2345,6 +2345,15 @@ window.ShopView = {
     },
 
     /**
+     * Puente temporal para la nueva vista Perfil: permite abrir los paneles
+     * legacy de Tienda sin mover todavía la lógica sensible de sync/ajustes.
+     * @param {'catalog'|'library'|'sync'|'settings'} tab
+     */
+    openTab(tab) {
+        switchTab(tab || 'catalog');
+    },
+
+    /**
      * Llamado por spa-router.js al SALIR de la vista de Tienda (v9.6).
      * Desconecta el IntersectionObserver de precarga para liberar recursos
      * cuando el catálogo no es visible. Se reconecta automáticamente en el

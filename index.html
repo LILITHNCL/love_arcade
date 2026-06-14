@@ -256,9 +256,10 @@
         </div>
 
         <ul class="nav-links">
-            <li><a href="#" class="nav-link active" data-view="home">Inicio</a></li>
-            <li><a href="#" class="nav-link" data-view="shop">Tienda</a></li>
-            <li><a href="#" class="nav-link" data-view="events">Eventos</a></li>
+            <li><a href="#view=hub" class="nav-link active" data-view="hub" aria-current="page">Hub</a></li>
+            <li><a href="#view=games" class="nav-link" data-view="games">Juegos</a></li>
+            <li><a href="#view=shop" class="nav-link" data-view="shop">Tienda</a></li>
+            <li><a href="#view=profile" class="nav-link" data-view="profile">Perfil</a></li>
         </ul>
 
         <div class="nav-user">
@@ -273,29 +274,32 @@
                 <span class="coin-display">0</span>
                 <span class="visually-hidden">monedas</span>
             </div>
-            <label for="avatar-upload" class="avatar-container" aria-label="Cambiar foto de perfil">
+            <button type="button" class="avatar-container avatar-profile-trigger" id="nav-profile-avatar" data-view="profile" aria-label="Abrir perfil">
                 <div class="avatar" id="user-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                     <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                 </div>
-                <div class="avatar-edit-icon" aria-hidden="true"><svg class="icon" width="10" height="10"><use href="#icon-plus"></use></svg></div>
-                <input type="file" id="avatar-upload" class="visually-hidden" accept="image/*">
-            </label>
+                <span class="avatar-profile-indicator" aria-hidden="true"><svg class="icon" width="10" height="10"><use href="#icon-user"></use></svg></span>
+            </button>
         </div>
     </nav>
 
     <!-- ── BOTTOM NAV (mobile) ── -->
     <nav class="bottom-nav" aria-label="Navegación rápida móvil">
-        <a href="#" class="b-nav-item active" data-view="home">
+        <a href="#view=hub" class="b-nav-item active" data-view="hub" aria-current="page">
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-home"></use></svg>
-            <span>Inicio</span>
+            <span>Hub</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="shop">
+        <a href="#view=games" class="b-nav-item" data-view="games">
+            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg>
+            <span>Juegos</span>
+        </a>
+        <a href="#view=shop" class="b-nav-item" data-view="shop">
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg>
             <span>Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-            <span>Eventos</span>
+        <a href="#view=profile" class="b-nav-item" data-view="profile">
+            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-user"></use></svg>
+            <span>Perfil</span>
         </a>
     </nav>
 
@@ -308,7 +312,7 @@
         <!-- ═══════════════════════════════════════════
              VISTA: INICIO
              ═══════════════════════════════════════════ -->
-        <div id="view-home" class="view-section">
+        <div id="view-hub" class="view-section">
 
             <!-- ── PLAYER HUD ── -->
             <div class="player-hud">
@@ -575,7 +579,33 @@
             </section>
 
 
-        </div><!-- /#view-home -->
+        </div><!-- /#view-hub -->
+
+        <!-- ═══════════════════════════════════════════
+             VISTA: JUEGOS
+             ═══════════════════════════════════════════ -->
+        <div id="view-games" class="view-section hidden">
+            <section class="section-header games-directory-header" aria-labelledby="games-view-title">
+                <div>
+                    <p class="section-kicker">Arcade</p>
+                    <h2 id="games-view-title" class="section-title">Biblioteca de juegos</h2>
+                    <p class="section-subtitle">Accede rápido a todos los minijuegos disponibles mientras el Hub conserva el resumen de actividad.</p>
+                </div>
+                <a href="#view=hub" class="btn-ghost" data-view="hub">Volver al Hub</a>
+            </section>
+
+            <section class="games-directory-panel glass-panel" aria-label="Juegos disponibles">
+                <div class="games-directory-copy">
+                    <h3>Catálogo jugable</h3>
+                    <p>Esta vista prepara la nueva sección Juegos sin cambiar todavía las tarjetas ni la economía de recompensas.</p>
+                </div>
+                <div class="games-directory-actions">
+                    <a href="games/jigsaw" class="btn-primary">Jugar Marejig</a>
+                    <a href="games/word-hunt" class="btn-ghost">Word Hunt</a>
+                    <a href="games/2048" class="btn-ghost">2048</a>
+                </div>
+            </section>
+        </div><!-- /#view-games -->
 
 
         <!-- ═══════════════════════════════════════════
@@ -987,6 +1017,42 @@
 
         </div><!-- /#view-shop -->
 
+
+        <!-- ═══════════════════════════════════════════
+             VISTA: PERFIL
+             ═══════════════════════════════════════════ -->
+        <div id="view-profile" class="view-section hidden">
+            <section class="section-header profile-view-header" aria-labelledby="profile-view-title">
+                <div>
+                    <p class="section-kicker">Mi Arcade</p>
+                    <h2 id="profile-view-title" class="section-title">Perfil y progreso</h2>
+                    <p class="section-subtitle">Nuevo espacio para identidad, tesoros, sincronización, ajustes, racha e historial.</p>
+                </div>
+            </section>
+
+            <section class="profile-route-grid" aria-label="Áreas del perfil">
+                <article class="profile-route-card glass-panel">
+                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-archive"></use></svg>
+                    <h3>Mis Tesoros</h3>
+                    <p>Inventario y wallpapers desbloqueados. Se migrará desde Tienda en una fase posterior.</p>
+                    <button type="button" class="btn-ghost" data-profile-shop-tab="library">Abrir tesoros actuales</button>
+                </article>
+                <article class="profile-route-card glass-panel">
+                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg>
+                    <h3>Sincronización</h3>
+                    <p>Exportación, importación, nube y recordatorios permanecerán funcionales mientras se separan de Tienda.</p>
+                    <button type="button" class="btn-ghost" data-profile-shop-tab="sync">Abrir sync actual</button>
+                </article>
+                <article class="profile-route-card glass-panel">
+                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-settings-2"></use></svg>
+                    <h3>Ajustes y racha</h3>
+                    <p>Tema, Bendición Lunar, calendario de racha, economía e historial tendrán aquí su destino final.</p>
+                    <button type="button" class="btn-ghost" data-profile-shop-tab="settings">Abrir ajustes actuales</button>
+                </article>
+            </section>
+        </div><!-- /#view-profile -->
+
+
         <!-- ═══════════════════════════════════════════
              VISTA: EVENTOS (v10.0 — LTE System)
              Cargada de forma lazy por event-logic.js al navegar aquí.
@@ -1284,7 +1350,6 @@
 
         // ── Sincronizar avatar HUD con input de navbar ───────────────────────
         const avatarUploads = [
-            document.getElementById('avatar-upload'),
             document.getElementById('avatar-upload-hud')
         ];
         avatarUploads.forEach(input => {
@@ -1368,7 +1433,7 @@
             250
         );
 
-        // ── API pública para la vista Inicio (usada por spa-router.js) ────────
+        // ── API pública para la vista Hub (usada por spa-router.js) ───────────
         window.HomeView = {
             refresh() {
                 updateCountdownDisplay();

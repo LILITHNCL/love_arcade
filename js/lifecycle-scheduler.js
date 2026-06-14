@@ -3,7 +3,7 @@
 
   const groups = new Map();
   const activeByReason = new Set(['visibility', 'page', 'view']);
-  let currentView = 'home';
+  let currentView = 'hub';
 
   function ensureGroup(name) {
     if (!groups.has(name)) groups.set(name, new Set());
@@ -58,8 +58,8 @@
     pauseAll,
     resumeAll,
     setActiveView(viewId) {
-      currentView = viewId || 'home';
-      if (currentView === 'home') resumeAll('view');
+      currentView = viewId || 'hub';
+      if (currentView === 'hub' || currentView === 'home') resumeAll('view');
       else pauseAll('view');
     },
     getActiveView() { return currentView; }
