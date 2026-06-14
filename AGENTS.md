@@ -13,6 +13,9 @@ Before making UI, layout, styling, accessibility, or animation changes, read the
 | `fixing-accessibility` | Reviewing or fixing semantic HTML, ARIA, labels, forms, dialogs, keyboard access, focus management, contrast, error states, or reduced-motion behavior. |
 | `fixing-motion-performance` | Adding or reviewing animations, transitions, scroll-linked effects, layout thrashing, rendering performance, or animation jank. |
 | `emil-design-eng` | Polishing microinteractions, motion taste, component details, interaction feel, and perceived product quality. |
+| `caveman` | Ultra-compressed communication mode for terse, token-efficient technical responses when explicitly requested. |
+| `grill-me` | Relentlessly stress-testing a plan or design by asking one question at a time and recommending an answer. |
+| `diagnose` | Disciplined bug/performance diagnosis using reproduce → minimise → hypothesise → instrument → fix → regression-test. |
 
 ## Skill selection
 
