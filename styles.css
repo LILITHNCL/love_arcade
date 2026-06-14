@@ -1629,6 +1629,169 @@ body::before {
     flex-shrink: 0;
 }
 
+/* ================================================================
+   HUB DASHBOARD
+   ================================================================ */
+.hub-player-summary {
+    margin-bottom: 14px;
+}
+
+.hub-player-summary__stats {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.hub-summary-stat {
+    min-width: 0;
+}
+
+.hub-summary-stat--rank {
+    background: var(--solid-surface-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: grid;
+    gap: 2px;
+}
+
+.hub-summary-stat--rank strong {
+    font-family: var(--font-display);
+    color: var(--text-high);
+    font-size: 1rem;
+}
+
+.hub-summary-stat--rank span:last-child {
+    color: var(--text-low);
+    font-size: 0.72rem;
+}
+
+.hub-profile-link {
+    min-height: 44px;
+    justify-content: center;
+}
+
+.hub-daily-card,
+.hub-continue-card {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: 16px;
+}
+
+.hub-daily-card__copy,
+.hub-daily-card__action {
+    min-width: 0;
+}
+
+.hub-daily-card__action {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.hub-daily-card .hud-daily-btn {
+    width: 100%;
+    min-height: 76px;
+    flex-basis: auto;
+}
+
+.hub-daily-card .hud-streak {
+    background: var(--solid-surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+}
+
+.hub-continue-card {
+    align-items: center;
+}
+
+.hub-section-header {
+    margin: 18px 0 12px;
+}
+
+.hub-popular-grid {
+    margin-bottom: 18px;
+}
+
+.hub-game-card .card-info {
+    gap: 8px;
+}
+
+.game-card-meta {
+    margin: 0;
+    color: var(--text-low);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.game-meta-chip {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 2;
+    border-radius: 999px;
+    border: 1px solid rgba(251,191,36,0.35);
+    background: rgba(11, 14, 24, 0.82);
+    color: var(--gold);
+    padding: 4px 8px;
+    font-size: 0.62rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.hub-more-games {
+    display: grid;
+    gap: 10px;
+}
+
+.hub-game-tile {
+    min-height: 76px;
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: var(--solid-surface-base);
+    color: var(--text-high);
+    text-decoration: none;
+    box-shadow: var(--control-shadow-rest);
+    transition: transform 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.hub-game-tile:hover,
+.hub-game-tile:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--accent-border);
+    box-shadow: var(--control-shadow-hover);
+}
+
+.hub-game-tile img {
+    width: 84px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.hub-game-tile span {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.hub-game-tile strong {
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+}
+
+.hub-game-tile small {
+    color: var(--text-low);
+    font-size: 0.74rem;
+}
+
 /* Countdown */
 .hud-countdown {
     font-size: 0.7rem;
@@ -3418,6 +3581,22 @@ details[open] summary::after { transform: rotate(45deg); }
     .hud-top { flex: 1; min-width: 240px; }
     .hud-balance-row { flex: 1; min-width: 240px; }
     .hud-streak { width: 100%; }
+    .hub-player-summary__stats {
+        grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) auto;
+        align-items: stretch;
+        width: 100%;
+    }
+    .hub-daily-card,
+    .hub-continue-card {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+    }
+    .hub-daily-card__action {
+        min-width: 260px;
+    }
+    .hub-more-games {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     /* Game cards */
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
@@ -3477,6 +3656,7 @@ details[open] summary::after { transform: rotate(45deg); }
     .shop-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
     .nav-user { gap: 18px; }
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .hub-more-games { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ================================================================

@@ -2068,6 +2068,7 @@ function updateDailyButton() {
         }
     }
 }
+window.updateDailyButton = updateDailyButton;
 
 function updateMoonBlessingUI() {
     const status   = window.GameCenter.getMoonBlessingStatus();
@@ -2456,6 +2457,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
             // (puede habilitarlo si el reclamo falló por error recuperable,
             //  o dejarlo desactivado con el contador si fue exitoso).
             updateDailyButton();
+            window.HomeView?.refresh?.();
         });
     }
 

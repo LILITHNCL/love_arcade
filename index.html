@@ -312,27 +312,24 @@
         <!-- ═══════════════════════════════════════════
              VISTA: INICIO
              ═══════════════════════════════════════════ -->
-        <div id="view-hub" class="view-section">
+        <div id="view-hub" class="view-section section-shell">
 
-            <!-- ── PLAYER HUD ── -->
-            <div class="player-hud">
-
-                <div class="hud-top">
+            <!-- ── PLAYER SUMMARY ── -->
+            <section class="player-hud hub-player-summary dashboard-card dashboard-card--elevated" aria-label="Resumen del jugador">
+                <div class="hud-top hub-player-summary__identity">
                     <div class="hud-avatar-wrap">
-                    <label for="avatar-upload-hud" aria-label="Cambiar foto de perfil" class="avatar-label">
+                        <label for="avatar-upload-hud" aria-label="Cambiar foto de perfil" class="avatar-label">
                             <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                                 <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
                             </div>
-                        <input type="file" id="avatar-upload-hud" class="visually-hidden" accept="image/*">
+                            <input type="file" id="avatar-upload-hud" class="visually-hidden" accept="image/*">
                         </label>
                         <div class="hud-avatar-ring"></div>
                     </div>
                     <div class="hud-info">
-                        <p class="hud-greeting">
-                            Bienvenid<span id="pref-suffix">@</span> de vuelta
-                        </p>
+                        <p class="hud-greeting">Bienvenid<span id="pref-suffix">@</span> de vuelta</p>
                         <div class="hud-name-row">
-                            <p class="hud-name" id="display-nickname"></p>
+                            <h2 class="hud-name" id="display-nickname">Jugador</h2>
                             <button id="btn-edit-identity"
                                     class="btn-edit-identity"
                                     type="button"
@@ -346,238 +343,170 @@
                         </div>
                         <p class="hud-status">
                             <span class="hud-status-dot"></span>
-                            <span>En línea · Love Arcade</span>
+                            <span>En línea · Rango Arcade</span>
                         </p>
                     </div>
                 </div>
 
-                <div class="hud-balance-row">
-                    <div class="hud-balance">
-                        <span class="hud-balance-label">Monedas</span>
+                <div class="hub-player-summary__stats" aria-label="Resumen del jugador">
+                    <div class="hud-balance hub-summary-stat">
+                        <span class="hud-balance-label">Saldo</span>
                         <div class="hud-balance-amount">
                             <svg class="icon" width="18" height="18" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
                             <span class="coin-display">0</span>
                         </div>
                     </div>
+                    <div class="hub-summary-stat hub-summary-stat--rank">
+                        <span class="hud-balance-label">Progreso</span>
+                        <strong id="hub-rank-label">Explorador</strong>
+                        <span id="hub-rank-hint">Rango inicial</span>
+                    </div>
+                    <a href="#view=profile" class="secondary-action hub-profile-link" data-view="profile">
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        Perfil
+                    </a>
+                </div>
+            </section>
 
-                    <button id="btn-daily" class="hud-daily-btn">
+            <!-- ── DAILY REWARD ── -->
+            <section class="hub-daily-card panel-solid dashboard-card" aria-labelledby="hub-daily-title">
+                <div class="hub-daily-card__copy">
+                    <p class="section-kicker section-heading__eyebrow">Recompensa diaria</p>
+                    <h2 id="hub-daily-title" class="section-title section-heading__title">Mantén tu racha activa</h2>
+                    <p class="section-subtitle section-heading__copy">Reclama monedas, conserva la racha y vuelve mañana por más.</p>
+                    <div id="daily-countdown" class="hud-countdown hidden">
+                        Próximo bono en: <span id="countdown-display">--:--:--</span>
+                    </div>
+                    <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
+                </div>
+                <div class="hub-daily-card__action">
+                    <button id="btn-daily" class="hud-daily-btn" type="button">
                         <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
                         <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
-                        <span class="hud-daily-label">BONO DIARIO</span>
+                        <span class="hud-daily-label">Reclamar</span>
                     </button>
-                </div>
-
-                <div id="daily-countdown" class="hud-countdown hidden">
-                    Próximo bono en: <span id="countdown-display">--:--:--</span>
-                </div>
-                <p id="daily-msg" class="daily-msg"></p>
-
-                <div class="hud-streak">
-                    <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
-                    <div class="streak-days" id="streak-days">
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
+                    <div class="hud-streak" aria-label="Racha semanal">
+                        <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
+                        <div class="streak-days" id="streak-days">
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                        </div>
+                        <span class="streak-count" id="streak-count">×1</span>
                     </div>
-                    <span class="streak-count" id="streak-count">×1</span>
+                </div>
+            </section>
+
+            <!-- ── CONTINUAR JUGANDO ── -->
+            <section class="hub-continue-card panel-solid dashboard-card" aria-labelledby="hub-continue-title">
+                <div>
+                    <p class="section-kicker section-heading__eyebrow">Continuar jugando</p>
+                    <h2 id="hub-continue-title" class="section-title section-heading__title">Empieza tu primera partida</h2>
+                    <p id="hub-continue-copy" class="section-subtitle section-heading__copy">Te recomendamos una partida corta para ganar tus primeras monedas.</p>
+                </div>
+                <a id="hub-continue-cta" href="games/word-hunt" class="primary-action">
+                    <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg>
+                    Jugar Word Hunt
+                </a>
+            </section>
+
+            <!-- ── JUEGOS POPULARES ── -->
+            <div class="section-header hub-section-header">
+                <div>
+                    <p class="section-kicker section-heading__eyebrow">Qué jugar ahora</p>
+                    <h2 class="section-title section-heading__title">Juegos populares</h2>
+                    <p class="section-subtitle section-heading__copy">Partidas rápidas para ganar monedas sin salir del Hub.</p>
                 </div>
             </div>
 
+            <section id="games" class="games-grid hub-popular-grid" aria-label="Juegos populares">
+                <article class="game-card hub-game-card hub-game-card--featured">
+                    <div class="card-cover">
+                        <img class="card-cover-img" src="assets/images/games/cover/marejig-cover-art-3-2.avif" alt="Portada de Marejig" width="1920" height="1280" loading="eager" fetchpriority="high" decoding="sync">
+                        <span class="game-meta-chip">Recompensa</span>
+                    </div>
+                    <div class="card-info">
+                        <p class="game-card-meta">Puzzle · corto</p>
+                        <h3 class="card-title">Marejig</h3>
+                        <p class="card-desc">Une todos los segmentos y suma monedas por progreso.</p>
+                        <a href="games/jigsaw" class="btn-primary w-full" style="justify-content:center;" data-game-id="jigsaw">
+                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar ahora
+                        </a>
+                    </div>
+                </article>
+
+                <article class="game-card hub-game-card">
+                    <div class="card-cover">
+                        <img class="card-cover-img" src="assets/images/games/cover/word-hunt-cover-art.avif" alt="Portada de Word Hunt" width="1920" height="804" loading="eager" fetchpriority="high" decoding="sync">
+                        <span class="game-meta-chip">Rápido</span>
+                    </div>
+                    <div class="card-info">
+                        <p class="game-card-meta">Palabras · diario</p>
+                        <h3 class="card-title">Word Hunt</h3>
+                        <p class="card-desc">Encuentra palabras ocultas en sesiones breves.</p>
+                        <a href="games/word-hunt" class="btn-primary w-full" style="justify-content:center;" data-game-id="word-hunt">
+                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar ahora
+                        </a>
+                    </div>
+                </article>
+
+                <article class="game-card hub-game-card">
+                    <div class="card-cover">
+                        <img class="card-cover-img" src="assets/images/games/cover/2048-cover-art.avif" alt="Portada de 2048" width="1920" height="804" loading="lazy" decoding="async">
+                        <span class="game-meta-chip">Continuable</span>
+                    </div>
+                    <div class="card-info">
+                        <p class="game-card-meta">Estrategia · puzzle</p>
+                        <h3 class="card-title">2048</h3>
+                        <p class="card-desc">Combina fichas y vuelve a tu mejor tablero.</p>
+                        <a href="games/2048" class="btn-primary w-full" style="justify-content:center;" data-game-id="2048">
+                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar ahora
+                        </a>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ── EVENTOS ── -->
             <section id="home-events-summary" class="home-events-summary-card hidden" aria-live="polite">
                 <p class="home-events-summary-card__label">Eventos</p>
                 <p class="home-events-summary-card__empty">Cargando resumen...</p>
             </section>
 
-            <!-- ── GAME CARDS ── -->
-            <div style="margin-bottom: 20px;">
-                <h2 class="section-title" style="margin-bottom: 4px;">¿Qué vamos a jugar?</h2>
-                <p class="section-subtitle">Gana monedas en cada partida</p>
+            <!-- ── MÁS JUEGOS ── -->
+            <div class="section-header hub-section-header">
+                <div>
+                    <p class="section-kicker section-heading__eyebrow">Directorio arcade</p>
+                    <h2 class="section-title section-heading__title">Más juegos</h2>
+                    <p class="section-subtitle section-heading__copy">Elige tu siguiente reto.</p>
+                </div>
             </div>
 
-            <section id="games" class="games-grid">
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/marejig-cover-art-3-2.avif"
-                            alt="Portada de Marejig"
-                            width="1920"
-                            height="1280"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Marejig</h3>
-                        <p class="card-desc">Une todos los segmentos.</p>
-                        <a href="games/jigsaw" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/rompecabezas-cover-art.avif"
-                            alt="Portada de Rompecabezas"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Rompecabezas</h3>
-                        <p class="card-desc">Une las piezas para completar la imagen y ganar monedas.</p>
-                        <a href="games/rompecabezas" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-                
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/word-hunt-cover-art.avif"
-                            alt="Portada de Word Hunt"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Word Hunt</h3>
-                        <p class="card-desc">Encuentra todas las palabras ocultas en el tablero.</p>
-                        <a href="games/word-hunt" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/ollin-smash-cover-art.avif"
-                            alt="Portada de Ollin Smash"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Ollin Smash</h3>
-                        <p class="card-desc">Destruye todos los bloques antes de que la pelota caiga.</p>
-                        <a href="games/ollin-smash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/space-shooter-cover-art.avif"
-                            alt="Portada de Vortex"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Vortex</h3>
-                        <p class="card-desc">Elimina todas las naves enemigas en este frenético shooter espacial.</p>
-                        <a href="games/Shooter" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/2048-cover-art.avif"
-                            alt="Portada de 2048"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">2048</h3>
-                        <p class="card-desc">Desliza las fichas y combina números iguales para sumarlos.</p>
-                        <a href="games/2048" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/jungle-dash-cover-art.avif"
-                            alt="Portada de Jungle Dash"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Jungle Dash</h3>
-                        <p class="card-desc">Controla a un jaguar en la selva y salta para esquivar obstáculos. ¿Cuánto puedes resistir?</p>
-                        <a href="games/jungle-dash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
-                <article class="game-card">
-                    <div class="card-cover">
-                        <img
-                            class="card-cover-img"
-                            src="assets/images/games/cover/dodger-cover-art.avif"
-                            alt="Portada de Dodger"
-                            width="1920"
-                            height="804"
-                            loading="eager"
-                            fetchpriority="high"
-                            decoding="sync"
-                        >
-                    </div>
-                    <div class="card-info">
-                        <h3 class="card-title">Dodger</h3>
-                        <p class="card-desc">Sobrevive el mayor tiempo posible a la lluvia de asteroides.</p>
-                        <a href="games/Dodger" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
-                        </a>
-                    </div>
-                </article>
-
+            <section class="hub-more-games" aria-label="Más juegos disponibles">
+                <a href="games/rompecabezas" class="hub-game-tile" data-game-id="rompecabezas">
+                    <img src="assets/images/games/cover/rompecabezas-cover-art.avif" alt="" loading="lazy" decoding="async">
+                    <span><strong>Rompecabezas</strong><small>Puzzle visual</small></span>
+                </a>
+                <a href="games/ollin-smash" class="hub-game-tile" data-game-id="ollin-smash">
+                    <img src="assets/images/games/cover/ollin-smash-cover-art.avif" alt="" loading="lazy" decoding="async">
+                    <span><strong>Ollin Smash</strong><small>Arcade de reflejos</small></span>
+                </a>
+                <a href="games/Shooter" class="hub-game-tile" data-game-id="shooter">
+                    <img src="assets/images/games/cover/space-shooter-cover-art.avif" alt="" loading="lazy" decoding="async">
+                    <span><strong>Vortex</strong><small>Shooter espacial</small></span>
+                </a>
+                <a href="games/jungle-dash" class="hub-game-tile" data-game-id="jungle-dash">
+                    <img src="assets/images/games/cover/jungle-dash-cover-art.avif" alt="" loading="lazy" decoding="async">
+                    <span><strong>Jungle Dash</strong><small>Runner</small></span>
+                </a>
+                <a href="games/Dodger" class="hub-game-tile" data-game-id="dodger">
+                    <img src="assets/images/games/cover/dodger-cover-art.avif" alt="" loading="lazy" decoding="async">
+                    <span><strong>Dodger</strong><small>Supervivencia</small></span>
+                </a>
             </section>
-
 
         </div><!-- /#view-hub -->
 
@@ -1407,6 +1336,57 @@
                 const total = info.nextReward + ((moon?.active) ? 90 : 0);
                 rewardEl.textContent = `+${total}`;
             }
+
+            const rankEl = document.getElementById('hub-rank-label');
+            const rankHintEl = document.getElementById('hub-rank-hint');
+            if (rankEl && rankHintEl) {
+                const rank = streak >= 14 ? 'Leyenda' : streak >= 7 ? 'Operador' : streak >= 3 ? 'Piloto' : 'Explorador';
+                rankEl.textContent = rank;
+                rankHintEl.textContent = streak > 0 ? `${streak} día${streak === 1 ? '' : 's'} de racha` : 'Rango inicial';
+            }
+        }
+
+        const HUB_GAMES = {
+            jigsaw: { title: 'Marejig', href: 'games/jigsaw', cta: 'Continuar Marejig' },
+            rompecabezas: { title: 'Rompecabezas', href: 'games/rompecabezas', cta: 'Continuar puzzle' },
+            'word-hunt': { title: 'Word Hunt', href: 'games/word-hunt', cta: 'Continuar Word Hunt' },
+            'ollin-smash': { title: 'Ollin Smash', href: 'games/ollin-smash', cta: 'Continuar Ollin Smash' },
+            Shooter: { title: 'Vortex', href: 'games/Shooter', cta: 'Continuar Vortex' },
+            shooter: { title: 'Vortex', href: 'games/Shooter', cta: 'Continuar Vortex' },
+            '2048': { title: '2048', href: 'games/2048', cta: 'Continuar 2048' },
+            'jungle-dash': { title: 'Jungle Dash', href: 'games/jungle-dash', cta: 'Continuar Jungle Dash' },
+            Dodger: { title: 'Dodger', href: 'games/Dodger', cta: 'Continuar Dodger' },
+            dodger: { title: 'Dodger', href: 'games/Dodger', cta: 'Continuar Dodger' }
+        };
+
+        function renderContinuePlaying() {
+            const titleEl = document.getElementById('hub-continue-title');
+            const copyEl = document.getElementById('hub-continue-copy');
+            const ctaEl = document.getElementById('hub-continue-cta');
+            if (!titleEl || !copyEl || !ctaEl) return;
+
+            const history = window.GameCenter?.getHistory?.() || [];
+            const progressEntry = history.find(entry => {
+                const motivo = entry?.motivo || entry?.name || '';
+                return /Nivel .* completado · /.test(motivo);
+            });
+            const gameId = progressEntry
+                ? String((progressEntry.motivo || progressEntry.name || '').split(' · ').pop() || '').trim()
+                : '';
+            const game = HUB_GAMES[gameId];
+
+            if (game) {
+                titleEl.textContent = `Continúa ${game.title}`;
+                copyEl.textContent = 'Detectamos progreso reciente. Retoma desde tu juego más activo.';
+                ctaEl.href = game.href;
+                ctaEl.innerHTML = `<svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> ${game.cta}`;
+                return;
+            }
+
+            titleEl.textContent = 'Empieza tu primera partida';
+            copyEl.textContent = 'Te recomendamos Word Hunt: es corto, directo y perfecto para ganar tus primeras monedas.';
+            ctaEl.href = 'games/word-hunt';
+            ctaEl.innerHTML = '<svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Word Hunt';
         }
 
         // ── Countdown (vista Inicio) ─────────────────────────────────────────
@@ -1454,8 +1434,10 @@
         // ── API pública para la vista Hub (usada por spa-router.js) ───────────
         window.HomeView = {
             refresh() {
+                window.updateDailyButton?.();
                 updateCountdownDisplay();
                 updateStreakBar();
+                renderContinuePlaying();
             },
             /**
              * Llamado por spa-router.js al SALIR de la vista Inicio (v9.6).
@@ -1468,7 +1450,9 @@
             },
             onEnter() {
                 window.AppScheduler?.resumeGroup?.('countdown');
+                window.updateDailyButton?.();
                 updateCountdownDisplay();
+                renderContinuePlaying();
             }
         };
 
@@ -1478,6 +1462,7 @@
         // primer frame sin parpadeo.
         updateStreakBar();
         updateCountdownDisplay();
+        renderContinuePlaying();
 
 
         const modalA11yState = {
