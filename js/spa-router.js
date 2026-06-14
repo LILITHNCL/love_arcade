@@ -48,7 +48,7 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'events'];
+    const VIEWS = ['home', 'games', 'shop', 'profile', 'events'];
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
@@ -271,6 +271,7 @@
                 if (previousView !== viewId) {
                     if (previousView === 'home') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
                     if (previousView === 'shop') lifecycleTasks.push(() => window.ShopView?.onLeave?.());
+                    if (previousView === 'profile') lifecycleTasks.push(() => window.ProfileView?.onLeave?.());
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
@@ -278,6 +279,7 @@
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
+                if (viewId === 'profile') lifecycleTasks.push(() => _profileViewCallback('ProfileView.onEnter', () => window.ProfileView?.onEnter?.()));
                 if (viewId === 'events') lifecycleTasks.push(() => _profileViewCallback('EventView.onEnter', () => window.EventView?.onEnter?.()));
 
                 _drainLifecycleQueue(lifecycleTasks);

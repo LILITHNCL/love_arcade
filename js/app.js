@@ -713,7 +713,7 @@ function _showStorageToast(message, type = 'warning') {
 }
 
 function initInteractiveMicroFX() {
-    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
+    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container, .safe-tap-card, .profile-avatar-label';
     const coarsePointerMql = window.matchMedia('(pointer: coarse)');
     const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
     let coarsePointer = coarsePointerMql.matches;
@@ -774,6 +774,72 @@ function initInteractiveMicroFX() {
     document.addEventListener('scroll', () => {
         releasePress();
     }, { passive: true });
+}
+
+
+function initSafeTapCards() {
+    const TAP_TOLERANCE = 10;
+    let active = null;
+
+    document.addEventListener('pointerdown', (e) => {
+        const card = e.target.closest('[data-safe-tap]');
+        if (!card || e.button > 0) return;
+        active = { el: card, x: e.clientX, y: e.clientY, canceled: false };
+    }, { passive: true });
+
+    document.addEventListener('pointermove', (e) => {
+        if (!active) return;
+        const dx = Math.abs(e.clientX - active.x);
+        const dy = Math.abs(e.clientY - active.y);
+        if (dx > TAP_TOLERANCE || dy > TAP_TOLERANCE) {
+            active.canceled = true;
+            active.el.classList.remove('is-pressing');
+        }
+    }, { passive: true });
+
+    document.addEventListener('pointercancel', () => {
+        if (active) active.canceled = true;
+    }, { passive: true });
+
+    document.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-safe-tap]');
+        if (!card || !active || active.el !== card) return;
+        if (active.canceled) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        active = null;
+    }, true);
+}
+
+function initProfileView() {
+    const openPanel = (panel) => {
+        document.querySelectorAll('.profile-option').forEach(btn => {
+            const isActive = btn.dataset.profilePanel === panel;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-expanded', String(isActive));
+        });
+        document.querySelectorAll('#view-profile .profile-panel').forEach(el => {
+            el.classList.toggle('hidden', el.id !== `tab-${panel}`);
+        });
+        if (panel === 'settings') {
+            try { renderHistory(); renderMoonBlessingStatus(); renderStreakCalendar(); } catch (_) {}
+        }
+    };
+
+    document.querySelectorAll('[data-profile-panel]').forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.addEventListener('click', () => openPanel(btn.dataset.profilePanel));
+    });
+
+    window.ProfileView = {
+        onEnter() {
+            applyAvatar();
+            applyIdentity();
+            if (!document.querySelector('#view-profile .profile-panel:not(.hidden)')) openPanel('sync');
+        },
+        onLeave() {}
+    };
 }
 
 function initLoadingStateObserver() {
@@ -1957,7 +2023,7 @@ window.formatCoinsNavbar = formatCoinsNavbar;
 function applyAvatar() {
     if (!store.userAvatar) return;
     // Selecciona el avatar de la navbar (#user-avatar-display) y el HUD (.hud-avatar)
-    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, .hud-avatar').forEach(el => {
+    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar').forEach(el => {
         el.style.backgroundImage = `url('${store.userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
@@ -1974,6 +2040,8 @@ function applyIdentity() {
     const nicknameEl = document.getElementById('display-nickname');
     if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
     if (nicknameEl) nicknameEl.textContent = store.nickname || '';
+    const profileNicknameEl = document.getElementById('profile-nickname');
+    if (profileNicknameEl) profileNicknameEl.textContent = store.nickname || 'Jugador';
 }
 
 function applyTheme(key) {
@@ -2296,6 +2364,8 @@ applyIdentity();
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
     initInteractiveMicroFX();
+    initSafeTapCards();
+    initProfileView();
     initLoadingStateObserver();
 
     // Re-sincronizar UI por si algún sub-módulo modificó el DOM
@@ -2411,7 +2481,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     // Avatar upload — delegado único
     document.addEventListener('change', async (e) => {
-        if (e.target.id === 'avatar-upload' || e.target.id === 'avatar-upload-hud') {
+        if (e.target.id === 'avatar-upload' || e.target.id === 'avatar-upload-hud' || e.target.id === 'avatar-upload-profile') {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
