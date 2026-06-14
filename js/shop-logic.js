@@ -1219,8 +1219,15 @@ function switchTab(tab) {
     document.querySelectorAll('.shop-tab').forEach(b =>
         b.classList.toggle('active', b.dataset.tab === tab)
     );
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.profile-action-card').forEach(b => {
+        const isActive = b.dataset.tab === tab;
+        b.classList.toggle('is-active', isActive);
+        b.setAttribute('aria-expanded', String(isActive));
+    });
     const panel = document.getElementById(`tab-${tab}`);
+    if (!panel) return;
+    const ownerView = panel.closest('.view-section') || document;
+    ownerView.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
     panel.classList.remove('hidden');
 
     if (tab === 'settings') {
@@ -2527,7 +2534,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Tabs
-    document.querySelectorAll('.shop-tab').forEach(btn =>
+    document.querySelectorAll('.shop-tab, .profile-action-card').forEach(btn =>
         btn.addEventListener('click', () => switchTab(btn.dataset.tab))
     );
 

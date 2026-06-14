@@ -258,7 +258,7 @@
         <ul class="nav-links">
             <li><a href="#" class="nav-link active" data-view="home">Inicio</a></li>
             <li><a href="#" class="nav-link" data-view="shop">Tienda</a></li>
-            <li><a href="#" class="nav-link" data-view="events">Eventos</a></li>
+            <li><a href="#" class="nav-link" data-view="profile">Perfil</a></li>
         </ul>
 
         <div class="nav-user">
@@ -293,9 +293,9 @@
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg>
             <span>Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-            <span>Eventos</span>
+        <a href="#" class="b-nav-item" data-view="profile">
+            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-user"></use></svg>
+            <span>Perfil</span>
         </a>
     </nav>
 
@@ -635,12 +635,6 @@
                 <button class="shop-tab" data-tab="library">
                     <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
                 </button>
-                <button class="shop-tab" data-tab="sync">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg> Sincronizar
-                </button>
-                <button class="shop-tab" data-tab="settings">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-settings-2"></use></svg> Ajustes
-                </button>
             </div>
 
             <!-- ── TAB: CATÁLOGO ── -->
@@ -718,6 +712,46 @@
                 </div>
                 <div id="library-container" class="shop-grid treasury-grid">
                     <p style="color:var(--text-low); grid-column:1/-1; text-align:center; padding:40px 0;">Cargando tu biblioteca…</p>
+                </div>
+            </section>
+
+        </div><!-- /#view-shop -->
+
+
+        <!-- ═══════════════════════════════════════════
+             VISTA: PERFIL
+             ═══════════════════════════════════════════ -->
+        <div id="view-profile" class="view-section hidden">
+            <section class="profile-hub" aria-labelledby="profile-title">
+                <div class="profile-hero glass-panel">
+                    <label for="avatar-upload-profile" class="profile-avatar-button" aria-label="Cambiar foto de perfil">
+                        <span class="profile-avatar" id="profile-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
+                            <svg class="icon" width="44" height="44" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        </span>
+                        <span class="profile-avatar-edit" aria-hidden="true"><svg class="icon" width="14" height="14"><use href="#icon-plus"></use></svg></span>
+                        <input type="file" id="avatar-upload-profile" class="visually-hidden" accept="image/*">
+                    </label>
+                    <h1 id="profile-title" class="profile-name">Love Arcade</h1>
+                    <p class="profile-kicker">Cuenta, respaldo y preferencias</p>
+                </div>
+
+                <div class="profile-action-grid" aria-label="Opciones de perfil">
+                    <button class="profile-action-card" type="button" data-tab="sync" aria-controls="tab-sync" aria-expanded="false">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
+                        <span class="profile-action-card__body">
+                            <span class="profile-action-card__title">Sincronización</span>
+                            <span class="profile-action-card__desc">Respalda tu progreso y continúa entre dispositivos.</span>
+                        </span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-tab="settings" aria-controls="tab-settings" aria-expanded="false">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-settings-2"></use></svg></span>
+                        <span class="profile-action-card__body">
+                            <span class="profile-action-card__title">Ajustes</span>
+                            <span class="profile-action-card__desc">Personaliza tema, recompensas y economía de tu cuenta.</span>
+                        </span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
                 </div>
             </section>
 
@@ -985,7 +1019,8 @@
                 </div>
             </section>
 
-        </div><!-- /#view-shop -->
+
+        </div><!-- /#view-profile -->
 
         <!-- ═══════════════════════════════════════════
              VISTA: EVENTOS (v10.0 — LTE System)
@@ -1285,7 +1320,8 @@
         // ── Sincronizar avatar HUD con input de navbar ───────────────────────
         const avatarUploads = [
             document.getElementById('avatar-upload'),
-            document.getElementById('avatar-upload-hud')
+            document.getElementById('avatar-upload-hud'),
+            document.getElementById('avatar-upload-profile')
         ];
         avatarUploads.forEach(input => {
             if (!input) return;
@@ -1295,7 +1331,7 @@
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     const url = ev.target.result;
-                    document.querySelectorAll('.avatar, .hud-avatar').forEach(el => {
+                    document.querySelectorAll('.avatar, .hud-avatar, .profile-avatar').forEach(el => {
                         el.style.backgroundImage = `url('${url}')`;
                         const icon = el.querySelector('svg');
                         if (icon) icon.style.display = 'none';

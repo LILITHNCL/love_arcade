@@ -1957,7 +1957,7 @@ window.formatCoinsNavbar = formatCoinsNavbar;
 function applyAvatar() {
     if (!store.userAvatar) return;
     // Selecciona el avatar de la navbar (#user-avatar-display) y el HUD (.hud-avatar)
-    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, .hud-avatar').forEach(el => {
+    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar').forEach(el => {
         el.style.backgroundImage = `url('${store.userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
@@ -1972,8 +1972,10 @@ function applyAvatar() {
 function applyIdentity() {
     const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
+    const profileNameEl = document.getElementById('profile-title');
     if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
     if (nicknameEl) nicknameEl.textContent = store.nickname || '';
+    if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
 }
 
 function applyTheme(key) {
@@ -2411,7 +2413,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     // Avatar upload — delegado único
     document.addEventListener('change', async (e) => {
-        if (e.target.id === 'avatar-upload' || e.target.id === 'avatar-upload-hud') {
+        if (e.target.id === 'avatar-upload' || e.target.id === 'avatar-upload-hud' || e.target.id === 'avatar-upload-profile') {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
