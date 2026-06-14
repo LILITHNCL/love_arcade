@@ -2413,7 +2413,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
 
     // Avatar upload — delegado único
     document.addEventListener('change', async (e) => {
-        if (e.target.id === 'avatar-upload' || e.target.id === 'avatar-upload-hud' || e.target.id === 'avatar-upload-profile') {
+        if (e.target.id === 'avatar-upload-profile') {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();

@@ -1219,11 +1219,6 @@ function switchTab(tab) {
     document.querySelectorAll('.shop-tab').forEach(b =>
         b.classList.toggle('active', b.dataset.tab === tab)
     );
-    document.querySelectorAll('.profile-action-card').forEach(b => {
-        const isActive = b.dataset.tab === tab;
-        b.classList.toggle('is-active', isActive);
-        b.setAttribute('aria-expanded', String(isActive));
-    });
     const panel = document.getElementById(`tab-${tab}`);
     if (!panel) return;
     const ownerView = panel.closest('.view-section') || document;
@@ -1844,7 +1839,7 @@ function renderHistory() {
 
     if (!history.length) {
         container.innerHTML =
-            '<p style="color:var(--text-low); font-size:0.8rem; text-align:center; padding:16px 0;">Sin transacciones aún.</p>';
+            '<div class="history-empty-state"><strong>Aún no hay movimientos.</strong><span>Cuando ganes o gastes monedas, aparecerán aquí.</span></div>';
         return;
     }
 
@@ -2534,9 +2529,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Tabs
-    document.querySelectorAll('.shop-tab, .profile-action-card').forEach(btn =>
+    document.querySelectorAll('.shop-tab').forEach(btn =>
         btn.addEventListener('click', () => switchTab(btn.dataset.tab))
     );
+
+
+    // Navegación interna de Perfil: pantallas dedicadas tipo app, sin acordeones.
+    const profileView = document.getElementById('view-profile');
+    const profileHome = profileView?.querySelector('[data-profile-panel="home"]');
+    let profileLastTrigger = null;
+
+    function showProfilePanel(panelName, trigger) {
+        if (!profileView || !profileHome) return;
+        if (trigger) profileLastTrigger = trigger;
+        profileView.querySelectorAll('[data-profile-panel]').forEach(panel => {
+            panel.classList.toggle('hidden', panel.dataset.profilePanel !== panelName);
+        });
+
+        if (panelName === 'personalization') {
+            window.GameCenter?.syncUI?.();
+        }
+        if (panelName === 'upgrades') {
+            renderMoonBlessingStatus();
+        }
+        if (panelName === 'history') {
+            renderHistory();
+        }
+
+        const activePanel = profileView.querySelector(`[data-profile-panel="${panelName}"]`);
+        refreshIcons(activePanel || profileView);
+        requestAnimationFrame(() => {
+            const focusTarget = activePanel?.querySelector('[data-profile-back], button, input, [tabindex]:not([tabindex="-1"])');
+            focusTarget?.focus?.({ preventScroll: true });
+        });
+    }
+
+    profileView?.querySelectorAll('[data-profile-target]').forEach(btn => {
+        btn.addEventListener('click', () => showProfilePanel(btn.dataset.profileTarget, btn));
+    });
+
+    profileView?.querySelectorAll('[data-profile-back]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            showProfilePanel('home');
+            requestAnimationFrame(() => profileLastTrigger?.focus?.({ preventScroll: true }));
+        });
+    });
 
     // Search con debounce
     const searchInput  = document.getElementById('search-input');
