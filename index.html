@@ -514,26 +514,62 @@
              VISTA: JUEGOS
              ═══════════════════════════════════════════ -->
         <div id="view-games" class="view-section section-shell hidden">
-            <section class="section-header section-heading games-directory-header" aria-labelledby="games-view-title">
-                <div>
-                    <p class="section-kicker section-heading__eyebrow">Arcade</p>
-                    <h2 id="games-view-title" class="section-title section-heading__title">Biblioteca de juegos</h2>
-                    <p class="section-subtitle section-heading__copy">Accede rápido a todos los minijuegos disponibles mientras el Hub conserva el resumen de actividad.</p>
+            <section class="games-hero dashboard-card dashboard-card--elevated" aria-labelledby="games-view-title">
+                <div class="games-hero__copy">
+                    <p class="section-kicker section-heading__eyebrow">Juegos</p>
+                    <h2 id="games-view-title" class="section-title section-heading__title">Elige tu próximo reto</h2>
+                    <p class="section-subtitle section-heading__copy">Explora minijuegos para jugar, continuar progreso y ganar recompensas. La Tienda queda separada: aquí no hay precios, solo partidas.</p>
                 </div>
                 <a href="#view=hub" class="secondary-action" data-view="hub">Volver al Hub</a>
             </section>
 
-            <section class="games-directory-panel panel-solid dashboard-card dashboard-card--elevated" aria-label="Juegos disponibles">
-                <div class="games-directory-copy">
-                    <span class="meta-chip" data-tone="accent">Base SPA lista</span>
-                    <h3>Catálogo jugable</h3>
-                    <p>Esta vista prepara la nueva sección Juegos sin cambiar todavía las tarjetas ni la economía de recompensas.</p>
+            <section class="games-toolbar panel-solid" aria-label="Buscar y filtrar juegos">
+                <label class="games-search" for="games-search-input">
+                    <svg class="icon" width="17" height="17" aria-hidden="true"><use href="#icon-search"></use></svg>
+                    <span class="visually-hidden">Buscar juego</span>
+                    <input id="games-search-input" type="search" placeholder="Buscar juego" autocomplete="off">
+                </label>
+                <div class="games-filter-pills" aria-label="Filtros por tipo de juego">
+                    <button type="button" class="games-filter is-active" data-games-filter="all" aria-pressed="true">Todos</button>
+                    <button type="button" class="games-filter" data-games-filter="puzzle" aria-pressed="false">Puzzle</button>
+                    <button type="button" class="games-filter" data-games-filter="arcade" aria-pressed="false">Arcade</button>
+                    <button type="button" class="games-filter" data-games-filter="accion" aria-pressed="false">Acción</button>
+                    <button type="button" class="games-filter" data-games-filter="rapidos" aria-pressed="false">Rápidos</button>
+                    <button type="button" class="games-filter" data-games-filter="nuevos" aria-pressed="false">Nuevos</button>
+                    <button type="button" class="games-filter" data-games-filter="recompensas" aria-pressed="false">Con recompensas</button>
                 </div>
-                <div class="games-directory-actions">
-                    <a href="games/jigsaw" class="primary-action">Jugar Marejig</a>
-                    <a href="games/word-hunt" class="secondary-action">Word Hunt</a>
-                    <a href="games/2048" class="secondary-action">2048</a>
+            </section>
+
+            <section class="games-section" aria-labelledby="games-continue-title">
+                <div class="games-section-heading">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Retomar</p>
+                        <h3 id="games-continue-title" class="games-section-title">Continuar jugando</h3>
+                    </div>
                 </div>
+                <div id="games-continue-list" class="games-continue-list" aria-live="polite"></div>
+            </section>
+
+            <section class="games-section" aria-labelledby="games-popular-title">
+                <div class="games-section-heading">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Qué jugar ahora</p>
+                        <h3 id="games-popular-title" class="games-section-title">Populares</h3>
+                    </div>
+                </div>
+                <div id="games-popular-list" class="games-catalog-grid"></div>
+            </section>
+
+            <section class="games-section" aria-labelledby="games-all-title">
+                <div class="games-section-heading">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Catálogo</p>
+                        <h3 id="games-all-title" class="games-section-title">Todos los juegos</h3>
+                    </div>
+                    <p id="games-results-count" class="games-results-count" aria-live="polite"></p>
+                </div>
+                <div id="games-all-list" class="games-catalog-grid"></div>
+                <p id="games-empty-state" class="games-empty-state hidden">No encontramos juegos con esa búsqueda. Prueba con otro nombre o vuelve a “Todos”.</p>
             </section>
         </div><!-- /#view-games -->
 
@@ -1388,6 +1424,114 @@
             ctaEl.href = 'games/word-hunt';
             ctaEl.innerHTML = '<svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Word Hunt';
         }
+
+        const GAMES_CATALOG = [
+            { id: 'jigsaw', title: 'Marejig', href: 'games/jigsaw', cover: 'assets/images/games/cover/marejig-cover-art-3-2.avif', category: 'Puzzle', tags: ['puzzle', 'rapidos', 'recompensas'], meta: 'Puzzle · corto', estimate: '5–10 min', difficulty: 'Media', reward: 'Monedas por nivel', badge: 'Recompensa', popular: true, description: 'Une segmentos y completa piezas con ritmo de puzzle arcade.' },
+            { id: 'word-hunt', title: 'Word Hunt', href: 'games/word-hunt', cover: 'assets/images/games/cover/word-hunt-cover-art.avif', category: 'Puzzle', tags: ['puzzle', 'rapidos', 'recompensas', 'nuevos'], meta: 'Palabras · diario', estimate: '3–6 min', difficulty: 'Ligera', reward: 'Retos diarios', badge: 'Rápido', popular: true, description: 'Encuentra palabras ocultas en partidas breves y fáciles de retomar.' },
+            { id: '2048', title: '2048', href: 'games/2048', cover: 'assets/images/games/cover/2048-cover-art.avif', category: 'Puzzle', tags: ['puzzle', 'rapidos'], meta: 'Estrategia · puzzle', estimate: '5 min', difficulty: 'Media', reward: 'Sin recompensa fija', badge: 'Continuable', popular: true, description: 'Combina fichas, supera tu marca y vuelve a tu mejor tablero.' },
+            { id: 'rompecabezas', title: 'Rompecabezas', href: 'games/rompecabezas', cover: 'assets/images/games/cover/rompecabezas-cover-art.avif', category: 'Puzzle', tags: ['puzzle', 'recompensas'], meta: 'Puzzle visual', estimate: '8–12 min', difficulty: 'Media', reward: 'Monedas por progreso', badge: 'Puzzle', popular: false, description: 'Reconstruye imágenes por niveles sin salir del entorno arcade.' },
+            { id: 'ollin-smash', title: 'Ollin Smash', href: 'games/ollin-smash', cover: 'assets/images/games/cover/ollin-smash-cover-art.avif', category: 'Arcade', tags: ['arcade', 'accion', 'rapidos', 'nuevos'], meta: 'Arcade · reflejos', estimate: '2–4 min', difficulty: 'Alta', reward: 'Reto de puntuación', badge: 'Nuevo', popular: false, description: 'Un golpe rápido de reflejos para perseguir una puntuación mejor.' },
+            { id: 'shooter', title: 'Vortex', href: 'games/Shooter', cover: 'assets/images/games/cover/space-shooter-cover-art.avif', category: 'Acción', tags: ['accion', 'arcade', 'recompensas'], meta: 'Shooter espacial', estimate: '6–10 min', difficulty: 'Alta', reward: 'Recompensas de combate', badge: 'Acción', popular: false, aliases: ['Shooter'], description: 'Sobrevive oleadas espaciales con presión, precisión y recompensa.' },
+            { id: 'jungle-dash', title: 'Jungle Dash', href: 'games/jungle-dash', cover: 'assets/images/games/cover/jungle-dash-cover-art.avif', category: 'Arcade', tags: ['arcade', 'accion', 'rapidos'], meta: 'Runner', estimate: '2–5 min', difficulty: 'Ligera', reward: 'Reto de distancia', badge: 'Rápido', popular: false, description: 'Corre, esquiva y encadena intentos cortos para mejorar tu marca.' },
+            { id: 'dodger', title: 'Dodger', href: 'games/Dodger', cover: 'assets/images/games/cover/dodger-cover-art.avif', category: 'Acción', tags: ['accion', 'arcade', 'rapidos'], meta: 'Supervivencia', estimate: '3–7 min', difficulty: 'Alta', reward: 'Reto de supervivencia', badge: 'Arcade', popular: false, aliases: ['Dodger'], description: 'Pilota, esquiva peligros y aguanta más que en tu intento anterior.' }
+        ];
+
+        function getGameProgressMeta(game) {
+            const history = window.GameCenter?.getHistory?.() || [];
+            const ids = [game.id, ...(game.aliases || [])];
+            const last = history.find(entry => {
+                const label = String(entry?.motivo || entry?.name || '');
+                return ids.some(id => label.endsWith(`· ${id}`));
+            });
+            // TODO(progreso): si GameCenter expone progreso público por juego,
+            // reemplazar esta inferencia por porcentajes/último nivel reales.
+            return last ? { hasProgress: true, label: 'Progreso detectado', cta: 'Continuar' } : { hasProgress: false, label: 'Listo para empezar', cta: 'Jugar' };
+        }
+
+        function createGameCard(game, options = {}) {
+            const progress = getGameProgressMeta(game);
+            const article = document.createElement('article');
+            article.className = `games-catalog-card${options.compact ? ' games-catalog-card--compact' : ''}`;
+            article.dataset.gameId = game.id;
+            article.innerHTML = `
+                <div class="games-catalog-card__cover">
+                    <img src="${game.cover}" alt="Portada de ${game.title}" loading="lazy" decoding="async">
+                    <span class="game-meta-chip">${game.badge}</span>
+                </div>
+                <div class="games-catalog-card__body">
+                    <p class="game-card-meta">${game.meta}</p>
+                    <h4>${game.title}</h4>
+                    <p class="games-catalog-card__desc">${game.description}</p>
+                    <dl class="games-card-facts">
+                        <div><dt>Categoría</dt><dd>${game.category}</dd></div>
+                        <div><dt>Tiempo</dt><dd>${game.estimate}</dd></div>
+                        <div><dt>Dificultad</dt><dd>${game.difficulty}</dd></div>
+                    </dl>
+                    <div class="games-card-reward"><svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-gift"></use></svg>${game.reward}</div>
+                    <div class="games-card-footer">
+                        <span class="games-progress-state${progress.hasProgress ? ' is-active' : ''}">${progress.label}</span>
+                        <a href="${game.href}" class="btn-primary" data-game-id="${game.id}"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg>${progress.cta}</a>
+                    </div>
+                </div>`;
+            return article;
+        }
+
+        window.GamesView = (() => {
+            let activeFilter = 'all';
+            let query = '';
+            let bound = false;
+
+            function filteredGames() {
+                const normalized = query.trim().toLowerCase();
+                return GAMES_CATALOG.filter(game => {
+                    const matchesFilter = activeFilter === 'all' || game.tags.includes(activeFilter);
+                    const text = `${game.title} ${game.category} ${game.meta} ${game.description}`.toLowerCase();
+                    return matchesFilter && (!normalized || text.includes(normalized));
+                });
+            }
+
+            function render() {
+                const continueList = document.getElementById('games-continue-list');
+                const popularList = document.getElementById('games-popular-list');
+                const allList = document.getElementById('games-all-list');
+                const empty = document.getElementById('games-empty-state');
+                const count = document.getElementById('games-results-count');
+                if (!continueList || !popularList || !allList) return;
+
+                const progressed = GAMES_CATALOG.filter(game => getGameProgressMeta(game).hasProgress).slice(0, 3);
+                const continueGames = progressed.length ? progressed : GAMES_CATALOG.slice(0, 2);
+                continueList.replaceChildren(...continueGames.map(game => createGameCard(game, { compact: true })));
+
+                popularList.replaceChildren(...GAMES_CATALOG.filter(game => game.popular).map(game => createGameCard(game)));
+
+                const games = filteredGames();
+                allList.replaceChildren(...games.map(game => createGameCard(game)));
+                empty?.classList.toggle('hidden', games.length > 0);
+                if (count) count.textContent = `${games.length} juego${games.length === 1 ? '' : 's'}`;
+            }
+
+            function bind() {
+                if (bound) return;
+                bound = true;
+                document.getElementById('games-search-input')?.addEventListener('input', (event) => {
+                    query = event.target.value || '';
+                    render();
+                });
+                document.querySelectorAll('[data-games-filter]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        activeFilter = button.dataset.gamesFilter || 'all';
+                        document.querySelectorAll('[data-games-filter]').forEach(btn => {
+                            const active = btn === button;
+                            btn.classList.toggle('is-active', active);
+                            btn.setAttribute('aria-pressed', String(active));
+                        });
+                        render();
+                    });
+                });
+            }
+
+            return { onEnter() { bind(); render(); }, refresh: render, catalog: () => [...GAMES_CATALOG] };
+        })();
 
         // ── Countdown (vista Inicio) ─────────────────────────────────────────
         let _countdownLastSecond = null;

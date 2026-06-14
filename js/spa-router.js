@@ -297,6 +297,7 @@
                 if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
                 if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'profile') lifecycleTasks.push(() => _profileViewCallback('ProfileView.onEnter', () => window.ProfileView?.onEnter?.()));
+                if (viewId === 'games') lifecycleTasks.push(() => _profileViewCallback('GamesView.onEnter', () => window.GamesView?.onEnter?.()));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
                 if (viewId === 'events') lifecycleTasks.push(() => _profileViewCallback('EventView.onEnter', () => window.EventView?.onEnter?.()));
 
