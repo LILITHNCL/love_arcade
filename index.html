@@ -612,7 +612,26 @@
         <!-- ═══════════════════════════════════════════
              VISTA: TIENDA
              ═══════════════════════════════════════════ -->
-        <div id="view-shop" class="view-section hidden">
+        <div id="view-shop" class="view-section section-shell hidden">
+
+            <section class="shop-vault-hero dashboard-card dashboard-card--elevated" aria-labelledby="shop-vault-title">
+                <div class="shop-vault-hero__copy">
+                    <p class="section-kicker section-heading__eyebrow">Arcade Shop</p>
+                    <h2 id="shop-vault-title" class="section-title section-heading__title">Bóveda de Tesoros</h2>
+                    <p class="section-subtitle section-heading__copy">Desbloquea wallpapers, avatares y recompensas con tu saldo interno.</p>
+                </div>
+                <div class="shop-vault-hero__meta" aria-label="Estado de compra">
+                    <span class="meta-chip shop-balance-chip">
+                        <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-star"></use></svg>
+                        Saldo: <strong class="coin-display">0</strong>
+                    </span>
+                    <button id="btn-promo-toggle" class="secondary-action promo-toggle-btn" type="button" aria-expanded="false" aria-controls="promo-section">
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
+                        <span>Canjear código</span>
+                        <svg class="icon promo-chevron" width="13" height="13" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+                    </button>
+                </div>
+            </section>
 
             <!-- ── SALE BANNER ── -->
             <div id="sale-banner" class="sale-banner hidden">
@@ -632,11 +651,6 @@
 
             <!-- ── CÓDIGO PROMO ── -->
             <div class="promo-toggle-wrap">
-                <button id="btn-promo-toggle" class="btn-ghost promo-toggle-btn" aria-expanded="false" aria-controls="promo-section">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
-                    <span>¿Tienes un código promocional?</span>
-                    <svg class="icon promo-chevron" width="13" height="13" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
-                </button>
                 <section id="promo-section" class="glass-panel promo-section promo-section--collapsed" aria-hidden="true">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
                         <div class="promo-icon-wrap">
@@ -648,7 +662,7 @@
                         </div>
                     </div>
                     <div class="promo-input-group">
-                        <input type="text" id="promo-input" placeholder="Ej: AMOR2024" class="promo-input">
+                        <input type="text" id="promo-input" placeholder="Ej: AMOR2024" class="promo-input" aria-label="Código promocional">
                         <button id="btn-redeem" class="btn-primary">
                             <span>Canjear</span>
                             <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
@@ -659,37 +673,52 @@
             </div>
 
 
-            <!-- ── TAB: CATÁLOGO ── -->
-            <section id="tab-catalog" class="tab-panel">
+            <!-- ── BÓVEDA: CATÁLOGO ── -->
+            <section id="tab-catalog" class="tab-panel panel-solid shop-vault-panel" aria-labelledby="shop-catalog-title">
+                <div class="section-header shop-catalog-header">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Recompensas desbloqueables</p>
+                        <h3 id="shop-catalog-title" class="section-title section-heading__title">Catálogo de la bóveda</h3>
+                    </div>
+                </div>
                 <div class="shop-toolbar">
                     <div class="search-wrap">
                         <svg class="icon search-icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg>
                         <input type="text" id="search-input" class="search-input"
-                               placeholder="Buscar wallpaper…" autocomplete="off">
+                               placeholder="Buscar recompensa, wallpaper o avatar…" autocomplete="off"
+                               aria-label="Buscar recompensa, wallpaper o avatar">
                         <button id="search-clear" class="search-clear hidden" aria-label="Limpiar">
                             <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-x"></use></svg>
                         </button>
                     </div>
-                    <div class="filter-pills" id="filter-pills">
-                        <button class="pill active" data-filter="NoObtenidos">
+                    <div class="filter-pills" id="filter-pills" aria-label="Filtros de recompensas">
+                        <button class="pill active" data-filter="Todos">
+                            Todos
+                        </button>
+                        <button class="pill" data-filter="NoObtenidos">
                             <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sparkles"></use></svg> Nuevos
                         </button>
-                        <button class="pill" data-filter="Stickers">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sticker"></use></svg> Stickers
+                        <button class="pill" data-filter="Ofertas">
+                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-zap"></use></svg> Ofertas
                         </button>
-                        <button class="pill" data-filter="Mobile">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-smartphone"></use></svg> Móvil
+                        <button class="pill" data-filter="Wallpapers">
+                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-layout-grid"></use></svg> Wallpapers
                         </button>
                         <button class="pill" data-filter="Avatar">
                             <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-user"></use></svg> Avatar
                         </button>
-                        <button class="pill filter-btn-gift" data-filter="Regalos">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-gift"></use></svg> Regalos
+                        <button class="pill" data-filter="Mobile">
+                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-smartphone"></use></svg> Móvil
                         </button>
                         <button class="pill" data-filter="PC">
                             <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-monitor"></use></svg> PC
                         </button>
-                        <button class="pill" data-filter="Todos">Todos</button>
+                        <button class="pill filter-btn-gift" data-filter="Regalos">
+                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-gift"></use></svg> Regalos
+                        </button>
+                        <button class="pill" data-filter="Stickers">
+                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sticker"></use></svg> Stickers
+                        </button>
                     </div>
                 </div>
 

@@ -151,7 +151,7 @@
 
 // ── Estado del catálogo (módulo privado) ──────────────────────────────────────
 let allItems     = [];
-let activeFilter = 'NoObtenidos';
+let activeFilter = 'Todos';
 let searchQuery  = '';
 let _pendingFilterFrame = null;
 let _shopDelegationBound = false;
@@ -1214,30 +1214,6 @@ const _closePreviewModal = closePreviewModal;
 window.openPreviewModal  = openPreviewModal;
 window.closePreviewModal = closePreviewModal;
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-    document.querySelectorAll('.shop-tab').forEach(b =>
-        b.classList.toggle('active', b.dataset.tab === tab)
-    );
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-    const panel = document.getElementById(`tab-${tab}`);
-    panel.classList.remove('hidden');
-
-    if (tab === 'settings') {
-        renderHistory();
-        renderMoonBlessingStatus();
-        renderStreakCalendar();
-    }
-    if (tab !== 'catalog') {
-        _stopGiftAutoplay();
-        _teardownShopLazyRender();
-    } else if (activeFilter !== 'Regalos') {
-        filterItems();
-    }
-    // Scope al panel activo: evita re-escanear vistas ocultas de la SPA.
-    refreshIcons(panel);
-}
-
 function _isGiftItem(item) {
     return item?.category === 'gift' || (Array.isArray(item?.tags) && item.tags.includes('regalo'));
 }
@@ -1454,7 +1430,7 @@ function _renderGiftCarousel(items) {
  * Efectos secundarios: lectura de GameCenter state, escrituras DOM del grid/estados vacíos.
  * Coste esperado: O(n) filtrado sobre items + coste de pintar primer lote.
  * Diseño (por qué): mantener filtrado centralizado facilita evolucionar reglas de negocio
- * sin duplicar lógica entre búsqueda, tabs y reseteos de filtros.
+ * sin duplicar lógica entre búsqueda, chips y reseteos de filtros.
  */
 function filterItems() {
     if (!allItems.length) return;
@@ -1466,10 +1442,13 @@ function filterItems() {
     const filtered = allItems.filter(item => {
         const isGift = _isGiftItem(item);
         let matchesFilter;
+        const tags = Array.isArray(item.tags) ? item.tags : [];
         if      (activeFilter === 'Todos')       matchesFilter = !isGift;
         else if (activeFilter === 'NoObtenidos') matchesFilter = !isGift && GameCenter.getBoughtCount(item.id) === 0;
+        else if (activeFilter === 'Ofertas')     matchesFilter = !isGift && Boolean(window.ECONOMY?.isSaleActive);
+        else if (activeFilter === 'Wallpapers')  matchesFilter = !isGift && (tags.includes('Mobile') || tags.includes('PC')) && !tags.includes('Avatar') && !tags.includes('Stickers');
         else if (activeFilter === 'Regalos')     matchesFilter = isGift;
-        else                                     matchesFilter = Array.isArray(item.tags) && item.tags.includes(activeFilter);
+        else                                     matchesFilter = tags.includes(activeFilter);
 
         const matchesSearch = !searchQuery
             || item.name.toLowerCase().includes(searchQuery)
@@ -1516,8 +1495,8 @@ function filterItems() {
 
 function resetFilters() {
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-    document.querySelector('[data-filter="NoObtenidos"]').classList.add('active');
-    activeFilter = 'NoObtenidos';
+    document.querySelector('[data-filter="Todos"]')?.classList.add('active');
+    activeFilter = 'Todos';
     searchQuery  = '';
     const searchInput = document.getElementById('search-input');
     const clearBtn    = document.getElementById('search-clear');
@@ -2338,7 +2317,7 @@ window.ShopView = {
         if (allItems.length) filterItems();
         _updateGiftFilterGlow();
 
-        // Scope a la vista de la tienda. El sale banner, tabs y pills tienen
+        // Scope a la vista de la tienda. El sale banner y pills tienen
         // iconos dinámicos que pueden necesitar re-inicialización al volver a la vista.
         const shopView = document.getElementById('view-shop');
         if (shopView) refreshIcons(shopView);
@@ -2547,10 +2526,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') handleRedeem();
     });
 
-    // Tabs
-    document.querySelectorAll('.shop-tab').forEach(btn =>
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab))
-    );
 
     // Search con debounce
     const searchInput  = document.getElementById('search-input');
