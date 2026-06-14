@@ -215,7 +215,7 @@
      *     entrada (.view-section:not(.hidden) → opacity:1 + translateY(0)).
      *  3. Sincronizar saldo, iconos y callbacks de vista.
      *
-     * @param {'home'|'shop'} viewId
+     * @param {'home'|'hub'|'games'|'shop'|'profile'|'events'} viewId
      * @param {string|null}   [anchor]
      */
     /**
@@ -310,7 +310,7 @@
     /**
      * Navega a una vista por su id y registra la entrada en el historial.
      *
-     * @param {'home'|'shop'} viewId
+     * @param {'home'|'hub'|'games'|'shop'|'profile'|'events'} viewId
      * @param {string|null}   [anchor]   ID del elemento al que hacer scroll (sin #).
      * @param {boolean}       [replace]  Si true, usa replaceState (para estado inicial).
      */
@@ -395,14 +395,6 @@
             if (viewEls[normalizeViewId(el.dataset.view)]) _bindNavItem(el);
         });
 
-        document.querySelectorAll('[data-profile-shop-tab]').forEach(el => {
-            el.addEventListener('click', () => {
-                const tab = el.dataset.profileShopTab || 'catalog';
-                navigateTo('shop');
-                setTimeout(() => window.ShopView?.openTab?.(tab), 0);
-            });
-        });
-        
         _syncNavHighlight('hub');
         
         // ── History API: estado inicial ───────────────────────────────────────

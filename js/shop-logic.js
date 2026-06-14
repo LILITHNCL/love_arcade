@@ -2345,15 +2345,6 @@ window.ShopView = {
     },
 
     /**
-     * Puente temporal para la nueva vista Perfil: permite abrir los paneles
-     * legacy de Tienda sin mover todavía la lógica sensible de sync/ajustes.
-     * @param {'catalog'|'library'|'sync'|'settings'} tab
-     */
-    openTab(tab) {
-        switchTab(tab || 'catalog');
-    },
-
-    /**
      * Llamado por spa-router.js al SALIR de la vista de Tienda (v9.6).
      * Desconecta el IntersectionObserver de precarga para liberar recursos
      * cuando el catálogo no es visible. Se reconecta automáticamente en el
@@ -2364,6 +2355,27 @@ window.ShopView = {
             _preloadObserver.disconnect();
             _preloadObserver = null;
         }
+    }
+};
+
+window.ProfileView = {
+    /**
+     * Refresca módulos de Perfil/Mi Arcade cuando la ruta entra en pantalla.
+     * Mantiene las funciones existentes como fuente única para no duplicar lógica.
+     */
+    onEnter() {
+        initEconomyInfo();
+        renderMoonBlessingStatus();
+        renderStreakCalendar();
+        renderHistory();
+        if (allItems.length) renderLibrary(allItems);
+        window.GameCenter?.syncUI?.();
+        const profileView = document.getElementById('view-profile');
+        if (profileView) refreshIcons(profileView);
+    },
+
+    onLeave() {
+        // Reservado para futuros observers/timers propios de Perfil.
     }
 };
 

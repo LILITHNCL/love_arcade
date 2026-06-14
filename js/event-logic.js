@@ -45,7 +45,7 @@
         '#faq details:nth-child(2)',
         '#faq details:nth-child(3)',
         // Shop elements (visibles al navegar a Tienda)
-        '#view-shop .shop-tabs',
+        '#view-shop .shop-toolbar',
         '#view-shop .promo-toggle-wrap',
         // HUD y elementos de la vista de inicio
         '.player-hud',

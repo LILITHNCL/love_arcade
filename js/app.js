@@ -1956,8 +1956,8 @@ window.formatCoinsNavbar = formatCoinsNavbar;
 
 function applyAvatar() {
     if (!store.userAvatar) return;
-    // Selecciona el avatar de la navbar (#user-avatar-display) y el HUD (.hud-avatar)
-    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, .hud-avatar').forEach(el => {
+    // Selecciona avatar de navbar, HUD y Perfil/Mi Arcade.
+    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar').forEach(el => {
         el.style.backgroundImage = `url('${store.userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
@@ -1972,8 +1972,12 @@ function applyAvatar() {
 function applyIdentity() {
     const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
+    const profileSuffixEl = document.getElementById('profile-pref-suffix');
+    const profileNicknameEl = document.getElementById('profile-display-nickname');
     if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
     if (nicknameEl) nicknameEl.textContent = store.nickname || '';
+    if (profileSuffixEl) profileSuffixEl.textContent = store.gender || '@';
+    if (profileNicknameEl) profileNicknameEl.textContent = store.nickname || 'jugador';
 }
 
 function applyTheme(key) {

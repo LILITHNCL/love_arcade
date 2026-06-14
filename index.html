@@ -658,21 +658,6 @@
                 </section>
             </div>
 
-            <!-- ── TABS ── -->
-            <div class="shop-tabs">
-                <button class="shop-tab active" data-tab="catalog">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-layout-grid"></use></svg> Catálogo
-                </button>
-                <button class="shop-tab" data-tab="library">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
-                </button>
-                <button class="shop-tab" data-tab="sync">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg> Sincronizar
-                </button>
-                <button class="shop-tab" data-tab="settings">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-settings-2"></use></svg> Ajustes
-                </button>
-            </div>
 
             <!-- ── TAB: CATÁLOGO ── -->
             <section id="tab-catalog" class="tab-panel">
@@ -739,150 +724,42 @@
                 </div>
             </section>
 
-            <!-- ── TAB: MIS TESOROS ── -->
-            <section id="tab-library" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
-                    <div>
-                        <h2 class="section-title">Mis Tesoros</h2>
-                        <p class="section-subtitle">Todos tus wallpapers desbloqueados</p>
+        </div><!-- /#view-shop -->
+
+
+        <!-- ═══════════════════════════════════════════
+             VISTA: PERFIL
+             ═══════════════════════════════════════════ -->
+        <div id="view-profile" class="view-section section-shell hidden">
+            <section class="profile-player-card dashboard-card dashboard-card--elevated" aria-labelledby="profile-view-title">
+                <div class="profile-player-card__identity">
+                    <div class="profile-avatar" id="profile-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
+                        <svg class="icon" width="28" height="28" aria-hidden="true"><use href="#icon-user"></use></svg>
+                    </div>
+                    <div class="section-heading">
+                        <p class="section-kicker section-heading__eyebrow">Mi Arcade</p>
+                        <h2 id="profile-view-title" class="section-title section-heading__title">Perfil y progreso</h2>
+                        <p class="section-subtitle section-heading__copy">Bienvenid<span id="profile-pref-suffix">@</span>, <strong id="profile-display-nickname">jugador</strong>. Gestiona identidad, tesoros, sync y configuración desde un solo centro.</p>
                     </div>
                 </div>
-                <div id="library-container" class="shop-grid treasury-grid">
-                    <p style="color:var(--text-low); grid-column:1/-1; text-align:center; padding:40px 0;">Cargando tu biblioteca…</p>
-                </div>
-            </section>
-
-            <!-- ── TAB: SINCRONIZAR ── -->
-            <section id="tab-sync" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
-                    <div>
-                        <h2 class="section-title">Sincronizar Partida</h2>
-                        <p class="section-subtitle">Transfiere tu progreso entre dispositivos</p>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--accent-soft); border:1px solid var(--accent-border); font-size:0.72rem; font-weight:700; color:var(--accent);">
-                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Checksum SHA-256
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--success-soft); border:1px solid rgba(34,208,122,0.3); font-size:0.72rem; font-weight:700; color:var(--success);">
-                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Anti-edición
-                    </div>
-                </div>
-
-                <div class="memory-card">
-                    <div class="memory-card__header">
-                        <div class="memory-card__chip memory-card__chip--export">
-                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
-                        </div>
-                        <div>
-                            <h3 class="memory-card__title">Exportar partida</h3>
-                            <p class="memory-card__sub">Genera y descarga un respaldo binario comprimido (.labak)</p>
-                        </div>
-                    </div>
-                    <button id="btn-export" class="btn-primary" style="position:relative; z-index:1;">
-                        <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
-                        <span>Exportar y descargar</span>
-                    </button>
-                    <p id="export-msg" class="feedback-msg"></p>
-                </div>
-
-                <div class="memory-card" style="border-color:rgba(34,208,122,0.25);">
-                    <div class="memory-card__header">
-                        <div class="memory-card__chip memory-card__chip--import">
-                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
-                        </div>
-                        <div>
-                            <h3 class="memory-card__title">Importar partida</h3>
-                            <p class="memory-card__sub">Carga un archivo .labak o .labak.gz para restaurar tu progreso</p>
-                        </div>
-                    </div>
-
-                    <label for="import-file" class="btn-ghost file-label" style="position:relative; z-index:1;">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-file-up"></use></svg> Seleccionar archivo .labak / .labak.gz
+                <div class="profile-player-card__actions">
+                    <label for="avatar-upload-hud" class="secondary-action profile-avatar-upload">
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        Cambiar avatar
                     </label>
-                    <input type="file" id="import-file" accept=".labak,.gz" hidden>
-                    <span id="import-file-name" class="file-name-display">Ningún archivo seleccionado</span>
-
-                    <button id="btn-import" class="btn-primary" style="margin-top:10px; width:100%; justify-content:center; position:relative; z-index:1; background:linear-gradient(135deg,#22d07a,#16a85e); color:#041a0a;">
-                        <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-check-circle"></use></svg>
-                        <span>Importar progreso</span>
+                    <button id="btn-profile-edit-identity" class="secondary-action" type="button">
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-pencil"></use></svg>
+                        Editar identidad
                     </button>
-                    <p id="import-msg" class="feedback-msg"></p>
-                </div>
-
-                <!-- ── NUBE: Sentinel Cloud Sync v14.0 ── -->
-                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35); margin-top:8px;">
-                    <div class="memory-card__header">
-                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(99,179,237,0.25),rgba(66,153,225,0.15)); border:1px solid rgba(99,179,237,0.4);">
-                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:#63b3ed;"><use href="#icon-download-cloud"></use></svg>
-                        </div>
-                        <div>
-                            <h3 class="memory-card__title">Sincronización en la Nube</h3>
-                            <p class="memory-card__sub">Portabilidad total · progreso entre dispositivos</p>
-                        </div>
-                        <!-- Indicador de estado en tiempo real -->
-                        <span id="cloud-status-badge" style="margin-left:auto; font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(113,128,150,0.2); color:var(--text-low); white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                            <span id="cloud-status-dot" style="width:6px; height:6px; border-radius:50%; background:var(--text-low); display:inline-block;"></span>
-                            <span id="cloud-status-text">Inactivo</span>
-                        </span>
-                    </div>
-                    <p id="cloud-account-state" style="font-size:0.78rem; color:var(--text-low); margin:0 0 6px; line-height:1.5;">
-                        Estado: Invitado
-                    </p>
-                    <p id="cloud-last-sync" style="font-size:0.68rem; color:var(--text-low); margin:0 0 12px;">
-                        Última sincronización: —-
-                    </p>
-
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button id="btn-cloud-open-gatekeeper" class="btn-primary" style="flex:1; justify-content:center;">
-                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-lock"></use></svg>
-                            Gestionar Cuenta
-                        </button>
-                    </div>
-                    <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
-                    <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
-                </div>
-
-                <div class="memory-card" id="push-notifications-card" style="border-color:rgba(155,89,255,0.45); margin-top:8px;">
-                    <div class="memory-card__header">
-                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(102,57,166,0.2)); border:1px solid rgba(155,89,255,0.5);">
-                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:var(--accent);"><use href="#icon-bell"></use></svg>
-                        </div>
-                        <div>
-                            <h3 class="memory-card__title">Recordatorios activos</h3>
-                            <p class="memory-card__sub">Recibe avisos importantes.</p>
-                        </div>
-                    </div>
-
-                    <p id="push-support-state" class="push-support-state"></p>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-                        <button id="btn-push-enable" class="btn-primary push-enable-btn" style="justify-content:center;">
-                            <svg class="icon push-enable-btn__icon" width="14" height="14" aria-hidden="true"><use href="#icon-bell"></use></svg>
-                            <span class="push-enable-btn__label">Recibir novedades</span>
-                        </button>
-                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar aviso</button>
-                    </div>
-                    <p id="push-status-msg" class="feedback-msg" style="min-height:18px;"></p>
-                    <div id="push-recovery-card" class="push-recovery-card hidden" role="status" aria-live="polite">
-                        <p class="push-recovery-title">¡Casi listo! Solo falta un paso:</p>
-                        <p class="push-recovery-copy">Para recibir actualizaciones, tu navegador necesita un permiso manual:</p>
-                        <ol class="push-recovery-steps">
-                            <li>Toca el <strong>candado o escudo</strong> junto a la URL.</li>
-                            <li>Entra en <strong>Configuración del sitio</strong>.</li>
-                            <li>Ve a <strong>Permisos</strong> y activa <strong>Notificaciones</strong>.</li>
-                        </ol>
-                    </div>
-
-                    
                 </div>
             </section>
 
-            <!-- ── TAB: AJUSTES ── -->
-            <section id="tab-settings" class="tab-panel hidden">
+            <!-- ── PERFIL: PERSONALIZACIÓN Y PROGRESO ── -->
+            <section id="tab-settings" class="profile-section profile-settings-grid">
                 <div class="section-header" style="margin-bottom:16px;">
                     <div>
-                        <h2 class="section-title">Ajustes</h2>
+                        <p class="section-kicker section-heading__eyebrow">Mi Arcade</p>
+                        <h2 class="section-title section-heading__title">Personalización y progreso</h2>
                         <p class="section-subtitle">Personaliza tu experiencia</p>
                     </div>
                 </div>
@@ -1016,45 +893,152 @@
                 </div>
             </section>
 
-        </div><!-- /#view-shop -->
 
 
-        <!-- ═══════════════════════════════════════════
-             VISTA: PERFIL
-             ═══════════════════════════════════════════ -->
-        <div id="view-profile" class="view-section section-shell hidden">
-            <section class="section-header section-heading profile-view-header" aria-labelledby="profile-view-title">
-                <div>
-                    <p class="section-kicker section-heading__eyebrow">Mi Arcade</p>
-                    <h2 id="profile-view-title" class="section-title section-heading__title">Perfil y progreso</h2>
-                    <p class="section-subtitle section-heading__copy">Nuevo espacio para identidad, tesoros, sincronización, ajustes, racha e historial.</p>
+            <!-- ── PERFIL: MIS TESOROS ── -->
+            <section id="tab-library" class="profile-section panel-solid dashboard-card">
+                <div class="section-header" style="margin-bottom:16px;">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Colección</p>
+                        <h2 class="section-title section-heading__title">Mis Tesoros</h2>
+                        <p class="section-subtitle">Todos tus wallpapers desbloqueados</p>
+                    </div>
                 </div>
-                <span class="reward-badge">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-star"></use></svg>
-                    Progreso
-                </span>
+                <div id="library-container" class="shop-grid treasury-grid">
+                    <p style="color:var(--text-low); grid-column:1/-1; text-align:center; padding:40px 0;">Cargando tu biblioteca…</p>
+                </div>
             </section>
 
-            <section class="profile-route-grid" aria-label="Áreas del perfil">
-                <article class="profile-route-card panel-solid dashboard-card">
-                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-archive"></use></svg>
-                    <h3>Mis Tesoros</h3>
-                    <p>Inventario y wallpapers desbloqueados. Se migrará desde Tienda en una fase posterior.</p>
-                    <button type="button" class="secondary-action" data-profile-shop-tab="library">Abrir tesoros actuales</button>
-                </article>
-                <article class="profile-route-card panel-solid dashboard-card">
-                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg>
-                    <h3>Sincronización</h3>
-                    <p>Exportación, importación, nube y recordatorios permanecerán funcionales mientras se separan de Tienda.</p>
-                    <button type="button" class="secondary-action" data-profile-shop-tab="sync">Abrir sync actual</button>
-                </article>
-                <article class="profile-route-card panel-solid dashboard-card">
-                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-settings-2"></use></svg>
-                    <h3>Ajustes y racha</h3>
-                    <p>Tema, Bendición Lunar, calendario de racha, economía e historial tendrán aquí su destino final.</p>
-                    <button type="button" class="secondary-action" data-profile-shop-tab="settings">Abrir ajustes actuales</button>
-                </article>
+
+
+            <!-- ── PERFIL: SINCRONIZACIÓN ── -->
+            <section id="tab-sync" class="profile-section panel-solid dashboard-card">
+                <div class="section-header" style="margin-bottom:16px;">
+                    <div>
+                        <p class="section-kicker section-heading__eyebrow">Portabilidad</p>
+                        <h2 class="section-title section-heading__title">Sincronización</h2>
+                        <p class="section-subtitle">Transfiere tu progreso entre dispositivos</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--accent-soft); border:1px solid var(--accent-border); font-size:0.72rem; font-weight:700; color:var(--accent);">
+                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Checksum SHA-256
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--success-soft); border:1px solid rgba(34,208,122,0.3); font-size:0.72rem; font-weight:700; color:var(--success);">
+                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Anti-edición
+                    </div>
+                </div>
+
+                <div class="memory-card">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip memory-card__chip--export">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Exportar partida</h3>
+                            <p class="memory-card__sub">Genera y descarga un respaldo binario comprimido (.labak)</p>
+                        </div>
+                    </div>
+                    <button id="btn-export" class="btn-primary" style="position:relative; z-index:1;">
+                        <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
+                        <span>Exportar y descargar</span>
+                    </button>
+                    <p id="export-msg" class="feedback-msg"></p>
+                </div>
+
+                <div class="memory-card" style="border-color:rgba(34,208,122,0.25);">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip memory-card__chip--import">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Importar partida</h3>
+                            <p class="memory-card__sub">Carga un archivo .labak o .labak.gz para restaurar tu progreso</p>
+                        </div>
+                    </div>
+
+                    <label for="import-file" class="btn-ghost file-label" style="position:relative; z-index:1;">
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-file-up"></use></svg> Seleccionar archivo .labak / .labak.gz
+                    </label>
+                    <input type="file" id="import-file" accept=".labak,.gz" hidden>
+                    <span id="import-file-name" class="file-name-display">Ningún archivo seleccionado</span>
+
+                    <button id="btn-import" class="btn-primary" style="margin-top:10px; width:100%; justify-content:center; position:relative; z-index:1; background:linear-gradient(135deg,#22d07a,#16a85e); color:#041a0a;">
+                        <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-check-circle"></use></svg>
+                        <span>Importar progreso</span>
+                    </button>
+                    <p id="import-msg" class="feedback-msg"></p>
+                </div>
+
+                <!-- ── NUBE: Sentinel Cloud Sync v14.0 ── -->
+                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35); margin-top:8px;">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(99,179,237,0.25),rgba(66,153,225,0.15)); border:1px solid rgba(99,179,237,0.4);">
+                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:#63b3ed;"><use href="#icon-download-cloud"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Sincronización en la Nube</h3>
+                            <p class="memory-card__sub">Portabilidad total · progreso entre dispositivos</p>
+                        </div>
+                        <!-- Indicador de estado en tiempo real -->
+                        <span id="cloud-status-badge" style="margin-left:auto; font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(113,128,150,0.2); color:var(--text-low); white-space:nowrap; display:flex; align-items:center; gap:4px;">
+                            <span id="cloud-status-dot" style="width:6px; height:6px; border-radius:50%; background:var(--text-low); display:inline-block;"></span>
+                            <span id="cloud-status-text">Inactivo</span>
+                        </span>
+                    </div>
+                    <p id="cloud-account-state" style="font-size:0.78rem; color:var(--text-low); margin:0 0 6px; line-height:1.5;">
+                        Estado: Invitado
+                    </p>
+                    <p id="cloud-last-sync" style="font-size:0.68rem; color:var(--text-low); margin:0 0 12px;">
+                        Última sincronización: —-
+                    </p>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button id="btn-cloud-open-gatekeeper" class="btn-primary" style="flex:1; justify-content:center;">
+                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-lock"></use></svg>
+                            Gestionar Cuenta
+                        </button>
+                    </div>
+                    <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
+                    <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
+                </div>
+
+                <div class="memory-card" id="push-notifications-card" style="border-color:rgba(155,89,255,0.45); margin-top:8px;">
+                    <div class="memory-card__header">
+                        <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(102,57,166,0.2)); border:1px solid rgba(155,89,255,0.5);">
+                            <svg class="icon" width="18" height="18" aria-hidden="true" style="color:var(--accent);"><use href="#icon-bell"></use></svg>
+                        </div>
+                        <div>
+                            <h3 class="memory-card__title">Recordatorios activos</h3>
+                            <p class="memory-card__sub">Recibe avisos importantes.</p>
+                        </div>
+                    </div>
+
+                    <p id="push-support-state" class="push-support-state"></p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                        <button id="btn-push-enable" class="btn-primary push-enable-btn" style="justify-content:center;">
+                            <svg class="icon push-enable-btn__icon" width="14" height="14" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                            <span class="push-enable-btn__label">Recibir novedades</span>
+                        </button>
+                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar aviso</button>
+                    </div>
+                    <p id="push-status-msg" class="feedback-msg" style="min-height:18px;"></p>
+                    <div id="push-recovery-card" class="push-recovery-card hidden" role="status" aria-live="polite">
+                        <p class="push-recovery-title">¡Casi listo! Solo falta un paso:</p>
+                        <p class="push-recovery-copy">Para recibir actualizaciones, tu navegador necesita un permiso manual:</p>
+                        <ol class="push-recovery-steps">
+                            <li>Toca el <strong>candado o escudo</strong> junto a la URL.</li>
+                            <li>Entra en <strong>Configuración del sitio</strong>.</li>
+                            <li>Ve a <strong>Permisos</strong> y activa <strong>Notificaciones</strong>.</li>
+                        </ol>
+                    </div>
+
+
+                </div>
             </section>
+
+
         </div><!-- /#view-profile -->
 
 
@@ -1684,8 +1668,8 @@
         window.revealUI?.();
 
         // ── Botón de edición en el HUD ──────────────────────────────────────
-        document.getElementById('btn-edit-identity')
-            ?.addEventListener('click', () => openIdentityModal('edit'));
+        document.querySelectorAll('#btn-edit-identity, #btn-profile-edit-identity')
+            .forEach(btn => btn.addEventListener('click', () => openIdentityModal('edit')));
 
         initIdentityModalListeners();
 
