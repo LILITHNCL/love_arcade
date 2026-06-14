@@ -1219,8 +1219,10 @@ function switchTab(tab) {
     document.querySelectorAll('.shop-tab').forEach(b =>
         b.classList.toggle('active', b.dataset.tab === tab)
     );
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
     const panel = document.getElementById(`tab-${tab}`);
+    if (!panel) return;
+    const ownerView = panel.closest('.view-section') || document;
+    ownerView.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
     panel.classList.remove('hidden');
 
     if (tab === 'settings') {
@@ -1837,9 +1839,30 @@ function renderHistory() {
 
     if (!history.length) {
         container.innerHTML =
-            '<p style="color:var(--text-low); font-size:0.8rem; text-align:center; padding:16px 0;">Sin transacciones aún.</p>';
+            '<div class="history-empty-state"><strong>Aún no hay movimientos.</strong><span>Cuando ganes o gastes monedas, aparecerán aquí.</span></div>';
         return;
     }
+
+    const prettyGameName = (value) => {
+        const key = String(value || '').toLowerCase();
+        const names = {
+            jigsaw: 'Rompecabezas', rompecabezas: 'Rompecabezas', shooter: 'Vortex', vortex: 'Vortex',
+            word_hunt: 'Word Hunt', 'word-hunt': 'Word Hunt', ollin_smash: 'Ollin Smash', 'ollin-smash': 'Ollin Smash',
+            jungle_dash: 'Jungle Dash', 'jungle-dash': 'Jungle Dash', dodger: 'Dodger', '2048': '2048'
+        };
+        return names[key] || 'Love Arcade';
+    };
+    const prettyHistory = (entry) => {
+        const raw = String(entry?.motivo || entry?.name || 'Movimiento');
+        const lower = raw.toLowerCase();
+        const gameMatch = raw.match(/·\s*([\w-]+)\s*$/);
+        const gameName = prettyGameName(gameMatch?.[1]);
+        if (lower.includes('código')) return { title: 'Código canjeado', context: gameName };
+        if (lower.includes('nivel') && lower.includes('completado')) return { title: 'Nivel completado', context: gameName };
+        if (lower.includes('bono')) return { title: 'Bono recibido', context: 'Recompensa diaria' };
+        if (lower.includes('compra')) return { title: 'Compra realizada', context: 'Tienda' };
+        return { title: raw.replace(/level_[\w-]+/gi, 'nivel').replace(/\s*·\s*[\w-]+\s*$/, ''), context: gameName };
+    };
 
     container.innerHTML = history.slice(0, 50).map(entry => {
         if (entry.tipo) {
@@ -1847,11 +1870,12 @@ function renderHistory() {
             const fecha = new Date(entry.fecha).toLocaleString('es-MX', {
                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
             });
+            const pretty = prettyHistory(entry);
             return `<div class="history-entry">
                 <span class="history-icon ${isIn ? 'history-icon--in' : 'history-icon--out'}">${isIn ? '+' : '-'}</span>
                 <div class="history-detail">
-                    <span class="history-motivo">${entry.motivo}</span>
-                    <span class="history-fecha">${fecha}</span>
+                    <span class="history-motivo">${pretty.title}</span>
+                    <span class="history-fecha">${pretty.context} · ${fecha}</span>
                 </div>
                 <span class="history-amount ${isIn ? 'history-amount--in' : 'history-amount--out'}">
                     ${isIn ? '+' : '-'}${entry.cantidad}
@@ -1867,11 +1891,12 @@ function renderHistory() {
                 ? new Date(entry.date).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
                 : '—';
             const isCode = entry.itemId === 'promo_code';
+            const pretty = prettyHistory(entry);
             return `<div class="history-entry">
                 <span class="history-icon ${isCode ? 'history-icon--in' : 'history-icon--out'}">${isCode ? '+' : '-'}</span>
                 <div class="history-detail">
-                    <span class="history-motivo">${entry.name || 'Transacción'}</span>
-                    <span class="history-fecha">${fecha}</span>
+                    <span class="history-motivo">${pretty.title}</span>
+                    <span class="history-fecha">${pretty.context} · ${fecha}</span>
                 </div>
                 <span class="history-amount ${isCode ? 'history-amount--in' : 'history-amount--out'}">
                     ${isCode ? `+${entry.price || '?'}` : `-${entry.price || '?'}`}
@@ -2530,6 +2555,48 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.shop-tab').forEach(btn =>
         btn.addEventListener('click', () => switchTab(btn.dataset.tab))
     );
+
+
+    // Navegación interna de Perfil: pantallas dedicadas tipo app, sin acordeones.
+    const profileView = document.getElementById('view-profile');
+    const profileHome = profileView?.querySelector('[data-profile-panel="home"]');
+    let profileLastTrigger = null;
+
+    function showProfilePanel(panelName, trigger) {
+        if (!profileView || !profileHome) return;
+        if (trigger) profileLastTrigger = trigger;
+        profileView.querySelectorAll('[data-profile-panel]').forEach(panel => {
+            panel.classList.toggle('hidden', panel.dataset.profilePanel !== panelName);
+        });
+
+        if (panelName === 'personalization') {
+            window.GameCenter?.syncUI?.();
+        }
+        if (panelName === 'upgrades') {
+            renderMoonBlessingStatus();
+        }
+        if (panelName === 'history') {
+            renderHistory();
+        }
+
+        const activePanel = profileView.querySelector(`[data-profile-panel="${panelName}"]`);
+        refreshIcons(activePanel || profileView);
+        requestAnimationFrame(() => {
+            const focusTarget = activePanel?.querySelector('[data-profile-back], button, input, [tabindex]:not([tabindex="-1"])');
+            focusTarget?.focus?.({ preventScroll: true });
+        });
+    }
+
+    profileView?.querySelectorAll('[data-profile-target]').forEach(btn => {
+        btn.addEventListener('click', () => showProfilePanel(btn.dataset.profileTarget, btn));
+    });
+
+    profileView?.querySelectorAll('[data-profile-back]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            showProfilePanel('home');
+            requestAnimationFrame(() => profileLastTrigger?.focus?.({ preventScroll: true }));
+        });
+    });
 
     // Search con debounce
     const searchInput  = document.getElementById('search-input');
