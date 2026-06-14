@@ -1218,8 +1218,9 @@ function _isGiftItem(item) {
     return item?.category === 'gift' || (Array.isArray(item?.tags) && item.tags.includes('regalo'));
 }
 
-function _isGiftUnlocked(item) {
+function _isRequirementMet(item) {
     const reqType = item?.requirements?.type;
+    if (!reqType) return true;
     if (reqType === 'game_played') {
         const byWindow = Boolean(window.__laSessionGameCompleted);
         let bySession = false;
@@ -1229,8 +1230,105 @@ function _isGiftUnlocked(item) {
     return false;
 }
 
+function _isGiftUnlocked(item) {
+    return _isRequirementMet(item);
+}
+
 function _getGiftRequirementText(item) {
     return item?.requirements?.description || 'Completa 1 partida';
+}
+
+function _getRewardType(item) {
+    const tags = Array.isArray(item.tags) ? item.tags : [];
+    if (_isGiftItem(item)) return 'Regalo desbloqueable';
+    if (tags.includes('Avatar')) return 'Avatar';
+    if (tags.includes('Stickers')) return 'Sticker';
+    if (tags.includes('Mobile') && tags.includes('PC')) return 'Wallpaper móvil + PC';
+    if (tags.includes('Mobile')) return 'Wallpaper móvil';
+    if (tags.includes('PC')) return 'Wallpaper PC';
+    return 'Recompensa arcade';
+}
+
+function _deriveRewardState(item) {
+    const bought = GameCenter.getBoughtCount(item.id);
+    const isOwned = bought > 0;
+    const isGift = _isGiftItem(item);
+    const unlocked = _isRequirementMet(item);
+    const eco = window.ECONOMY || {};
+    const basePrice = Number(item.price) || 0;
+    const finalPrice = eco.isSaleActive ? Math.floor(basePrice * eco.saleMultiplier) : basePrice;
+    const balance = Number(window.GameCenter?.getBalance?.() || 0);
+    const missingCoins = Math.max(0, finalPrice - balance);
+    const isSale = Boolean(eco.isSaleActive && finalPrice < basePrice && !isOwned && !isGift);
+    const isInsufficient = !isOwned && !isGift && finalPrice > 0 && missingCoins > 0;
+
+    if (isOwned) {
+        return {
+            key: 'owned',
+            badge: 'Tuyo',
+            badgeIcon: 'check-circle-2',
+            type: _getRewardType(item),
+            finalPrice,
+            missingCoins,
+            requirementText: '',
+            primaryText: 'Descargar',
+            statusText: 'Desbloqueado en tu colección'
+        };
+    }
+
+    if (!unlocked) {
+        return {
+            key: 'locked',
+            badge: 'Bloqueado',
+            badgeIcon: 'lock',
+            type: _getRewardType(item),
+            finalPrice,
+            missingCoins,
+            requirementText: item.requirements?.description || _getGiftRequirementText(item),
+            primaryText: 'Bloqueado',
+            statusText: item.requirements?.description || 'Completa el requisito para desbloquear'
+        };
+    }
+
+    if (isGift) {
+        return {
+            key: 'gift',
+            badge: 'Regalo',
+            badgeIcon: 'gift',
+            type: _getRewardType(item),
+            finalPrice,
+            missingCoins,
+            requirementText: _getGiftRequirementText(item),
+            primaryText: 'Obtener',
+            statusText: 'Disponible por jugar'
+        };
+    }
+
+    if (isInsufficient) {
+        return {
+            key: 'insufficient',
+            badge: isSale ? 'Oferta' : 'Nuevo',
+            badgeIcon: isSale ? 'zap' : 'sparkles',
+            type: _getRewardType(item),
+            finalPrice,
+            missingCoins,
+            requirementText: '',
+            primaryText: `Faltan ${missingCoins} monedas`,
+            statusText: 'Saldo insuficiente'
+        };
+    }
+
+    return {
+        key: isSale ? 'sale' : 'available',
+        badge: isSale ? 'Oferta' : 'Nuevo',
+        badgeIcon: isSale ? 'zap' : 'sparkles',
+        type: _getRewardType(item),
+        finalPrice,
+        missingCoins,
+        requirementText: '',
+        primaryText: isSale ? 'Desbloquear oferta' : 'Desbloquear',
+        statusText: isSale ? 'Oferta activa' : 'Disponible'
+    };
 }
 
 function _readGiftClaimOrder() {
@@ -1530,66 +1628,116 @@ function renderStreakCalendar() {
 }
 
 function _buildShopCard(item, loading = 'lazy') {
-    const bought     = GameCenter.getBoughtCount(item.id);
-    const isOwned    = bought > 0;
-    const eco        = window.ECONOMY;
-    const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
+    const state      = _deriveRewardState(item);
+    const isOwned    = state.key === 'owned';
+    const isLocked   = state.key === 'locked';
+    const isGift     = state.key === 'gift';
+    const isShort    = state.key === 'insufficient';
+    const isSale     = state.key === 'sale' || (state.badge === 'Oferta' && !isOwned);
     const isEager    = loading === 'eager';
+    const price      = Number(item.price) || 0;
+    const rewardType = state.type;
+    const safeName   = String(item.name || 'Recompensa');
+    const safeNameAttr = safeName.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const itemJSON   = JSON.stringify(item).replace(/'/g, "&#39;");
+    const badgeClass = state.badge === 'Oferta' ? 'sale' : state.key;
 
-    const priceHTML = eco.isSaleActive && !isOwned
-        ? `<div class="shop-price">
-               <span class="price-original">${item.price}</span>
-               <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-               <span class="price-sale">${finalPrice}</span>
+    const priceHTML = isOwned
+        ? `<div class="reward-card__price reward-card__price--owned">
+               <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg>
+               Tuyo
            </div>`
-        : `<div class="shop-price">
-               <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-               ${isOwned ? '<span style="color:var(--success);">Obtenido</span>' : item.price}
-           </div>`;
+        : isLocked
+            ? `<div class="reward-card__price reward-card__price--locked">
+                   <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg>
+                   ${state.requirementText}
+               </div>`
+            : isGift
+                ? `<div class="reward-card__price reward-card__price--gift">
+                       <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-gift"></use></svg>
+                       ${state.requirementText}
+                   </div>`
+                : isSale
+                    ? `<div class="reward-card__price">
+                           <span class="price-original">${price}</span>
+                           <svg class="icon" width="12" height="12" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
+                           <span class="price-sale">${state.finalPrice}</span>
+                       </div>`
+                    : `<div class="reward-card__price">
+                           <svg class="icon" width="12" height="12" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
+                           ${state.finalPrice}
+                       </div>`;
 
-    const actionHTML = isOwned
-        ? (() => {
-            const url = GameCenter.getDownloadUrl(item.id, item.file);
-            return url
-                ? `<a href="${url}" download class="btn-primary vault-btn"
-                       style="width:100%; justify-content:center; font-size:0.78rem; padding:7px;">
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-download"></use></svg> Descargar
-                   </a>`
-                : `<button class="btn-primary"
-                       style="width:100%; justify-content:center; opacity:0.5; font-size:0.78rem; padding:7px;"
-                       disabled>
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-check"></use></svg> Obtenido
-                   </button>`;
-        })()
-        : `<div style="display:flex; gap:5px; width:100%;">
-                <button class="btn-ghost shop-preview-btn"
-                        style="flex-shrink:0; padding:7px 9px;"
-                        data-id="${item.id}" title="Vista previa">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                </button>
-                <button class="btn-primary shop-buy-btn"
-                        style="flex:1; justify-content:center; font-size:0.78rem; padding:7px;"
-                        data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
-                    <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg> ${finalPrice}
-                </button>
-           </div>`;
+    let primaryHTML;
+    if (isOwned) {
+        const url = GameCenter.getDownloadUrl(item.id, item.file);
+        primaryHTML = url
+            ? `<a href="${url}" download class="btn-primary vault-btn reward-card__primary"
+                   aria-label="Descargar ${safeNameAttr}">
+                   <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-download"></use></svg>
+                   Descargar
+               </a>`
+            : `<button class="btn-primary reward-card__primary" disabled aria-label="${safeNameAttr} obtenido sin archivo disponible">
+                   <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-check"></use></svg>
+                   Obtenido
+               </button>`;
+    } else if (isLocked) {
+        primaryHTML = `<button class="btn-primary reward-card__primary" disabled aria-describedby="reward-status-${item.id}">
+                   <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-lock"></use></svg>
+                   Bloqueado
+               </button>`;
+    } else if (isShort) {
+        primaryHTML = `<button class="btn-primary reward-card__primary" disabled aria-describedby="reward-status-${item.id}">
+                   <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-star"></use></svg>
+                   ${state.primaryText}
+               </button>`;
+    } else {
+        primaryHTML = `<button class="btn-primary shop-buy-btn reward-card__primary"
+                   data-item='${itemJSON}'
+                   aria-label="${isGift ? `Obtener regalo ${safeNameAttr}` : `Desbloquear ${safeNameAttr} por ${state.finalPrice} monedas`}">
+                   <svg class="icon" width="13" height="13" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
+                   ${state.primaryText}
+               </button>`;
+    }
+
+    const secondaryHTML = isLocked || isShort
+        ? `<a href="#view=games" class="btn-ghost reward-card__secondary" data-view="games" aria-label="Ir a Juegos para ganar monedas o desbloquear ${safeNameAttr}">
+               <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-gamepad-2"></use></svg>
+               Jugar para ganar
+           </a>`
+        : `<button class="btn-ghost shop-preview-btn reward-card__secondary"
+                   data-id="${item.id}"
+                   aria-label="Ver preview de ${safeNameAttr}">
+               <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-eye"></use></svg>
+               Ver preview
+           </button>`;
 
     const card = document.createElement('article');
-    card.className = 'glass-panel shop-card';
+    card.className = `panel-solid shop-card reward-card reward-card--${state.key}`;
     card.innerHTML =
-        `        <img src="${item.image}" alt="${item.name}" class="shop-img"
-             loading="${loading}"
-             ${isEager ? 'fetchpriority="high"' : ''}
-             decoding="async" crossorigin="anonymous"
-             onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
-        ${isOwned ? '<div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>' : ''}
-        ${eco.isSaleActive && !isOwned
-            ? '<div class="sale-card-badge"><svg class="icon" width="9" height="9" style="fill:currentColor;stroke:none" aria-hidden="true"><use href="#icon-zap"></use></svg> OFERTA</div>'
-            : ''}
-        <div style="width:100%;">
-            <h3 class="card-name">${item.name}</h3>
+        `<div class="reward-card__media">
+            <img src="${item.image}" alt="${safeNameAttr}" class="shop-img reward-card__image"
+                 loading="${loading}"
+                 ${isEager ? 'fetchpriority="high"' : ''}
+                 decoding="async" crossorigin="anonymous"
+                 onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
+            ${isLocked ? '<div class="reward-card__lock-overlay" aria-hidden="true"></div>' : ''}
+            <span class="reward-card__badge reward-card__badge--${badgeClass}">
+                <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-${state.badgeIcon}"></use></svg>
+                ${state.badge}
+            </span>
+        </div>
+        <div class="reward-card__body">
+            <div class="reward-card__meta-row">
+                <span class="reward-card__type">${rewardType}</span>
+                <span id="reward-status-${item.id}" class="reward-card__state">${state.statusText}</span>
+            </div>
+            <h3 class="card-name reward-card__name">${safeName}</h3>
             ${priceHTML}
-            ${actionHTML}
+            <div class="reward-card__actions">
+                ${primaryHTML}
+                ${secondaryHTML}
+            </div>
         </div>`;
     return card;
 }
@@ -1670,6 +1818,12 @@ function _bindShopContainerDelegation() {
     _shopDelegationBound = true;
 
     container.addEventListener('click', async (e) => {
+        const gamesLink = e.target.closest('.reward-card__secondary[data-view="games"]');
+        if (gamesLink) {
+            e.preventDefault();
+            window.SpaRouter?.navigateTo?.('games');
+            return;
+        }
 
         const previewBtn = e.target.closest('.shop-preview-btn');
         if (previewBtn) {

@@ -1993,10 +1993,155 @@ body::before {
     object-fit: cover;
     border-radius: var(--radius-sm);
     margin-bottom: 8px;
-    transition: transform 0.2s;
+    transition: transform 160ms ease-out;
     contain: paint;
 }
 .shop-card:hover .shop-img { transform: scale(1.02); }
+
+.reward-card {
+    align-items: stretch;
+    text-align: left;
+    gap: 0;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.reward-card__media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    background: var(--solid-surface-deep);
+}
+
+.reward-card__image {
+    display: block;
+    margin-bottom: 0;
+}
+
+.reward-card__lock-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 6, 12, 0.62);
+    border: 1px solid rgba(148,163,184,0.22);
+    pointer-events: none;
+}
+
+.reward-card__badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(11, 14, 24, 0.86);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-high);
+    font-size: 0.62rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.reward-card__badge--sale,
+.reward-card__badge--gift {
+    border-color: rgba(251,191,36,0.34);
+    color: var(--gold);
+}
+
+.reward-card__badge--owned {
+    border-color: rgba(34,208,122,0.34);
+    color: var(--success);
+}
+
+.reward-card__badge--locked,
+.reward-card__badge--insufficient {
+    border-color: rgba(148,163,184,0.3);
+    color: var(--text-med);
+}
+
+.reward-card__body {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.reward-card__meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reward-card__type,
+.reward-card__state {
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: var(--text-low);
+}
+
+.reward-card__state {
+    color: var(--text-med);
+}
+
+.reward-card__name {
+    margin-bottom: 0;
+}
+
+.reward-card__price {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--price-current-aa);
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
+.reward-card__price--owned {
+    color: var(--success);
+}
+
+.reward-card__price--gift {
+    color: var(--gold);
+}
+
+.reward-card__price--locked {
+    color: var(--text-med);
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.reward-card__actions {
+    display: grid;
+    gap: 6px;
+}
+
+.reward-card__primary,
+.reward-card__secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
+    font-size: 0.76rem;
+    padding: 8px 10px;
+}
+
+.reward-card__primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+    filter: grayscale(0.2);
+}
+
+.reward-card--locked .reward-card__image,
+.reward-card--insufficient .reward-card__image {
+    opacity: 0.72;
+}
 
 /* ================================================================
    SHAKE ANIMATION
