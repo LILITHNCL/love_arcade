@@ -107,7 +107,16 @@
         runNext();
     }
 
-    async function _renderHomeEventsSummary() {
+    let _homeEventsSummaryTimer = null;
+
+    function _clearHomeEventsSummaryTimer() {
+        if (_homeEventsSummaryTimer !== null) {
+            clearInterval(_homeEventsSummaryTimer);
+            _homeEventsSummaryTimer = null;
+        }
+    }
+
+    async function _renderHomeEventsSummary(options = {}) {
         const container = document.getElementById('home-events-summary');
         if (!container) return;
 
@@ -124,45 +133,58 @@
             return svg;
         };
 
-        const createIconLabel = (name, text, className) => {
-            const el = document.createElement('p');
+        const createIconLabel = (name, text, className, tag = 'p') => {
+            const el = document.createElement(tag);
             if (className) el.className = className;
             el.appendChild(createIcon(name));
             el.appendChild(document.createTextNode(` ${text}`));
             return el;
         };
 
-        container.classList.add('hidden');
-        container.replaceChildren(
-            createIconLabel('sparkles', 'Eventos', 'home-events-summary-card__label'),
-            Object.assign(document.createElement('p'), {
-                className: 'home-events-summary-card__empty',
-                textContent: 'Cargando resumen...'
-            })
-        );
+        const makeButton = (text, targetView, className = 'btn-ghost home-events-summary-card__cta') => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = className;
+            btn.textContent = text;
+            btn.addEventListener('click', () => navigateTo(targetView));
+            return btn;
+        };
+
+        if (!options.silent) {
+            container.classList.remove('hidden');
+            container.setAttribute('aria-busy', 'true');
+            container.replaceChildren(
+                createIconLabel('sparkles', 'Eventos y retos', 'home-events-summary-card__label'),
+                Object.assign(document.createElement('p'), {
+                    className: 'home-events-summary-card__empty',
+                    textContent: 'Buscando actividad disponible...'
+                })
+            );
+        }
 
         try {
             const summary = await window.EventView?.getHomeEventsSummary?.(2);
-            if (!summary || !summary.activeCount) {
-                container.classList.add('hidden');
-                container.innerHTML = '';
-                return;
-            }
-
-            const urgent = summary.urgentEvent;
-            const secondary = summary.topEvents[1];
+            const mode = summary?.mode || 'empty';
+            const focus = summary?.focusEvent || null;
+            const streakInfo = window.GameCenter?.getStreakInfo?.();
+            const dailyReady = Boolean(streakInfo?.canClaim);
 
             const header = document.createElement('div');
             header.className = 'home-events-summary-card__header';
-            header.appendChild(createIconLabel('sparkles', 'Eventos activos', 'home-events-summary-card__label'));
+            const statusText = mode === 'active'
+                ? 'Evento en vivo'
+                : mode === 'upcoming'
+                    ? 'Próximo evento'
+                    : 'Eventos en pausa';
+            header.appendChild(createIconLabel('sparkles', statusText, 'home-events-summary-card__label'));
 
             const badge = document.createElement('span');
-            badge.className = 'home-events-summary-card__count-badge';
+            badge.className = `home-events-summary-card__count-badge home-events-summary-card__count-badge--${mode}`;
             const strong = document.createElement('strong');
-            strong.textContent = String(summary.activeCount);
-            const liveLabel = document.createElement('span');
-            liveLabel.textContent = 'en vivo';
-            badge.append(strong, liveLabel);
+            strong.textContent = mode === 'active' ? String(summary.activeCount) : (dailyReady ? '1' : '0');
+            const badgeLabel = document.createElement('span');
+            badgeLabel.textContent = mode === 'active' ? 'en vivo' : (dailyReady ? 'reto listo' : 'en radar');
+            badge.append(strong, badgeLabel);
             header.appendChild(badge);
 
             const layout = document.createElement('div');
@@ -170,35 +192,54 @@
             const body = document.createElement('div');
             body.className = 'home-events-summary-card__body';
 
-            body.appendChild(Object.assign(document.createElement('p'), {
-                className: 'home-events-summary-card__kicker',
-                textContent: 'Más urgente'
-            }));
-            body.appendChild(Object.assign(document.createElement('h3'), {
-                className: 'home-events-summary-card__title',
-                textContent: urgent.title || ''
-            }));
-            body.appendChild(createIconLabel('clock', `Termina en ${urgent.timeLeft || ''}`, 'home-events-summary-card__meta'));
-            body.appendChild(createIconLabel('gift', `${urgent.reward || ''}`, 'home-events-summary-card__reward'));
-            if (secondary) {
-                body.appendChild(createIconLabel('calendar', `También: ${secondary.title || ''} · ${secondary.timeLeft || ''}`, 'home-events-summary-card__secondary'));
+            if (mode === 'active' && focus) {
+                body.appendChild(Object.assign(document.createElement('p'), { className: 'home-events-summary-card__kicker', textContent: 'Más urgente' }));
+                body.appendChild(Object.assign(document.createElement('h3'), { className: 'home-events-summary-card__title', textContent: focus.title }));
+                body.appendChild(createIconLabel('clock', `Termina en ${focus.timeLeft}`, 'home-events-summary-card__meta'));
+                body.appendChild(createIconLabel('gift', focus.reward, 'home-events-summary-card__reward'));
+                if (summary.topEvents?.[1]) body.appendChild(createIconLabel('calendar', `También: ${summary.topEvents[1].title} · ${summary.topEvents[1].timeLeft}`, 'home-events-summary-card__secondary'));
+                layout.append(body, makeButton('Ver evento', 'events'));
+            } else if (mode === 'upcoming' && focus) {
+                body.appendChild(Object.assign(document.createElement('p'), { className: 'home-events-summary-card__kicker', textContent: 'Teaser' }));
+                body.appendChild(Object.assign(document.createElement('h3'), { className: 'home-events-summary-card__title', textContent: focus.title }));
+                body.appendChild(createIconLabel('clock', `Empieza en ${focus.timeLeft}`, 'home-events-summary-card__meta'));
+                body.appendChild(createIconLabel('gift', focus.reward, 'home-events-summary-card__reward'));
+                layout.append(body, makeButton('Ver detalles', 'events'));
+            } else {
+                body.appendChild(Object.assign(document.createElement('p'), { className: 'home-events-summary-card__kicker', textContent: dailyReady ? 'Reto diario alternativo' : 'Vuelve pronto' }));
+                body.appendChild(Object.assign(document.createElement('h3'), { className: 'home-events-summary-card__title', textContent: dailyReady ? `Bono diario listo: +${streakInfo.nextReward} monedas` : 'Sin eventos activos ahora' }));
+                body.appendChild(createIconLabel(dailyReady ? 'gift' : 'calendar', dailyReady ? `Racha actual: ${streakInfo.streak || 0} día${(streakInfo.streak || 0) === 1 ? '' : 's'}` : 'No hay próximos eventos programados.', 'home-events-summary-card__meta'));
+                const recent = summary?.recentEvents?.[0];
+                body.appendChild(createIconLabel('info', recent ? `Último evento: ${recent.title}` : 'Mientras tanto, juega partidas rápidas para preparar monedas.', 'home-events-summary-card__secondary'));
+                layout.append(body, makeButton(dailyReady ? 'Reclamar en Hub' : 'Jugar ahora', dailyReady ? 'hub' : 'games'));
             }
 
-            const cta = document.createElement('button');
-            cta.type = 'button';
-            cta.className = 'btn-ghost home-events-summary-card__cta';
-            cta.dataset.homeOpenEvents = '';
-            cta.textContent = 'Ver eventos';
-
-            layout.append(body, cta);
             container.replaceChildren(header, layout);
-
             container.classList.remove('hidden');
-            container.querySelector('[data-home-open-events]')?.addEventListener('click', () => navigateTo('events'));
+            container.removeAttribute('aria-busy');
         } catch (_) {
-            container.classList.add('hidden');
-            container.replaceChildren();
+            container.classList.remove('hidden');
+            container.removeAttribute('aria-busy');
+            const header = document.createElement('div');
+            header.className = 'home-events-summary-card__header';
+            header.appendChild(createIconLabel('sparkles', 'Eventos y retos', 'home-events-summary-card__label'));
+            const layout = document.createElement('div');
+            layout.className = 'home-events-summary-card__layout';
+            const body = document.createElement('div');
+            body.className = 'home-events-summary-card__body';
+            body.appendChild(Object.assign(document.createElement('h3'), { className: 'home-events-summary-card__title', textContent: 'Modo sin conexión listo' }));
+            body.appendChild(Object.assign(document.createElement('p'), { className: 'home-events-summary-card__empty', textContent: 'No pudimos actualizar eventos, pero puedes seguir jugando y acumulando monedas.' }));
+            layout.append(body, makeButton('Ir a juegos', 'games'));
+            container.replaceChildren(header, layout);
         }
+    }
+
+    function _startHomeEventsSummary() {
+        _clearHomeEventsSummaryTimer();
+        _renderHomeEventsSummary();
+        _homeEventsSummaryTimer = setInterval(() => {
+            if (currentView === 'hub') _renderHomeEventsSummary({ silent: true });
+        }, 60_000);
     }
     
     // ── Núcleo de transición (sin History API) ────────────────────────────────
@@ -288,14 +329,14 @@
                 // no según la vista destino. De lo contrario, transiciones como
                 // shop -> events no liberan recursos de ShopView.
                 if (previousView !== viewId) {
-                    if (previousView === 'hub') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
+                    if (previousView === 'hub') lifecycleTasks.push(() => { _clearHomeEventsSummaryTimer(); window.HomeView?.onLeave?.(); });
                     if (previousView === 'shop') lifecycleTasks.push(() => window.ShopView?.onLeave?.());
                     if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
                 if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
                 if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
-                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
+                if (viewId === 'hub') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _startHomeEventsSummary(); }));
                 if (viewId === 'profile') lifecycleTasks.push(() => _profileViewCallback('ProfileView.onEnter', () => window.ProfileView?.onEnter?.()));
                 if (viewId === 'games') lifecycleTasks.push(() => _profileViewCallback('GamesView.onEnter', () => window.GamesView?.onEnter?.()));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));

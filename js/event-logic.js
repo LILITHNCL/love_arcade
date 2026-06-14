@@ -164,14 +164,30 @@
         }
     }
 
-    function _toSummaryEvent(event) {
+    function _toSummaryEvent(event, status = 'active') {
+        const startsIn = event.startDate ? _formatTimeLeft(event.startDate) : '';
         return {
             id: event.id,
+            type: event.type || 'generic',
+            status,
             title: event.ui?.title || event.title || 'Evento especial',
-            timeLeft: _formatTimeLeft(event.endDate),
+            subtitle: event.ui?.subtitle || '',
+            description: event.ui?.description || event.description || '',
+            timeLeft: status === 'upcoming' ? startsIn : _formatTimeLeft(event.endDate),
             reward: _getMainRewardLabel(event),
-            remainingMs: _getRemainingMs(event),
+            remainingMs: status === 'upcoming'
+                ? Math.max(0, new Date(event.startDate).getTime() - Date.now())
+                : _getRemainingMs(event),
         };
+    }
+
+    function _getEventStatus(event) {
+        const now = Date.now();
+        const start = event.startDate ? new Date(event.startDate).getTime() : 0;
+        const end = event.endDate ? new Date(event.endDate).getTime() : Infinity;
+        if (now >= start && now < end) return 'active';
+        if (now < start) return 'upcoming';
+        return 'past';
     }
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -1248,11 +1264,27 @@
                 <span>Los eventos se aplican automáticamente. Las misiones y la cacería requieren interacción.</span>
             </p>`;
         } else {
+            const upcomingEvents = allEvents
+                .filter(e => _getEventStatus(e) === 'upcoming')
+                .map(e => _toSummaryEvent(e, 'upcoming'))
+                .sort((a, b) => a.remainingMs - b.remainingMs);
+            const pastEvents = allEvents
+                .filter(e => _getEventStatus(e) === 'past')
+                .sort((a, b) => new Date(b.endDate || 0).getTime() - new Date(a.endDate || 0).getTime())
+                .map(e => _toSummaryEvent(e, 'past'));
+            const nextEvent = upcomingEvents[0];
+            const recentEvent = pastEvents[0];
+            const streakInfo = window.GameCenter?.getStreakInfo?.();
+
             html += `
-            <div class="lte-empty">
-                ${_icon('calendar', 42)}
-                <p>No hay eventos activos en este momento.</p>
-                <span>¡Vuelve pronto para ver nuevas bonificaciones y desafíos!</span>
+            <div class="lte-empty lte-empty--useful">
+                ${_icon(nextEvent ? 'clock' : 'calendar', 42)}
+                <p>${nextEvent ? _escapeHTML(nextEvent.title) : 'Eventos en pausa, arcade activo.'}</p>
+                <span>${nextEvent
+                    ? `Empieza en ${_escapeHTML(nextEvent.timeLeft)} · ${_escapeHTML(nextEvent.reward)}`
+                    : 'No hay próximos eventos programados. Vuelve pronto o completa tu reto diario mientras tanto.'}</span>
+                ${streakInfo?.canClaim ? `<button type="button" class="btn-primary lte-empty__cta" data-view="hub">Reclamar bono diario</button>` : `<button type="button" class="btn-primary lte-empty__cta" data-view="games">Jugar partidas</button>`}
+                ${recentEvent ? `<small>Último destacado: ${_escapeHTML(recentEvent.title)} · ${_escapeHTML(recentEvent.reward)}</small>` : ''}
             </div>`;
         }
 
@@ -1317,6 +1349,13 @@
                 }
             });
         });
+
+        container.querySelectorAll('.lte-empty__cta[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const viewId = btn.dataset.view;
+                if (viewId) window.SpaRouter?.navigateTo?.(viewId);
+            });
+        });
     }
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -1368,15 +1407,33 @@
 
     async function getHomeEventsSummary(limit = 2) {
         const eventsData = await _loadEvents();
-        const liveEvents = (eventsData.activeEvents || [])
-            .filter(e => _isEventLive(e))
-            .map(_toSummaryEvent)
+        const allEvents = eventsData.activeEvents || [];
+        const liveEvents = allEvents
+            .filter(e => _getEventStatus(e) === 'active')
+            .map(e => _toSummaryEvent(e, 'active'))
             .sort((a, b) => a.remainingMs - b.remainingMs);
+        const upcomingEvents = allEvents
+            .filter(e => _getEventStatus(e) === 'upcoming')
+            .map(e => _toSummaryEvent(e, 'upcoming'))
+            .sort((a, b) => a.remainingMs - b.remainingMs);
+        const pastEvents = allEvents
+            .filter(e => _getEventStatus(e) === 'past')
+            .sort((a, b) => new Date(b.endDate || 0).getTime() - new Date(a.endDate || 0).getTime())
+            .map(e => _toSummaryEvent(e, 'past'));
+
+        const focusEvent = liveEvents[0] || upcomingEvents[0] || pastEvents[0] || null;
+        const mode = liveEvents.length ? 'active' : (upcomingEvents.length ? 'upcoming' : (pastEvents.length ? 'quiet' : 'empty'));
 
         return {
+            mode,
             activeCount: liveEvents.length,
+            upcomingCount: upcomingEvents.length,
+            pastCount: pastEvents.length,
             urgentEvent: liveEvents[0] || null,
+            focusEvent,
             topEvents: liveEvents.slice(0, Math.max(1, Math.min(limit, 2))),
+            upcomingEvents: upcomingEvents.slice(0, Math.max(1, Math.min(limit, 2))),
+            recentEvents: pastEvents.slice(0, Math.max(1, Math.min(limit, 2))),
         };
     }
 

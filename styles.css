@@ -6262,3 +6262,35 @@ svg { stroke-width: 2; }
         transition: none !important;
     }
 }
+.home-events-summary-card__count-badge--quiet,
+.home-events-summary-card__count-badge--empty {
+    border-color: var(--glass-base-border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-med);
+}
+.home-events-summary-card__count-badge--upcoming {
+    border-color: rgba(245,158,11,0.38);
+    background: rgba(245,158,11,0.12);
+    color: #fbbf24;
+}
+.home-events-summary-card:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+}
+.lte-empty--useful {
+    gap: 10px;
+}
+.lte-empty__cta {
+    margin-top: 6px;
+}
+.lte-empty--useful small {
+    color: var(--text-low);
+    font-size: 0.76rem;
+}
+@media (prefers-reduced-motion: reduce) {
+    .home-events-summary-card,
+    .home-events-summary-card * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
