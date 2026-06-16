@@ -42,6 +42,14 @@ const PVZ_Config = {
     REWARDS: {
         COINS_PER_ZOMBIE: 5,
         COINS_PER_LEVEL: 50
+    },
+
+    // Mapeo de recursos
+    ASSETS: {
+        PLANT_BASIC: { key: 'plant_basic', path: 'assets/plant_basic.png', type: 'image', fallbackColor: 0x00aa00 },
+        ZOMBIE_BASIC: { key: 'zombie_basic', path: 'assets/zombie_basic.png', type: 'image', fallbackColor: 0x777777 },
+        PEA: { key: 'pea', path: 'assets/pea.png', type: 'image', fallbackColor: 0x00ff00 },
+        BACKGROUND: { key: 'background', path: 'assets/lawn.png', type: 'image', fallbackColor: 0x1a1a1a }
     }
 };
 

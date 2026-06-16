@@ -11,9 +11,19 @@ class PVZ_Preload extends Phaser.Scene {
     preload() {
         console.log('[PVZ] Preloading assets...');
 
-        // Placeholder para assets futuros
-        // this.load.image('sun', 'assets/sun.png');
-        // this.load.spritesheet('zombie', 'assets/zombie_walk.png', { frameWidth: 64, frameHeight: 64 });
+        // Carga dinámica desde PVZ_Config.ASSETS
+        Object.values(PVZ_Config.ASSETS).forEach(asset => {
+            if (asset.type === 'image') {
+                this.load.image(asset.key, asset.path);
+            }
+            // Futuro: soportar spritesheets, audio, etc.
+        });
+
+        // Escuchar errores de carga para activar fallbacks
+        this.load.on('loaderror', (fileObj) => {
+            console.warn(`[PVZ] Error cargando: ${fileObj.key}. Usando fallback.`);
+            this.pvz_createFallback(fileObj.key);
+        });
 
         // Texto de carga
         const width = this.cameras.main.width;
@@ -29,28 +39,47 @@ class PVZ_Preload extends Phaser.Scene {
         });
         loadingText.setOrigin(0.5, 0.5);
 
-        // Generar texturas de marcador de posición
-        this.pvz_generatePlaceholders();
     }
 
     pvz_generatePlaceholders() {
-        // Planta
-        let g = this.add.graphics();
-        g.fillStyle(0x00aa00, 1);
-        g.fillRect(0, 0, 40, 60);
-        g.generateTexture('plant_placeholder', 40, 60);
-        g.clear();
+        // Crear texturas de fallback para todos los assets definidos
+        // Esto asegura que siempre haya algo que mostrar incluso si la carga falla
+        Object.values(PVZ_Config.ASSETS).forEach(asset => {
+            this.pvz_createFallback(asset.key);
+        });
+    }
 
-        // Zombie
-        g.fillStyle(0x777777, 1);
-        g.fillRect(0, 0, 40, 70);
-        g.generateTexture('zombie_placeholder', 40, 70);
-        g.clear();
+    /**
+     * Crea una textura básica de color si el asset real falla
+     */
+    pvz_createFallback(key) {
+        // Si ya existe la textura (porque se cargó bien), no sobreescribir
+        if (this.textures.exists(key) && this.textures.get(key).key !== '__MISSING') {
+            return;
+        }
 
-        // Proyectil
-        g.fillStyle(0x00ff00, 1);
-        g.fillCircle(8, 8, 8);
-        g.generateTexture('pea_placeholder', 16, 16);
+        // Buscar info del asset en la config
+        const assetInfo = Object.values(PVZ_Config.ASSETS).find(a => a.key === key);
+        const color = assetInfo ? assetInfo.fallbackColor : 0xff00ff;
+
+        const g = this.add.graphics();
+        g.fillStyle(color, 1);
+
+        if (key.includes('plant')) {
+            g.fillRect(0, 0, 40, 60);
+            g.generateTexture(key, 40, 60);
+        } else if (key.includes('zombie')) {
+            g.fillRect(0, 0, 40, 70);
+            g.generateTexture(key, 40, 70);
+        } else if (key.includes('pea')) {
+            g.fillCircle(8, 8, 8);
+            g.generateTexture(key, 16, 16);
+        } else {
+            // Fondo o genérico
+            g.fillRect(0, 0, 32, 32);
+            g.generateTexture(key, 32, 32);
+        }
+
         g.destroy();
     }
 

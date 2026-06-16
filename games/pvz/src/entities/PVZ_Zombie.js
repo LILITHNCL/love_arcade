@@ -5,7 +5,7 @@
 
 class PVZ_Zombie extends PVZ_Entity {
     constructor(scene, x, y, row) {
-        super(scene, x, y, 'zombie_placeholder');
+        super(scene, x, y, PVZ_Config.ASSETS.ZOMBIE_BASIC.key);
 
         this.pvz_row = row;
         this.pvz_hp = PVZ_Config.COMBAT.ZOMBIE_HP;

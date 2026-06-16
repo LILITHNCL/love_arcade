@@ -5,7 +5,7 @@
 
 class PVZ_Plant extends PVZ_Entity {
     constructor(scene, x, y, row) {
-        super(scene, x, y, 'plant_placeholder');
+        super(scene, x, y, PVZ_Config.ASSETS.PLANT_BASIC.key);
 
         this.pvz_row = row;
         this.pvz_hp = PVZ_Config.COMBAT.PLANT_HP;

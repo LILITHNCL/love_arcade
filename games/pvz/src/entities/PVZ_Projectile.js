@@ -6,8 +6,8 @@
 
 class PVZ_Projectile extends PVZ_Entity {
     constructor(scene, x, y) {
-        // Usaremos un rectángulo verde como placeholder si no hay textura
-        super(scene, x, y, 'pea_placeholder');
+        // Usaremos la clave definida en la configuración
+        super(scene, x, y, PVZ_Config.ASSETS.PEA.key);
 
         // Atributos de proyectil
         this.pvz_damage = PVZ_Config.COMBAT.PROJECTILE_DAMAGE;
