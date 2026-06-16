@@ -712,20 +712,13 @@
              ═══════════════════════════════════════════ -->
         <div id="view-profile" class="view-section hidden">
             <section class="profile-hub" data-profile-panel="home" aria-labelledby="profile-title">
-                <div class="profile-hero glass-panel">
-                    <label for="avatar-upload-profile" class="profile-avatar-button" aria-label="Cambiar foto de perfil">
+                <div class="profile-summary">
+                    <button id="profile-edit-trigger" class="profile-edit-trigger" type="button" aria-label="Editar perfil">
                         <span class="profile-avatar" id="profile-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                             <svg class="icon" width="44" height="44" aria-hidden="true"><use href="#icon-user"></use></svg>
                         </span>
-                        <span class="profile-avatar-edit" aria-hidden="true"><svg class="icon" width="14" height="14"><use href="#icon-pencil"></use></svg></span>
-                        <input type="file" id="avatar-upload-profile" class="visually-hidden" accept="image/*">
-                    </label>
-                    <div class="profile-name-row">
-                        <h1 id="profile-title" class="profile-name">Love Arcade</h1>
-                        <button id="profile-edit-identity" class="profile-name-edit" type="button" aria-label="Editar nickname">
-                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-pencil"></use></svg>
-                        </button>
-                    </div>
+                        <span id="profile-title" class="profile-name">Love Arcade</span>
+                    </button>
                 </div>
 
                 <div class="profile-action-grid" aria-label="Opciones de perfil">
@@ -1157,6 +1150,65 @@
         </div>
     </div>
 
+    <!-- ── PROFILE EDIT MODAL — Netflix-style draft editor ── -->
+    <div id="profile-edit-modal"
+         class="modal-overlay profile-edit-modal-overlay hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="profile-edit-modal-title"
+         aria-describedby="profile-edit-modal-description">
+        <div class="profile-edit-modal-box" role="document">
+            <header class="profile-edit-modal-header">
+                <div>
+                    <p class="profile-edit-eyebrow">Perfil</p>
+                    <h2 id="profile-edit-modal-title" class="profile-edit-title">Edit Profile</h2>
+                </div>
+                <button id="profile-edit-close" class="profile-edit-close" type="button" aria-label="Cerrar">
+                    <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-x"></use></svg>
+                </button>
+            </header>
+
+            <p id="profile-edit-modal-description" class="profile-edit-description">
+                Elige un avatar, ajusta tu nickname y guarda cuando quieras aplicar los cambios.
+            </p>
+
+            <div class="profile-edit-preview" aria-live="polite">
+                <div class="profile-edit-preview-avatar" id="profile-edit-preview-avatar" aria-hidden="true"></div>
+                <label class="profile-edit-nickname-label" for="profile-edit-nickname">Nickname</label>
+                <div class="profile-edit-input-row">
+                    <input id="profile-edit-nickname"
+                           class="profile-edit-nickname-input"
+                           type="text"
+                           maxlength="15"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="words"
+                           spellcheck="false"
+                           aria-describedby="profile-edit-help profile-edit-error">
+                    <span id="profile-edit-count" class="profile-edit-count" aria-live="polite">0/15</span>
+                </div>
+                <p id="profile-edit-help" class="profile-edit-help">Máximo 15 caracteres.</p>
+                <p id="profile-edit-error" class="profile-edit-error hidden" role="alert"></p>
+            </div>
+
+            <section class="profile-edit-avatar-section" aria-labelledby="profile-edit-avatar-title">
+                <h3 id="profile-edit-avatar-title" class="profile-edit-section-title">Choose your icon</h3>
+                <div id="profile-edit-avatar-grid" class="profile-edit-avatar-grid" role="grid" aria-label="Avatares disponibles">
+                    <button id="profile-edit-upload-tile" class="profile-edit-avatar-tile profile-edit-upload-tile" type="button" role="gridcell" aria-label="Subir imagen desde galería">
+                        <span class="profile-edit-upload-icon" aria-hidden="true"><svg class="icon" width="24" height="24"><use href="#icon-upload-cloud"></use></svg></span>
+                        <span>Upload</span>
+                    </button>
+                </div>
+                <input type="file" id="modal-avatar-upload" class="visually-hidden" accept="image/*" tabindex="-1">
+            </section>
+
+            <footer class="profile-edit-actions">
+                <p id="profile-edit-status" class="profile-edit-status" role="status" aria-live="polite"></p>
+                <button id="profile-edit-save" class="profile-edit-save" type="button">Save Profile</button>
+            </footer>
+        </div>
+    </div>
+
     <!-- ── CUSTOM CONFIRM MODAL ── -->
     <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-box">
@@ -1335,28 +1387,6 @@
 
     <script>
 
-        // ── Sincronizar avatar HUD con input de navbar ───────────────────────
-        const avatarUploads = [
-            document.getElementById('avatar-upload-profile')
-        ];
-        avatarUploads.forEach(input => {
-            if (!input) return;
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const url = ev.target.result;
-                    document.querySelectorAll('.avatar, .hud-avatar, .profile-avatar').forEach(el => {
-                        el.style.backgroundImage = `url('${url}')`;
-                        const icon = el.querySelector('svg');
-                        if (icon) icon.style.display = 'none';
-                    });
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-
         // ── Racha (vista Inicio) ─────────────────────────────────────────────
         function updateStreakBar() {
             const info = window.GameCenter?.getStreakInfo?.();
@@ -1453,6 +1483,7 @@
             activeModal: null,
             modalTriggerMap: new WeakMap(),
             focusTrapHandler: null,
+            escapeHandler: null,
             hiddenSiblings: []
         };
 
@@ -1508,13 +1539,36 @@
         }
 
         window.ModalA11y = {
-            open(modalEl, triggerEl) {
+            open(modalEl, triggerEl, options = {}) {
                 if (!modalEl) return;
                 const opener = triggerEl || document.activeElement;
                 if (opener) modalA11yState.modalTriggerMap.set(modalEl, opener);
                 modalA11yState.activeModal = modalEl;
                 setBackgroundInteractivity(modalEl, true);
                 trapModalFocus(modalEl);
+
+                if (modalA11yState.escapeHandler) {
+                    document.removeEventListener('keydown', modalA11yState.escapeHandler, true);
+                }
+                modalA11yState.escapeHandler = (e) => {
+                    if (e.key !== 'Escape' || modalA11yState.activeModal !== modalEl) return;
+                    if (options.closeOnEscape === false) return;
+                    e.preventDefault();
+                    if (typeof options.onEscape === 'function') {
+                        options.onEscape();
+                    } else {
+                        modalEl.classList.add('hidden');
+                        window.ModalA11y?.close?.(modalEl);
+                    }
+                };
+                document.addEventListener('keydown', modalA11yState.escapeHandler, true);
+
+                const initialFocus = typeof options.initialFocus === 'string'
+                    ? modalEl.querySelector(options.initialFocus)
+                    : options.initialFocus;
+                requestAnimationFrame(() => {
+                    (initialFocus || getFocusableElements(modalEl)[0])?.focus?.();
+                });
             },
             close(modalEl) {
                 if (!modalEl) return;
@@ -1522,6 +1576,10 @@
                 if (modalA11yState.focusTrapHandler) {
                     document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
                     modalA11yState.focusTrapHandler = null;
+                }
+                if (modalA11yState.escapeHandler) {
+                    document.removeEventListener('keydown', modalA11yState.escapeHandler, true);
+                    modalA11yState.escapeHandler = null;
                 }
                 modalA11yState.activeModal = null;
                 const trigger = modalA11yState.modalTriggerMap.get(modalEl);
@@ -1659,17 +1717,294 @@
             setTimeout(() => nicknameInput?.focus(), 280);
         }
 
+        // ── Profile Edit Modal — draft-state avatar/nickname editor ────────
+        const PROFILE_DEFAULT_AVATAR = 'https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif';
+        const profileEditState = {
+            isOpen: false,
+            manifestLoaded: false,
+            presets: [],
+            draftNickname: '',
+            draftAvatarUrl: '',
+            draftAvatarSource: 'current',
+            selectedPresetPath: '',
+            uploadedFile: null,
+            uploadPreviewUrl: '',
+            isSaving: false
+        };
+
+        function safeCssUrl(url) {
+            return String(url || PROFILE_DEFAULT_AVATAR).replace(/"/g, '%22');
+        }
+
+        function getCurrentAvatarUrl() {
+            return window.GameCenter?.getAvatar?.() || PROFILE_DEFAULT_AVATAR;
+        }
+
+        function setProfileEditError(message = '') {
+            const errorEl = document.getElementById('profile-edit-error');
+            const input = document.getElementById('profile-edit-nickname');
+            if (!errorEl) return;
+            errorEl.textContent = message;
+            errorEl.classList.toggle('hidden', !message);
+            input?.setAttribute('aria-invalid', message ? 'true' : 'false');
+        }
+
+        function setProfileEditStatus(message = '') {
+            const statusEl = document.getElementById('profile-edit-status');
+            if (statusEl) statusEl.textContent = message;
+        }
+
+        function renderProfileEditPreview() {
+            const preview = document.getElementById('profile-edit-preview-avatar');
+            const input = document.getElementById('profile-edit-nickname');
+            const count = document.getElementById('profile-edit-count');
+            if (preview) preview.style.backgroundImage = `url("${safeCssUrl(profileEditState.draftAvatarUrl)}")`;
+            if (input && input.value !== profileEditState.draftNickname) input.value = profileEditState.draftNickname;
+            if (count) count.textContent = `${profileEditState.draftNickname.length}/15`;
+
+            document.querySelectorAll('.profile-edit-preset-tile').forEach((tile) => {
+                const selected = tile.dataset.avatarSrc === profileEditState.selectedPresetPath;
+                tile.classList.toggle('is-selected', selected);
+                tile.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+        }
+
+        function cleanupUploadPreview() {
+            if (profileEditState.uploadPreviewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(profileEditState.uploadPreviewUrl);
+            }
+            profileEditState.uploadPreviewUrl = '';
+        }
+
+        function fallbackAvatarManifest() {
+            return [
+                { id: 'arcade/1', label: 'Arcade Player 1', src: 'assets/avatar/arcade/1.svg' },
+                { id: 'arcade/2', label: 'Arcade Player 2', src: 'assets/avatar/arcade/2.svg' },
+                { id: 'arcade/3', label: 'Arcade Player 3', src: 'assets/avatar/arcade/3.svg' }
+            ];
+        }
+
+        function normalizeAvatarManifest(data) {
+            const collections = Array.isArray(data?.collections) ? data.collections : [];
+            const items = collections.flatMap((collection) => Array.isArray(collection.items) ? collection.items : []);
+            return items
+                .filter((item) => item?.id && item?.src)
+                .map((item) => ({ id: String(item.id), label: String(item.label || item.id), src: String(item.src) }));
+        }
+
+        async function loadProfileAvatarManifest() {
+            if (profileEditState.manifestLoaded) return profileEditState.presets;
+            try {
+                const response = await fetch('assets/avatar/avatar-manifest.json', { cache: 'no-cache' });
+                if (!response.ok) throw new Error(`Manifest ${response.status}`);
+                const data = await response.json();
+                profileEditState.presets = normalizeAvatarManifest(data);
+            } catch (err) {
+                console.warn('[ProfileEdit] No se pudo cargar avatar-manifest.json; usando placeholders.', err);
+                profileEditState.presets = fallbackAvatarManifest();
+            }
+            if (!profileEditState.presets.length) profileEditState.presets = fallbackAvatarManifest();
+            profileEditState.manifestLoaded = true;
+            return profileEditState.presets;
+        }
+
+        function renderProfileAvatarGrid() {
+            const grid = document.getElementById('profile-edit-avatar-grid');
+            const uploadTile = document.getElementById('profile-edit-upload-tile');
+            if (!grid || !uploadTile) return;
+            grid.querySelectorAll('.profile-edit-preset-tile').forEach((tile) => tile.remove());
+
+            profileEditState.presets.forEach((avatar) => {
+                const tile = document.createElement('button');
+                tile.type = 'button';
+                tile.className = 'profile-edit-avatar-tile profile-edit-preset-tile';
+                tile.setAttribute('role', 'gridcell');
+                tile.setAttribute('aria-label', avatar.label);
+                tile.setAttribute('aria-pressed', 'false');
+                tile.dataset.avatarId = avatar.id;
+                tile.dataset.avatarSrc = avatar.src;
+                tile.innerHTML = `
+                    <span class="profile-edit-avatar-art" style="background-image:url(&quot;${safeCssUrl(avatar.src)}&quot;)"></span>
+                    <span class="profile-edit-avatar-label">${avatar.label}</span>
+                `;
+                tile.addEventListener('click', () => {
+                    cleanupUploadPreview();
+                    profileEditState.uploadedFile = null;
+                    profileEditState.selectedPresetPath = avatar.src;
+                    profileEditState.draftAvatarSource = 'preset';
+                    profileEditState.draftAvatarUrl = avatar.src;
+                    setProfileEditError('');
+                    renderProfileEditPreview();
+                });
+                grid.insertBefore(tile, uploadTile);
+            });
+            renderProfileEditPreview();
+        }
+
+        function hydrateProfileEditDraft() {
+            const identity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
+            cleanupUploadPreview();
+            profileEditState.draftNickname = (identity.nickname || '').slice(0, 15);
+            profileEditState.draftAvatarUrl = getCurrentAvatarUrl();
+            profileEditState.draftAvatarSource = 'current';
+            profileEditState.selectedPresetPath = '';
+            profileEditState.uploadedFile = null;
+            profileEditState.isSaving = false;
+            setProfileEditError('');
+            setProfileEditStatus('');
+        }
+
+        async function openProfileEditModal(triggerEl) {
+            const modal = document.getElementById('profile-edit-modal');
+            if (!modal) return;
+            profileEditState.isOpen = true;
+            hydrateProfileEditDraft();
+            renderProfileEditPreview();
+            modal.classList.remove('hidden');
+            await loadProfileAvatarManifest();
+            renderProfileAvatarGrid();
+            window.ModalA11y?.open?.(modal, triggerEl || document.activeElement, {
+                initialFocus: '#profile-edit-nickname',
+                onEscape: () => closeProfileEditModal()
+            });
+        }
+
+        function closeProfileEditModal(force = false) {
+            if (profileEditState.isSaving && !force) return;
+            const modal = document.getElementById('profile-edit-modal');
+            if (!modal) return;
+            profileEditState.isOpen = false;
+            modal.classList.add('hidden');
+            cleanupUploadPreview();
+            window.ModalA11y?.close?.(modal);
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (evt) => resolve(evt.target.result);
+                reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveProfileEditDraft() {
+            if (profileEditState.isSaving) return;
+            const nickname = profileEditState.draftNickname.trim();
+            const saveBtn = document.getElementById('profile-edit-save');
+            const modal = document.getElementById('profile-edit-modal');
+            if (!nickname) {
+                setProfileEditError('El nickname no puede estar vacío.');
+                document.getElementById('profile-edit-nickname')?.focus();
+                return;
+            }
+
+            profileEditState.isSaving = true;
+            modal?.setAttribute('aria-busy', 'true');
+            if (saveBtn) saveBtn.disabled = true;
+            setProfileEditError('');
+            setProfileEditStatus('Guardando perfil…');
+
+            try {
+                const currentIdentity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
+                if (nickname !== (currentIdentity.nickname || '')) {
+                    window.GameCenter?.setIdentity?.(nickname, currentIdentity.gender || '@');
+                }
+
+                if (profileEditState.draftAvatarSource === 'upload' && profileEditState.uploadedFile) {
+                    const dataUrl = await readFileAsDataUrl(profileEditState.uploadedFile);
+                    await window.GameCenter?.setAvatar?.(dataUrl);
+                } else if (profileEditState.draftAvatarSource === 'preset' && profileEditState.selectedPresetPath) {
+                    window.GameCenter?.setAvatarPath?.(profileEditState.selectedPresetPath);
+                }
+
+                setProfileEditStatus('Perfil actualizado.');
+                closeProfileEditModal(true);
+            } catch (err) {
+                setProfileEditError(err?.message || 'No se pudo guardar el perfil.');
+                setProfileEditStatus('');
+            } finally {
+                profileEditState.isSaving = false;
+                modal?.removeAttribute('aria-busy');
+                if (saveBtn) saveBtn.disabled = false;
+            }
+        }
+
+        function initProfileEditModalListeners() {
+            const trigger = document.getElementById('profile-edit-trigger');
+            const closeBtn = document.getElementById('profile-edit-close');
+            const saveBtn = document.getElementById('profile-edit-save');
+            const uploadTile = document.getElementById('profile-edit-upload-tile');
+            const uploadInput = document.getElementById('modal-avatar-upload');
+            const nicknameInput = document.getElementById('profile-edit-nickname');
+            const modal = document.getElementById('profile-edit-modal');
+
+            trigger?.addEventListener('click', () => openProfileEditModal(trigger));
+            closeBtn?.addEventListener('click', () => closeProfileEditModal());
+            saveBtn?.addEventListener('click', saveProfileEditDraft);
+            uploadTile?.addEventListener('click', () => uploadInput?.click());
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) closeProfileEditModal();
+            });
+
+            document.getElementById('profile-edit-avatar-grid')?.addEventListener('keydown', (e) => {
+                const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'];
+                if (!keys.includes(e.key)) return;
+                const tiles = Array.from(document.querySelectorAll('.profile-edit-avatar-tile'));
+                const currentIndex = tiles.indexOf(document.activeElement);
+                if (currentIndex === -1) return;
+                e.preventDefault();
+                const columns = Math.max(1, Math.round((document.getElementById('profile-edit-avatar-grid')?.clientWidth || 1) / Math.max(1, tiles[0].offsetWidth + 12)));
+                const nextIndex = (() => {
+                    if (e.key === 'Home') return 0;
+                    if (e.key === 'End') return tiles.length - 1;
+                    if (e.key === 'ArrowRight') return Math.min(tiles.length - 1, currentIndex + 1);
+                    if (e.key === 'ArrowLeft') return Math.max(0, currentIndex - 1);
+                    if (e.key === 'ArrowDown') return Math.min(tiles.length - 1, currentIndex + columns);
+                    return Math.max(0, currentIndex - columns);
+                })();
+                tiles[nextIndex]?.focus();
+            });
+
+            nicknameInput?.addEventListener('input', () => {
+                profileEditState.draftNickname = nicknameInput.value.slice(0, 15);
+                if (profileEditState.draftNickname.trim()) setProfileEditError('');
+                renderProfileEditPreview();
+            });
+            nicknameInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveProfileEditDraft();
+                }
+            });
+
+            uploadInput?.addEventListener('change', () => {
+                const file = uploadInput.files?.[0];
+                if (!file) return;
+                if (!file.type?.startsWith('image/')) {
+                    setProfileEditError('Selecciona un archivo de imagen válido.');
+                    uploadInput.value = '';
+                    return;
+                }
+                cleanupUploadPreview();
+                profileEditState.uploadedFile = file;
+                profileEditState.uploadPreviewUrl = URL.createObjectURL(file);
+                profileEditState.draftAvatarSource = 'upload';
+                profileEditState.selectedPresetPath = '';
+                profileEditState.draftAvatarUrl = profileEditState.uploadPreviewUrl;
+                setProfileEditError('');
+                renderProfileEditPreview();
+            });
+        }
+
         // ── Identity Flow — v9.4 ────────────────────────────────────────────
         // Si el usuario ya tiene nickname → revealUI() directamente.
         // Si no → mostrar modal de bienvenida; revealUI() se llama al confirmar.
 
         window.revealUI?.();
 
-        // ── Botón de edición en el HUD ──────────────────────────────────────
-        document.getElementById('profile-edit-identity')
-            ?.addEventListener('click', () => openIdentityModal('edit'));
-
         initIdentityModalListeners();
+        initProfileEditModalListeners();
 
         // ── Post-claim UI refresh ────────────────────────────────────────────
         // El handler principal de #btn-daily (reclamo, validación, mensaje)
