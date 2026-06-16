@@ -28,6 +28,30 @@ class PVZ_Preload extends Phaser.Scene {
             }
         });
         loadingText.setOrigin(0.5, 0.5);
+
+        // Generar texturas de marcador de posición
+        this.pvz_generatePlaceholders();
+    }
+
+    pvz_generatePlaceholders() {
+        // Planta
+        let g = this.add.graphics();
+        g.fillStyle(0x00aa00, 1);
+        g.fillRect(0, 0, 40, 60);
+        g.generateTexture('plant_placeholder', 40, 60);
+        g.clear();
+
+        // Zombie
+        g.fillStyle(0x777777, 1);
+        g.fillRect(0, 0, 40, 70);
+        g.generateTexture('zombie_placeholder', 40, 70);
+        g.clear();
+
+        // Proyectil
+        g.fillStyle(0x00ff00, 1);
+        g.fillCircle(8, 8, 8);
+        g.generateTexture('pea_placeholder', 16, 16);
+        g.destroy();
     }
 
     create() {

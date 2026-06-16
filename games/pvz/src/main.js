@@ -11,6 +11,13 @@ window.addEventListener('load', () => {
         height: PVZ_Config.HEIGHT,
         backgroundColor: '#1a1a1a',
         pixelArt: true,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        },
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH

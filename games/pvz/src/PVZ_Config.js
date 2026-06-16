@@ -25,8 +25,22 @@ const PVZ_Config = {
         GRID_BORDER: 0xffffff
     },
 
-    // Economía
+    // Economía y Combate
+    COMBAT: {
+        PLANT_HP: 100,
+        ZOMBIE_HP: 100,
+        ZOMBIE_SPEED: -0.5, // Píxeles por frame (aprox)
+        ZOMBIE_DAMAGE: 10,
+        ZOMBIE_ATTACK_RATE: 1000, // ms entre mordiscos
+
+        PROJECTILE_SPEED: 300, // Píxeles por segundo
+        PROJECTILE_DAMAGE: 20,
+
+        PLANT_ATTACK_RATE: 1500 // ms entre disparos
+    },
+
     REWARDS: {
+        COINS_PER_ZOMBIE: 5,
         COINS_PER_LEVEL: 50
     }
 };
