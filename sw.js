@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.25';
+const CACHE_VERSION = 'v2.04.04.26';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -29,6 +29,10 @@ const APP_SHELL_FILES = [
   '/assets/icon/icon-192-any.png',
   '/assets/icon/apple-touch-icon.png',
   '/assets/icon/icon-192-maskable.png',
+  '/assets/avatar/avatar-manifest.json',
+  '/assets/avatar/arcade/1.svg',
+  '/assets/avatar/arcade/2.svg',
+  '/assets/avatar/arcade/3.svg',
   '/assets/images/games/cover/2048-cover-art.avif',
   '/assets/images/games/cover/word-hunt-cover-art.avif',
   '/assets/images/games/cover/space-shooter-cover-art.avif',

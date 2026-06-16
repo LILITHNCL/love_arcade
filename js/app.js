@@ -1623,6 +1623,23 @@ window.GameCenter = {
         await _saveAvatarLocally(dataUrl);
         return { success: true, remote: false };
     },
+
+    /**
+     * Guarda un avatar local predefinido sin pasar por Supabase Storage.
+     * Bridge temporal para presets empaquetados en /assets/avatar/ mientras
+     * Sentinel sigue sincronizando sólo URLs remotas en user_profiles.avatar_url.
+     * @param {string} assetPath Ruta local aprobada bajo assets/avatar/.
+     */
+    setAvatarPath: (assetPath) => {
+        const normalized = String(assetPath || '').trim().replace(/^\/+/, '');
+        if (!/^assets\/avatar\/[\w./-]+\.(?:avif|webp|png|jpg|jpeg|svg)$/i.test(normalized)) {
+            throw new Error('Avatar local no permitido.');
+        }
+        store.userAvatar = normalized;
+        saveState({ immediateCloudSync: true });
+        applyAvatar();
+        return { success: true, remote: false, preset: true, url: normalized };
+    },
     getAvatar: ()        => store.userAvatar,
 
     // Alias de compatibilidad — mantenido por si juegos externos llaman a activateMoonBlessing().
@@ -2410,23 +2427,6 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     // Refresco periódico cada 30 min por si la app permanece abierta mucho tiempo
     window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
         || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
-
-    // Avatar upload — delegado único
-    document.addEventListener('change', async (e) => {
-        if (e.target.id === 'avatar-upload-profile') {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (evt) => {
-                try {
-                    await window.GameCenter.setAvatar(evt.target.result);
-                } catch (err) {
-                    _showStorageToast(err?.message || 'No se pudo guardar el avatar.', 'error');
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    });
 
     // Bono diario — el botón se desactiva SÍNCRONAMENTE antes de cualquier operación
     // asíncrona para prevenir el "double-tap bug" (race condition por clics rápidos).

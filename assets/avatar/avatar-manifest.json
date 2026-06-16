@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "collections": [
+    {
+      "id": "arcade",
+      "label": "Arcade",
+      "items": [
+        {
+          "id": "arcade/1",
+          "label": "Nova Player",
+          "src": "assets/avatar/arcade/1.svg"
+        },
+        {
+          "id": "arcade/2",
+          "label": "Pixel Rider",
+          "src": "assets/avatar/arcade/2.svg"
+        },
+        {
+          "id": "arcade/3",
+          "label": "Moon Runner",
+          "src": "assets/avatar/arcade/3.svg"
+        }
+      ]
+    }
+  ]
+}
