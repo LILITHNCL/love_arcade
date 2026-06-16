@@ -11,6 +11,13 @@ class PVZ_Game extends Phaser.Scene {
     create() {
         console.log('[PVZ] Game scene started');
 
+        // Estado del juego
+        this.pvz_suns = PVZ_Config.ECONOMY.INITIAL_SUNS;
+        this.pvz_selectedPlant = null;
+        this.pvz_isGameOver = false;
+        this.pvz_zombiesDefeated = 0;
+        this.pvz_zombiesToDefeat = 10; // Objetivo de la oleada
+
         // Grupos para colisiones y gestión
         this.pvz_plants = this.add.group({ runChildUpdate: true });
         this.pvz_zombies = this.add.group({ runChildUpdate: true });
@@ -22,25 +29,26 @@ class PVZ_Game extends Phaser.Scene {
         // Dibujar el patio (Rejilla de 9x5)
         this.pvz_drawGrid();
 
-        // Título o HUD simple
-        this.add.text(20, 20, 'PLANTS VS ZOMBIES - ARCADE', {
-            font: 'bold 24px Rajdhani',
-            fill: '#2d5a27'
-        });
-
         // Configurar Colisiones
         this.pvz_setupCollisions();
 
-        // Spawn inicial de prueba
+        // Generación automática de soles
         this.time.addEvent({
-            delay: 3000,
+            delay: PVZ_Config.ECONOMY.SUN_GEN_RATE,
+            callback: () => { this.pvz_suns += PVZ_Config.ECONOMY.SUN_VALUE; },
+            loop: true
+        });
+
+        // Spawn de zombies
+        this.pvz_spawnTimer = this.time.addEvent({
+            delay: 5000,
             callback: this.pvz_spawnRandomZombie,
             callbackScope: this,
             loop: true
         });
 
-        // Planta de prueba
-        this.pvz_addPlant(1, 2);
+        // Lanzar UI
+        this.scene.launch('PVZ_UI');
     }
 
     update(time, delta) {
@@ -101,10 +109,15 @@ class PVZ_Game extends Phaser.Scene {
     }
 
     pvz_onCellClick(col, row) {
-        console.log(`[PVZ] Click en Celda: Col ${col}, Fila ${row}`);
-        // Futuro: Sistema de plantación
-        if (!this.pvz_hasPlantInCell(col, row)) {
+        if (!this.pvz_selectedPlant) return;
+
+        const cost = PVZ_Config.ECONOMY.PLANT_COSTS[this.pvz_selectedPlant];
+
+        if (this.pvz_suns >= cost && !this.pvz_hasPlantInCell(col, row)) {
+            this.pvz_suns -= cost;
             this.pvz_addPlant(col, row);
+            this.pvz_selectedPlant = null; // Deseleccionar tras plantar
+            console.log(`[PVZ] Planta colocada en ${col},${row}. Soles restantes: ${this.pvz_suns}`);
         }
     }
 
@@ -173,14 +186,35 @@ class PVZ_Game extends Phaser.Scene {
     pvz_reportZombieDeath() {
         const reward = PVZ_Config.REWARDS.COINS_PER_ZOMBIE;
 
+        // Incrementar contador de progreso
+        this.pvz_zombiesDefeated++;
+        if (this.pvz_zombiesDefeated >= this.pvz_zombiesToDefeat) {
+            this.pvz_triggerVictory();
+        }
+
         // Reportar usando completeLevel según el estándar solicitado
         if (window.GameCenter && window.GameCenter.completeLevel) {
-            // Usamos un ID de nivel dinámico o genérico para el reporte de combate
             const zombieId = `zombie-defeat-${Date.now()}`;
             window.GameCenter.completeLevel('pvz-arcade', zombieId, reward);
         } else {
             console.log('[PVZ] Standalone: +5 monedas (simulado)');
         }
+    }
+
+    pvz_triggerGameOver() {
+        if (this.pvz_isGameOver) return;
+        this.pvz_isGameOver = true;
+
+        this.scene.pause();
+        this.scene.launch('PVZ_GameOver');
+    }
+
+    pvz_triggerVictory() {
+        if (this.pvz_isGameOver) return;
+        this.pvz_isGameOver = true;
+
+        this.scene.pause();
+        this.scene.launch('PVZ_Victory');
     }
 }
 

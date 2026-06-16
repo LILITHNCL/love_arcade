@@ -37,9 +37,9 @@ class PVZ_Zombie extends PVZ_Entity {
         // Normalizar movimiento con delta (basado en 60 FPS -> 16.66ms)
         this.x += (this.pvz_speed * delta) / 16.66;
 
-        // Si llega al final del patio (Game Over - Futuro)
-        if (this.x < 50) {
-            console.log('[PVZ] Zombie llegó a la casa!');
+        // Si llega al final del patio (Game Over)
+        if (this.x < PVZ_Config.GRID.OFFSET_X - 20) {
+            this.scene.pvz_triggerGameOver();
         }
     }
 

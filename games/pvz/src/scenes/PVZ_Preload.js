@@ -74,6 +74,12 @@ class PVZ_Preload extends Phaser.Scene {
         } else if (key.includes('pea')) {
             g.fillCircle(8, 8, 8);
             g.generateTexture(key, 16, 16);
+        } else if (key.includes('sun')) {
+            g.fillCircle(15, 15, 15);
+            g.generateTexture(key, 30, 30);
+        } else if (key.includes('ui')) {
+            g.fillRect(0, 0, 40, 40);
+            g.generateTexture(key, 40, 40);
         } else {
             // Fondo o genérico
             g.fillRect(0, 0, 32, 32);

@@ -25,7 +25,11 @@ window.addEventListener('load', () => {
         scene: [
             PVZ_Boot,
             PVZ_Preload,
-            PVZ_Game
+            PVZ_Game,
+            PVZ_UI,
+            PVZ_PauseMenu,
+            PVZ_GameOver,
+            PVZ_Victory
         ]
     };
 

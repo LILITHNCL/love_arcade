@@ -44,12 +44,24 @@ const PVZ_Config = {
         COINS_PER_LEVEL: 50
     },
 
+    // Economía de Soles
+    ECONOMY: {
+        INITIAL_SUNS: 100,
+        SUN_GEN_RATE: 5000, // ms entre soles automáticos
+        SUN_VALUE: 25,
+        PLANT_COSTS: {
+            PLANT_BASIC: 50
+        }
+    },
+
     // Mapeo de recursos
     ASSETS: {
         PLANT_BASIC: { key: 'plant_basic', path: 'assets/plant_basic.png', type: 'image', fallbackColor: 0x00aa00 },
         ZOMBIE_BASIC: { key: 'zombie_basic', path: 'assets/zombie_basic.png', type: 'image', fallbackColor: 0x777777 },
         PEA: { key: 'pea', path: 'assets/pea.png', type: 'image', fallbackColor: 0x00ff00 },
-        BACKGROUND: { key: 'background', path: 'assets/lawn.png', type: 'image', fallbackColor: 0x1a1a1a }
+        BACKGROUND: { key: 'background', path: 'assets/lawn.png', type: 'image', fallbackColor: 0x1a1a1a },
+        SUN: { key: 'sun', path: 'assets/sun.png', type: 'image', fallbackColor: 0xffff00 },
+        UI_PAUSE: { key: 'ui_pause', path: 'assets/pause.png', type: 'image', fallbackColor: 0xffffff }
     }
 };
 
