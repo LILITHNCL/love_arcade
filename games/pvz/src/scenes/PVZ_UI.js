@@ -41,31 +41,37 @@ class PVZ_UI extends Phaser.Scene {
         const startY = 20;
         const spacing = 70;
 
-        // Card para Planta Básica
-        this.pvz_plantCard = this.add.container(startX, startY);
+        this.pvz_plantCards = [];
+        const unlocked = PVZ_Storage.pvz_getData().unlockedPlants;
 
-        const cardBg = this.add.rectangle(0, 0, 60, 80, 0x555555, 0.8).setOrigin(0);
-        cardBg.setStrokeStyle(2, 0xffffff, 1);
+        const plantKeys = ['PLANT_BASIC', 'PLANT_FAST'];
 
-        const plantIcon = this.add.image(30, 30, PVZ_Config.ASSETS.PLANT_BASIC.key).setScale(0.5);
+        plantKeys.forEach((key, index) => {
+            if (!unlocked.includes(key)) return;
 
-        const costText = this.add.text(30, 65, PVZ_Config.ECONOMY.PLANT_COSTS.PLANT_BASIC, {
-            font: 'bold 16px Rajdhani',
-            fill: '#ffffff'
-        }).setOrigin(0.5);
+            const card = this.add.container(startX + (index * spacing), startY);
 
-        this.pvz_plantCard.add([cardBg, plantIcon, costText]);
-        this.pvz_uiContainer.add(this.pvz_plantCard);
+            const cardBg = this.add.rectangle(0, 0, 60, 80, 0x555555, 0.8).setOrigin(0);
+            cardBg.setStrokeStyle(2, 0xffffff, 1);
 
-        // Interactividad
-        cardBg.setInteractive({ useHandCursor: true });
+            const plantIcon = this.add.image(30, 30, PVZ_Config.ASSETS[key].key).setScale(0.5);
 
-        cardBg.on('pointerdown', () => {
-            this.pvz_selectPlant('PLANT_BASIC');
+            const costText = this.add.text(30, 65, PVZ_Config.ECONOMY.PLANT_COSTS[key], {
+                font: 'bold 16px Rajdhani',
+                fill: '#ffffff'
+            }).setOrigin(0.5);
+
+            card.add([cardBg, plantIcon, costText]);
+            this.pvz_uiContainer.add(card);
+
+            cardBg.setInteractive({ useHandCursor: true });
+            cardBg.on('pointerdown', () => this.pvz_selectPlant(key, card));
+
+            this.pvz_plantCards.push({ key, card, cost: PVZ_Config.ECONOMY.PLANT_COSTS[key] });
         });
 
-        // Estado visual de selección
-        this.pvz_cardHighlight = this.add.rectangle(startX, startY, 60, 80)
+        // Estado visual de selección (Highlight compartido)
+        this.pvz_cardHighlight = this.add.rectangle(0, 0, 60, 80)
             .setOrigin(0)
             .setStrokeStyle(3, 0xffff00)
             .setVisible(false);
@@ -89,13 +95,17 @@ class PVZ_UI extends Phaser.Scene {
         this.pvz_uiContainer.add(pauseBtn);
     }
 
-    pvz_selectPlant(plantKey) {
+    pvz_selectPlant(plantKey, cardContainer) {
         const cost = PVZ_Config.ECONOMY.PLANT_COSTS[plantKey];
         const currentSuns = this.gameScene.pvz_suns;
 
         if (currentSuns >= cost) {
             this.gameScene.pvz_selectedPlant = plantKey;
-            this.pvz_cardHighlight.setVisible(true);
+
+            // Si no se pasa el contenedor (ej: desde tests), buscarlo
+            const card = cardContainer || this.pvz_plantCards.find(c => c.key === plantKey).card;
+
+            this.pvz_cardHighlight.setPosition(card.x, card.y).setVisible(true);
             console.log(`[PVZ] Planta seleccionada: ${plantKey}`);
         } else {
             // Feedback de "no hay dinero"
@@ -110,8 +120,9 @@ class PVZ_UI extends Phaser.Scene {
             this.pvz_sunText.setText(this.gameScene.pvz_suns);
 
             // Actualizar transparencia de cards si no alcanza el dinero
-            const cost = PVZ_Config.ECONOMY.PLANT_COSTS.PLANT_BASIC;
-            this.pvz_plantCard.setAlpha(this.gameScene.pvz_suns >= cost ? 1 : 0.5);
+            this.pvz_plantCards.forEach(item => {
+                item.card.setAlpha(this.gameScene.pvz_suns >= item.cost ? 1 : 0.5);
+            });
 
             // Ocultar highlight si ya no hay planta seleccionada en el juego
             if (!this.gameScene.pvz_selectedPlant) {

@@ -7,24 +7,40 @@ class PVZ_Victory extends Phaser.Scene {
         super('PVZ_Victory');
     }
 
-    create() {
+    create(data) {
         const { WIDTH, HEIGHT } = PVZ_Config;
         this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x005500, 0.8).setOrigin(0);
 
         const container = this.add.container(WIDTH / 2, HEIGHT / 2);
 
-        this.add.text(0, -100, '¡VICTORIA!', {
+        this.add.text(0, -120, '¡VICTORIA!', {
             font: 'bold 64px Rajdhani',
             fill: '#ffff00',
             align: 'center'
         }).setOrigin(0.5);
 
-        this.add.text(0, -30, 'HAS DEFENDIDO TU JARDÍN', {
+        this.add.text(0, -60, 'HAS DEFENDIDO TU JARDÍN', {
             font: 'bold 24px Rajdhani',
             fill: '#ffffff'
         }).setOrigin(0.5);
 
-        const restartBtn = this.pvz_createButton(0, 50, 'NUEVA PARTIDA', () => {
+        // Recompensa Hub
+        const reward = data.reward || 0;
+        this.add.text(0, 0, `¡Has ganado ${reward} monedas para tu Hub!`, {
+            font: '20px Rajdhani',
+            fill: '#4ade80'
+        }).setOrigin(0.5);
+
+        // Lógica de desbloqueo (Demo)
+        if (!PVZ_Storage.pvz_isPlantUnlocked('PLANT_FAST')) {
+            PVZ_Storage.pvz_unlockPlant('PLANT_FAST');
+            this.add.text(0, 30, '¡NUEVA PLANTA DESBLOQUEADA: LANZAGUISANTES RÁPIDO!', {
+                font: 'bold 18px Rajdhani',
+                fill: '#00ffff'
+            }).setOrigin(0.5);
+        }
+
+        const restartBtn = this.pvz_createButton(0, 80, 'NUEVA PARTIDA', () => {
             this.scene.start('PVZ_Game');
         });
 

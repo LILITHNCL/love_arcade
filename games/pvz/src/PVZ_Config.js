@@ -50,13 +50,20 @@ const PVZ_Config = {
         SUN_GEN_RATE: 5000, // ms entre soles automáticos
         SUN_VALUE: 25,
         PLANT_COSTS: {
-            PLANT_BASIC: 50
+            PLANT_BASIC: 50,
+            PLANT_FAST: 75
         }
+    },
+
+    // Persistencia
+    STORAGE: {
+        KEY: 'PVZ_SaveData'
     },
 
     // Mapeo de recursos
     ASSETS: {
         PLANT_BASIC: { key: 'plant_basic', path: 'assets/plant_basic.png', type: 'image', fallbackColor: 0x00aa00 },
+        PLANT_FAST: { key: 'plant_fast', path: 'assets/plant_fast.png', type: 'image', fallbackColor: 0x00ffff },
         ZOMBIE_BASIC: { key: 'zombie_basic', path: 'assets/zombie_basic.png', type: 'image', fallbackColor: 0x777777 },
         PEA: { key: 'pea', path: 'assets/pea.png', type: 'image', fallbackColor: 0x00ff00 },
         BACKGROUND: { key: 'background', path: 'assets/lawn.png', type: 'image', fallbackColor: 0x1a1a1a },

@@ -39,6 +39,9 @@ class PVZ_Preload extends Phaser.Scene {
         });
         loadingText.setOrigin(0.5, 0.5);
 
+        // Pre-generar placeholders para asegurar que existan incluso si falla el cargador
+        // y el listener 'loaderror' tiene race conditions
+        this.pvz_generatePlaceholders();
     }
 
     pvz_generatePlaceholders() {

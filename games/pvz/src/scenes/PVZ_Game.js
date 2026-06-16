@@ -16,7 +16,11 @@ class PVZ_Game extends Phaser.Scene {
         this.pvz_selectedPlant = null;
         this.pvz_isGameOver = false;
         this.pvz_zombiesDefeated = 0;
-        this.pvz_zombiesToDefeat = 10; // Objetivo de la oleada
+        this.pvz_zombiesToDefeat = 10;
+        this.pvz_canPlant = true; // Control de anti-ghost click
+
+        // Cargar progreso
+        this.pvz_playerData = PVZ_Storage.pvz_getData();
 
         // Grupos para colisiones y gestión
         this.pvz_plants = this.add.group({ runChildUpdate: true });
@@ -109,14 +113,18 @@ class PVZ_Game extends Phaser.Scene {
     }
 
     pvz_onCellClick(col, row) {
-        if (!this.pvz_selectedPlant) return;
+        if (!this.pvz_selectedPlant || !this.pvz_canPlant) return;
 
         const cost = PVZ_Config.ECONOMY.PLANT_COSTS[this.pvz_selectedPlant];
 
         if (this.pvz_suns >= cost && !this.pvz_hasPlantInCell(col, row)) {
+            // Bloquear plantación momentáneamente para evitar ghost clicks en móviles
+            this.pvz_canPlant = false;
+            this.time.delayedCall(200, () => { this.pvz_canPlant = true; });
+
             this.pvz_suns -= cost;
             this.pvz_addPlant(col, row);
-            this.pvz_selectedPlant = null; // Deseleccionar tras plantar
+            this.pvz_selectedPlant = null;
             console.log(`[PVZ] Planta colocada en ${col},${row}. Soles restantes: ${this.pvz_suns}`);
         }
     }
@@ -213,8 +221,21 @@ class PVZ_Game extends Phaser.Scene {
         if (this.pvz_isGameOver) return;
         this.pvz_isGameOver = true;
 
+        // Actualizar persistencia local
+        const data = PVZ_Storage.pvz_getData();
+        data.levelsCompleted++;
+        PVZ_Storage.pvz_saveData(data);
+
+        // Reportar recompensa final de nivel
+        const finalReward = PVZ_Config.REWARDS.COINS_PER_LEVEL;
+        const sessionId = `pvz-win-${Date.now()}`;
+
+        if (window.GameCenter && window.GameCenter.completeLevel) {
+            window.GameCenter.completeLevel('pvz-arcade', sessionId, finalReward);
+        }
+
         this.scene.pause();
-        this.scene.launch('PVZ_Victory');
+        this.scene.launch('PVZ_Victory', { reward: finalReward });
     }
 }
 
