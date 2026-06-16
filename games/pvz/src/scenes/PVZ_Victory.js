@@ -53,11 +53,18 @@ class PVZ_Victory extends Phaser.Scene {
 
     pvz_createButton(x, y, text, callback) {
         const btn = this.add.container(x, y);
-        const bg = this.add.rectangle(0, 0, 200, 50, 0x000000, 0.5).setInteractive({ useHandCursor: true });
+        const bg = this.add.rectangle(0, 0, 200, 50, 0x2d5a27, 1).setInteractive({ useHandCursor: true });
         bg.setStrokeStyle(2, 0xffffff);
         const txt = this.add.text(0, 0, text, { font: 'bold 20px Rajdhani', fill: '#ffffff' }).setOrigin(0.5);
 
-        bg.on('pointerdown', callback);
+        bg.on('pointerdown', () => {
+            bg.setFillStyle(0x1e3d1a);
+            this.time.delayedCall(100, callback);
+        });
+
+        bg.on('pointerover', () => bg.setAlpha(0.8));
+        bg.on('pointerout', () => bg.setAlpha(1));
+
         btn.add([bg, txt]);
         return btn;
     }

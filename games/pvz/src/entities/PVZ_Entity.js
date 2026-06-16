@@ -40,6 +40,16 @@ class PVZ_Entity extends Phaser.GameObjects.Sprite {
      */
     takeDamage(amount) {
         this.pvz_hp -= amount;
+
+        // Feedback visual de daño (flash rojo)
+        this.setTint(0xff0000);
+        this.scene.time.delayedCall(100, () => this.clearTint());
+
+        // Cámara shake si es una planta recibiendo daño
+        if (this instanceof PVZ_Plant) {
+            this.scene.cameras.main.shake(100, 0.002);
+        }
+
         if (this.pvz_hp <= 0) {
             this.die();
         }

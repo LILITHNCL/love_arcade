@@ -47,12 +47,39 @@ const PVZ_Config = {
     // Economía de Soles
     ECONOMY: {
         INITIAL_SUNS: 100,
-        SUN_GEN_RATE: 5000, // ms entre soles automáticos
         SUN_VALUE: 25,
         PLANT_COSTS: {
             PLANT_BASIC: 50,
             PLANT_FAST: 75
         }
+    },
+
+    // Ajustes de dificultad y balance
+    BALANCING: {
+        EASY: {
+            ZOMBIE_SPEED: -0.3,
+            SUN_GEN_RATE: 6000,
+            SPAWN_RATE: 8000
+        },
+        NORMAL: {
+            ZOMBIE_SPEED: -0.5,
+            SUN_GEN_RATE: 5000,
+            SPAWN_RATE: 5000
+        },
+        HARD: {
+            ZOMBIE_SPEED: -0.8,
+            SUN_GEN_RATE: 4000,
+            SPAWN_RATE: 3000
+        }
+    },
+
+    /**
+     * Helper para obtener balance según dificultad
+     */
+    getBalancing(level = 1) {
+        if (level <= 2) return this.BALANCING.EASY;
+        if (level <= 5) return this.BALANCING.NORMAL;
+        return this.BALANCING.HARD;
     },
 
     // Persistencia

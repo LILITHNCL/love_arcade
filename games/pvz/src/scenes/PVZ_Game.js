@@ -11,16 +11,20 @@ class PVZ_Game extends Phaser.Scene {
     create() {
         console.log('[PVZ] Game scene started');
 
+        // Cargar progreso
+        this.pvz_playerData = PVZ_Storage.pvz_getData();
+
+        // Configuración de dificultad dinámica
+        const difficulty = PVZ_Config.getBalancing(this.pvz_playerData.levelsCompleted + 1);
+
         // Estado del juego
         this.pvz_suns = PVZ_Config.ECONOMY.INITIAL_SUNS;
         this.pvz_selectedPlant = null;
         this.pvz_isGameOver = false;
         this.pvz_zombiesDefeated = 0;
-        this.pvz_zombiesToDefeat = 10;
+        this.pvz_zombiesToDefeat = 5 + (this.pvz_playerData.levelsCompleted * 2);
         this.pvz_canPlant = true; // Control de anti-ghost click
-
-        // Cargar progreso
-        this.pvz_playerData = PVZ_Storage.pvz_getData();
+        this.pvz_difficulty = difficulty;
 
         // Grupos para colisiones y gestión
         this.pvz_plants = this.add.group({ runChildUpdate: true });
@@ -38,14 +42,14 @@ class PVZ_Game extends Phaser.Scene {
 
         // Generación automática de soles
         this.time.addEvent({
-            delay: PVZ_Config.ECONOMY.SUN_GEN_RATE,
+            delay: difficulty.SUN_GEN_RATE,
             callback: () => { this.pvz_suns += PVZ_Config.ECONOMY.SUN_VALUE; },
             loop: true
         });
 
         // Spawn de zombies
         this.pvz_spawnTimer = this.time.addEvent({
-            delay: 5000,
+            delay: difficulty.SPAWN_RATE,
             callback: this.pvz_spawnRandomZombie,
             callbackScope: this,
             loop: true
@@ -162,6 +166,7 @@ class PVZ_Game extends Phaser.Scene {
         const y = OFFSET_Y + (row * CELL_HEIGHT) + CELL_HEIGHT;
 
         const zombie = new PVZ_Zombie(this, x, y, row);
+        zombie.pvz_speed = this.pvz_difficulty.ZOMBIE_SPEED; // Aplicar dificultad
         this.pvz_zombies.add(zombie);
         this.physics.add.existing(zombie);
     }
