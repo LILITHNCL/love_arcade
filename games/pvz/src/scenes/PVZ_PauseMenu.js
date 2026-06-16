@@ -24,7 +24,7 @@ class PVZ_PauseMenu extends Phaser.Scene {
         // Botón Continuar
         const resumeBtn = this.pvz_createButton(0, 0, 'CONTINUAR', () => {
             this.scene.resume('PVZ_Game');
-            this.scene.stop();
+            this.scene.stop(); // Detener esta escena de pausa
         });
 
         // Botón Salir

@@ -20,6 +20,8 @@ class PVZ_GameOver extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const restartBtn = this.pvz_createButton(0, 50, 'REINTENTAR', () => {
+            // Detener todas las escenas activas para un reinicio limpio
+            this.scene.stop('PVZ_UI');
             this.scene.start('PVZ_Game');
         });
 

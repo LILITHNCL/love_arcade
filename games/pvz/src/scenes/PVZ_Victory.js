@@ -41,6 +41,8 @@ class PVZ_Victory extends Phaser.Scene {
         }
 
         const restartBtn = this.pvz_createButton(0, 80, 'NUEVA PARTIDA', () => {
+            // Detener todas las escenas activas para un reinicio limpio
+            this.scene.stop('PVZ_UI');
             this.scene.start('PVZ_Game');
         });
 

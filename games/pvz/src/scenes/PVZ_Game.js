@@ -11,6 +11,9 @@ class PVZ_Game extends Phaser.Scene {
     create() {
         console.log('[PVZ] Game scene started');
 
+        // 0. FONDO (Primero para asegurar profundidad correcta)
+        this.add.image(0, 0, PVZ_Config.ASSETS.BACKGROUND.key).setOrigin(0).setDisplaySize(PVZ_Config.WIDTH, PVZ_Config.HEIGHT);
+
         // Cargar progreso
         this.pvz_playerData = PVZ_Storage.pvz_getData();
 
@@ -30,9 +33,7 @@ class PVZ_Game extends Phaser.Scene {
         this.pvz_plants = this.add.group({ runChildUpdate: true });
         this.pvz_zombies = this.add.group({ runChildUpdate: true });
         this.pvz_projectiles = this.add.group({ runChildUpdate: true });
-
-        // Fondo base
-        this.add.rectangle(0, 0, PVZ_Config.WIDTH, PVZ_Config.HEIGHT, 0x111111).setOrigin(0);
+        this.pvz_suns_group = this.add.group();
 
         // Dibujar el patio (Rejilla de 9x5)
         this.pvz_drawGrid();
@@ -40,20 +41,18 @@ class PVZ_Game extends Phaser.Scene {
         // Configurar Colisiones
         this.pvz_setupCollisions();
 
-        // Generación automática de soles
+        // Generación de soles (Mecánica de recogida)
         this.time.addEvent({
             delay: difficulty.SUN_GEN_RATE,
-            callback: () => { this.pvz_suns += PVZ_Config.ECONOMY.SUN_VALUE; },
-            loop: true
-        });
-
-        // Spawn de zombies
-        this.pvz_spawnTimer = this.time.addEvent({
-            delay: difficulty.SPAWN_RATE,
-            callback: this.pvz_spawnRandomZombie,
+            callback: this.pvz_spawnSun,
             callbackScope: this,
             loop: true
         });
+
+        // Wave Manager
+        this.pvz_spawnCount = 0;
+        this.pvz_currentSpawnRate = difficulty.SPAWN_RATE;
+        this.pvz_scheduleNextSpawn();
 
         // Lanzar UI
         this.scene.launch('PVZ_UI');
@@ -61,12 +60,10 @@ class PVZ_Game extends Phaser.Scene {
 
     update(time, delta) {
         // Ejecutar los bucles de actualización de todos los grupos
-        // runChildUpdate: true ya está configurado en el grupo, pero
-        // Phaser 3 requiere que el grupo en sí reciba una señal de actualización
-        // si no se está usando el sistema de escenas automáticas de Phaser para grupos.
         this.pvz_plants.getChildren().forEach(p => p.update(time, delta));
         this.pvz_zombies.getChildren().forEach(z => z.update(time, delta));
         this.pvz_projectiles.getChildren().forEach(proj => proj.update(time, delta));
+        this.pvz_suns_group.getChildren().forEach(sun => sun.update(time, delta));
     }
 
     /**
@@ -157,18 +154,60 @@ class PVZ_Game extends Phaser.Scene {
     }
 
     /**
-     * Spawnea un zombie en una fila aleatoria
+     * Spawnea un sol en una posición aleatoria del patio
+     */
+    pvz_spawnSun() {
+        const { GRID, WIDTH } = PVZ_Config;
+        const x = Phaser.Math.Between(GRID.OFFSET_X, WIDTH - 100);
+        const y = Phaser.Math.Between(GRID.OFFSET_Y, 200);
+
+        const sun = new PVZ_Sun(this, x, y);
+        this.pvz_suns_group.add(sun);
+    }
+
+    /**
+     * Programación dinámica de spawns (Wave Manager)
+     */
+    pvz_scheduleNextSpawn() {
+        if (this.pvz_isGameOver || this.pvz_spawnCount >= this.pvz_zombiesToDefeat) return;
+
+        this.time.delayedCall(this.pvz_currentSpawnRate, () => {
+            this.pvz_spawnRandomZombie();
+
+            // Aumentar dificultad gradualmente
+            this.pvz_currentSpawnRate = Math.max(1500, this.pvz_currentSpawnRate * 0.95);
+            this.pvz_scheduleNextSpawn();
+        });
+    }
+
+    /**
+     * Spawnea un zombie asegurando que no se sature una sola fila
      */
     pvz_spawnRandomZombie() {
-        const row = Phaser.Math.Between(0, PVZ_Config.GRID.ROWS - 1);
+        if (this.pvz_spawnCount >= this.pvz_zombiesToDefeat) return;
+
+        // Intentar encontrar una fila con menos zombies
+        const rows = [0, 1, 2, 3, 4].sort(() => Math.random() - 0.5);
+        let selectedRow = rows[0];
+
+        for (let r of rows) {
+            const count = this.pvz_zombies.getChildren().filter(z => z.pvz_row === r).length;
+            if (count === 0) {
+                selectedRow = r;
+                break;
+            }
+        }
+
         const { CELL_HEIGHT, OFFSET_Y } = PVZ_Config.GRID;
         const x = PVZ_Config.WIDTH + 50;
-        const y = OFFSET_Y + (row * CELL_HEIGHT) + CELL_HEIGHT;
+        const y = OFFSET_Y + (selectedRow * CELL_HEIGHT) + CELL_HEIGHT;
 
-        const zombie = new PVZ_Zombie(this, x, y, row);
-        zombie.pvz_speed = this.pvz_difficulty.ZOMBIE_SPEED; // Aplicar dificultad
+        const zombie = new PVZ_Zombie(this, x, y, selectedRow);
+        zombie.pvz_speed = this.pvz_difficulty.ZOMBIE_SPEED;
         this.pvz_zombies.add(zombie);
         this.physics.add.existing(zombie);
+
+        this.pvz_spawnCount++;
     }
 
     /**
