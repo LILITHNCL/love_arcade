@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2d5a27">
+
+    <title>PVZ Arcade - Love Arcade</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --pvz-green: #2d5a27;
+            --glass-bg: rgba(0, 0, 0, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            touch-action: none;
+            font-family: 'Rajdhani', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            height: 100dvh;
+            width: 100vw;
+            color: white;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+        }
+
+        /* UI OVERLAYS */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        .hud-top {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .hud-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container"></div>
+
+    <div class="ui-layer">
+        <div class="hud-top">
+            <a href="../../index.html" class="hud-btn interactive" id="PVZ_exitBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                SALIR
+            </a>
+        </div>
+    </div>
+
+    <!-- Phaser 3 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+    <!-- Love Arcade Core -->
+    <script src="../../js/supabase-loader.js"></script>
+    <script src="../../js/app.js"></script>
+
+    <!-- Game Scripts -->
+    <script src="src/PVZ_Config.js"></script>
+    <script src="src/entities/PVZ_Entity.js"></script>
+    <script src="src/scenes/PVZ_Boot.js"></script>
+    <script src="src/scenes/PVZ_Preload.js"></script>
+    <script src="src/scenes/PVZ_Game.js"></script>
+    <script src="src/main.js"></script>
+
+</body>
+</html>
