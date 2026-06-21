@@ -536,10 +536,6 @@ function migrateState(loadedStore) {
         delete merged.redeemedCodes;
     }
 
-    // v14.2 — Limpieza preventiva: no mantener DataURL heredado en estado persistido.
-    if (_isBase64Avatar(merged.userAvatar)) {
-        merged.userAvatar = null;
-    }
 
     return merged;
 }
