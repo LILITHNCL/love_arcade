@@ -1590,7 +1590,7 @@ window.GameCenter = {
 
                 const { data } = sbClient.storage.from(bucket).getPublicUrl(path);
                 if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
-                store.userAvatar = data.publicUrl;
+                store.userAvatar = `${data.publicUrl}?t=${Date.now()}`;
                 saveState({ immediateCloudSync: true });
                 applyAvatar();
                 return { success: true, remote: true, url: data.publicUrl };
