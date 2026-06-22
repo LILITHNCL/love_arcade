@@ -536,10 +536,6 @@ function migrateState(loadedStore) {
         delete merged.redeemedCodes;
     }
 
-    // v14.2 — Limpieza preventiva: no mantener DataURL heredado en estado persistido.
-    if (_isBase64Avatar(merged.userAvatar)) {
-        merged.userAvatar = null;
-    }
 
     return merged;
 }
@@ -1594,7 +1590,7 @@ window.GameCenter = {
 
                 const { data } = sbClient.storage.from(bucket).getPublicUrl(path);
                 if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
-                store.userAvatar = data.publicUrl;
+                store.userAvatar = `${data.publicUrl}?t=${Date.now()}`;
                 saveState({ immediateCloudSync: true });
                 applyAvatar();
                 return { success: true, remote: true, url: data.publicUrl };

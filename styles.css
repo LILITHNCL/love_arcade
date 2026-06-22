@@ -5722,9 +5722,9 @@ svg { stroke-width: 2; }
    PROFILE EDIT MODAL — AMOLED Netflix-style draft editor
    ================================================================ */
 .profile-edit-modal-overlay {
-    background: #000000;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     align-items: stretch;
     justify-content: center;
     padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
@@ -5739,10 +5739,10 @@ svg { stroke-width: 2; }
     margin: auto;
     padding: 22px clamp(16px, 4vw, 28px);
     border-radius: 28px;
-    background: #000000;
-    color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.18);
-    box-shadow: 0 24px 80px rgba(0,0,0,0.9);
+    background: var(--solid-surface-base);
+    color: var(--text-primary-aa);
+    border: 1px solid var(--accent-border);
+    box-shadow: var(--surface-shadow-premium);
     overflow: hidden;
     animation: profileEditEnter 180ms ease-out both;
 }
@@ -5761,7 +5761,7 @@ svg { stroke-width: 2; }
 
 .profile-edit-eyebrow {
     margin: 0 0 4px;
-    color: rgba(255,255,255,0.58);
+    color: var(--text-tertiary-aa);
     font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -5772,7 +5772,7 @@ svg { stroke-width: 2; }
     font-family: var(--font-display);
     font-size: clamp(1.55rem, 5vw, 2.35rem);
     line-height: 1;
-    color: #ffffff;
+    color: var(--text-primary-aa);
     text-wrap: balance;
 }
 
@@ -5782,25 +5782,25 @@ svg { stroke-width: 2; }
     width: 44px;
     height: 44px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.24);
-    background: #000000;
-    color: #ffffff;
+    border: 1px solid var(--border-strong-aa);
+    background: var(--solid-surface-float);
+    color: var(--text-primary-aa);
     cursor: pointer;
     transition: transform 150ms ease-out, border-color 150ms ease-out;
 }
 
 .profile-edit-close:hover,
 .profile-edit-close:focus-visible {
-    border-color: #ffffff;
+    border-color: var(--accent);
     outline: 2px solid transparent;
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.18);
+    box-shadow: 0 0 0 3px var(--accent-soft-aa);
 }
 
 .profile-edit-close:active { transform: scale(0.97); }
 
 .profile-edit-description {
     margin: 0;
-    color: rgba(255,255,255,0.72);
+    color: var(--text-tertiary-aa);
     font-size: 0.92rem;
     line-height: 1.55;
     text-wrap: pretty;
@@ -5817,14 +5817,14 @@ svg { stroke-width: 2; }
     width: clamp(118px, 34vw, 170px);
     height: clamp(118px, 34vw, 170px);
     border-radius: 24px;
-    background: #000000 center / cover no-repeat;
-    border: 2px solid rgba(255,255,255,0.28);
-    box-shadow: 0 18px 48px rgba(0,0,0,0.78);
+    background: var(--surface-0) center / cover no-repeat;
+    border: 2px solid var(--accent-border);
+    box-shadow: var(--shadow-lg);
 }
 
 .profile-edit-nickname-label {
     width: min(100%, 360px);
-    color: rgba(255,255,255,0.78);
+    color: var(--text-secondary-aa);
     font-size: 0.78rem;
     font-weight: 800;
     text-align: left;
@@ -5840,9 +5840,9 @@ svg { stroke-width: 2; }
     min-height: 48px;
     padding: 0 58px 0 14px;
     border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.28);
-    background: #000000;
-    color: #ffffff;
+    border: 1px solid var(--border-strong-aa);
+    background: var(--solid-surface-deep);
+    color: var(--text-primary-aa);
     font-family: var(--font-display);
     font-weight: 850;
     font-size: 1.05rem;
@@ -5851,8 +5851,8 @@ svg { stroke-width: 2; }
 }
 
 .profile-edit-nickname-input:focus {
-    border-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.16);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft-aa);
 }
 
 .profile-edit-nickname-input[aria-invalid="true"] {
@@ -5865,7 +5865,7 @@ svg { stroke-width: 2; }
     right: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255,255,255,0.54);
+    color: var(--text-tertiary-aa);
     font-family: var(--font-mono);
     font-size: 0.72rem;
 }
@@ -5879,7 +5879,7 @@ svg { stroke-width: 2; }
     text-align: left;
 }
 
-.profile-edit-help { color: rgba(255,255,255,0.52); }
+.profile-edit-help { color: var(--text-tertiary-aa); }
 .profile-edit-error { color: #fb7185; }
 
 .profile-edit-avatar-section {
@@ -5890,7 +5890,7 @@ svg { stroke-width: 2; }
 
 .profile-edit-section-title {
     margin: 0;
-    color: rgba(255,255,255,0.88);
+    color: var(--text-primary-aa);
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 900;
@@ -5915,30 +5915,30 @@ svg { stroke-width: 2; }
     gap: 8px;
     padding: 10px;
     border-radius: 20px;
-    border: 2px solid rgba(255,255,255,0.16);
-    background: #000000;
-    color: rgba(255,255,255,0.82);
+    border: 2px solid var(--border-strong-aa);
+    background: var(--solid-surface-float);
+    color: var(--text-secondary-aa);
     cursor: pointer;
     text-align: center;
     transition: transform 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 
 .profile-edit-avatar-tile:focus-visible {
-    outline: 2px solid #ffffff;
+    outline: 2px solid var(--accent);
     outline-offset: 3px;
 }
 
 .profile-edit-avatar-tile:active { transform: scale(0.97); }
 
 .profile-edit-avatar-tile.is-selected {
-    border-color: #ffffff;
-    box-shadow: inset 0 0 0 2px #000000, 0 0 0 3px rgba(255,255,255,0.24);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--solid-surface-base), 0 0 0 3px var(--accent-soft-aa);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .profile-edit-avatar-tile:hover {
         transform: translateY(-2px);
-        border-color: rgba(255,255,255,0.52);
+        border-color: var(--accent-border-aa);
     }
 }
 
@@ -5946,13 +5946,13 @@ svg { stroke-width: 2; }
     width: 74px;
     height: 74px;
     border-radius: 18px;
-    background: #000000 center / cover no-repeat;
-    border: 1px solid rgba(255,255,255,0.2);
+    background: var(--surface-0) center / cover no-repeat;
+    border: 1px solid var(--border-subtle-aa);
 }
 
 .profile-edit-avatar-label {
     max-width: 100%;
-    color: rgba(255,255,255,0.72);
+    color: var(--text-tertiary-aa);
     font-size: 0.76rem;
     font-weight: 800;
     overflow: hidden;
@@ -5966,8 +5966,8 @@ svg { stroke-width: 2; }
     width: 58px;
     height: 58px;
     border-radius: 18px;
-    border: 1px dashed rgba(255,255,255,0.42);
-    color: #ffffff;
+    border: 1px dashed var(--border-strong-aa);
+    color: var(--text-primary-aa);
 }
 
 .profile-edit-actions {
@@ -5979,7 +5979,7 @@ svg { stroke-width: 2; }
 .profile-edit-status {
     min-height: 1.2em;
     margin: 0;
-    color: rgba(255,255,255,0.68);
+    color: var(--text-tertiary-aa);
     font-size: 0.82rem;
     text-align: center;
 }
@@ -5988,9 +5988,9 @@ svg { stroke-width: 2; }
     width: 100%;
     min-height: 50px;
     border-radius: 14px;
-    border: 1px solid #ffffff;
-    background: #ffffff;
-    color: #000000;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    color: var(--text-on-accent-aa);
     font-family: var(--font-display);
     font-weight: 950;
     cursor: pointer;
@@ -5998,7 +5998,7 @@ svg { stroke-width: 2; }
 }
 
 .profile-edit-save:focus-visible {
-    outline: 2px solid #ffffff;
+    outline: 2px solid var(--accent);
     outline-offset: 4px;
 }
 

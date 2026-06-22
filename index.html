@@ -1864,7 +1864,7 @@
             await loadProfileAvatarManifest();
             renderProfileAvatarGrid();
             window.ModalA11y?.open?.(modal, triggerEl || document.activeElement, {
-                initialFocus: '#profile-edit-nickname',
+                initialFocus: window.matchMedia('(pointer: coarse)').matches ? '#profile-edit-close' : '#profile-edit-nickname',
                 onEscape: () => closeProfileEditModal()
             });
         }
