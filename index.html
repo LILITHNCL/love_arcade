@@ -1925,7 +1925,7 @@
                     const dataUrl = await readFileAsDataUrl(profileEditState.uploadedFile);
                     await window.GameCenter?.setAvatar?.(dataUrl);
                 } else if (profileEditState.draftAvatarSource === 'preset' && profileEditState.selectedPresetPath) {
-                    window.GameCenter?.setAvatarPath?.(profileEditState.selectedPresetPath);
+                    await window.GameCenter?.setAvatarPath?.(profileEditState.selectedPresetPath);
                 }
 
                 setProfileEditStatus('Perfil actualizado.');
