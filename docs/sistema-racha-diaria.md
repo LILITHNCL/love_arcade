@@ -35,6 +35,7 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `docs/DOCUMENTACION.md` | Documentación histórica y analítica existente sobre el sistema. |
 | `docs/love-arcade-minigame-dev-manual.md` | Expone `window.GameCenter.getStreakInfo()` como API disponible para minijuegos. |
 | `docs/EVENTOS-LTE.md` y `data/events.json` | Documentan y configuran eventos LTE, incluyendo `streak_boost_v1`. |
+| `docs/supabase-recuperacion-racha.md` | Guía operativa con SQL para diagnosticar y restaurar manualmente la racha de un usuario desde Supabase. |
 
 ## 3. Modelo de datos y persistencia
 
