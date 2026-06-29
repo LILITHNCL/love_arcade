@@ -345,21 +345,21 @@
                         </div>
                     </div>
 
-                    <button id="btn-daily" class="hud-daily-btn">
+                    <button id="btn-daily" class="hud-daily-btn" aria-label="Reclamar bono diario" aria-describedby="daily-msg daily-countdown">
                         <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
                         <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
-                        <span class="hud-daily-label">BONO DIARIO</span>
+                        <span class="hud-daily-label" id="hud-daily-label">BONO DIARIO</span>
                     </button>
                 </div>
 
                 <div id="daily-countdown" class="hud-countdown hidden">
                     Próximo bono en: <span id="countdown-display">--:--:--</span>
                 </div>
-                <p id="daily-msg" class="daily-msg"></p>
+                <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
 
                 <div class="hud-streak">
                     <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
-                    <div class="streak-days" id="streak-days">
+                    <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
                         <div class="streak-day"></div>
                         <div class="streak-day"></div>
                         <div class="streak-day"></div>
@@ -1327,6 +1327,25 @@
 
         </div>
     </div>
+    <div id="daily-repair-modal"
+         class="modal-overlay daily-repair-overlay hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="daily-repair-title"
+         aria-describedby="daily-repair-message">
+        <div class="modal-box daily-repair-box">
+            <p class="daily-repair-kicker">
+                <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-flame"></use></svg>
+                Rescate de racha
+            </p>
+            <h3 id="daily-repair-title" class="modal-title daily-repair-title">Reparar racha</h3>
+            <p id="daily-repair-message" class="daily-repair-message"></p>
+            <div class="modal-actions daily-repair-actions">
+                <button id="btn-daily-repair-cancel" class="btn-ghost" type="button">Ahora no</button>
+                <button id="btn-daily-repair-confirm" class="btn-primary" type="button">Usar 500 monedas</button>
+            </div>
+        </div>
+    </div>
 
     <div id="streak-milestone-modal"
          class="modal-overlay streak-milestone-overlay hidden"
@@ -1391,6 +1410,8 @@
             });
             const countEl = document.getElementById('streak-count');
             if (countEl) countEl.textContent = `×${streak}`;
+            const daysEl = document.getElementById('streak-days');
+            if (daysEl) daysEl.setAttribute('aria-label', `Racha actual: ${streak} día${streak !== 1 ? 's' : ''} de 7 segmentos visibles`);
 
             const rewardEl = document.getElementById('hud-reward-amount');
             if (rewardEl && window.GameCenter?.canClaimDaily?.()) {
@@ -1424,9 +1445,8 @@
             if (_countdownLastSecond === secBucket && !displayEl.textContent) return;
             _countdownLastSecond = secBucket;
 
-            const tomorrow = new Date(now);
-            tomorrow.setHours(24, 0, 0, 0);
-            let diff = Math.max(0, tomorrow.getTime() - now);
+            const resetAt = window.GameCenter?.getNextDailyResetTime?.(now) || (() => { const tomorrow = new Date(now); tomorrow.setHours(24, 0, 0, 0); return tomorrow.getTime(); })();
+            let diff = Math.max(0, resetAt - now);
             const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
             diff %= 3_600_000;
             const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');

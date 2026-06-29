@@ -10,7 +10,7 @@ La racha diaria es un sistema de retención que recompensa al usuario por volver
 daily: { lastClaim: 0, streak: 0 }
 ```
 
-El sistema usa **días calendario locales** en lugar de esperar 24 horas exactas. Esto significa que si un usuario reclama a las 23:59, puede reclamar de nuevo a las 00:00 del día siguiente y la racha continúa. La recompensa base empieza en **20 monedas**, sube **+5 monedas por día de racha** y se limita a **60 monedas**. Además, puede recibir **+90 monedas** si tiene activa la Bendición Lunar.
+El sistema usa **días calendario locales con corte flexible a las 03:00 AM** en lugar de esperar 24 horas exactas. Esto significa que si un usuario reclama antes de dormir y vuelve durante la madrugada, el sistema no avanza el día de racha hasta las 03:00 AM. La recompensa base empieza en **20 monedas**, sube **+5 monedas por día de racha** y se limita a **60 monedas**. Además, puede recibir **+90 monedas** si tiene activa la Bendición Lunar.
 
 A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 
@@ -35,6 +35,7 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `docs/DOCUMENTACION.md` | Documentación histórica y analítica existente sobre el sistema. |
 | `docs/love-arcade-minigame-dev-manual.md` | Expone `window.GameCenter.getStreakInfo()` como API disponible para minijuegos. |
 | `docs/EVENTOS-LTE.md` y `data/events.json` | Documentan y configuran eventos LTE, incluyendo `streak_boost_v1`. |
+| `docs/supabase-recuperacion-racha.md` | Guía operativa con SQL para diagnosticar y restaurar manualmente la racha de un usuario desde Supabase. |
 
 ## 3. Modelo de datos y persistencia
 
@@ -113,10 +114,10 @@ Ejemplos:
 
 ## 5. Reglas de racha diaria
 
-El sistema compara **medianoche contra medianoche**:
+El sistema compara **medianoche relativa contra medianoche relativa** con una madrugada flexible de 3 horas:
 
-1. `nowMidnight = new Date(now).setHours(0, 0, 0, 0)`.
-2. `lastMidnight = new Date(lastClaim).setHours(0, 0, 0, 0)`.
+1. `nowMidnight = _getDailyDayStart(now)`, que resta 3 horas antes de normalizar a medianoche local.
+2. `lastMidnight = _getDailyDayStart(lastClaim)`, aplicando el mismo desfase de 3 horas.
 3. `diffDays = Math.round((nowMidnight - lastMidnight) / 86_400_000)`.
 
 Reglas:
@@ -125,7 +126,8 @@ Reglas:
 |---:|---|
 | `0` | Ya reclamó hoy. No se entrega recompensa. |
 | `1` | La racha continúa. Se incrementa desde la racha actual. |
-| `> 1` | La racha se rompió. Se reinicia a `1`. |
+| `2` | La racha entra en **Recuperación Retroactiva**: puede rescatarse por 500 monedas sin reiniciar. |
+| `> 2` | La racha se rompió. Se reinicia a `1`. |
 | Sin reclamo previo | Se considera primer reclamo y queda en `1`. |
 
 La racha se incrementa normalmente en `+1`, pero si el evento LTE `streak_boost_v1` está activo, se incrementa en `+2` cuando `diffDays === 1`.
@@ -144,7 +146,7 @@ El flujo principal ocurre cuando el usuario pulsa `#btn-daily`:
 8. Calcula nueva racha y recompensa base.
 9. Añade Bendición Lunar si está activa.
 10. Suma monedas al store.
-11. Actualiza `store.daily = { lastClaim: now, streak: newStreak }`.
+11. Si `diffDays === 2`, no muta el store y devuelve `repairRequired` para que la UI abra la confirmación de reparación. En reclamos normales, actualiza `store.daily = { lastClaim: now, streak: newStreak }`.
 12. Registra transacción en `history`.
 13. Persiste con `saveState()`.
 14. Actualiza UI de Bendición Lunar.
@@ -223,7 +225,7 @@ Retorno de fallo típico:
 
 ### `GameCenter.canClaimDaily()`
 
-Retorna `true` si ya cambió el día calendario local respecto a `daily.lastClaim`. Se usa para UI y notificaciones, no como validación completa anti-abuso.
+Retorna `true` si ya cambió el día calendario flexible respecto a `daily.lastClaim` usando el mismo caché `love_arcade_time_cache` que `claimDaily()`. Si el caché marca `desynced`, retorna `false` para evitar falsas promesas de UI.
 
 ### `GameCenter.getStreakInfo()`
 
@@ -457,7 +459,7 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 ### 17.2 Riesgos / oportunidades
 
 - `#btn-daily` no tiene `aria-label`; aunque tiene texto visible, el monto dinámico puede hacer que el nombre accesible sea poco claro. Recomendación: `aria-label="Reclamar bono diario"` y actualizar `aria-describedby` hacia el monto/estado si se quiere más contexto.
-- `#daily-msg` no tiene `aria-live`; los mensajes de éxito/error pueden no anunciarse a lectores de pantalla. Recomendación: `role="status"` o `aria-live="polite"`.
+- `#daily-msg` ya incluye `role="status"` y `aria-live="polite"`, por lo que los mensajes de éxito, bloqueo y reparación se anuncian a tecnologías de asistencia.
 - La barra de racha usa `div` visuales sin texto accesible. Recomendación: añadir un texto oculto o `aria-label` en el contenedor, por ejemplo “Racha actual: 5 días”.
 - El modal de hito no implementa explícitamente focus trap ni restauración de foco. Recomendación: al abrir, enfocar el botón de reclamo; al cerrar, devolver foco al botón diario o al disparador relevante.
 - El countdown puede beneficiarse de `aria-live="polite"` con cuidado para no anunciar cada segundo; mejor anunciar cambios de estado, no cada tick.
@@ -482,7 +484,7 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 ### 18.3 Riesgos / oportunidades
 
 - Algunas animaciones de racha usan `box-shadow`, que puede ser más costoso que `opacity/transform`. No es grave por el tamaño pequeño, pero conviene mantenerlo acotado.
-- El CSS documenta que `prefers-reduced-motion` desactiva el pulse, pero en el fragmento inspeccionado no se ve la regla concreta junto al bloque. Recomendación: verificar o añadir media query global para desactivar `dailyBtnPulse`, `streakPulse`, `streakMilestonePop` y `streakRewardFloat`.
+- Existe una regla global `prefers-reduced-motion` que detiene los pulsos del botón, la barra de racha, los modales de racha y el brillo flotante de recompensas.
 - `streakMilestonePop` dura 500 ms; para feedback de interacción suele ser largo. Como es una celebración modal, puede ser aceptable, pero debería respetar reducción de movimiento.
 
 ## 19. Estados de UX cubiertos
@@ -503,7 +505,7 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 
 | Caso | Comportamiento |
 |---|---|
-| Reclamo a las 23:59 y luego a las 00:01 | Continúa racha por día calendario. |
+| Reclamo a las 23:59 y luego a las 00:01 | No avanza prematuramente: ambos caen en el mismo día flexible hasta las 03:00 AM. |
 | Más de un día sin reclamar | `diffDays > 1`, racha se reinicia a 1. |
 | Racha mayor a 7 | Barra queda llena; contador textual muestra valor real. |
 | Evento `streak_boost_v1` activo | Siguiente racha suma +2 si venía de ayer. |
@@ -525,10 +527,10 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 
 ### Alta prioridad
 
-- Añadir `aria-live="polite"` o `role="status"` a `#daily-msg`.
+- Mantener `role="status"` y `aria-live="polite"` en `#daily-msg` cuando se modifique el HUD.
 - Añadir texto accesible para racha actual y próximo bono.
 - Enfocar el botón del modal de hito al abrir y restaurar foco al cerrar.
-- Confirmar que existe una regla global `prefers-reduced-motion`; si no existe, añadirla para las animaciones de racha.
+- Mantener la regla global `prefers-reduced-motion` para nuevas animaciones de racha o reparación.
 
 ### Media prioridad
 
@@ -572,3 +574,12 @@ flowchart TD
 El sistema de racha diaria está bien integrado con la economía, la UI del HUD, Bendición Lunar, eventos LTE, analítica, hitos y notificaciones. Su decisión UX más importante es usar **días calendario** y no ventanas rígidas de 24 horas, lo cual reduce frustración y hace que el hábito diario sea más natural. La arquitectura prioriza respuesta instantánea con validación horaria en background; esto favorece la experiencia, aunque deja un riesgo residual cuando no hay caché de tiempo válido.
 
 Las mejoras más valiosas no requieren reescritura: reforzar accesibilidad de mensajes dinámicos y modal, añadir pruebas de fechas, alinear notificaciones con medianoche local y hacer visible el boost de evento cuando esté activo.
+
+
+## 22. Actualización v12 — Madrugada Flexible y Recuperación Retroactiva
+
+- El corte de racha diaria se desplaza a las **03:00 AM** mediante `DAILY_DAY_OFFSET_MS`. Antes de calcular el día calendario, el motor resta 3 horas al timestamp evaluado; así, un reclamo a las 01:30 AM sigue perteneciendo al día anterior.
+- `canClaimDaily()`, `getStreakInfo()`, `claimDaily()` y el countdown del HUD comparten la misma semántica de corte flexible y el mismo caché horario, evitando discrepancias entre UI y validación.
+- Cuando `diffDays === 2`, `claimDaily()` no reinicia la racha. Devuelve `repairRequired`, el HUD cambia a **REPARAR RACHA** y `repairDailyStreak()` permite conservar la racha vigente a cambio de **500 monedas**.
+- Si el usuario no tiene saldo suficiente, el botón queda deshabilitado y `#daily-msg` muestra “Consigue las monedas que faltan jugando en el Arcade.” sin mutar `localStorage`.
+- `#daily-msg` ahora anuncia cambios con `role="status"` y `aria-live="polite"`; los pulsos de botón/racha y los modales respetan `prefers-reduced-motion`.
