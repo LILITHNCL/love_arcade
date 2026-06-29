@@ -2,23 +2,23 @@
   "version": 1,
   "collections": [
     {
-      "id": "arcade",
-      "label": "Arcade",
+      "id": "clasicos",
+      "label": "Clásicos",
       "items": [
         {
-          "id": "arcade/1",
-          "label": "Nova Player",
-          "src": "assets/avatar/arcade/1.svg"
+          "id": "clasicos/1",
+          "label": "Isla Corazón",
+          "src": "assets/avatar/clasicos/isla-corazon-46d17a82.jpg"
         },
         {
-          "id": "arcade/2",
-          "label": "Pixel Rider",
-          "src": "assets/avatar/arcade/2.svg"
+          "id": "clasicos/2",
+          "label": "505",
+          "src": "assets/avatar/clasicos/505-a7bdbed3.jpg"
         },
         {
-          "id": "arcade/3",
-          "label": "Moon Runner",
-          "src": "assets/avatar/arcade/3.svg"
+          "id": "clasicos/3",
+          "label": "Bocchi the Cat",
+          "src": "assets/avatar/clasicos/bocchi-81f12dff.jpg"
         }
       ]
     }
