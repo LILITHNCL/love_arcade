@@ -281,6 +281,8 @@ const TIME_API_TIMEOUT = 4000;
  * Separada del store principal para no contaminar checksums de sincronización.
  */
 const TIME_CACHE_KEY = 'love_arcade_time_cache';
+const DAILY_DAY_OFFSET_MS = 3 * 60 * 60 * 1000;
+const DAILY_REPAIR_COST = 500;
 
 /**
  * TTL del caché de tiempo (ms). Mientras el caché sea más reciente que este
@@ -317,6 +319,41 @@ function _writeTimeCache(data) {
  *   cacheAge:   number    — antigüedad del caché en ms (0 si no existe)
  * }}
  */
+function _getDailyDayStart(ts) {
+    const shifted = ts - DAILY_DAY_OFFSET_MS;
+    return new Date(shifted).setHours(0, 0, 0, 0);
+}
+
+function _getDailyDiffDays(now, lastClaim) {
+    if (!lastClaim) return 1;
+    return Math.round((_getDailyDayStart(now) - _getDailyDayStart(lastClaim)) / 86_400_000);
+}
+
+function _getCurrentDailyTime() {
+    return _readTimeCache();
+}
+
+function _getDailyRepairState() {
+    const { time: now, verified, desynced } = _getCurrentDailyTime();
+    const { lastClaim, streak } = store.daily;
+    const diffDays = _getDailyDiffDays(now, lastClaim);
+    return {
+        now,
+        verified,
+        desynced,
+        diffDays,
+        repairAvailable: lastClaim > 0 && streak > 0 && diffDays === 2,
+        repairCost: DAILY_REPAIR_COST,
+        canAffordRepair: store.coins >= DAILY_REPAIR_COST
+    };
+}
+
+function _getNextDailyResetTime(now = Date.now()) {
+    const shifted = new Date(now - DAILY_DAY_OFFSET_MS);
+    shifted.setHours(24, 0, 0, 0);
+    return shifted.getTime() + DAILY_DAY_OFFSET_MS;
+}
+
 function _readTimeCache() {
     try {
         const raw = localStorage.getItem(TIME_CACHE_KEY);
@@ -1216,20 +1253,27 @@ window.GameCenter = {
         }
 
         // ── 3. Cálculo de días calendario (normalizar a medianoche) ──
-        const nowMidnight  = new Date(now).setHours(0, 0, 0, 0);
-        const lastMidnight = lastClaim > 0
-            ? new Date(lastClaim).setHours(0, 0, 0, 0)
-            : null;
-
-        const diffDays = lastMidnight !== null
-            ? Math.round((nowMidnight - lastMidnight) / 86_400_000)
-            : 1;
+        const diffDays = _getDailyDiffDays(now, lastClaim);
 
         if (diffDays === 0) {
             return {
                 success:  false,
                 verified,
                 message:  '¡Ya reclamaste tu bono hoy! Vuelve mañana.'
+            };
+        }
+
+        if (diffDays === 2 && lastClaim > 0 && streak > 0) {
+            return {
+                success: false,
+                repairRequired: true,
+                repairCost: DAILY_REPAIR_COST,
+                canAffordRepair: store.coins >= DAILY_REPAIR_COST,
+                streak,
+                verified,
+                message: store.coins >= DAILY_REPAIR_COST
+                    ? `Puedes reparar tu racha de ${streak} día${streak !== 1 ? 's' : ''}.`
+                    : 'Consigue las monedas que faltan jugando en el Arcade.'
             };
         }
 
@@ -1288,6 +1332,31 @@ window.GameCenter = {
         };
     },
 
+    repairDailyStreak: () => {
+        const state = _getDailyRepairState();
+        const { lastClaim, streak } = store.daily;
+
+        if (lastClaim > 0 && state.now < lastClaim) {
+            return { success: false, verified: state.verified, message: 'Se detectó una inconsistencia horaria. Por favor, verifica la configuración de tu dispositivo.' };
+        }
+        if (state.desynced) {
+            return { success: false, verified: state.verified, message: 'Reloj desincronizado. Verifica la hora de tu dispositivo e inténtalo de nuevo.' };
+        }
+        if (!state.repairAvailable) {
+            return { success: false, verified: state.verified, message: 'La reparación de racha no está disponible ahora.' };
+        }
+        if (store.coins < DAILY_REPAIR_COST) {
+            return { success: false, repairRequired: true, verified: state.verified, message: 'Consigue las monedas que faltan jugando en el Arcade.' };
+        }
+
+        store.coins -= DAILY_REPAIR_COST;
+        store.daily = { lastClaim: state.now, streak };
+        logTransaction('gasto', DAILY_REPAIR_COST, `Reparación de racha · ${streak} días`);
+        saveState({ immediateCloudSync: true });
+        window.GhostAnalytics?.track('daily_streak_repair', { costo: DAILY_REPAIR_COST, racha: streak });
+        return { success: true, verified: state.verified, cost: DAILY_REPAIR_COST, streak, message: `Racha de ${streak} día${streak !== 1 ? 's' : ''} rescatada por ${DAILY_REPAIR_COST} monedas.` };
+    },
+
     /**
      * Comprueba si el usuario puede reclamar el bono diario.
      * Usa el reloj local para la UI (sin coste de red); la validación real
@@ -1296,12 +1365,15 @@ window.GameCenter = {
      *
      * @returns {boolean}
      */
+    getNextDailyResetTime: (now = Date.now()) => _getNextDailyResetTime(now),
+
     canClaimDaily: () => {
         const { lastClaim } = store.daily;
         if (lastClaim === 0) return true;
-        const nowMidnight  = new Date().setHours(0, 0, 0, 0);
-        const lastMidnight = new Date(lastClaim).setHours(0, 0, 0, 0);
-        return (nowMidnight - lastMidnight) >= 86_400_000; // al menos 1 día de diferencia
+        const state = _getDailyRepairState();
+        if (state.desynced) return false;
+        const diffDays = state.diffDays;
+        return diffDays >= 1;
     },
 
     /**
@@ -1310,13 +1382,8 @@ window.GameCenter = {
      */
     getStreakInfo: () => {
         const { lastClaim, streak } = store.daily;
-        const nowMidnight  = new Date().setHours(0, 0, 0, 0);
-        const lastMidnight = lastClaim > 0
-            ? new Date(lastClaim).setHours(0, 0, 0, 0)
-            : null;
-        const diffDays   = lastMidnight !== null
-            ? Math.round((nowMidnight - lastMidnight) / 86_400_000)
-            : 1;
+        const repairState = _getDailyRepairState();
+        const diffDays = repairState.diffDays;
 
         // [v10.1] Reflejar streak_boost_v1 en la previsualización de nextStreak.
         // claimDaily() aplica el mismo cálculo; así la UI muestra siempre el
@@ -1331,7 +1398,10 @@ window.GameCenter = {
         return {
             streak,
             nextReward,
-            canClaim:     diffDays >= 1,
+            canClaim:     diffDays >= 1 && !repairState.desynced,
+            repairAvailable: repairState.repairAvailable,
+            repairCost: DAILY_REPAIR_COST,
+            canAffordRepair: repairState.canAffordRepair,
             streakBoosted: streakBoost === 2
         };
     },
@@ -2049,15 +2119,32 @@ function updateDailyButton() {
     const can  = window.GameCenter.canClaimDaily();
     const info = window.GameCenter.getStreakInfo();
 
-    btn.disabled      = !can;
-    btn.style.opacity = can ? '1' : '0.5';
-    btn.style.cursor  = can ? 'pointer' : 'not-allowed';
+    const repairMode = Boolean(info.repairAvailable);
+    const enabled = repairMode ? Boolean(info.canAffordRepair) : can;
+
+    btn.disabled      = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.5';
+    btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+    btn.dataset.mode  = repairMode ? 'repair' : 'claim';
+    btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
+
+    const labelEl = document.getElementById('hud-daily-label');
+    if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
+
+    const msg = document.getElementById('daily-msg');
+    if (msg && repairMode && !info.canAffordRepair) {
+        msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
+        msg.style.color = '#facc15';
+        msg.style.opacity = '1';
+    }
 
     // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
     const rewardEl = document.getElementById('hud-reward-amount');
     if (rewardEl) {
         // Solo actualizar la cifra; la etiqueta "BONO DIARIO" se queda fija
-        if (!can) {
+        if (repairMode) {
+            rewardEl.textContent = `${info.repairCost} 🪙`;
+        } else if (!can) {
             rewardEl.textContent = `×${info.streak}`;
         } else {
             const moonStatus = window.GameCenter.getMoonBlessingStatus();
@@ -2159,6 +2246,47 @@ function _renderStreakMilestoneRewards(rewards = []) {
             </li>
         `;
     }).join('');
+}
+
+
+function _setDailyMessage(message, success = false) {
+    const msg = document.getElementById('daily-msg');
+    if (!msg) return;
+    msg.textContent   = message;
+    msg.style.color   = success ? '#4ade80' : '#facc15';
+    msg.style.opacity = '1';
+    setTimeout(() => { msg.style.opacity = '0'; }, 3500);
+}
+
+function showDailyRepairModal() {
+    const modal = document.getElementById('daily-repair-modal');
+    const messageEl = document.getElementById('daily-repair-message');
+    const confirmBtn = document.getElementById('btn-daily-repair-confirm');
+    const cancelBtn = document.getElementById('btn-daily-repair-cancel');
+    const info = window.GameCenter.getStreakInfo();
+    if (!modal || !messageEl || !confirmBtn || !cancelBtn || !info.repairAvailable) return;
+
+    messageEl.textContent = `¿Quieres usar ${info.repairCost} monedas para rescatar tu racha de ${info.streak} día${info.streak !== 1 ? 's' : ''}? 🪙✨`;
+    modal.classList.remove('hidden');
+    modal.classList.add('daily-repair-overlay--visible');
+    confirmBtn.disabled = !info.canAffordRepair;
+    confirmBtn.focus();
+
+    const close = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('daily-repair-overlay--visible');
+        document.getElementById('btn-daily')?.focus();
+    };
+    cancelBtn.onclick = close;
+    confirmBtn.onclick = () => {
+        confirmBtn.disabled = true;
+        const result = window.GameCenter.repairDailyStreak();
+        close();
+        _setDailyMessage(result.message, result.success);
+        updateUI();
+        updateDailyButton();
+        window.updateStreakBar?.();
+    };
 }
 
 function showStreakMilestoneModal() {
@@ -2434,16 +2562,20 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
             dailyBtn.style.opacity = '0.5';
             dailyBtn.style.cursor  = 'not-allowed';
 
+            if (dailyBtn.dataset.mode === 'repair') {
+                showDailyRepairModal();
+                updateDailyButton();
+                return;
+            }
+
             // ── Paso 2: ejecutar reclamo (instantáneo — sin red) ──
             const result = window.GameCenter.claimDaily();
 
             // ── Paso 3: mostrar mensaje y actualizar UI ──
-            const msg = document.getElementById('daily-msg');
-            if (msg) {
-                msg.textContent   = result.message;
-                msg.style.color   = result.success ? '#4ade80' : '#facc15';
-                msg.style.opacity = '1';
-                setTimeout(() => { msg.style.opacity = '0'; }, 3500);
+            if (result.repairRequired) {
+                showDailyRepairModal();
+            } else {
+                _setDailyMessage(result.message, result.success);
             }
 
             // updateDailyButton() recalcula el estado correcto del botón
