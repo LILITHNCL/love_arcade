@@ -904,6 +904,29 @@ async function _saveAvatarLocally(dataUrl) {
     applyAvatar();
 }
 
+async function _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket = 'avatars' }) {
+    const path = `${userId}/profile.jpg`;
+    const compressed = await compressImage(sourceBlob, 200, 200, 0.7);
+    const { error: uploadError } = await sbClient
+        .storage
+        .from(bucket)
+        .upload(path, compressed, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: 'image/jpeg'
+        });
+    if (uploadError) throw uploadError;
+
+    const { data } = sbClient.storage.from(bucket).getPublicUrl(path);
+    if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
+
+    const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+    store.userAvatar = publicUrl;
+    saveState({ immediateCloudSync: true });
+    applyAvatar();
+    return { path, publicUrl: data.publicUrl, cacheBustedUrl: publicUrl };
+}
+
 // =====================================================
 // API PÚBLICA — window.GameCenter
 // =====================================================
@@ -1647,23 +1670,8 @@ window.GameCenter = {
                 }
 
                 const sourceBlob = _dataUrlToBlob(dataUrl);
-                const compressed = await compressImage(sourceBlob, 200, 200, 0.7);
-                const { error: uploadError } = await sbClient
-                    .storage
-                    .from(bucket)
-                    .upload(path, compressed, {
-                        cacheControl: '3600',
-                        upsert: true,
-                        contentType: 'image/jpeg'
-                    });
-                if (uploadError) throw uploadError;
-
-                const { data } = sbClient.storage.from(bucket).getPublicUrl(path);
-                if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
-                store.userAvatar = `${data.publicUrl}?t=${Date.now()}`;
-                saveState({ immediateCloudSync: true });
-                applyAvatar();
-                return { success: true, remote: true, url: data.publicUrl };
+                const { publicUrl } = await _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket });
+                return { success: true, remote: true, url: publicUrl };
             } catch (err) {
                 const statusCode = err?.statusCode || err?.status || null;
                 const message = err?.message || String(err);
@@ -1691,16 +1699,49 @@ window.GameCenter = {
     },
 
     /**
-     * Guarda un avatar local predefinido sin pasar por Supabase Storage.
-     * Bridge temporal para presets empaquetados en /assets/avatar/ mientras
-     * Sentinel sigue sincronizando sólo URLs remotas en user_profiles.avatar_url.
+     * Guarda un avatar predefinido. Con sesión activa lo sube a Supabase
+     * Storage igual que una foto personalizada, para que Sentinel persista
+     * una URL remota en user_profiles.avatar_url y el avatar viaje entre
+     * dispositivos. Sin sesión mantiene el fallback local empaquetado.
      * @param {string} assetPath Ruta local aprobada bajo assets/avatar/.
      */
-    setAvatarPath: (assetPath) => {
+    setAvatarPath: async (assetPath) => {
         const normalized = String(assetPath || '').trim().replace(/^\/+/, '');
         if (!/^assets\/avatar\/[\w./-]+\.(?:avif|webp|png|jpg|jpeg|svg)$/i.test(normalized)) {
             throw new Error('Avatar local no permitido.');
         }
+
+        const session = window.Sentinel?.getSession?.();
+        const sbClient = window.Sentinel?.getClient?.();
+        const userId = session?.user?.id;
+        const bucket = 'avatars';
+
+        if (session && sbClient && userId) {
+            const path = `${userId}/profile.jpg`;
+            try {
+                const { data: authData, error: authError } = await sbClient.auth.getSession();
+                if (authError) throw authError;
+                const freshSession = authData?.session;
+                if (!freshSession?.access_token) {
+                    _trackAvatarStorageFallback('storage_no_session', { user_id: userId, bucket, path, preset: true });
+                    throw new Error('Missing access token');
+                }
+
+                const response = await fetch(normalized, { cache: 'no-cache' });
+                if (!response.ok) throw new Error(`No se pudo cargar el avatar predefinido (${response.status}).`);
+                const sourceBlob = await response.blob();
+                const { publicUrl } = await _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket });
+                return { success: true, remote: true, preset: true, url: publicUrl };
+            } catch (err) {
+                const statusCode = err?.statusCode || err?.status || null;
+                const fallbackReason = Number(statusCode) === 403
+                    ? 'storage_forbidden_rls'
+                    : 'storage_network';
+                _trackAvatarStorageFallback(fallbackReason, { user_id: userId, bucket, path, preset: true, status_code: statusCode });
+                console.warn('[GameCenter] Avatar predefinido no pudo subirse a Supabase; usando fallback local:', err?.message || String(err));
+            }
+        }
+
         store.userAvatar = normalized;
         saveState({ immediateCloudSync: true });
         applyAvatar();
