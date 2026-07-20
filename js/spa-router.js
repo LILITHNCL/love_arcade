@@ -48,7 +48,7 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'events'];
+    const VIEWS = ['home', 'shop', 'profile', 'events'];
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};

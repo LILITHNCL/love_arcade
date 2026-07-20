@@ -258,7 +258,7 @@
         <ul class="nav-links">
             <li><a href="#" class="nav-link active" data-view="home">Inicio</a></li>
             <li><a href="#" class="nav-link" data-view="shop">Tienda</a></li>
-            <li><a href="#" class="nav-link" data-view="events">Eventos</a></li>
+            <li><a href="#" class="nav-link" data-view="profile">Perfil</a></li>
         </ul>
 
         <div class="nav-user">
@@ -273,13 +273,11 @@
                 <span class="coin-display">0</span>
                 <span class="visually-hidden">monedas</span>
             </div>
-            <label for="avatar-upload" class="avatar-container" aria-label="Cambiar foto de perfil">
+            <div class="avatar-container" aria-hidden="true">
                 <div class="avatar" id="user-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                     <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                 </div>
-                <div class="avatar-edit-icon" aria-hidden="true"><svg class="icon" width="10" height="10"><use href="#icon-plus"></use></svg></div>
-                <input type="file" id="avatar-upload" class="visually-hidden" accept="image/*">
-            </label>
+            </div>
         </div>
     </nav>
 
@@ -293,9 +291,9 @@
             <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-shopping-bag"></use></svg>
             <span>Tienda</span>
         </a>
-        <a href="#" class="b-nav-item" data-view="events">
-            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-            <span>Eventos</span>
+        <a href="#" class="b-nav-item" data-view="profile">
+            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-user"></use></svg>
+            <span>Perfil</span>
         </a>
     </nav>
 
@@ -314,13 +312,10 @@
             <div class="player-hud">
 
                 <div class="hud-top">
-                    <div class="hud-avatar-wrap">
-                    <label for="avatar-upload-hud" aria-label="Cambiar foto de perfil" class="avatar-label">
-                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
-                                <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
-                            </div>
-                        <input type="file" id="avatar-upload-hud" class="visually-hidden" accept="image/*">
-                        </label>
+                    <div class="hud-avatar-wrap" aria-hidden="true">
+                        <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
+                            <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        </div>
                         <div class="hud-avatar-ring"></div>
                     </div>
                     <div class="hud-info">
@@ -329,12 +324,6 @@
                         </p>
                         <div class="hud-name-row">
                             <p class="hud-name" id="display-nickname"></p>
-                            <button id="btn-edit-identity"
-                                    class="btn-edit-identity"
-                                    type="button"
-                                    aria-label="Editar nombre y saludo">
-                                <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-pencil"></use></svg>
-                            </button>
                             <span id="cloud-sync-indicator" class="hud-cloud-sync-indicator" aria-live="polite" title="Sincronización en la nube">
                                 <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
                                 Nube
@@ -356,21 +345,21 @@
                         </div>
                     </div>
 
-                    <button id="btn-daily" class="hud-daily-btn">
+                    <button id="btn-daily" class="hud-daily-btn" aria-label="Reclamar bono diario" aria-describedby="daily-msg daily-countdown">
                         <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
                         <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
-                        <span class="hud-daily-label">BONO DIARIO</span>
+                        <span class="hud-daily-label" id="hud-daily-label">BONO DIARIO</span>
                     </button>
                 </div>
 
                 <div id="daily-countdown" class="hud-countdown hidden">
                     Próximo bono en: <span id="countdown-display">--:--:--</span>
                 </div>
-                <p id="daily-msg" class="daily-msg"></p>
+                <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
 
                 <div class="hud-streak">
                     <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
-                    <div class="streak-days" id="streak-days">
+                    <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
                         <div class="streak-day"></div>
                         <div class="streak-day"></div>
                         <div class="streak-day"></div>
@@ -400,7 +389,7 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="assets/images/games/cover/marejig-cover-art-3-2.avif"
+                            src="assets/images/games/cover/marejig-cover.avif"
                             alt="Portada de Marejig"
                             width="1920"
                             height="1280"
@@ -411,9 +400,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Marejig</h3>
-                        <p class="card-desc">Une todos los segmentos.</p>
-                        <a href="games/jigsaw" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/jigsaw" class="card-play-action" aria-label="Jugar Marejig">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -422,7 +410,7 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="assets/images/games/cover/rompecabezas-cover-art.avif"
+                            src="assets/images/games/cover/rompecabezas-cover.avif"
                             alt="Portada de Rompecabezas"
                             width="1920"
                             height="804"
@@ -433,9 +421,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Rompecabezas</h3>
-                        <p class="card-desc">Une las piezas para completar la imagen y ganar monedas.</p>
-                        <a href="games/rompecabezas" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/rompecabezas" class="card-play-action" aria-label="Jugar Rompecabezas">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -444,7 +431,7 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="assets/images/games/cover/word-hunt-cover-art.avif"
+                            src="assets/images/games/cover/word-hunt-cover.avif"
                             alt="Portada de Word Hunt"
                             width="1920"
                             height="804"
@@ -455,9 +442,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Word Hunt</h3>
-                        <p class="card-desc">Encuentra todas las palabras ocultas en el tablero.</p>
-                        <a href="games/word-hunt" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/word-hunt" class="card-play-action" aria-label="Jugar Word Hunt">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -466,7 +452,7 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="assets/images/games/cover/ollin-smash-cover-art.avif"
+                            src="assets/images/games/cover/ollin-smash-cover.avif"
                             alt="Portada de Ollin Smash"
                             width="1920"
                             height="804"
@@ -477,9 +463,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Ollin Smash</h3>
-                        <p class="card-desc">Destruye todos los bloques antes de que la pelota caiga.</p>
-                        <a href="games/ollin-smash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/ollin-smash" class="card-play-action" aria-label="Jugar Ollin Smash">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -499,9 +484,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Vortex</h3>
-                        <p class="card-desc">Elimina todas las naves enemigas en este frenético shooter espacial.</p>
-                        <a href="games/Shooter" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/Shooter" class="card-play-action" aria-label="Jugar Vortex">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -510,7 +494,7 @@
                     <div class="card-cover">
                         <img
                             class="card-cover-img"
-                            src="assets/images/games/cover/2048-cover-art.avif"
+                            src="assets/images/games/cover/2048-cover.avif"
                             alt="Portada de 2048"
                             width="1920"
                             height="804"
@@ -521,9 +505,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">2048</h3>
-                        <p class="card-desc">Desliza las fichas y combina números iguales para sumarlos.</p>
-                        <a href="games/2048" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/2048" class="card-play-action" aria-label="Jugar 2048">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -543,9 +526,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Jungle Dash</h3>
-                        <p class="card-desc">Controla a un jaguar en la selva y salta para esquivar obstáculos. ¿Cuánto puedes resistir?</p>
-                        <a href="games/jungle-dash" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/jungle-dash" class="card-play-action" aria-label="Jugar Jungle Dash">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -565,9 +547,8 @@
                     </div>
                     <div class="card-info">
                         <h3 class="card-title">Dodger</h3>
-                        <p class="card-desc">Sobrevive el mayor tiempo posible a la lluvia de asteroides.</p>
-                        <a href="games/Dodger" class="btn-primary w-full" style="justify-content:center;">
-                            <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-play"></use></svg> Jugar Ahora
+                        <a href="games/Dodger" class="card-play-action" aria-label="Jugar Dodger">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-play"></use></svg>
                         </a>
                     </div>
                 </article>
@@ -634,12 +615,6 @@
                 </button>
                 <button class="shop-tab" data-tab="library">
                     <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
-                </button>
-                <button class="shop-tab" data-tab="sync">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg> Sincronizar
-                </button>
-                <button class="shop-tab" data-tab="settings">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-settings-2"></use></svg> Ajustes
                 </button>
             </div>
 
@@ -721,22 +696,68 @@
                 </div>
             </section>
 
-            <!-- ── TAB: SINCRONIZAR ── -->
-            <section id="tab-sync" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
+        </div><!-- /#view-shop -->
+
+
+        <!-- ═══════════════════════════════════════════
+             VISTA: PERFIL
+             ═══════════════════════════════════════════ -->
+        <div id="view-profile" class="view-section hidden">
+            <section class="profile-hub" data-profile-panel="home" aria-labelledby="profile-title">
+                <div class="profile-summary">
+                    <button id="profile-edit-trigger" class="profile-edit-trigger" type="button" aria-label="Editar perfil">
+                        <span class="profile-avatar" id="profile-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
+                            <svg class="icon" width="44" height="44" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        </span>
+                        <span id="profile-title" class="profile-name">Love Arcade</span>
+                    </button>
+                </div>
+
+                <div class="profile-action-grid" aria-label="Opciones de perfil">
+                    <button class="profile-action-card" type="button" data-profile-target="sync">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Sincronización</span><span class="profile-action-card__desc">Guarda tu progreso y llévalo contigo.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="notifications">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-bell"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Recibe avisos cuando haya recompensas o novedades.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="personalization">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-palette"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Personalización</span><span class="profile-action-card__desc">Elige cómo quieres que se vea tu página.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="upgrades">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-moon"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Mejoras</span><span class="profile-action-card__desc">Activa extras especiales para tu experiencia.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="history">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-scroll-text"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Historial</span><span class="profile-action-card__desc">Revisa tus monedas, compras y recompensas.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Pantalla: Sincronización -->
+            <section id="tab-sync" class="profile-screen hidden" data-profile-panel="sync">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
                     <div>
-                        <h2 class="section-title">Sincronizar Partida</h2>
-                        <p class="section-subtitle">Transfiere tu progreso entre dispositivos</p>
+                        <p class="profile-screen-kicker">Progreso seguro</p>
+                        <h2 class="section-title">Sincronización</h2>
+                        <p class="section-subtitle">Guarda tu avance y llévalo contigo.</p>
                     </div>
                 </div>
 
-                <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--accent-soft); border:1px solid var(--accent-border); font-size:0.72rem; font-weight:700; color:var(--accent);">
-                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Checksum SHA-256
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:var(--success-soft); border:1px solid rgba(34,208,122,0.3); font-size:0.72rem; font-weight:700; color:var(--success);">
-                        <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Anti-edición
-                    </div>
+                <div class="profile-info-strip">
+                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Respaldo protegido</span>
+                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Recuperación segura</span>
                 </div>
 
                 <div class="memory-card">
@@ -745,13 +766,13 @@
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
                         </div>
                         <div>
-                            <h3 class="memory-card__title">Exportar partida</h3>
-                            <p class="memory-card__sub">Genera y descarga un respaldo binario comprimido (.labak)</p>
+                            <h3 class="memory-card__title">Guardar respaldo</h3>
+                            <p class="memory-card__sub">Crea una copia de tu partida para guardarla donde prefieras.</p>
                         </div>
                     </div>
                     <button id="btn-export" class="btn-primary" style="position:relative; z-index:1;">
                         <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
-                        <span>Exportar y descargar</span>
+                        <span>Guardar respaldo</span>
                     </button>
                     <p id="export-msg" class="feedback-msg"></p>
                 </div>
@@ -762,20 +783,20 @@
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-download-cloud"></use></svg>
                         </div>
                         <div>
-                            <h3 class="memory-card__title">Importar partida</h3>
-                            <p class="memory-card__sub">Carga un archivo .labak o .labak.gz para restaurar tu progreso</p>
+                            <h3 class="memory-card__title">Restaurar partida</h3>
+                            <p class="memory-card__sub">Elige un respaldo guardado para recuperar tu progreso.</p>
                         </div>
                     </div>
 
                     <label for="import-file" class="btn-ghost file-label" style="position:relative; z-index:1;">
-                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-file-up"></use></svg> Seleccionar archivo .labak / .labak.gz
+                        <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-file-up"></use></svg> Elegir respaldo
                     </label>
                     <input type="file" id="import-file" accept=".labak,.gz" hidden>
                     <span id="import-file-name" class="file-name-display">Ningún archivo seleccionado</span>
 
                     <button id="btn-import" class="btn-primary" style="margin-top:10px; width:100%; justify-content:center; position:relative; z-index:1; background:linear-gradient(135deg,#22d07a,#16a85e); color:#041a0a;">
                         <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#icon-check-circle"></use></svg>
-                        <span>Importar progreso</span>
+                        <span>Restaurar progreso</span>
                     </button>
                     <p id="import-msg" class="feedback-msg"></p>
                 </div>
@@ -787,8 +808,8 @@
                             <svg class="icon" width="18" height="18" aria-hidden="true" style="color:#63b3ed;"><use href="#icon-download-cloud"></use></svg>
                         </div>
                         <div>
-                            <h3 class="memory-card__title">Sincronización en la Nube</h3>
-                            <p class="memory-card__sub">Portabilidad total · progreso entre dispositivos</p>
+                            <h3 class="memory-card__title">Guardado en la nube</h3>
+                            <p class="memory-card__sub">Conecta tu cuenta para mantener tu avance disponible.</p>
                         </div>
                         <!-- Indicador de estado en tiempo real -->
                         <span id="cloud-status-badge" style="margin-left:auto; font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(113,128,150,0.2); color:var(--text-low); white-space:nowrap; display:flex; align-items:center; gap:4px;">
@@ -806,21 +827,34 @@
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button id="btn-cloud-open-gatekeeper" class="btn-primary" style="flex:1; justify-content:center;">
                             <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-lock"></use></svg>
-                            Gestionar Cuenta
+                            Gestionar cuenta
                         </button>
                     </div>
                     <p id="cloud-login-msg" class="feedback-msg" style="min-height:18px;"></p>
                     <p id="cloud-sync-msg" class="feedback-msg" style="min-height:18px;"></p>
                 </div>
 
-                <div class="memory-card" id="push-notifications-card" style="border-color:rgba(155,89,255,0.45); margin-top:8px;">
+            </section>
+            <!-- Pantalla: Notificaciones -->
+            <section id="profile-notifications" class="profile-screen hidden" data-profile-panel="notifications">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
+                    <div>
+                        <p class="profile-screen-kicker">Avisos útiles</p>
+                        <h2 class="section-title">Notificaciones</h2>
+                        <p class="section-subtitle">Elige si quieres recibir recordatorios importantes.</p>
+                    </div>
+                </div>
+                <div class="profile-screen-card" id="push-notifications-card">
                     <div class="memory-card__header">
                         <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(102,57,166,0.2)); border:1px solid rgba(155,89,255,0.5);">
                             <svg class="icon" width="18" height="18" aria-hidden="true" style="color:var(--accent);"><use href="#icon-bell"></use></svg>
                         </div>
                         <div>
-                            <h3 class="memory-card__title">Recordatorios activos</h3>
-                            <p class="memory-card__sub">Recibe avisos importantes.</p>
+                            <h3 class="memory-card__title">Recordatorios importantes</h3>
+                            <p class="memory-card__sub">Avísame cuando haya recompensas o novedades útiles.</p>
                         </div>
                     </div>
 
@@ -828,9 +862,9 @@
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
                         <button id="btn-push-enable" class="btn-primary push-enable-btn" style="justify-content:center;">
                             <svg class="icon push-enable-btn__icon" width="14" height="14" aria-hidden="true"><use href="#icon-bell"></use></svg>
-                            <span class="push-enable-btn__label">Recibir novedades</span>
+                            <span class="push-enable-btn__label">Activar recordatorios</span>
                         </button>
-                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar aviso</button>
+                        <button id="btn-push-test" class="btn-ghost" style="font-size:0.8rem;">Probar notificación</button>
                     </div>
                     <p id="push-status-msg" class="feedback-msg" style="min-height:18px;"></p>
                     <div id="push-recovery-card" class="push-recovery-card hidden" role="status" aria-live="polite">
@@ -845,14 +879,18 @@
 
                     
                 </div>
-            </section>
 
-            <!-- ── TAB: AJUSTES ── -->
-            <section id="tab-settings" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
+            </section>
+            <!-- Pantalla: Personalización -->
+            <section id="profile-personalization" class="profile-screen hidden" data-profile-panel="personalization">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
                     <div>
-                        <h2 class="section-title">Ajustes</h2>
-                        <p class="section-subtitle">Personaliza tu experiencia</p>
+                        <p class="profile-screen-kicker">Tu estilo</p>
+                        <h2 class="section-title">Personalización</h2>
+                        <p class="section-subtitle">Elige el color que combine con tu página.</p>
                     </div>
                 </div>
 
@@ -863,8 +901,8 @@
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-palette"></use></svg>
                         </div>
                         <div>
-                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Tema de color</h3>
-                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Elige el acento visual de toda la plataforma</p>
+                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Color de tu arcade</h3>
+                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Este color se aplicará a la interfaz principal.</p>
                         </div>
                     </div>
                     <div class="theme-grid">
@@ -896,15 +934,28 @@
                     </div>
                 </div>
 
+            </section>
+            <!-- Pantalla: Mejoras -->
+            <section id="profile-upgrades" class="profile-screen hidden" data-profile-panel="upgrades">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
+                    <div>
+                        <p class="profile-screen-kicker">Detalles especiales</p>
+                        <h2 class="section-title">Mejoras</h2>
+                        <p class="section-subtitle">Activa extras para darle más brillo a tu experiencia.</p>
+                    </div>
+                </div>
                 <!-- Bendición Lunar -->
-                <div class="glass-panel settings-card" style="margin-bottom:1rem; border-color:rgba(192,132,252,0.2);">
+                <div class="profile-feature-card profile-feature-card--moon">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
                         <div class="promo-icon-wrap moon-icon-wrap">
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-moon"></use></svg>
                         </div>
                         <div>
                             <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Bendición Lunar</h3>
-                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">+90 monedas extra en cada bono diario durante 7 días</p>
+                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Una mejora especial: +90 monedas extra en cada bono diario durante 7 días.</p>
                         </div>
                     </div>
                     <div class="economy-info" style="margin-bottom:14px;">
@@ -928,64 +979,51 @@
                     <p id="moon-blessing-msg" class="feedback-msg"></p>
                 </div>
 
-                <!-- Racha semanal -->
-                <div class="glass-panel settings-card" style="margin-bottom:1rem;">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-                        <div class="promo-icon-wrap" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">
-                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-flame"></use></svg>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Racha Diaria</h3>
-                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Vuelve cada día para aumentar tu recompensa</p>
-                        </div>
-                    </div>
-                    <div class="streak-calendar" id="settings-streak-calendar"></div>
-                    <p style="font-size:0.72rem; color:var(--text-low); margin-top:10px; text-align:center;">
-                        Cada día de racha aumenta +5 monedas (máx. 60)
-                    </p>
-                </div>
 
-                <!-- Estado de la economía -->
-                <div class="glass-panel settings-card" style="margin-bottom:1rem;">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-                        <div class="promo-icon-wrap" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">
-                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-trending-up"></use></svg>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Estado de la economía</h3>
-                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Descuentos y cashback activos</p>
-                        </div>
-                    </div>
-                    <div class="economy-info">
-                        <div class="economy-row">
-                            <span style="font-size:0.85rem; color:var(--text-med);">Descuento global</span>
-                            <span id="eco-sale-status" class="eco-badge">—</span>
-                        </div>
-                        <div class="economy-row">
-                            <span style="font-size:0.85rem; color:var(--text-med);">Cashback por compra</span>
-                            <span id="eco-cashback" class="eco-badge eco-badge--green">—</span>
-                        </div>
+                <div class="profile-coming-soon-grid" aria-label="Próximos cosméticos">
+                    <article class="profile-coming-soon-card">
+                        <span class="profile-coming-soon-card__badge">Próximamente</span>
+                        <h3>Estilos de página</h3>
+                        <p>Nuevos marcos, fondos y detalles visuales para personalizar tu perfil.</p>
+                    </article>
+                    <article class="profile-coming-soon-card">
+                        <span class="profile-coming-soon-card__badge">Próximamente</span>
+                        <h3>Efectos visuales</h3>
+                        <p>Pequeños toques cosméticos para que tu arcade se sienta más tuyo.</p>
+                    </article>
+                </div>
+            </section>
+            <!-- Pantalla: Historial -->
+            <section id="profile-history" class="profile-screen hidden" data-profile-panel="history">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
+                    <div>
+                        <p class="profile-screen-kicker">Tus movimientos</p>
+                        <h2 class="section-title">Historial</h2>
+                        <p class="section-subtitle">Revisa tus monedas, compras y recompensas.</p>
                     </div>
                 </div>
-
-                <!-- Historial de transacciones -->
-                <div class="glass-panel settings-card">
+                <!-- Movimientos de monedas -->
+                <div class="profile-screen-card">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
                         <div class="promo-icon-wrap" style="background:rgba(148,163,184,0.2);">
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-scroll-text"></use></svg>
                         </div>
                         <div>
-                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Historial de transacciones</h3>
-                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Últimos movimientos de tu saldo</p>
+                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800;">Movimientos de monedas</h3>
+                            <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Cuando ganes o gastes monedas, aparecerán aquí.</p>
                         </div>
                     </div>
                     <div id="history-list" class="history-list">
                         <p style="color:var(--text-low); font-size:0.8rem; text-align:center; padding:20px 0;">Cargando…</p>
                     </div>
                 </div>
+
             </section>
 
-        </div><!-- /#view-shop -->
+        </div><!-- /#view-profile -->
 
         <!-- ═══════════════════════════════════════════
              VISTA: EVENTOS (v10.0 — LTE System)
@@ -1101,6 +1139,63 @@
                 <h3 id="preview-name" class="preview-name"></h3>
                 <div id="preview-actions" class="preview-actions"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ── PROFILE EDIT MODAL — Netflix-style draft editor ── -->
+    <div id="profile-edit-modal"
+         class="modal-overlay profile-edit-modal-overlay hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="profile-edit-modal-title"
+         aria-describedby="profile-edit-modal-description">
+        <div class="profile-edit-modal-box" role="document">
+            <header class="profile-edit-modal-header">
+                <div>
+                    <h2 id="profile-edit-modal-title" class="profile-edit-title">Editar Perfil</h2>
+                </div>
+                <button id="profile-edit-close" class="profile-edit-close" type="button" aria-label="Cerrar">
+                    <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-x"></use></svg>
+                </button>
+            </header>
+
+            <p id="profile-edit-modal-description" class="profile-edit-description">
+                Elige un avatar, ajusta tu nombre y guarda cuando quieras aplicar los cambios.
+            </p>
+
+            <div class="profile-edit-preview" aria-live="polite">
+                <div class="profile-edit-preview-avatar" id="profile-edit-preview-avatar" aria-hidden="true"></div>
+                <label class="profile-edit-nickname-label" for="profile-edit-nickname">Nombre</label>
+                <div class="profile-edit-input-row">
+                    <input id="profile-edit-nickname"
+                           class="profile-edit-nickname-input"
+                           type="text"
+                           maxlength="15"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="words"
+                           spellcheck="false"
+                           aria-describedby="profile-edit-help profile-edit-error">
+                    <span id="profile-edit-count" class="profile-edit-count" aria-live="polite">0/15</span>
+                </div>
+                <p id="profile-edit-error" class="profile-edit-error hidden" role="alert"></p>
+            </div>
+
+            <section class="profile-edit-avatar-section" aria-labelledby="profile-edit-avatar-title">
+                <h3 id="profile-edit-avatar-title" class="profile-edit-section-title">Elige tu avatar</h3>
+                <div id="profile-edit-avatar-grid" class="profile-edit-avatar-grid" role="grid" aria-label="Avatares disponibles">
+                    <button id="profile-edit-upload-tile" class="profile-edit-avatar-tile profile-edit-upload-tile" type="button" role="gridcell" aria-label="Subir imagen desde galería">
+                        <span class="profile-edit-upload-icon" aria-hidden="true"><svg class="icon" width="24" height="24"><use href="#icon-upload-cloud"></use></svg></span>
+                        <span>Subir</span>
+                    </button>
+                </div>
+                <input type="file" id="modal-avatar-upload" class="visually-hidden" accept="image/*" tabindex="-1">
+            </section>
+
+            <footer class="profile-edit-actions">
+                <p id="profile-edit-status" class="profile-edit-status" role="status" aria-live="polite"></p>
+                <button id="profile-edit-save" class="profile-edit-save" type="button">Guardar</button>
+            </footer>
         </div>
     </div>
 
@@ -1230,6 +1325,25 @@
 
         </div>
     </div>
+    <div id="daily-repair-modal"
+         class="modal-overlay daily-repair-overlay hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="daily-repair-title"
+         aria-describedby="daily-repair-message">
+        <div class="modal-box daily-repair-box">
+            <p class="daily-repair-kicker">
+                <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-flame"></use></svg>
+                Rescate de racha
+            </p>
+            <h3 id="daily-repair-title" class="modal-title daily-repair-title">Reparar racha</h3>
+            <p id="daily-repair-message" class="daily-repair-message"></p>
+            <div class="modal-actions daily-repair-actions">
+                <button id="btn-daily-repair-cancel" class="btn-ghost" type="button">Ahora no</button>
+                <button id="btn-daily-repair-confirm" class="btn-primary" type="button">Usar 500 monedas</button>
+            </div>
+        </div>
+    </div>
 
     <div id="streak-milestone-modal"
          class="modal-overlay streak-milestone-overlay hidden"
@@ -1282,29 +1396,6 @@
 
     <script>
 
-        // ── Sincronizar avatar HUD con input de navbar ───────────────────────
-        const avatarUploads = [
-            document.getElementById('avatar-upload'),
-            document.getElementById('avatar-upload-hud')
-        ];
-        avatarUploads.forEach(input => {
-            if (!input) return;
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const url = ev.target.result;
-                    document.querySelectorAll('.avatar, .hud-avatar').forEach(el => {
-                        el.style.backgroundImage = `url('${url}')`;
-                        const icon = el.querySelector('svg');
-                        if (icon) icon.style.display = 'none';
-                    });
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-
         // ── Racha (vista Inicio) ─────────────────────────────────────────────
         function updateStreakBar() {
             const info = window.GameCenter?.getStreakInfo?.();
@@ -1317,6 +1408,8 @@
             });
             const countEl = document.getElementById('streak-count');
             if (countEl) countEl.textContent = `×${streak}`;
+            const daysEl = document.getElementById('streak-days');
+            if (daysEl) daysEl.setAttribute('aria-label', `Racha actual: ${streak} día${streak !== 1 ? 's' : ''} de 7 segmentos visibles`);
 
             const rewardEl = document.getElementById('hud-reward-amount');
             if (rewardEl && window.GameCenter?.canClaimDaily?.()) {
@@ -1350,9 +1443,8 @@
             if (_countdownLastSecond === secBucket && !displayEl.textContent) return;
             _countdownLastSecond = secBucket;
 
-            const tomorrow = new Date(now);
-            tomorrow.setHours(24, 0, 0, 0);
-            let diff = Math.max(0, tomorrow.getTime() - now);
+            const resetAt = window.GameCenter?.getNextDailyResetTime?.(now) || (() => { const tomorrow = new Date(now); tomorrow.setHours(24, 0, 0, 0); return tomorrow.getTime(); })();
+            let diff = Math.max(0, resetAt - now);
             const hh = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
             diff %= 3_600_000;
             const mm = String(Math.floor(diff / 60_000)).padStart(2, '0');
@@ -1401,6 +1493,7 @@
             activeModal: null,
             modalTriggerMap: new WeakMap(),
             focusTrapHandler: null,
+            escapeHandler: null,
             hiddenSiblings: []
         };
 
@@ -1456,13 +1549,36 @@
         }
 
         window.ModalA11y = {
-            open(modalEl, triggerEl) {
+            open(modalEl, triggerEl, options = {}) {
                 if (!modalEl) return;
                 const opener = triggerEl || document.activeElement;
                 if (opener) modalA11yState.modalTriggerMap.set(modalEl, opener);
                 modalA11yState.activeModal = modalEl;
                 setBackgroundInteractivity(modalEl, true);
                 trapModalFocus(modalEl);
+
+                if (modalA11yState.escapeHandler) {
+                    document.removeEventListener('keydown', modalA11yState.escapeHandler, true);
+                }
+                modalA11yState.escapeHandler = (e) => {
+                    if (e.key !== 'Escape' || modalA11yState.activeModal !== modalEl) return;
+                    if (options.closeOnEscape === false) return;
+                    e.preventDefault();
+                    if (typeof options.onEscape === 'function') {
+                        options.onEscape();
+                    } else {
+                        modalEl.classList.add('hidden');
+                        window.ModalA11y?.close?.(modalEl);
+                    }
+                };
+                document.addEventListener('keydown', modalA11yState.escapeHandler, true);
+
+                const initialFocus = typeof options.initialFocus === 'string'
+                    ? modalEl.querySelector(options.initialFocus)
+                    : options.initialFocus;
+                requestAnimationFrame(() => {
+                    (initialFocus || getFocusableElements(modalEl)[0])?.focus?.();
+                });
             },
             close(modalEl) {
                 if (!modalEl) return;
@@ -1470,6 +1586,10 @@
                 if (modalA11yState.focusTrapHandler) {
                     document.removeEventListener('keydown', modalA11yState.focusTrapHandler, true);
                     modalA11yState.focusTrapHandler = null;
+                }
+                if (modalA11yState.escapeHandler) {
+                    document.removeEventListener('keydown', modalA11yState.escapeHandler, true);
+                    modalA11yState.escapeHandler = null;
                 }
                 modalA11yState.activeModal = null;
                 const trigger = modalA11yState.modalTriggerMap.get(modalEl);
@@ -1607,17 +1727,294 @@
             setTimeout(() => nicknameInput?.focus(), 280);
         }
 
+        // ── Profile Edit Modal — draft-state avatar/nickname editor ────────
+        const PROFILE_DEFAULT_AVATAR = 'https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif';
+        const profileEditState = {
+            isOpen: false,
+            manifestLoaded: false,
+            presets: [],
+            draftNickname: '',
+            draftAvatarUrl: '',
+            draftAvatarSource: 'current',
+            selectedPresetPath: '',
+            uploadedFile: null,
+            uploadPreviewUrl: '',
+            isSaving: false
+        };
+
+        function safeCssUrl(url) {
+            return String(url || PROFILE_DEFAULT_AVATAR).replace(/"/g, '%22');
+        }
+
+        function getCurrentAvatarUrl() {
+            return window.GameCenter?.getAvatar?.() || PROFILE_DEFAULT_AVATAR;
+        }
+
+        function setProfileEditError(message = '') {
+            const errorEl = document.getElementById('profile-edit-error');
+            const input = document.getElementById('profile-edit-nickname');
+            if (!errorEl) return;
+            errorEl.textContent = message;
+            errorEl.classList.toggle('hidden', !message);
+            input?.setAttribute('aria-invalid', message ? 'true' : 'false');
+        }
+
+        function setProfileEditStatus(message = '') {
+            const statusEl = document.getElementById('profile-edit-status');
+            if (statusEl) statusEl.textContent = message;
+        }
+
+        function renderProfileEditPreview() {
+            const preview = document.getElementById('profile-edit-preview-avatar');
+            const input = document.getElementById('profile-edit-nickname');
+            const count = document.getElementById('profile-edit-count');
+            if (preview) preview.style.backgroundImage = `url("${safeCssUrl(profileEditState.draftAvatarUrl)}")`;
+            if (input && input.value !== profileEditState.draftNickname) input.value = profileEditState.draftNickname;
+            if (count) count.textContent = `${profileEditState.draftNickname.length}/15`;
+
+            document.querySelectorAll('.profile-edit-preset-tile').forEach((tile) => {
+                const selected = tile.dataset.avatarSrc === profileEditState.selectedPresetPath;
+                tile.classList.toggle('is-selected', selected);
+                tile.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+        }
+
+        function cleanupUploadPreview() {
+            if (profileEditState.uploadPreviewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(profileEditState.uploadPreviewUrl);
+            }
+            profileEditState.uploadPreviewUrl = '';
+        }
+
+        function fallbackAvatarManifest() {
+            return [
+                { id: 'arcade/1', label: 'Arcade Player 1', src: 'assets/avatar/arcade/1.svg' },
+                { id: 'arcade/2', label: 'Arcade Player 2', src: 'assets/avatar/arcade/2.svg' },
+                { id: 'arcade/3', label: 'Arcade Player 3', src: 'assets/avatar/arcade/3.svg' }
+            ];
+        }
+
+        function normalizeAvatarManifest(data) {
+            const collections = Array.isArray(data?.collections) ? data.collections : [];
+            const items = collections.flatMap((collection) => Array.isArray(collection.items) ? collection.items : []);
+            return items
+                .filter((item) => item?.id && item?.src)
+                .map((item) => ({ id: String(item.id), label: String(item.label || item.id), src: String(item.src) }));
+        }
+
+        async function loadProfileAvatarManifest() {
+            if (profileEditState.manifestLoaded) return profileEditState.presets;
+            try {
+                const response = await fetch('assets/avatar/avatar-manifest.json', { cache: 'no-cache' });
+                if (!response.ok) throw new Error(`Manifest ${response.status}`);
+                const data = await response.json();
+                profileEditState.presets = normalizeAvatarManifest(data);
+            } catch (err) {
+                console.warn('[ProfileEdit] No se pudo cargar avatar-manifest.json; usando placeholders.', err);
+                profileEditState.presets = fallbackAvatarManifest();
+            }
+            if (!profileEditState.presets.length) profileEditState.presets = fallbackAvatarManifest();
+            profileEditState.manifestLoaded = true;
+            return profileEditState.presets;
+        }
+
+        function renderProfileAvatarGrid() {
+            const grid = document.getElementById('profile-edit-avatar-grid');
+            const uploadTile = document.getElementById('profile-edit-upload-tile');
+            if (!grid || !uploadTile) return;
+            grid.querySelectorAll('.profile-edit-preset-tile').forEach((tile) => tile.remove());
+
+            profileEditState.presets.forEach((avatar) => {
+                const tile = document.createElement('button');
+                tile.type = 'button';
+                tile.className = 'profile-edit-avatar-tile profile-edit-preset-tile';
+                tile.setAttribute('role', 'gridcell');
+                tile.setAttribute('aria-label', avatar.label);
+                tile.setAttribute('aria-pressed', 'false');
+                tile.dataset.avatarId = avatar.id;
+                tile.dataset.avatarSrc = avatar.src;
+                tile.innerHTML = `
+                    <span class="profile-edit-avatar-art" style="background-image:url(&quot;${safeCssUrl(avatar.src)}&quot;)"></span>
+                    <span class="profile-edit-avatar-label">${avatar.label}</span>
+                `;
+                tile.addEventListener('click', () => {
+                    cleanupUploadPreview();
+                    profileEditState.uploadedFile = null;
+                    profileEditState.selectedPresetPath = avatar.src;
+                    profileEditState.draftAvatarSource = 'preset';
+                    profileEditState.draftAvatarUrl = avatar.src;
+                    setProfileEditError('');
+                    renderProfileEditPreview();
+                });
+                grid.insertBefore(tile, uploadTile);
+            });
+            renderProfileEditPreview();
+        }
+
+        function hydrateProfileEditDraft() {
+            const identity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
+            cleanupUploadPreview();
+            profileEditState.draftNickname = (identity.nickname || '').slice(0, 15);
+            profileEditState.draftAvatarUrl = getCurrentAvatarUrl();
+            profileEditState.draftAvatarSource = 'current';
+            profileEditState.selectedPresetPath = '';
+            profileEditState.uploadedFile = null;
+            profileEditState.isSaving = false;
+            setProfileEditError('');
+            setProfileEditStatus('');
+        }
+
+        async function openProfileEditModal(triggerEl) {
+            const modal = document.getElementById('profile-edit-modal');
+            if (!modal) return;
+            profileEditState.isOpen = true;
+            hydrateProfileEditDraft();
+            renderProfileEditPreview();
+            modal.classList.remove('hidden');
+            await loadProfileAvatarManifest();
+            renderProfileAvatarGrid();
+            window.ModalA11y?.open?.(modal, triggerEl || document.activeElement, {
+                initialFocus: window.matchMedia('(pointer: coarse)').matches ? '#profile-edit-close' : '#profile-edit-nickname',
+                onEscape: () => closeProfileEditModal()
+            });
+        }
+
+        function closeProfileEditModal(force = false) {
+            if (profileEditState.isSaving && !force) return;
+            const modal = document.getElementById('profile-edit-modal');
+            if (!modal) return;
+            profileEditState.isOpen = false;
+            modal.classList.add('hidden');
+            cleanupUploadPreview();
+            window.ModalA11y?.close?.(modal);
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (evt) => resolve(evt.target.result);
+                reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveProfileEditDraft() {
+            if (profileEditState.isSaving) return;
+            const nickname = profileEditState.draftNickname.trim();
+            const saveBtn = document.getElementById('profile-edit-save');
+            const modal = document.getElementById('profile-edit-modal');
+            if (!nickname) {
+                setProfileEditError('El nickname no puede estar vacío.');
+                document.getElementById('profile-edit-nickname')?.focus();
+                return;
+            }
+
+            profileEditState.isSaving = true;
+            modal?.setAttribute('aria-busy', 'true');
+            if (saveBtn) saveBtn.disabled = true;
+            setProfileEditError('');
+            setProfileEditStatus('Guardando perfil…');
+
+            try {
+                const currentIdentity = window.GameCenter?.getIdentity?.() ?? { nickname: '', gender: '@' };
+                if (nickname !== (currentIdentity.nickname || '')) {
+                    window.GameCenter?.setIdentity?.(nickname, currentIdentity.gender || '@');
+                }
+
+                if (profileEditState.draftAvatarSource === 'upload' && profileEditState.uploadedFile) {
+                    const dataUrl = await readFileAsDataUrl(profileEditState.uploadedFile);
+                    await window.GameCenter?.setAvatar?.(dataUrl);
+                } else if (profileEditState.draftAvatarSource === 'preset' && profileEditState.selectedPresetPath) {
+                    await window.GameCenter?.setAvatarPath?.(profileEditState.selectedPresetPath);
+                }
+
+                setProfileEditStatus('Perfil actualizado.');
+                closeProfileEditModal(true);
+            } catch (err) {
+                setProfileEditError(err?.message || 'No se pudo guardar el perfil.');
+                setProfileEditStatus('');
+            } finally {
+                profileEditState.isSaving = false;
+                modal?.removeAttribute('aria-busy');
+                if (saveBtn) saveBtn.disabled = false;
+            }
+        }
+
+        function initProfileEditModalListeners() {
+            const trigger = document.getElementById('profile-edit-trigger');
+            const closeBtn = document.getElementById('profile-edit-close');
+            const saveBtn = document.getElementById('profile-edit-save');
+            const uploadTile = document.getElementById('profile-edit-upload-tile');
+            const uploadInput = document.getElementById('modal-avatar-upload');
+            const nicknameInput = document.getElementById('profile-edit-nickname');
+            const modal = document.getElementById('profile-edit-modal');
+
+            trigger?.addEventListener('click', () => openProfileEditModal(trigger));
+            closeBtn?.addEventListener('click', () => closeProfileEditModal());
+            saveBtn?.addEventListener('click', saveProfileEditDraft);
+            uploadTile?.addEventListener('click', () => uploadInput?.click());
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) closeProfileEditModal();
+            });
+
+            document.getElementById('profile-edit-avatar-grid')?.addEventListener('keydown', (e) => {
+                const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'];
+                if (!keys.includes(e.key)) return;
+                const tiles = Array.from(document.querySelectorAll('.profile-edit-avatar-tile'));
+                const currentIndex = tiles.indexOf(document.activeElement);
+                if (currentIndex === -1) return;
+                e.preventDefault();
+                const columns = Math.max(1, Math.round((document.getElementById('profile-edit-avatar-grid')?.clientWidth || 1) / Math.max(1, tiles[0].offsetWidth + 12)));
+                const nextIndex = (() => {
+                    if (e.key === 'Home') return 0;
+                    if (e.key === 'End') return tiles.length - 1;
+                    if (e.key === 'ArrowRight') return Math.min(tiles.length - 1, currentIndex + 1);
+                    if (e.key === 'ArrowLeft') return Math.max(0, currentIndex - 1);
+                    if (e.key === 'ArrowDown') return Math.min(tiles.length - 1, currentIndex + columns);
+                    return Math.max(0, currentIndex - columns);
+                })();
+                tiles[nextIndex]?.focus();
+            });
+
+            nicknameInput?.addEventListener('input', () => {
+                profileEditState.draftNickname = nicknameInput.value.slice(0, 15);
+                if (profileEditState.draftNickname.trim()) setProfileEditError('');
+                renderProfileEditPreview();
+            });
+            nicknameInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveProfileEditDraft();
+                }
+            });
+
+            uploadInput?.addEventListener('change', () => {
+                const file = uploadInput.files?.[0];
+                if (!file) return;
+                if (!file.type?.startsWith('image/')) {
+                    setProfileEditError('Selecciona un archivo de imagen válido.');
+                    uploadInput.value = '';
+                    return;
+                }
+                cleanupUploadPreview();
+                profileEditState.uploadedFile = file;
+                profileEditState.uploadPreviewUrl = URL.createObjectURL(file);
+                profileEditState.draftAvatarSource = 'upload';
+                profileEditState.selectedPresetPath = '';
+                profileEditState.draftAvatarUrl = profileEditState.uploadPreviewUrl;
+                setProfileEditError('');
+                renderProfileEditPreview();
+            });
+        }
+
         // ── Identity Flow — v9.4 ────────────────────────────────────────────
         // Si el usuario ya tiene nickname → revealUI() directamente.
         // Si no → mostrar modal de bienvenida; revealUI() se llama al confirmar.
 
         window.revealUI?.();
 
-        // ── Botón de edición en el HUD ──────────────────────────────────────
-        document.getElementById('btn-edit-identity')
-            ?.addEventListener('click', () => openIdentityModal('edit'));
-
         initIdentityModalListeners();
+        initProfileEditModalListeners();
 
         // ── Post-claim UI refresh ────────────────────────────────────────────
         // El handler principal de #btn-daily (reclamo, validación, mensaje)
