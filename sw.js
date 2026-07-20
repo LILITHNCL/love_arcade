@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.55';
+const CACHE_VERSION = 'v2.04.04.56';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -35,7 +35,7 @@ const APP_SHELL_FILES = [
   '/assets/avatar/clasicos/505-a7bdbed3.jpg',
   '/assets/images/games/cover/2048-cover.avif',
   '/assets/images/games/cover/word-hunt-cover.avif',
-  '/assets/images/games/cover/space-shooter-cover-art.avif',
+  '/assets/images/games/cover/space-shooter-cover.avif',
   '/assets/images/games/cover/rompecabezas-cover.avif',
   '/assets/images/games/cover/ollin-smash-cover.avif',
   '/assets/images/games/cover/jungle-dash-cover-art.avif',
