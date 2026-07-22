@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.56';
+const CACHE_VERSION = 'v2.04.04.60';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -33,14 +33,38 @@ const APP_SHELL_FILES = [
   '/assets/avatar/clasicos/isla-corazon-46d17a82.jpg',
   '/assets/avatar/clasicos/bocchi-81f12dff.jpg',
   '/assets/avatar/clasicos/505-a7bdbed3.jpg',
-  '/assets/images/games/cover/2048-cover.avif',
-  '/assets/images/games/cover/word-hunt-cover.avif',
-  '/assets/images/games/cover/space-shooter-cover.avif',
-  '/assets/images/games/cover/rompecabezas-cover.avif',
-  '/assets/images/games/cover/ollin-smash-cover.avif',
-  '/assets/images/games/cover/jungle-dash-cover-art.avif',
-  '/assets/images/games/cover/dodger-cover-art.avif',
-  '/assets/images/games/cover/marejig-cover.avif'
+  '/assets/images/games/cover/2048-cover-512.avif',
+  '/assets/images/games/cover/2048-cover-640.avif',
+  '/assets/images/games/cover/2048-cover-768.avif',
+  '/assets/images/games/cover/2048-cover-1024.avif',
+  '/assets/images/games/cover/marejig-cover-512.avif',
+  '/assets/images/games/cover/marejig-cover-640.avif',
+  '/assets/images/games/cover/marejig-cover-768.avif',
+  '/assets/images/games/cover/marejig-cover-1024.avif',
+  '/assets/images/games/cover/ollin-smash-cover-512.avif',
+  '/assets/images/games/cover/ollin-smash-cover-640.avif',
+  '/assets/images/games/cover/ollin-smash-cover-768.avif',
+  '/assets/images/games/cover/ollin-smash-cover-1024.avif',
+  '/assets/images/games/cover/rompecabezas-cover-512.avif',
+  '/assets/images/games/cover/rompecabezas-cover-640.avif',
+  '/assets/images/games/cover/rompecabezas-cover-768.avif',
+  '/assets/images/games/cover/rompecabezas-cover-1024.avif',
+  '/assets/images/games/cover/space-shooter-cover-512.avif',
+  '/assets/images/games/cover/space-shooter-cover-640.avif',
+  '/assets/images/games/cover/space-shooter-cover-768.avif',
+  '/assets/images/games/cover/space-shooter-cover-1024.avif',
+  '/assets/images/games/cover/word-hunt-cover-512.avif',
+  '/assets/images/games/cover/word-hunt-cover-640.avif',
+  '/assets/images/games/cover/word-hunt-cover-768.avif',
+  '/assets/images/games/cover/word-hunt-cover-1024.avif',
+  '/assets/images/games/cover/dodger-cover-art-512.avif',
+  '/assets/images/games/cover/dodger-cover-art-640.avif',
+  '/assets/images/games/cover/dodger-cover-art-768.avif',
+  '/assets/images/games/cover/dodger-cover-art-1024.avif',
+  '/assets/images/games/cover/jungle-dash-cover-art-512.avif',
+  '/assets/images/games/cover/jungle-dash-cover-art-640.avif',
+  '/assets/images/games/cover/jungle-dash-cover-art-768.avif',
+  '/assets/images/games/cover/jungle-dash-cover-art-1024.avif'
 ];
 
 const GAMES_FILES = [
