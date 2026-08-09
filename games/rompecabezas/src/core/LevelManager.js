@@ -208,7 +208,7 @@ export class LevelManager {
             const publicId = `Nivel${String(n).padStart(2, '0')}`;
 
             return {
-                id:          `lvl_${n}`,
+                id:          `lvl_v2_${n}`,
                 index:       i,
                 publicId,
                 image:       buildImageUrl(publicId),
