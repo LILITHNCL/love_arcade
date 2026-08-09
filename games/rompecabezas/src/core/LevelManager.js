@@ -66,7 +66,7 @@ import { Storage } from '../systems/Storage.js';
 // ─────────────────────────────────────────────────────────────
 //  Constantes de configuración
 // ─────────────────────────────────────────────────────────────
-const TOTAL_LEVELS    = 154;
+const TOTAL_LEVELS    = 5;
 const CLOUDINARY_BASE = 'https://res.cloudinary.com/dyspgn0sw/image/upload';
 
 // ─────────────────────────────────────────────────────────────
