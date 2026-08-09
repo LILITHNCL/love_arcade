@@ -66,7 +66,7 @@ import { Storage } from '../systems/Storage.js';
 // ─────────────────────────────────────────────────────────────
 //  Constantes de configuración
 // ─────────────────────────────────────────────────────────────
-const TOTAL_LEVELS    = 154;
+const TOTAL_LEVELS    = 5;
 const CLOUDINARY_BASE = 'https://res.cloudinary.com/dyspgn0sw/image/upload';
 
 // ─────────────────────────────────────────────────────────────
@@ -208,7 +208,7 @@ export class LevelManager {
             const publicId = `Nivel${String(n).padStart(2, '0')}`;
 
             return {
-                id:          `lvl_${n}`,
+                id:          `lvl_v2_${n}`,
                 index:       i,
                 publicId,
                 image:       buildImageUrl(publicId),
