@@ -36,7 +36,21 @@
         Object.freeze(['nivel_008', 8, 'Devoradora de Mochi', 'Producción', 'hard', 'nivel008']),
         Object.freeze(['nivel_009', 9, 'No era por aquí', 'Producción', 'hard', 'nivel009']),
         Object.freeze(['nivel_010', 10, 'Todavía no', 'Producción', 'hard', 'nivel010']),
-        Object.freeze(['nivel_011', 11, 'La noche en que no llovió', 'Producción', 'hard', 'nivel011'])
+        Object.freeze(['nivel_011', 11, 'La noche en que no llovió', 'Producción', 'hard', 'nivel011']),
+        Object.freeze(['nivel_012', 12, 'Caos irresistible', 'Producción', 'standard', 'nivel012']),
+        Object.freeze(['nivel_013', 13, 'Paz nostálgica', 'Producción', 'standard', 'nivel013']),
+        Object.freeze(['nivel_014', 14, 'Hacia la luz', 'Producción', 'standard', 'nivel014']),
+        Object.freeze(['nivel_015', 15, 'Nuevo mundo', 'Producción', 'standard', 'nivel015']),
+        Object.freeze(['nivel_016', 16, 'Wubba Lubba', 'Producción', 'standard', 'nivel016']),
+        Object.freeze(['nivel_017', 17, 'Sin saberlo', 'Producción', 'standard', 'nivel017']),
+        Object.freeze(['nivel_018', 18, 'Plus Ultra', 'Producción', 'standard', 'nivel018']),
+        Object.freeze(['nivel_019', 19, 'Florecer juntos', 'Producción', 'standard', 'nivel019']),
+        Object.freeze(['nivel_020', 20, 'Cinco noches', 'Producción', 'standard', 'nivel020']),
+        Object.freeze(['nivel_021', 21, 'Realidad pérdida', 'Producción', 'standard', 'nivel021']),
+        Object.freeze(['nivel_022', 22, 'Sin perdón', 'Producción', 'standard', 'nivel022']),
+        Object.freeze(['nivel_023', 23, 'Deseo dorado', 'Producción', 'standard', 'nivel023']),
+        Object.freeze(['nivel_024', 24, 'Estrella escondida', 'Producción', 'standard', 'nivel024']),
+        Object.freeze(['nivel_025', 25, 'Regalo', 'Producción', 'standard', 'nivel025'])
     ]);
 
     var MAREJIG_ALLOWED_LEVEL_KEYS = Object.freeze([
