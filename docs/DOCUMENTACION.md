@@ -2564,33 +2564,17 @@ const PROMO_CODES_HASHED = {
 
 | Hash SHA-256 (primeros 16 chars) | Monedas | Código original |
 |---|---|---|
-| `bf321fd2057fa13f` | 50 | GOUL50 |
-| `b4d84aca1d5ff57b` | 50 | AMRO50 |
-| `4558eb9beb0e7795` | 50 | GOVE50 |
-| `72b39c0a7c2fe8a8` | 50 | FU50 |
-| `72cf61b005e730b6` | 50 | GO50 |
-| `e6453c805f71d9e7` | 50 | GOBR50 |
-| `ab96dc80db7dba63` | 50 | CH50 |
-| `02dcc8750da36c25` | 50 | ASYA50 |
-| `92bdd5dffca1bfee` | 50 | MINA50 |
-| `0c313dd65a464d2e` | 50 | SA50 |
-| `37c74d7abd7b237c` | 50 | TRFU50 |
-| `8db94e555d11f110` | 50 | VEZA50 |
-| `f75a0e6945982ff7` | 50 | JADO50 |
-| `0512cff95aa63306` | 50 | JADOUNO50 |
-| `ac7b6ff2fd991864` | 50 | JADODOS50 |
-| `03a757ee862ded77` | 50 | JADOTRES50 |
-| `379dcec413be95bf` | 50 | HAMI50 |
-| `5bc5dd8321afdd53` | 50 | MA50 |
-| `c5395455063acab1` | 50 | XI50 |
-| `0cd1cd7704a567e4` | 50 | LADEHI50 |
-| `888b5b43925b50cb` | 50 | HIGO50 |
-| `190d2b7ebff147a6` | 50 | KAWA50 |
-| `88feae97920cf17c` | 60 | SACAME |
-| `76d06ecc24894e3d` | 1000 | SAMUEL1000 |
-| `79de29d219b29ccb` | 500 | FEB14 |
-| `724dd40fbeb9e3d5` | 300 | SOFYEK300 |
-| `07d2dde1b4c1fe43` | 200 | ERRORRC |
+| `4564f1daae1dd157` | 2500 | PVZGW2500 |
+| `5136694194f15aec` | 500 | PVZGW500 |
+| `fe499ddb40f6bf77` | 1000 | BOCCHICAT1000 |
+| `aec9091f68e1f132` | 1000 | 09112024 |
+| `a6670a5454af70c9` | 200 | VERSION9 |
+| `02d936b1e7ecebb0` | 13000 | PAGO_QA |
+| `fc4cbe30d1379fac` | 1200 | FIX_REWARD_120426 |
+| `5c9808d0e5afe7cd` | 1000 | SOLECITO |
+| `ec029eed55db3414` | 1000 | LUNITA |
+| `f28aab1b9b359e78` | 6000 | HACO260526 |
+| `2bf4c2eb61f4e857` | 2000 | HLSEPENM |
 
 > Los hashes completos (64 caracteres) se encuentran en `PROMO_CODES_HASHED` dentro de `app.js`.
 
