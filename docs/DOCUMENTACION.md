@@ -2674,7 +2674,7 @@ Sin cambios en v8.0. Cada operación que modifica el saldo genera una entrada en
 { tipo: 'ingreso', cantidad: 9,   motivo: 'Cashback: Rouge the Bat', fecha: timestamp }
 ```
 
-El store mantiene un máximo de 150 entradas. La pestaña Ajustes muestra las 50 más recientes con scroll.
+El store mantiene un máximo de 50 entradas (reducido desde 150 en v14.1, ver §2af). La pestaña Ajustes muestra las 50 más recientes con scroll.
 
 ---
 
