@@ -1192,8 +1192,6 @@ function closePreviewModal(modal, stage) {
     _lastFocusedElement = null;
 }
 
-// Private alias kept for internal callers that pass explicit refs (unchanged API)
-const _closePreviewModal = closePreviewModal;
 
 // ── Global exposure ───────────────────────────────────────────────────────────
 // Required for:
