@@ -654,7 +654,7 @@ _icon('heart', 12, { cls: 'wishlist-icon' })
 | `index.html` | SVG Sprite (47 `<symbol>`) inyectado al inicio del `<body>`. Los 70 nodos `<i data-lucide>` reemplazados por `<svg class="icon"><use>`. `<script src="unpkg.com/lucide">` eliminado. `lucide.createIcons()` inline eliminado. |
 | `spa-router.js` | `lucide.createIcons()` eliminado de `_applyView()`. JSDoc actualizado. Versión actualizada a v9.6. |
 | `app.js` | 3 llamadas a `lucide.createIcons()` eliminadas (DOMContentLoaded + 2 handlers de avatar upload). |
-| `shop-logic.js` | `refreshIcons()` convertida a no-op documentado. Añadido helper `_icon(name, size, opts)`. Todos los `<i data-lucide>` en template strings reemplazados por `<svg><use>`. Llamadas a `lucide.createIcons()` eliminadas. |
+| `shop-logic.js` | Añadido helper `_icon(name, size, opts)`. Todos los `<i data-lucide>` en template strings reemplazados por `<svg><use>`. Llamadas a `lucide.createIcons()` eliminadas. |
 | `styles.css` | Añadida clase `.icon` (stroke base, sin fill) y variantes `.icon--star-filled`, `.icon--zap-filled`, `.icon--heart-filled`. |
 
 ### Resultado
