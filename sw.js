@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.78';
+const CACHE_VERSION = 'v2.04.04.79';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -69,6 +69,7 @@ const APP_SHELL_FILES = [
 
 const GAMES_FILES = [
   '/games/jungle-dash/index.html', '/games/jungle-dash/js/JD_Core.js', '/games/jungle-dash/js/JD_Physics.js', '/games/jungle-dash/js/JD_Renderer.js', '/games/jungle-dash/js/JD_Audio.js', '/games/jungle-dash/js/JD_Entities.js', '/games/jungle-dash/assets/audio/JD_bgm_jungle.mp3', '/games/jungle-dash/assets/sprites/JD_bg_layer0.webp', '/games/jungle-dash/assets/sprites/JD_obs_log.png', '/games/jungle-dash/assets/sprites/JD_jaguar_run.webp', '/games/jungle-dash/assets/sprites/JD_obs_plant.png', '/games/jungle-dash/assets/sprites/JD_bg_layer1.webp', '/games/jungle-dash/assets/sprites/JD_bg_layer2.webp', '/games/jungle-dash/assets/sprites/JD_jaguar_jump.webp', '/games/jungle-dash/assets/sprites/JD_item_supercoin.webp', '/games/jungle-dash/assets/sprites/JD_bg_layer3.webp',
+  '/games/jigsaw/index.html', '/games/jigsaw/css/marejig.css', '/games/jigsaw/js/MAREJIG_config.js', '/games/jigsaw/js/MAREJIG_levels.js', '/games/jigsaw/js/MAREJIG_cloudinary.js', '/games/jigsaw/js/MAREJIG_imageLoader.js', '/games/jigsaw/js/MAREJIG_storage.js', '/games/jigsaw/js/MAREJIG_state.js', '/games/jigsaw/js/MAREJIG_shapes.js', '/games/jigsaw/js/MAREJIG_groups.js', '/games/jigsaw/js/MAREJIG_segments.js', '/games/jigsaw/js/MAREJIG_generator.js', '/games/jigsaw/js/MAREJIG_scene.js', '/games/jigsaw/js/MAREJIG_renderer.js', '/games/jigsaw/js/MAREJIG_input.js', '/games/jigsaw/js/MAREJIG_economy.js', '/games/jigsaw/js/MAREJIG_audio.js', '/games/jigsaw/js/MAREJIG_menu.js', '/games/jigsaw/js/MAREJIG_main.js',
   '/games/2048/index.html', '/games/2048/lumina_bridge.js', '/games/2048/lumina_input.js', '/games/2048/lumina_render.js', '/games/2048/lumina_core.js', '/games/2048/lumina_audio.js',
   '/games/ollin-smash/index.html', '/games/ollin-smash/css/styles.css', '/games/ollin-smash/js/state.js', '/games/ollin-smash/js/core/particles.js', '/games/ollin-smash/js/core/physics.js', '/games/ollin-smash/js/audio/audio-engine.js', '/games/ollin-smash/js/config.js', '/games/ollin-smash/js/main.js', '/games/ollin-smash/js/ui/interface.js', '/games/ollin-smash/js/components/ball.js', '/games/ollin-smash/js/components/bricks.js', '/games/ollin-smash/js/components/powerups.js', '/games/ollin-smash/js/components/paddle.js',
   '/games/rompecabezas/index.html', '/games/rompecabezas/src/core/PuzzleEngine.js', '/games/rompecabezas/src/core/LevelManager.js', '/games/rompecabezas/src/style.css', '/games/rompecabezas/src/systems/Storage.js', '/games/rompecabezas/src/systems/Economy.js', '/games/rompecabezas/src/systems/AudioSynth.js', '/games/rompecabezas/src/main.js', '/games/rompecabezas/src/ui/UIController.js',
