@@ -1346,7 +1346,7 @@
   {
     "id": 127,
     "name": "Anya Forger",
-    "price": 1500,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/anya-forger-e46cc4d7",
     "file": "anya-forger-e46cc4d7.avif",
     "tags": [
@@ -1356,7 +1356,7 @@
   {
   "id": 128,
   "name": "505",
-  "price": 2000,
+  "price": 1500,
   "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/505-9f1d201b",
   "file": "505-9f1d201b.webp",
   "tags": [
@@ -1366,7 +1366,7 @@
 {
     "id": 129,
     "name": "Amanecer",
-    "price": 2000,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/cabaña-b897b405",
     "file": "cabaña-b897b405.webp",
     "tags": [
@@ -1376,7 +1376,7 @@
   {
     "id": 130,
     "name": "Atardecer",
-    "price": 2000,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/ciudad-fc1d89b5",
     "file": "ciudad-fc1d89b5.webp",
     "tags": [
@@ -1396,7 +1396,7 @@
   {
     "id": 132,
     "name": "PvZ: GW2",
-    "price": 3000,
+    "price": 2000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/pvz-gw2-6b43574c",
     "file": "pvz-gw2-6b43574c",
     "tags": [
@@ -1406,7 +1406,7 @@
   {
     "id": 133,
     "name": "Vaquita",
-    "price": 2000,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/vaquita-275e1595",
     "file": "vaquita-275e1595.webp",
     "tags": [
