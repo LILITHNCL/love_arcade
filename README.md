@@ -48,7 +48,7 @@ love_arcade/
 ├── js/
 │   ├── app.js          — Motor principal + Sentinel Cloud Sync (Supabase opcional)
 │   ├── shop-logic.js   — Módulo de Tienda (catálogo, compras, sync)
-│   ├── event-logic.js  — Sistema LTE: Gachapón, eventos activos, pity
+│   ├── event-logic.js  — Sistema LTE: Gachapón Relámpago y eventos activos
 │   ├── spa-router.js   — Router SPA con History API
 │   └── sync-worker.js  — Web Worker: Base64 + SHA-256
 ├── api/                — Endpoints serverless de Vercel (proxy/config/reportes)
@@ -62,8 +62,8 @@ love_arcade/
 
 ## Características principales
 
-- **Sistema de Eventos LTE** — `data/events.json` define eventos activos sin tocar JS. Incluye: Gachapón de Wallpapers (5⭐/4⭐/3⭐ con pity system), Hot Streak Weekend (+2 racha por reclamo) e Invasión de Monedas (×1.5 en todos los juegos).
-- **Gachapón de Wallpapers** — Banner limitado con tirada ×1 (100 monedas) y ×10 (900 monedas). Garantía épica cada 10 tiradas. Aleatoriedad con `crypto.getRandomValues()`. Shimmer animado según rareza.
+- **Sistema de Eventos LTE** — `data/events.json` define eventos activos sin tocar JS. Incluye tipos vigentes como Gachapón Relámpago (`gacha_flash`), cacerías interactivas, hitos personales y misiones diarias; ver `docs/EVENTOS-LTE.md` para el detalle técnico.
+- **Gachapón Relámpago** — Evento `gacha_flash` con giro único de costo configurable, recompensa aleatoria entre `minReward` y `maxReward`, límite diario de 5 tiradas por evento, sin pity system ni rarezas discretas.
 - **Economía central** — `window.GameCenter` expone una API pública para que cualquier minijuego integrado deposite monedas mediante `completeLevel(gameId, levelId, coins)`.
 - **Tienda con descuentos y cashback** — El objeto `ECONOMY` en `app.js` controla ofertas globales y porcentaje de devolución desde un único punto.
 - **Bono Diario con racha** — Recompensa escalable (20 → 60 monedas) con verificación de tiempo de red en segundo plano para prevenir manipulación de reloj.
