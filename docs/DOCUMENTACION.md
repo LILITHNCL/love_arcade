@@ -1764,7 +1764,7 @@ updateMockupTime();                              // Inmediato al abrir
 _mockupClockInterval = setInterval(updateMockupTime, 30_000); // Cada 30 s
 ```
 
-El intervalo se destruye explícitamente en `_closePreviewModal()` para evitar memory leaks.
+El intervalo se destruye explícitamente en `closePreviewModal()` para evitar memory leaks.
 
 ---
 
