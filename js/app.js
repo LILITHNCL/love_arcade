@@ -1750,11 +1750,6 @@ window.GameCenter = {
     },
     getAvatar: ()        => store.userAvatar,
 
-    // Alias de compatibilidad — mantenido por si juegos externos llaman a activateMoonBlessing().
-    // shop.html fue eliminado en la migración SPA v9.0; la función real es buyMoonBlessing().
-    // Puede retirarse cuando se confirme que ningún juego integrado usa este alias.
-    activateMoonBlessing: function() { return this.buyMoonBlessing(); },
-
     // ── TEMA ─────────────────────────────────────────────────────────────────
 
     setTheme: (key) => {

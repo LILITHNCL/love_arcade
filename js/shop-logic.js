@@ -218,15 +218,6 @@ let _stageCtxHandler = null;
 let _lastFocusedElement = null;
 let isRedeeming = false;
 
-// ── Utilidad de iconos (v9.6 — SVG Sprite) ───────────────────────────────────
-/**
- * [v11.5] refreshIcons() ha sido eliminada por obsolescencia.
- * Los iconos se sirven como SVG Sprite estático desde v9.6.
- * Esta referencia se mantiene solo si es estrictamente necesaria por compatibilidad externa,
- * pero ha sido vaciada y marcada para remoción.
- */
-function refreshIcons() { /* deprecated */ }
-
 /**
  * Helper: genera el markup de un icono SVG Sprite.
  * Reemplaza el patrón <svg class="icon" aria-hidden="true"><use href="#icon-NAME"></use></svg> eliminado en v9.6.
@@ -1128,8 +1119,6 @@ function openPreviewModal(itemOrId) {
         document.getElementById('preview-close-btn')?.focus()
             ?? document.getElementById('preview-close')?.focus();
     });
-    refreshIcons(actionsEl);
-
     actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async () => {
         closePreviewModal();
         const parsed = JSON.parse(
@@ -1203,8 +1192,6 @@ function closePreviewModal(modal, stage) {
     _lastFocusedElement = null;
 }
 
-// Private alias kept for internal callers that pass explicit refs (unchanged API)
-const _closePreviewModal = closePreviewModal;
 
 // ── Global exposure ───────────────────────────────────────────────────────────
 // Required for:
@@ -1236,8 +1223,6 @@ function switchTab(tab) {
     } else if (activeFilter !== 'Regalos') {
         filterItems();
     }
-    // Scope al panel activo: evita re-escanear vistas ocultas de la SPA.
-    refreshIcons(panel);
 }
 
 function _isGiftItem(item) {
@@ -1647,7 +1632,6 @@ function _appendShopBatch(container) {
     }
     _shopRenderState.cursor = end;
 
-    refreshIcons(container);
     _initPreloadObserver(container, _shopRenderState.items.slice(0, end));
     return end < _shopRenderState.items.length;
 }
@@ -1760,7 +1744,6 @@ function renderLibrary(items) {
                 <p style="font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text-med);">Tu biblioteca está vacía</p>
                 <p style="font-size:0.8rem; margin-top:6px;">Canjea wallpapers en el Catálogo.</p>
             </div>`;
-        refreshIcons(container); // scope al contenedor vacío
         return;
     }
 
@@ -1828,7 +1811,6 @@ function renderLibrary(items) {
         });
     });
 
-    refreshIcons(container); // scope a la biblioteca renderizada
 }
 
 // ── Render: Historial ─────────────────────────────────────────────────────────
@@ -2187,8 +2169,6 @@ function initSaleBanner() {
             `${pct}% de descuento + ${Math.round(eco.cashbackRate * 100)}% de cashback en toda la tienda.`;
         if (badgeEl) badgeEl.textContent = `${pct}%`;
     }
-    // Scope al banner; el ícono de rayo (zap) solo vive dentro de este nodo.
-    refreshIcons(banner);
 }
 
 function initEconomyInfo() {
@@ -2238,7 +2218,6 @@ function openEmailModal(item, absoluteUrl) {
     _lastFocusedElement = document.activeElement;
     modal.classList.remove('hidden');
     window.ModalA11y?.open?.(modal, _lastFocusedElement);
-    refreshIcons(modal);
     requestAnimationFrame(() => { if (inputEl) inputEl.focus(); });
 }
 
@@ -2340,10 +2319,6 @@ window.ShopView = {
         if (allItems.length) filterItems();
         _updateGiftFilterGlow();
 
-        // Scope a la vista de la tienda. El sale banner, tabs y pills tienen
-        // iconos dinámicos que pueden necesitar re-inicialización al volver a la vista.
-        const shopView = document.getElementById('view-shop');
-        if (shopView) refreshIcons(shopView);
     },
 
     /**
@@ -2557,7 +2532,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const activePanel = profileView.querySelector(`[data-profile-panel="${panelName}"]`);
-        refreshIcons(activePanel || profileView);
         requestAnimationFrame(() => {
             const focusTarget = activePanel?.querySelector('[data-profile-back], button, input, [tabindex]:not([tabindex="-1"])');
             focusTarget?.focus?.({ preventScroll: true });
@@ -2676,8 +2650,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // donde setTheme() actualiza el store, los CSS vars, la clase theme-{key}
     // en <body> y el estado visual de todos los .theme-btn desde un único lugar.
 
-    // Scan global ÚNICO al final del init: todos los iconos del HTML estático
-    // (navbars, botones de ajustes, FAQs) se inicializan aquí. A partir de este
-    // punto, todos los refreshIcons() en renders dinámicos usan scope explícito.
-    refreshIcons();
 });

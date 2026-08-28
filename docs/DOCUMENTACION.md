@@ -49,7 +49,6 @@
 12. [Códigos Promocionales (SHA-256)](#12-códigos-promocionales-sha-256)
 13. [Sistema de Racha (Streaks)](#13-sistema-de-racha-streaks)
 14. [Bendición Lunar](#14-bendición-lunar)
-15. [Wishlist — Funcionalidad Completa](#15-wishlist--funcionalidad-completa)
 16. [Sincronización con BackupEngine (.labak)](#16-sincronización-con-backupengine-labak)
 17. [Historial de Transacciones](#17-historial-de-transacciones)
 18. [Flujos de Usuario](#18-flujos-de-usuario)
@@ -83,10 +82,7 @@ Love Arcade es una **plataforma de recompensas sin backend** construida con HTML
 | **UI Móvil** | El "Hero Balance" (banner grande de monedas) se oculta en móvil mediante `display: none` en el CSS base. El saldo ya es visible en la Navbar superior. |
 | **UI Móvil** | La grilla de productos en la tienda usa `repeat(2, 1fr)` como base (2 columnas en móvil), en lugar de 1 columna. |
 | **Iconografía** | Todos los emojis funcionales (`🌙`, `⚡`, `♥`) han sido reemplazados por `<svg class="icon"><use href="#icon-NAME">`. Los iconos se sirven desde un SVG Sprite estático definido en `index.html` (v9.6). |
-| **Filtros** | Los filtros del catálogo se simplifican a: Todos, PC, Mobile y Mis Lista. Se eliminan Anime, Gaming, Sonic, DragonBall y Genshin. |
-| **Wishlist** | Nuevo filtro "Mis Lista" para ver solo los ítems marcados con el corazón. |
-| **Wishlist** | Indicador de coste: muestra cuántas monedas faltan para comprar toda la lista. |
-| **Wishlist** | Los ítems en Wishlist aparecen siempre al principio de los resultados de búsqueda. |
+| **Filtros** | Los filtros del catálogo se simplifican a: Todos, PC y Mobile. Se eliminan Anime, Gaming, Sonic, DragonBall y Genshin. |
 | **Sync** | Exportación: migrada a archivo binario comprimido `.labak` (`gzip`) con checksum SHA-256. Se descarga automáticamente sin portapapeles. |
 | **Sync** | Importación: usa `<input type="file" accept=".labak,.gz">`, descompresión (`DecompressionStream`) y validación de integridad previa a restaurar `localStorage`. Estándar actual: `.labak`; legado compatible en importación: `.labak.gz`. |
 | **Economía** | Sin cambios. `saleMultiplier` y `cashbackRate` se mantienen intactos. |
@@ -628,7 +624,6 @@ Se añade en `styles.css` la clase base `.icon` y variantes para casos de fill e
 /* Variantes de fill para iconos con relleno explícito */
 .icon--star-filled  { fill: #fbbf24; stroke: none; }  /* precio, coin-badge */
 .icon--zap-filled   { fill: currentColor; stroke: none; }  /* sale badge */
-.icon--heart-filled { fill: currentColor; stroke: none; }  /* wishlist activo */
 ```
 
 > **Nota para desarrollo:** Los iconos generados dinámicamente en templates HTML dentro de `shop-logic.js` deben usar el helper `_icon(name, size, opts)` en lugar de la antigua sintaxis `<i data-lucide>`.
@@ -643,8 +638,6 @@ _icon('download', 14)
 _icon('star', 13, { fill: '#fbbf24', stroke: 'none' })
 // → <svg class="icon" width="13" height="13" style="fill:#fbbf24;stroke:none" aria-hidden="true">...
 
-_icon('heart', 12, { cls: 'wishlist-icon' })
-// → <svg class="icon wishlist-icon" width="12" height="12" aria-hidden="true">...
 ```
 
 ### Archivos modificados
@@ -654,7 +647,7 @@ _icon('heart', 12, { cls: 'wishlist-icon' })
 | `index.html` | SVG Sprite (47 `<symbol>`) inyectado al inicio del `<body>`. Los 70 nodos `<i data-lucide>` reemplazados por `<svg class="icon"><use>`. `<script src="unpkg.com/lucide">` eliminado. `lucide.createIcons()` inline eliminado. |
 | `spa-router.js` | `lucide.createIcons()` eliminado de `_applyView()`. JSDoc actualizado. Versión actualizada a v9.6. |
 | `app.js` | 3 llamadas a `lucide.createIcons()` eliminadas (DOMContentLoaded + 2 handlers de avatar upload). |
-| `shop-logic.js` | `refreshIcons()` convertida a no-op documentado. Añadido helper `_icon(name, size, opts)`. Todos los `<i data-lucide>` en template strings reemplazados por `<svg><use>`. Llamadas a `lucide.createIcons()` eliminadas. |
+| `shop-logic.js` | Añadido helper `_icon(name, size, opts)`. Todos los `<i data-lucide>` en template strings reemplazados por `<svg><use>`. Llamadas a `lucide.createIcons()` eliminadas. |
 | `styles.css` | Añadida clase `.icon` (stroke base, sin fill) y variantes `.icon--star-filled`, `.icon--zap-filled`, `.icon--heart-filled`. |
 
 ### Resultado
@@ -1137,7 +1130,6 @@ Todos los `backdrop-filter: blur()` han sido eliminados de los elementos de pane
 | `.bottom-nav` | `backdrop-filter: blur(20px)` | ❌ Eliminado — bg `#050508` sólido |
 | `.card-badge` | `backdrop-filter: blur(8px)` | ❌ Eliminado — bg sólido |
 | `.card-reward` | `backdrop-filter: blur(8px)` | ❌ Eliminado — bg sólido |
-| `.wishlist-btn` | `backdrop-filter: blur(8px)` | ❌ Eliminado — bg `rgba(0,0,0,0.9)` |
 | `.owned-badge` | `backdrop-filter: blur(6px)` | ❌ Eliminado — bg `rgba(34,208,122,0.2)` |
 
 **El 10% Glass permitido (excepciones):**
@@ -1772,7 +1764,7 @@ updateMockupTime();                              // Inmediato al abrir
 _mockupClockInterval = setInterval(updateMockupTime, 30_000); // Cada 30 s
 ```
 
-El intervalo se destruye explícitamente en `_closePreviewModal()` para evitar memory leaks.
+El intervalo se destruye explícitamente en `closePreviewModal()` para evitar memory leaks.
 
 ---
 
@@ -2058,7 +2050,7 @@ El archivo declaraba `v7.5` en su cabecera JSDoc desde su creación. Actualizado
 
 **Sin cambios estructurales en v8.0.** Cada ítem mantiene su estructura con el campo `tags` que contiene etiquetas como `"PC"`, `"Mobile"`, `"Anime"`, etc. Sin embargo, **solo se renderizan los tags `PC` y `Mobile`** en las cards del catálogo (v8.0: simplificación de UI).
 
-Los filtros del catálogo también se reducen a `Todos`, `PC`, `Mobile` y `Wishlist`. Las etiquetas adicionales (`Anime`, `Gaming`, `Sonic`, etc.) se mantienen en el JSON para uso futuro, pero no se muestran como pills ni se usan en los filtros.
+Los filtros del catálogo también se reducen a `Todos`, `PC` y `Mobile`. Las etiquetas adicionales (`Anime`, `Gaming`, `Sonic`, etc.) se mantienen en el JSON para uso futuro, pero no se muestran como pills ni se usan en los filtros.
 
 ---
 
@@ -2481,28 +2473,6 @@ Ambas tienen `will-change: transform` para promoverse a capas GPU antes del prim
 
 ### Clases nuevas en v8.0
 
-**`.wishlist-cost-banner`** — Contenedor del indicador de coste de Wishlist:
-```css
-.wishlist-cost-banner {
-    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-    border-radius: var(--radius-md);
-    background: rgba(255,79,122,0.08); border: 1px solid rgba(255,79,122,0.25);
-    font-size: 0.82rem; color: var(--text-med);
-}
-.wishlist-cost-banner strong { color: #ff4f7a; }
-```
-
-**`.pill--wishlist`** — Pill de filtro con color rosa diferenciado:
-```css
-.pill--wishlist.active { background: #ff4f7a; border-color: #ff4f7a; }
-```
-
-**`.wishlist-btn--active svg path`** — Rellena el corazón SVG Sprite vía CSS:
-```css
-.wishlist-btn--active svg path,
-.wishlist-btn--active svg circle { fill: currentColor !important; }
-```
-
 **`.sync-separator`** — Separador visual entre métodos de importación:
 ```css
 .sync-separator { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 0.78rem; color: var(--text-low); }
@@ -2564,33 +2534,17 @@ const PROMO_CODES_HASHED = {
 
 | Hash SHA-256 (primeros 16 chars) | Monedas | Código original |
 |---|---|---|
-| `bf321fd2057fa13f` | 50 | GOUL50 |
-| `b4d84aca1d5ff57b` | 50 | AMRO50 |
-| `4558eb9beb0e7795` | 50 | GOVE50 |
-| `72b39c0a7c2fe8a8` | 50 | FU50 |
-| `72cf61b005e730b6` | 50 | GO50 |
-| `e6453c805f71d9e7` | 50 | GOBR50 |
-| `ab96dc80db7dba63` | 50 | CH50 |
-| `02dcc8750da36c25` | 50 | ASYA50 |
-| `92bdd5dffca1bfee` | 50 | MINA50 |
-| `0c313dd65a464d2e` | 50 | SA50 |
-| `37c74d7abd7b237c` | 50 | TRFU50 |
-| `8db94e555d11f110` | 50 | VEZA50 |
-| `f75a0e6945982ff7` | 50 | JADO50 |
-| `0512cff95aa63306` | 50 | JADOUNO50 |
-| `ac7b6ff2fd991864` | 50 | JADODOS50 |
-| `03a757ee862ded77` | 50 | JADOTRES50 |
-| `379dcec413be95bf` | 50 | HAMI50 |
-| `5bc5dd8321afdd53` | 50 | MA50 |
-| `c5395455063acab1` | 50 | XI50 |
-| `0cd1cd7704a567e4` | 50 | LADEHI50 |
-| `888b5b43925b50cb` | 50 | HIGO50 |
-| `190d2b7ebff147a6` | 50 | KAWA50 |
-| `88feae97920cf17c` | 60 | SACAME |
-| `76d06ecc24894e3d` | 1000 | SAMUEL1000 |
-| `79de29d219b29ccb` | 500 | FEB14 |
-| `724dd40fbeb9e3d5` | 300 | SOFYEK300 |
-| `07d2dde1b4c1fe43` | 200 | ERRORRC |
+| `4564f1daae1dd157` | 2500 | PVZGW2500 |
+| `5136694194f15aec` | 500 | PVZGW500 |
+| `fe499ddb40f6bf77` | 1000 | BOCCHICAT1000 |
+| `aec9091f68e1f132` | 1000 | 09112024 |
+| `a6670a5454af70c9` | 200 | VERSION9 |
+| `02d936b1e7ecebb0` | 13000 | PAGO_QA |
+| `fc4cbe30d1379fac` | 1200 | FIX_REWARD_120426 |
+| `5c9808d0e5afe7cd` | 1000 | SOLECITO |
+| `ec029eed55db3414` | 1000 | LUNITA |
+| `f28aab1b9b359e78` | 6000 | HACO260526 |
+| `2bf4c2eb61f4e857` | 2000 | HLSEPENM |
 
 > Los hashes completos (64 caracteres) se encuentran en `PROMO_CODES_HASHED` dentro de `app.js`.
 
@@ -2660,68 +2614,6 @@ La protección contra abuso queda cubierta por el `desynced` del sync en backgro
 
 ---
 
-## 15. Wishlist — Funcionalidad Completa
-
-A partir de v8.0, la Wishlist tiene tres funcionalidades activas:
-
-### 14.1 Filtro "Mis Lista"
-
-La pill `[data-filter="Wishlist"]` en la barra de filtros muestra únicamente los ítems marcados con el corazón:
-
-```javascript
-// En filterItems()
-} else if (activeFilter === 'Wishlist') {
-    matchesFilter = GameCenter.isWishlisted(item.id);
-}
-```
-
-### 14.2 Prioridad en búsqueda
-
-Al listar resultados, los ítems en Wishlist siempre aparecen antes, sin importar el filtro activo:
-
-```javascript
-const wishlisted = filtered.filter(item => GameCenter.isWishlisted(item.id));
-const others     = filtered.filter(item => !GameCenter.isWishlisted(item.id));
-renderShop([...wishlisted, ...others]);
-```
-
-### 14.3 Indicador de coste
-
-El banner `#wishlist-cost-banner` muestra en tiempo real cuántas monedas faltan para comprar todos los ítems de la lista que aún no se poseen:
-
-```javascript
-function updateWishlistCost() {
-    const unwownedWishlisted = allItems.filter(item =>
-        GameCenter.isWishlisted(item.id) && GameCenter.getBoughtCount(item.id) === 0
-    );
-    const total = unwownedWishlisted.reduce((sum, item) => {
-        const price = eco.isSaleActive
-            ? Math.floor(item.price * eco.saleMultiplier)
-            : item.price;
-        return sum + price;
-    }, 0);
-    const needed = Math.max(0, total - GameCenter.getBalance());
-    // Actualizar banner...
-}
-```
-
-`updateWishlistCost()` se llama en: carga inicial del catálogo, toggle de Wishlist, y tras completar una compra.
-
-### API de Wishlist (sin cambios)
-
-```javascript
-GameCenter.toggleWishlist(itemId)  // → true si quedó en wishlist
-GameCenter.isWishlisted(itemId)    // → boolean
-```
-
-**Almacenamiento:**
-
-```javascript
-store.wishlist = [3, 7, 21]  // Array de IDs numéricos
-```
-
----
-
 ## 16. Sincronización con BackupEngine (.labak)
 
 ### Flujo de exportación (v15.0)
@@ -2782,7 +2674,7 @@ Sin cambios en v8.0. Cada operación que modifica el saldo genera una entrada en
 { tipo: 'ingreso', cantidad: 9,   motivo: 'Cashback: Rouge the Bat', fecha: timestamp }
 ```
 
-El store mantiene un máximo de 150 entradas. La pestaña Ajustes muestra las 50 más recientes con scroll.
+El store mantiene un máximo de 50 entradas (reducido desde 150 en v14.1, ver §2af). La pestaña Ajustes muestra las 50 más recientes con scroll.
 
 ---
 
@@ -2834,28 +2726,6 @@ logTransaction(...)  ·  saveState()
 updateDailyButton()  →  restaura el botón al estado correcto
                          (desactivado con contador si el reclamo fue exitoso,
                           habilitado si falló por error recuperable)
-```
-
-### Flujo de Wishlist y compra
-
-```
-Usuario toca el corazón en una card
-    │
-    ▼
-GameCenter.toggleWishlist(id)  →  store.wishlist actualizado  →  saveState()
-    │
-    ▼
-CSS: .wishlist-btn--active → svg path { fill: currentColor }  [corazón lleno]
-    │
-    ▼
-updateWishlistCost()  →  Banner: "Necesitas X monedas para tu lista"
-    │
-    ▼  [usuario activa filtro "Mis Lista"]
-filterItems() → solo ítems en wishlist → wishlisted primero
-    │
-    ▼  [usuario canjea un ítem de la lista]
-GameCenter.buyItem(item)  →  resultado exitoso
-filterItems() + updateWishlistCost()  →  banner actualizado
 ```
 
 ### Flujo de sincronización (v8.0)
@@ -2976,7 +2846,6 @@ const filteredTags = item.tags;
 | **Checksum** | Hash SHA-256 del store exportado, incluido en el código/archivo de sincronización para detectar edición manual. |
 | **Mobile-First** | Estrategia de CSS donde los estilos base aplican a pantallas pequeñas y los overrides se definen con `@media (min-width: ...)`. |
 | **Hero Balance** | El banner grande de monedas en la parte superior de la tienda. Oculto en móvil (v8.0). |
-| **Wishlist** | Lista de ítems marcados como favoritos. Ahora con filtro activo, indicador de coste y prioridad en búsqueda. |
 | **Racha / Streak** | Días consecutivos en que se reclama el bono diario. Determina la recompensa escalonada. |
 | **Bendición Lunar** | Buff temporal de +90 monedas por reclamo diario. Costo 100 monedas, vigencia 7 días. |
 | **Skeleton Screen** | Placeholder visual con animación de pulso que imita la estructura de las cards mientras carga el JSON. |
@@ -3491,21 +3360,6 @@ Los siguientes eventos no son fallos de código sino señales de diseño. Se cap
 
 ---
 
-#### `wishlist_add` 💜
-
-**Disparado en:** `shop-logic.js → renderShop()` — listener del botón wishlist, solo cuando `isNow === true` (se está agregando, no quitando).
-
-**Metadatos:**
-
-| Campo | Descripción | Ejemplo |
-|---|---|---|
-| `wallpaper` | Nombre del ítem | `Sakura Dreams` |
-| `precio` | Precio base del ítem | `600` |
-
-**Utilidad de diagnóstico:** Revela qué wallpapers generan más deseo de compra sin que el usuario tenga saldo. Permite priorizar descuentos o ajustar precios de los más wishlisted.
-
----
-
 #### `daily_bonus` 🌟
 
 **Disparado en:** `app.js → claimDaily()` — solo en la rama de éxito (`success: true`). No se dispara en intentos fallidos para no saturar el canal.
@@ -3581,7 +3435,6 @@ Devuelve el número de códigos promocionales ya canjeados (longitud de `store.r
 | `detected_error` | 🚨 | Carmesí | `window.error` / `unhandledrejection` | `tipo`, `mensaje`, `archivo?`, `stack?`, `url`, `online`, `mem_mb?`, `vista?` |
 | `invalid_promo_code` | 🔑 | Naranja | `handleRedeem()` — código desconocido | `intento***`, `longitud` |
 | `insufficient_funds` | 💸 | Rojo | `buyItem()` / `buyMoonBlessing()` | `wallpaper`, `precio`, `saldo` |
-| `wishlist_add` | 💜 | Rosa | `renderShop()` — wishlist toggle add | `wallpaper`, `precio` |
 | `daily_bonus` | 🌟 | Verde lima | `claimDaily()` — éxito | `recompensa`, `base`, `luna`, `racha` |
 | `user_snapshot` | 📊 | Celeste | `loadCatalog()` — una vez por sesión | `saldo`, `comprados`, `disponibles`, `racha`, `códigos_canjeados` |
 | `sync_export` | 💾 | Violeta suave | `handleExport()` — éxito | `portapapeles` |
@@ -3592,9 +3445,9 @@ Devuelve el número de códigos promocionales ya canjeados (longitud de `store.r
 
 | Archivo | Cambio |
 |---|---|
-| `js/analytics.js` | v9.9.2: 6 nuevos tipos en `EVENT_COLORS/EMOJIS`, `_getExecutionContext()` helper, contexto forense en ambos handlers de error, `console.log` actualizado |
+| `js/analytics.js` | v9.9.2: nuevos tipos en `EVENT_COLORS/EMOJIS`, `_getExecutionContext()` helper, contexto forense en ambos handlers de error, `console.log` actualizado |
 | `js/app.js` | v9.9.2: eliminado `track('redeem_code')` de `redeemPromoCode()`, `insufficient_funds` en `buyItem()` y `buyMoonBlessing()`, `daily_bonus` en `claimDaily()`, nuevo `getRedeemedCount()` |
-| `js/shop-logic.js` | v9.9.2: fuente única `redeem_code` + `invalid_promo_code` en `handleRedeem()`, `wishlist_add` en `renderShop()`, `user_snapshot` en `loadCatalog()`, `sync_export` en `handleExport()` |
+| `js/shop-logic.js` | v9.9.2: fuente única `redeem_code` + `invalid_promo_code` en `handleRedeem()`, `user_snapshot` en `loadCatalog()`, `sync_export` en `handleExport()` |
 | `DOCUMENTACION.md` | Sección §2u añadida; título, ToC y footer actualizados a v9.9.2 |
 
 ---
@@ -4538,7 +4391,6 @@ El campo `user` es inyectado automáticamente por `_send()` — nunca debe pasar
 | `click_download`            | `analytics`    | 📈 Analíticas |
 | `open_game`                 | `analytics`    | 📈 Analíticas |
 | `insufficient_funds`        | `analytics`    | 📈 Analíticas |
-| `wishlist_add`              | `analytics`    | 📈 Analíticas |
 | `user_snapshot`             | `analytics`    | 📈 Analíticas |
 | `sync_export`               | `analytics`    | 📈 Analíticas |
 
