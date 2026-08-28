@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.79';
+const CACHE_VERSION = 'v2.04.04.80';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -19,7 +19,6 @@ const APP_SHELL_FILES = [
   '/js/push-notifications.js',
   '/js/backup-engine.js',
   '/data/shop-gifts.json',
-  '/data/events.json',
   '/data/shop.json',
   '/assets/icon/icon-512-any.png',
   '/assets/icon/icon-512-maskable.png',
