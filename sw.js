@@ -17,7 +17,6 @@ const APP_SHELL_FILES = [
   '/js/analytics.js',
   '/js/supabase-loader.js',
   '/js/push-notifications.js',
-  '/js/event-logic.js',
   '/js/backup-engine.js',
   '/data/shop-gifts.json',
   '/data/events.json',

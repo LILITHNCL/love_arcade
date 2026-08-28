@@ -1020,13 +1020,10 @@
         </div><!-- /#view-profile -->
 
         <!-- ═══════════════════════════════════════════
-             VISTA: EVENTOS (v10.0 — LTE System)
-             Cargada de forma lazy por event-logic.js al navegar aquí.
-             El contenido interno es inyectado por _renderEventsView().
+             VISTA: EVENTOS
+             Contenedor reservado para navegación SPA.
              ═══════════════════════════════════════════ -->
-        <div id="view-events" class="view-section hidden">
-            <!-- Contenido inyectado por event-logic.js onEnter() -->
-        </div><!-- /#view-events -->
+        <div id="view-events" class="view-section hidden"></div><!-- /#view-events -->
 
     </main><!-- /.container -->
 
@@ -1373,7 +1370,6 @@
                             StorageInterceptor + Supabase auth/sync
          5. shop-logic.js → Catálogo, compras, sync, ajustes
          6. spa-router.js → Navegación SPA entre vistas
-         7. event-logic.js → Eventos LTE, gachapón
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1386,7 +1382,6 @@
     <script src="js/push-notifications.js"></script>
     <script src="js/shop-logic.js"></script>
     <script src="js/spa-router.js"></script>
-    <script src="js/event-logic.js"></script>
 
     <script>
 
