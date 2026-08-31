@@ -1380,9 +1380,6 @@ body::before {
     color: white;
     z-index: 2;
 }
-.badge-new { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-.badge-hot { background: var(--error); box-shadow: 0 0 10px rgba(255,66,102,0.4); }
-
 .card-reward {
     position: absolute;
     bottom: 10px; right: 10px;
@@ -2032,21 +2029,6 @@ body::before {
 }
 .price-original { text-decoration: line-through; color: var(--price-original-aa); font-size: 0.72rem; font-weight: 400; }
 .price-sale { color: var(--price-sale-aa); font-size: 1rem; font-weight: 900; }
-.sale-pill {
-    background: var(--success-soft);
-    border: 1px solid rgba(34,208,122,0.3);
-    color: var(--success); font-size: 0.58rem; font-weight: 800;
-    text-transform: uppercase; padding: 2px 4px; border-radius: 8px;
-}
-
-.card-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 4px; }
-.card-tag {
-    background: var(--solid-surface-base);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-low); font-size: 0.58rem; font-weight: 600;
-    padding: 2px 5px; border-radius: 8px;
-}
-
 .vault-btn {
     background: linear-gradient(135deg, #22d07a, #16a85e) !important;
     color: #041a0a !important; font-weight: 800 !important;
