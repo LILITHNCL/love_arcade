@@ -1125,7 +1125,7 @@ function openPreviewModal(itemOrId) {
         actionsEl.innerHTML =
             `<button class="btn-ghost" style="flex:1; justify-content:center;" id="preview-close-btn">Volver</button>
              <button class="btn-primary preview-buy-btn" style="flex:2; justify-content:center;"
-                     data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
+                     data-id="${item.id}">
                  <svg class="icon" width="13" height="13" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
                  Canjear · ${finalPrice}
              </button>`;
@@ -1138,12 +1138,17 @@ function openPreviewModal(itemOrId) {
         document.getElementById('preview-close-btn')?.focus()
             ?? document.getElementById('preview-close')?.focus();
     });
-    actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async () => {
+    actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async (event) => {
+        const buyBtn = event.currentTarget;
+        const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
+        if (!item) {
+            console.warn('[Preview 2.0] Purchase item not found for', buyBtn.dataset.id,
+                '| allItems loaded:', allItems.length);
+            return;
+        }
+
         closePreviewModal();
-        const parsed = JSON.parse(
-            actionsEl.querySelector('.preview-buy-btn').dataset.item.replace(/&#39;/g, "'")
-        );
-        await initiatePurchase(parsed, null);
+        await initiatePurchase(item, null);
     });
 
     document.getElementById('preview-close-btn')?.addEventListener('click', () => {
@@ -1600,7 +1605,7 @@ function _buildShopCard(item, loading = 'lazy') {
                 </button>
                 <button class="btn-primary shop-buy-btn"
                         style="flex:1; justify-content:center; font-size:0.78rem; padding:7px;"
-                        data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
+                        data-id="${item.id}">
                     <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg> ${finalPrice}
                 </button>
            </div>`;
@@ -1739,12 +1744,14 @@ function _bindShopContainerDelegation() {
 
         const buyBtn = e.target.closest('.shop-buy-btn');
         if (buyBtn) {
-            try {
-                const item = JSON.parse(buyBtn.dataset.item.replace(/&#39;/g, "'"));
-                await initiatePurchase(item, buyBtn);
-            } catch (err) {
-                console.error('Error parsing item', err);
+            const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
+            if (!item) {
+                console.warn('[Shop] Purchase item not found for', buyBtn.dataset.id,
+                    '| allItems loaded:', allItems.length);
+                return;
             }
+
+            await initiatePurchase(item, buyBtn);
         }
     });
 }
@@ -2391,6 +2398,30 @@ window.ShopView = {
 // ── Carga del catálogo con manejo de errores y reintento ─────────────────────
 
 /**
+ * Persiste el hash del catálogo fuera del camino crítico de renderizado.
+ * El hash solo informa el estado de notificaciones push, por lo que el grid y
+ * la biblioteca deben estar disponibles antes de calcularlo. La revisión evita
+ * que una carga anterior sobrescriba el hash de un reintento más reciente.
+ */
+function _scheduleCatalogHashPersistence(items, revision) {
+    const persistHash = () => {
+        if (_catalogRevision !== revision) return;
+        try {
+            const bytes = new TextEncoder().encode(JSON.stringify(items));
+            const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+            const catalogHash = btoa(binary).slice(0, 120);
+            localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
+        } catch (_) {}
+    };
+
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(persistHash, { timeout: 1000 });
+    } else {
+        setTimeout(persistHash, 0);
+    }
+}
+
+/**
  * Descarga shop.json y renderiza el catálogo.
  * Si la petición falla (red, 404, 500), oculta el grid y muestra
  * #shop-error-state con un botón de reintento que vuelve a llamar a esta función.
@@ -2431,10 +2462,6 @@ function loadCatalog() {
             .catch(() => [])
     ])
         .then(([items, gifts]) => {
-            try {
-                const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
-                localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
-            } catch (_) {}
             const baseCatalog = items.filter(item => !_isGiftItem(item));
             const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
             allItems = [...baseCatalog, ...giftCatalog];
@@ -2442,6 +2469,7 @@ function loadCatalog() {
             if (gridEl) gridEl.innerHTML = '';
             filterItems();
             renderLibrary(allItems);
+            _scheduleCatalogHashPersistence(items, _catalogRevision);
         
             // Asegurar que el error state está oculto si se cargó correctamente
             if (errorEl) errorEl.classList.add('hidden');
