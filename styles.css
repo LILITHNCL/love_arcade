@@ -4360,37 +4360,6 @@ svg { stroke-width: 2; }
 /* ================================================================
    PROFILE INTERNAL SCREENS — app-like account flows
    ================================================================ */
-.profile-name-row {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 18px;
-}
-
-.profile-name-row .profile-name { margin: 0; }
-
-.profile-name-edit {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 999px;
-    border: 1px solid var(--accent-border);
-    background: var(--accent-soft);
-    color: var(--accent);
-    box-shadow: var(--control-shadow-rest);
-    cursor: pointer;
-    transition: transform var(--motion-micro), box-shadow var(--motion-small), background-color var(--motion-small);
-}
-
-.profile-name-edit:hover,
-.profile-name-edit:focus-visible {
-    background: var(--solid-surface-float);
-    box-shadow: var(--control-shadow-hover);
-}
-
-.profile-name-edit:active { transform: scale(0.96); }
 
 .profile-screen {
     max-width: 760px;
@@ -4550,7 +4519,6 @@ svg { stroke-width: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .profile-name-edit,
     .profile-back-btn {
         transition: none;
     }
@@ -4614,14 +4582,6 @@ svg { stroke-width: 2; }
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-}
-
-.profile-edit-eyebrow {
-    margin: 0 0 4px;
-    color: var(--text-tertiary-aa);
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
 }
 
 .profile-edit-title {
