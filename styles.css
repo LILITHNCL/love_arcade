@@ -4123,30 +4123,6 @@ svg { stroke-width: 2; }
    Push notifications UI
    ────────────────────────────────────────────────────────── */
 
-.push-benefits {
-    background: linear-gradient(135deg, rgba(155, 89, 255, 0.10), rgba(79, 53, 160, 0.14));
-    border: 1px solid rgba(155, 89, 255, 0.28);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-}
-
-.push-benefits-title {
-    margin: 0 0 6px;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: var(--accent);
-}
-
-.push-benefits-list {
-    margin: 0;
-    padding-left: 18px;
-    display: grid;
-    gap: 3px;
-    color: var(--text-med);
-    font-size: 0.77rem;
-}
-
 .push-support-state {
     font-size: 0.8rem;
     margin: 0;
@@ -4170,12 +4146,6 @@ svg { stroke-width: 2; }
 .push-enable-btn.is-active:hover {
     transform: none;
     filter: none;
-}
-
-.push-help-note {
-    margin: 6px 0 0;
-    font-size: 0.72rem;
-    color: var(--text-low);
 }
 
 .push-recovery-card {
@@ -4208,9 +4178,6 @@ svg { stroke-width: 2; }
     color: var(--text-med);
 }
 
-@media (max-width: 640px) {
-    .push-rules-grid { grid-template-columns: 1fr; }
-}
     line-height: 1.2;
 
 /* ================================================================
