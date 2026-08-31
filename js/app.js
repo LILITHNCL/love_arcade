@@ -7,16 +7,8 @@
  *  - addCoins(amount): nuevo método público de GameCenter que permite a
  *    event-logic.js depositar monedas sin pasar por completeLevel().
  *    Usado por la Cacería de Tesoros y el Gachapón Relámpago.
- *  - Multiplicador de bonificación con expiración: store.bonus_multiplier y
- *    store.bonus_multiplier_expires. completeLevel() aplica el multiplicador
- *    si Date.now() < bonus_multiplier_expires antes de sumar al saldo.
  *  - Evento personalizado 'la:levelcomplete': completeLevel() despacha este
- *    CustomEvent en document tras cada pago exitoso. event-logic.js lo escucha
- *    para actualizar el progreso de Hitos Personales sin acoplamiento directo
- *    entre módulos.
- *  - getBonusMultiplierStatus(): devuelve el estado del multiplicador activo.
- *  - migrateState(): incorpora los campos bonus_multiplier, bonus_multiplier_expires
- *    con valores seguros por defecto.
+ *    CustomEvent en document tras cada pago exitoso para módulos desacoplados.
  *
  * NOVEDADES v9.9.2 (Hardening & Error Detection):
  *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
@@ -451,9 +443,6 @@ function migrateState(loadedStore) {
         // v9.4 — Identity
         nickname:       '',    // Máx. 15 chars. Vacío = primer acceso → flujo de bienvenida.
         gender:         '@',   // 'o' | 'a' | '@' — controla el sufijo del saludo.
-        // v11.0 — Multiplicador de bonificación con expiración (Hitos Personales)
-        bonus_multiplier:         1,   // Factor activo (ej: 2 = ×2). Base = 1 (sin efecto).
-        bonus_multiplier_expires: 0   // Timestamp ms. 0 = sin multiplicador activo.
     };
 
     const merged = { ...defaults, ...loadedStore };
@@ -477,14 +466,6 @@ function migrateState(loadedStore) {
     // v9.4 — Validación de identidad (migración silenciosa)
     if (typeof merged.nickname !== 'string')           merged.nickname = '';
     if (!['o', 'a', '@'].includes(merged.gender))      merged.gender   = '@';
-
-    // v11.0 — Multiplicador de bonificación
-    if (typeof merged.bonus_multiplier !== 'number' || merged.bonus_multiplier < 1) {
-        merged.bonus_multiplier = 1;
-    }
-    if (typeof merged.bonus_multiplier_expires !== 'number') {
-        merged.bonus_multiplier_expires = 0;
-    }
 
     // v14.1 — Limpieza de legado: eliminar lista en texto plano ya obsoleta.
     if (Object.prototype.hasOwnProperty.call(merged, 'redeemedCodes')) {
@@ -866,37 +847,20 @@ window.GameCenter = {
         }
         store.progress[gameId].push(levelId);
 
-        let finalAmount = rewardAmount;
-
-        // [v11.0] Multiplicador de bonificación con expiración (Hitos Personales).
-        // Si el timestamp de expiración es posterior a ahora, aplicar el factor.
-        const now = Date.now();
-        if (store.bonus_multiplier > 1 && now < store.bonus_multiplier_expires) {
-            finalAmount = Math.floor(finalAmount * store.bonus_multiplier);
-        } else if (store.bonus_multiplier_expires > 0 && now >= store.bonus_multiplier_expires) {
-            // Limpiar multiplicador expirado para no dejarlo en el store indefinidamente.
-            store.bonus_multiplier         = 1;
-            store.bonus_multiplier_expires = 0;
-        }
-
-        store.coins += finalAmount;
-        logTransaction('ingreso', finalAmount,
-            `Nivel ${levelId} completado · ${gameId}` +
-            (finalAmount !== rewardAmount ? ' [multiplicador activo]' : '')
-        );
+        store.coins += rewardAmount;
+        logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
         saveState({ immediateCloudSync: true });
 
         // Flag de sesión volátil para desbloqueos "Regalos" en tienda.
         window.__laSessionGameCompleted = true;
         try { sessionStorage.setItem('la_session_game_completed', '1'); } catch (_) { /* noop */ }
 
-        // [v11.0] Despachar evento personalizado para que event-logic.js pueda
-        // actualizar el progreso de Hitos Personales sin acoplamiento directo.
+        // [v11.0] Notificar a módulos desacoplados tras el pago exitoso.
         document.dispatchEvent(new CustomEvent('la:levelcomplete', {
-            detail: { gameId, levelId, reward: finalAmount }
+            detail: { gameId, levelId, reward: rewardAmount }
         }));
 
-        return { paid: true, coins: store.coins, multiplied: finalAmount !== rewardAmount };
+        return { paid: true, coins: store.coins };
     },
 
     // ── TIENDA ───────────────────────────────────────────────────────────────
@@ -975,42 +939,6 @@ window.GameCenter = {
         logTransaction('ingreso', n, motivo);
         saveState({ immediateCloudSync: true });
         return { success: true, coins: store.coins };
-    },
-
-    // ── v11.0 — MULTIPLICADOR DE BONIFICACIÓN ─────────────────────────────────
-
-    /**
-     * Activa el multiplicador de bonificación con un timestamp de expiración.
-     * Si ya hay uno activo, lo sobreescribe si el nuevo factor es mayor.
-     * @param {number} multiplier        Factor multiplicador (ej: 2 = ×2).
-     * @param {number} durationMs        Duración en ms.
-     * @param {string} [motivo]          Descripción del origen del multiplicador.
-     * @returns {{ success: boolean, expiresAt: number }}
-     */
-    activateBonusMultiplier: (multiplier, durationMs, motivo = 'Hito de evento') => {
-        if (!Number.isFinite(multiplier) || multiplier <= 1) {
-            return { success: false };
-        }
-        const expiresAt = Date.now() + durationMs;
-        store.bonus_multiplier         = multiplier;
-        store.bonus_multiplier_expires = expiresAt;
-        logTransaction('ingreso', 0, `Multiplicador ×${multiplier} activado · ${motivo}`);
-        saveState();
-        return { success: true, expiresAt };
-    },
-
-    /**
-     * Devuelve el estado del multiplicador de bonificación activo.
-     * @returns {{ active: boolean, multiplier: number, remainingMs: number }}
-     */
-    getBonusMultiplierStatus: () => {
-        const now    = Date.now();
-        const active = store.bonus_multiplier > 1 && store.bonus_multiplier_expires > now;
-        return {
-            active,
-            multiplier:  active ? store.bonus_multiplier : 1,
-            remainingMs: active ? store.bonus_multiplier_expires - now : 0
-        };
     },
 
     /**

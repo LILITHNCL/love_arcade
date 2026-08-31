@@ -3787,33 +3787,6 @@ Se refactorizó _initHunt() para recopilar todos los anclajes candidatos de todo
 
 ---
 
-### Mecánica: Hitos Personales (`personal_milestone`)
-
-**Flujo:**
-1. `_initMilestoneListener()` registra un listener para el `CustomEvent` `'la:levelcomplete'` en `document`.
-2. `app.js::completeLevel()` despacha `'la:levelcomplete'` tras cada nivel pagado exitosamente.
-3. Cada dispatch incrementa el contador del hito (clave `la_milestone_progress_{eventId}` en `localStorage`, con reinicio diario automático).
-4. Al alcanzar `config.target` partidas, se invoca `window.GameCenter.activateBonusMultiplier(multiplier, durationMs)`.
-5. `completeLevel()` lee el multiplicador activo desde `store.bonus_multiplier` y lo aplica si `Date.now() < store.bonus_multiplier_expires`.
-
-**Acoplamiento desacoplado:** el CustomEvent `'la:levelcomplete'` elimina la dependencia directa entre `app.js` y `event-logic.js`. Cualquier módulo futuro puede escuchar este evento sin modificar el núcleo.
-
-**Configuración en `events.json`:**
-
-```json
-{
-  "id": "milestone_2026_01",
-  "type": "personal_milestone",
-  "config": {
-    "target": 5,
-    "multiplier": 2,
-    "multiplierDurationMs": 3600000
-  }
-}
-```
-
----
-
 ### Mecánica: Gachapón Relámpago (`gacha_flash`)
 
 **Flujo:**
@@ -3854,8 +3827,6 @@ Se refactorizó _initHunt() para recopilar todos los anclajes candidatos de todo
 |---|---|---|
 | `addCoins` | `(amount, motivo?) → { success, coins }` | Deposita monedas directamente. Solo acepta valores positivos. |
 | `spendCoins` | `(amount, motivo?) → { success, coins }` | Deduce monedas. Devuelve `{ success: false, reason: 'insufficient' }` si el saldo es menor. |
-| `activateBonusMultiplier` | `(multiplier, durationMs, motivo?) → { success, expiresAt }` | Activa un multiplicador con expiración de timestamp. |
-| `getBonusMultiplierStatus` | `() → { active, multiplier, remainingMs }` | Estado del multiplicador activo. |
 | `incrementMissionStat` | `(stat, delta)` | Incrementa `playtime` o `games_played` del día. Auto-reinicia si el día cambió. |
 | `getMissionStats` | `() → { date, playtime, games_played, claimed[] }` | Estadísticas del día actual. |
 | `claimMissionReward` | `(missionId, reward) → { success, coins }` | Idempotente: marca la misión como reclamada y otorga la recompensa. |
@@ -3867,8 +3838,6 @@ Se refactorizó _initHunt() para recopilar todos los anclajes candidatos de todo
 
 | Campo | Tipo | Valor por defecto | Descripción |
 |---|---|---|---|
-| `bonus_multiplier` | `number` | `1` | Factor de multiplicación activo (1 = sin efecto). |
-| `bonus_multiplier_expires` | `number` | `0` | Timestamp ms de expiración. 0 = inactivo. |
 | `missions.date` | `string` | `''` | Fecha `YYYY-MM-DD` del último reinicio de misiones. |
 | `missions.playtime` | `number` | `0` | Segundos de juego activo en el día actual. |
 | `missions.games_played` | `number` | `0` | Partidas completadas en el día actual. |
@@ -3909,9 +3878,9 @@ Todos los campos son retrocompatibles: `migrateState()` los inicializa con valor
 
 ```javascript
 // Despachado por app.js::completeLevel() tras cada pago exitoso.
-// Escuchado por event-logic.js para hitos y misiones.
+// Disponible para módulos desacoplados que necesiten reaccionar al pago.
 document.dispatchEvent(new CustomEvent('la:levelcomplete', {
-    detail: { gameId, levelId, reward: finalAmount }
+    detail: { gameId, levelId, reward: rewardAmount }
 }));
 ```
 
@@ -3925,7 +3894,7 @@ Cualquier módulo de la plataforma puede escuchar `'la:levelcomplete'` sin modif
 |---|---|
 | `data/events.json` | Esquema v11.0: fechas sin sufijo de zona horaria, tipos `interactive_hunt`, `personal_milestone`, `gacha_flash`, `daily_missions`. Estructura `config` y `ui` separadas por evento. |
 | `js/event-logic.js` | **Reescritura completa v11.0.** Motor de tiempos Naive Local Time, `_isEventLive()`, renderers por tipo de evento, `_initHunt()`, `_initMilestoneListener()`, `_spinGacha()`, `_renderDailyMissionsCard()`, `_bindViewListeners()`, `_showToast()`. |
-| `js/app.js` | v11.0: `spendCoins()`, `addCoins()`, `activateBonusMultiplier()`, `getBonusMultiplierStatus()`, `incrementMissionStat()`, `getMissionStats()`, `claimMissionReward()`, `_getTodayString()`. `completeLevel()` aplica bonus_multiplier y despacha `'la:levelcomplete'`. Tracker de playtime activo en `DOMContentLoaded`. Campos `bonus_multiplier`, `bonus_multiplier_expires`, `missions` en `migrateState()`. |
+| `js/app.js` | v11.0: `spendCoins()`, `addCoins()`, `incrementMissionStat()`, `getMissionStats()`, `claimMissionReward()`, `_getTodayString()`. `completeLevel()` despacha `'la:levelcomplete'`. Tracker de playtime activo en `DOMContentLoaded`. Campos `missions` en `migrateState()`. |
 | `styles.css` | v11.0: ~120 líneas de estilos nuevos: barras de progreso, objetos flotantes de cacería, botón gacha, misiones, toast de eventos, tarjetas interactivas, reduced-motion. |
 | `DOCUMENTACION.md` | Sección §2x añadida; ToC y header actualizados a v11.0. |
 
