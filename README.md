@@ -6,7 +6,7 @@
 
 ## ¿Qué es?
 
-Love Arcade es un Game Hub web donde cada partida genera **Monedas** que se acumulan en un saldo persistente. Con ese saldo las usuarias pueden canjear wallpapers exclusivos en la tienda integrada, activar el buff de Bendición Lunar y participar en eventos especiales con descuentos y cashback.
+Love Arcade es un Game Hub web donde cada partida genera **Monedas** que se acumulan en un saldo persistente. Con ese saldo las usuarias pueden canjear wallpapers exclusivos en la tienda integrada y activar el buff de Bendición Lunar.
 
 La experiencia **prioriza ejecución local en navegador** (estado principal en `localStorage`) y añade un **backend serverless opcional** para funcionalidades concretas: telemetría/proxy API en Vercel y sincronización cloud con Supabase cuando la sesión está activa.
 
@@ -34,7 +34,7 @@ Cliente (SPA) ──► API Vercel (serverless) ──► Supabase
 | Routing | SPA custom (`spa-router.js`) con History API |
 
 **Impacto en rendimiento móvil (resumen):**
-- **Permanece local/offline:** navegación SPA, render UI, economía base, tienda local, inventario local, eventos cacheados y progreso en `localStorage`.
+- **Permanece local/offline:** navegación SPA, render UI, economía base, tienda local, inventario local y progreso en `localStorage`.
 - **Depende de red:** login/sesión cloud, subida/descarga de snapshot cloud (Supabase), funciones serverless de Vercel (proxy/telemetría), verificación de tiempo de red para anti-manipulación cuando hay conectividad.
 
 ---
@@ -48,13 +48,11 @@ love_arcade/
 ├── js/
 │   ├── app.js          — Motor principal + Sentinel Cloud Sync (Supabase opcional)
 │   ├── shop-logic.js   — Módulo de Tienda (catálogo, compras, sync)
-│   ├── event-logic.js  — Sistema LTE: Gachapón Relámpago y eventos activos
 │   ├── spa-router.js   — Router SPA con History API
 │   └── sync-worker.js  — Web Worker: Base64 + SHA-256
 ├── api/                — Endpoints serverless de Vercel (proxy/config/reportes)
 ├── data/
-│   ├── shop.json       — Catálogo de wallpapers
-│   └── events.json     — Eventos activos (LTE, Gachapón)
+│   └── shop.json       — Catálogo de wallpapers
 └── games/              — Minijuegos independientes (HTML/JS)
 ```
 
@@ -62,8 +60,6 @@ love_arcade/
 
 ## Características principales
 
-- **Sistema de Eventos LTE** — `data/events.json` define eventos activos sin tocar JS. Incluye tipos vigentes como Gachapón Relámpago (`gacha_flash`), cacerías interactivas, hitos personales y misiones diarias.
-- **Gachapón Relámpago** — Evento `gacha_flash` con giro único de costo configurable, recompensa aleatoria entre `minReward` y `maxReward`, límite diario de 5 tiradas por evento, sin pity system ni rarezas discretas.
 - **Economía central** — `window.GameCenter` expone una API pública para que cualquier minijuego integrado deposite monedas mediante `completeLevel(gameId, levelId, coins)`.
 - **Tienda con descuentos y cashback** — El objeto `ECONOMY` en `app.js` controla ofertas globales y porcentaje de devolución desde un único punto.
 - **Bono Diario con racha** — Recompensa escalable (20 → 60 monedas) con verificación de tiempo de red en segundo plano para prevenir manipulación de reloj.
@@ -107,7 +103,6 @@ Consulta `love-arcade-coin-system.md` para el contrato completo de integración.
 | `ECONOMIA.md` | Guía de configuración de ofertas, descuentos y cashback |
 | `love-arcade-coin-system.md` | Manual de integración para desarrolladores de minijuegos |
 | `love-arcade-minigame-dev-manual.md` | Guía de desarrollo de nuevos minijuegos |
-| `data/events.json` | Panel de control de eventos LTE activos (sin tocar JS) |
 
 ---
 
