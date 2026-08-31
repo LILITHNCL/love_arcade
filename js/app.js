@@ -12,18 +12,11 @@
  *    si Date.now() < bonus_multiplier_expires antes de sumar al saldo.
  *  - Evento personalizado 'la:levelcomplete': completeLevel() despacha este
  *    CustomEvent en document tras cada pago exitoso. event-logic.js lo escucha
- *    para actualizar el progreso de Hitos Personales y Misiones del Día sin
- *    acoplamiento directo entre módulos.
- *  - Contador de sesiones de juego: incrementMissionStat(stat, delta) expuesto
- *    en GameCenter. Actualiza store.missions con estadísticas diarias (juegos
- *    jugados, tiempo activo en segundos). Se reinicia automáticamente si la
- *    fecha cambia respecto a missions.date.
- *  - Tracker de tiempo activo: setInterval de 1 s en DOMContentLoaded que suma
- *    al contador de playtime solo cuando document.visibilityState === 'visible'.
- *  - getMissionStats(): devuelve las estadísticas del día actual del store.
+ *    para actualizar el progreso de Hitos Personales sin acoplamiento directo
+ *    entre módulos.
  *  - getBonusMultiplierStatus(): devuelve el estado del multiplicador activo.
  *  - migrateState(): incorpora los campos bonus_multiplier, bonus_multiplier_expires
- *    y missions con valores seguros por defecto.
+ *    con valores seguros por defecto.
  *
  * NOVEDADES v9.9.2 (Hardening & Error Detection):
  *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
@@ -460,14 +453,7 @@ function migrateState(loadedStore) {
         gender:         '@',   // 'o' | 'a' | '@' — controla el sufijo del saludo.
         // v11.0 — Multiplicador de bonificación con expiración (Hitos Personales)
         bonus_multiplier:         1,   // Factor activo (ej: 2 = ×2). Base = 1 (sin efecto).
-        bonus_multiplier_expires: 0,   // Timestamp ms. 0 = sin multiplicador activo.
-        // v11.0 — Estadísticas diarias para Misiones del Día
-        missions: {
-            date:         '',  // Fecha YYYY-MM-DD del último reinicio.
-            playtime:     0,   // Segundos de juego activo en el día actual.
-            games_played: 0,   // Partidas completadas en el día actual.
-            claimed:      []   // IDs de misiones reclamadas hoy.
-        }
+        bonus_multiplier_expires: 0   // Timestamp ms. 0 = sin multiplicador activo.
     };
 
     const merged = { ...defaults, ...loadedStore };
@@ -500,20 +486,14 @@ function migrateState(loadedStore) {
         merged.bonus_multiplier_expires = 0;
     }
 
-    // v11.0 — Misiones diarias
-    if (!merged.missions || typeof merged.missions !== 'object') {
-        merged.missions = { date: '', playtime: 0, games_played: 0, claimed: [] };
-    }
-    if (typeof merged.missions.date         !== 'string') merged.missions.date         = '';
-    if (typeof merged.missions.playtime     !== 'number') merged.missions.playtime     = 0;
-    if (typeof merged.missions.games_played !== 'number') merged.missions.games_played = 0;
-    if (!Array.isArray(merged.missions.claimed))          merged.missions.claimed      = [];
-
     // v14.1 — Limpieza de legado: eliminar lista en texto plano ya obsoleta.
     if (Object.prototype.hasOwnProperty.call(merged, 'redeemedCodes')) {
         delete merged.redeemedCodes;
     }
-
+    // v14.6 — Limpieza de legado: Misiones del Día ya no forma parte del store.
+    if (Object.prototype.hasOwnProperty.call(merged, 'missions')) {
+        delete merged.missions;
+    }
 
     return merged;
 }
@@ -906,8 +886,6 @@ window.GameCenter = {
         );
         saveState({ immediateCloudSync: true });
 
-        // [v11.0] Incrementar estadísticas diarias de misiones.
-        window.GameCenter.incrementMissionStat('games_played', 1);
         // Flag de sesión volátil para desbloqueos "Regalos" en tienda.
         window.__laSessionGameCompleted = true;
         try { sessionStorage.setItem('la_session_game_completed', '1'); } catch (_) { /* noop */ }
@@ -985,7 +963,7 @@ window.GameCenter = {
     /**
      * Deposita monedas directamente en el saldo sin pasar por completeLevel().
      * Usado por la Cacería de Tesoros y el Gachapón Relámpago (event-logic.js).
-     * No despacha 'la:levelcomplete' ni incrementa estadísticas de misiones.
+     * No despacha 'la:levelcomplete'.
      * @param {number} amount  Cantidad entera positiva de monedas a añadir.
      * @param {string} [motivo] Descripción para el historial de transacciones.
      * @returns {{ success: boolean, coins: number }}
@@ -996,77 +974,6 @@ window.GameCenter = {
         store.coins += n;
         logTransaction('ingreso', n, motivo);
         saveState({ immediateCloudSync: true });
-        return { success: true, coins: store.coins };
-    },
-
-    // ── v11.0 — MISIONES DIARIAS ──────────────────────────────────────────────
-
-    /**
-     * Obtiene la fecha local del día en formato YYYY-MM-DD.
-     * Usado para verificar si las misiones deben reiniciarse.
-     * @returns {string}
-     */
-    _getTodayString: () => {
-    const d = new Date();
-    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-},
-
-    /**
-     * Incrementa una estadística diaria de misiones.
-     * Reinicia automáticamente el objeto missions si la fecha cambió (nuevo día).
-     * @param {'playtime'|'games_played'} stat  Estadística a incrementar.
-     * @param {number} delta  Cantidad a sumar (positiva).
-     */
-    incrementMissionStat: (stat, delta) => {
-        const today = window.GameCenter._getTodayString();
-        // Reinicio automático a medianoche local
-        if (store.missions.date !== today) {
-            store.missions = { date: today, playtime: 0, games_played: 0, claimed: [] };
-        }
-        if (stat === 'playtime') {
-            store.missions.playtime = (store.missions.playtime || 0) + delta;
-        } else if (stat === 'games_played') {
-            store.missions.games_played = (store.missions.games_played || 0) + delta;
-        }
-        // No llamar a saveState() aquí para playtime (se llama cada segundo).
-        // El guardado se delega a saveState() al final del ciclo de 60 s, o en
-        // cualquier otra escritura del store (compra, daily, etc.).
-        // Para games_played sí guardamos inmediatamente.
-        if (stat === 'games_played') saveState();
-    },
-
-    /**
-     * Devuelve las estadísticas de misiones del día actual.
-     * Si la fecha cambió, reinicia antes de devolver.
-     * @returns {{ date: string, playtime: number, games_played: number, claimed: string[] }}
-     */
-    getMissionStats: () => {
-        const today = window.GameCenter._getTodayString();
-        if (store.missions.date !== today) {
-            store.missions = { date: today, playtime: 0, games_played: 0, claimed: [] };
-        }
-        return { ...store.missions };
-    },
-
-    /**
-     * Marca una misión como reclamada y deposita su recompensa.
-     * Idempotente: ignorado si la misión ya fue reclamada hoy.
-     * @param {string} missionId  ID de la misión.
-     * @param {number} reward     Monedas a otorgar.
-     * @returns {{ success: boolean, coins: number }}
-     */
-    claimMissionReward: (missionId, reward) => {
-        const today = window.GameCenter._getTodayString();
-        if (store.missions.date !== today) {
-            store.missions = { date: today, playtime: 0, games_played: 0, claimed: [] };
-        }
-        if (store.missions.claimed.includes(missionId)) {
-            return { success: false, reason: 'already_claimed', coins: store.coins };
-        }
-        store.missions.claimed.push(missionId);
-        store.coins += reward;
-        logTransaction('ingreso', reward, `Misión completada: ${missionId}`);
-        saveState();
         return { success: true, coins: store.coins };
     },
 
@@ -2457,45 +2364,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Opcional: también al recuperar foco de la ventana (alt-tab / click fuera).
     window.addEventListener('focus', refreshHubStateFromDisk);
 
-    // ── v11.0 — Tracker de tiempo activo (Misiones del Día) ──────────────────
-    // Cada segundo que la pestaña esté visible se suma 1 al contador de playtime.
-    // El guardado en localStorage se realiza cada 60 s para no saturar el disco.
-    let _missionSaveTimer = 0;
-    let _playtimeTicker = null;
-    let _visibleStartedAt = document.visibilityState === 'visible' ? Date.now() : 0;
-
-    const flushVisiblePlaytime = () => {
-        if (!_visibleStartedAt) return;
-        const elapsedSec = Math.floor((Date.now() - _visibleStartedAt) / 1000);
-        if (elapsedSec <= 0) return;
-        window.GameCenter.incrementMissionStat('playtime', elapsedSec);
-        _visibleStartedAt += elapsedSec * 1000;
-        _missionSaveTimer += elapsedSec;
-        if (_missionSaveTimer >= 60) {
-            _missionSaveTimer = 0;
-            saveState(); // Persistir playtime acumulado por lotes
-        }
-    };
-
-    const startPlaytimeTicker = () => {
-        if (_playtimeTicker) return;
-        _visibleStartedAt = Date.now();
-        _playtimeTicker = window.AppScheduler?.registerInterval('sync', 'playtime-flush', flushVisiblePlaytime, 15_000) || setInterval(flushVisiblePlaytime, 15_000);
-    };
-
-    const stopPlaytimeTicker = () => {
-        flushVisiblePlaytime();
-if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
-            window.AppScheduler.clearIntervalTask(_playtimeTicker);
-        } else {
-            clearInterval(_playtimeTicker);
-        }
-        _playtimeTicker = null;
-        _visibleStartedAt = 0;
-    };
-
-    if (document.visibilityState === 'visible') startPlaytimeTicker();
-
     // ── Background time sync (v9.6) ───────────────────────────────────────
     // Se lanza 800 ms después del DOMContentLoaded para no competir con el
     // primer paint. El resultado se almacena en TIME_CACHE_KEY y será leído
@@ -2505,10 +2373,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     // Actualizar el caché cuando el usuario vuelve a la pestaña
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            startPlaytimeTicker();
             _scheduleTimeSync(250);
-        } else {
-            stopPlaytimeTicker();
         }
     });
 
@@ -2666,7 +2531,6 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
     ]);
 
     const PASSIVE_PRIORITY_KEYS = new Set([
-        'love_arcade_missions',
         'LUMINA_gameState',
         'MAREJIG_levelProgress_v1',
         'MAREJIG_activeSave_v1',
@@ -2881,35 +2745,15 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         }, delay);
     }
 
-    function _isMissionsOnlyDelta(prevRaw, nextRaw) {
-        try {
-            if (!prevRaw || !nextRaw) return false;
-            const prev = migrateState(JSON.parse(prevRaw));
-            const next = migrateState(JSON.parse(nextRaw));
-            const prevM = prev?.missions || {};
-            const nextM = next?.missions || {};
-            const missionsChanged = JSON.stringify(prevM) !== JSON.stringify(nextM);
-            if (!missionsChanged) return false;
-            prev.missions = { ...prevM, playtime: 0, games_played: 0 };
-            next.missions = { ...nextM, playtime: 0, games_played: 0 };
-            return JSON.stringify(prev) === JSON.stringify(next);
-        } catch (_) {
-            return false;
-        }
-    }
-
-    function _resolveSyncPriority(key, prevValue, nextValue) {
-        if ((key === CONFIG.stateKey || key === 'gamecenter_v6_promos') && _isMissionsOnlyDelta(prevValue, nextValue)) {
-            return 'passive';
-        }
+    function _resolveSyncPriority(key) {
         if (HIGH_PRIORITY_KEYS.has(key)) return 'high';
         if (PASSIVE_PRIORITY_KEYS.has(key)) return 'passive';
         return 'passive'; // resto de claves vigiladas
     }
 
-    function _sentinelScheduleSyncForKey(key, prevValue = null, nextValue = null) {
+    function _sentinelScheduleSyncForKey(key) {
         if (!_sbSession) return;
-        const priority = _resolveSyncPriority(key, prevValue, nextValue);
+        const priority = _resolveSyncPriority(key);
         if (priority === 'high') {
             _sentinelScheduleSync(HIGH_PRIORITY_DEBOUNCE_MS);
             return;
@@ -3010,7 +2854,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         if (!SENTINEL_WATCHED_KEYS.has(key) || !_sbSession || _isRestoringSession) return;
         _hasUnsyncedChanges = true;
         _originalSetItem(SENTINEL_TS_KEY, new Date().toISOString());
-        _sentinelScheduleSyncForKey(key, prevValue, nextValue);
+        _sentinelScheduleSyncForKey(key);
     }
 
     /**
@@ -3051,7 +2895,7 @@ if (window.AppScheduler?.clearIntervalTask && _playtimeTicker?.group) {
         _hasUnsyncedChanges = true;
         if (!_sbSession || _isRestoringSession) return; // Invitado o sesión no restaurada → ignorar sync cloud
         console.log(`[Sentinel] Cambio detectado en pestaña externa (${event.key}). Sincronizando...`);
-        _sentinelScheduleSyncForKey(event.key, event.oldValue, event.newValue);
+        _sentinelScheduleSyncForKey(event.key);
     });
 
     // ── Autenticación — onAuthStateChange ────────────────────────────────────
