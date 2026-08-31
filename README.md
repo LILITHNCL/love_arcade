@@ -62,7 +62,7 @@ love_arcade/
 
 ## Características principales
 
-- **Sistema de Eventos LTE** — `data/events.json` define eventos activos sin tocar JS. Incluye tipos vigentes como Gachapón Relámpago (`gacha_flash`), cacerías interactivas, hitos personales y misiones diarias; ver `docs/EVENTOS-LTE.md` para el detalle técnico.
+- **Sistema de Eventos LTE** — `data/events.json` define eventos activos sin tocar JS. Incluye tipos vigentes como Gachapón Relámpago (`gacha_flash`), cacerías interactivas, hitos personales y misiones diarias.
 - **Gachapón Relámpago** — Evento `gacha_flash` con giro único de costo configurable, recompensa aleatoria entre `minReward` y `maxReward`, límite diario de 5 tiradas por evento, sin pity system ni rarezas discretas.
 - **Economía central** — `window.GameCenter` expone una API pública para que cualquier minijuego integrado deposite monedas mediante `completeLevel(gameId, levelId, coins)`.
 - **Tienda con descuentos y cashback** — El objeto `ECONOMY` en `app.js` controla ofertas globales y porcentaje de devolución desde un único punto.
