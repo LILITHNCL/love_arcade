@@ -2407,7 +2407,9 @@ function _scheduleCatalogHashPersistence(items, revision) {
     const persistHash = () => {
         if (_catalogRevision !== revision) return;
         try {
-            const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
+            const bytes = new TextEncoder().encode(JSON.stringify(items));
+            const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+            const catalogHash = btoa(binary).slice(0, 120);
             localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
         } catch (_) {}
     };
