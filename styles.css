@@ -4049,51 +4049,10 @@ svg { stroke-width: 2; }
     border: 1px solid rgba(99, 179, 237, 0.35);
 }
 
-.cloud-gatekeeper-kicker {
-    margin: 0 0 8px;
-    color: #63b3ed;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    font-size: 0.64rem;
-    font-weight: 700;
-}
-
 .cloud-gatekeeper-title {
     font-family: var(--font-display);
     font-size: 1.08rem;
     margin-bottom: 8px;
-}
-
-.cloud-gatekeeper-sub {
-    margin: 0 0 18px;
-    color: var(--text-low);
-    font-size: 0.77rem;
-    line-height: 1.45;
-}
-
-.cloud-gatekeeper-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.cloud-gatekeeper-tab {
-    border: 1px solid var(--border-mid);
-    background: var(--solid-surface-base);
-    color: var(--text-low);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.cloud-gatekeeper-tab.is-active {
-    border-color: var(--accent-border);
-    background: var(--accent-soft);
-    color: var(--accent);
 }
 
 .cloud-gatekeeper-panels {
@@ -4135,12 +4094,6 @@ svg { stroke-width: 2; }
     display: none;
 }
 
-.cloud-password-form {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-mid);
-}
-
 .cloud-password-input-wrap {
     position: relative;
 }
@@ -4164,47 +4117,6 @@ svg { stroke-width: 2; }
 
 .cloud-password-toggle:hover {
     color: var(--text-main);
-}
-
-.cloud-password-strength {
-    height: 7px;
-    border-radius: 99px;
-    background: rgba(113, 128, 150, 0.2);
-    overflow: hidden;
-    margin: 8px 0 6px;
-}
-
-.cloud-password-strength-bar {
-    width: 0%;
-    height: 100%;
-    border-radius: 99px;
-    transition: width .18s ease, background .25s ease;
-    background: linear-gradient(90deg, #f56565, #f6e05e);
-}
-
-.cloud-password-hint {
-    margin: 0 0 8px;
-    color: var(--text-low);
-    font-size: 0.67rem;
-    line-height: 1.4;
-}
-
-.cloud-password-generate-btn {
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 10px;
-    font-size: 0.75rem;
-}
-
-.cloud-email-change-banner {
-    margin: 8px 0 12px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(99, 179, 237, 0.4);
-    background: rgba(66, 153, 225, 0.14);
-    color: #cfe9ff;
-    font-size: 0.69rem;
-    line-height: 1.45;
 }
 
 /* ──────────────────────────────────────────────────────────
