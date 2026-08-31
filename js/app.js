@@ -25,27 +25,6 @@
  *  - migrateState(): incorpora los campos bonus_multiplier, bonus_multiplier_expires
  *    y missions con valores seguros por defecto.
  *
- * NOVEDADES v10.2 (External Game Event Fix):
- *  - isEventActive(): el stub seguro ya no devuelve siempre false. Ahora lee
- *    el caché 'love_arcade_events_v1' de localStorage, escrito por event-logic.js
- *    cada vez que carga events.json con éxito. Esto garantiza que los juegos
- *    externos (games/*.html) apliquen el multiplicador de Invasión de Monedas
- *    y cualquier otro efecto de evento aunque no carguen event-logic.js.
- *    TTL del caché: 24 horas. Comportamiento conservador (devuelve false) si
- *    el caché está ausente, expirado o malformado.
- *  - Comentario del stub actualizado para documentar el contrato de caché.
- *
- *
- * NOVEDADES v10.0 (LTE Events System):
- *  - isEventActive(id): función global stub definida aquí como fallback seguro.
- *    La implementación real vive en event-logic.js y sobreescribe este stub al
- *    cargarse. Permite que claimDaily() y completeLevel() llamen a isEventActive()
- *    independientemente del orden de carga de los módulos.
- *  - claimDaily(): incorpora streak_boost_v1. Si el evento está activo, el
- *    incremento de racha pasa de +1 a +2 (max continúa siendo dailyStreakCap).
- *  - completeLevel(): incorpora coin_invasion_v1. Si el evento está activo,
- *    el rewardAmount se multiplica por 1.5 antes de sumarse al saldo.
- *
  * NOVEDADES v9.9.2 (Hardening & Error Detection):
  *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
  *    disparo es handleRedeem() en shop-logic.js, al final de la cadena de éxito
@@ -160,45 +139,6 @@ const ECONOMY = {
     cashbackRate:   0.1
 };
 window.ECONOMY = ECONOMY;
-
-// =====================================================
-// EVENTOS POR TIEMPO LIMITADO — Implementación con fallback a localStorage
-//
-// [v10.2 — FIX external games] La implementación completa vive en
-// event-logic.js y sobreescribe esta función al cargar. Sin embargo,
-// los juegos externos (games/*.html) ejecutan app.js en su propio contexto
-// de página, sin cargar event-logic.js. Para que el multiplicador de monedas
-// y otros efectos de evento funcionen también en esos contextos, esta
-// implementación lee el caché que event-logic.js persiste en localStorage
-// ('love_arcade_events_v1') cada vez que carga events.json con éxito.
-//
-// Contrato del caché:
-//   localStorage['love_arcade_events_v1'] = JSON.stringify({ data: {…}, ts: number })
-//   Clave 'data': objeto idéntico a la respuesta de events.json.
-//   Clave 'ts':   timestamp (ms) de la última escritura.
-//   TTL:          24 horas. Pasado ese tiempo se ignora y la función devuelve
-//                 false de forma conservadora hasta la próxima visita al hub.
-//
-// Si event-logic.js ESTÁ cargado (contexto del hub), sobreescribirá esta
-// función con la implementación en memoria, más eficiente. El resultado
-// observable es idéntico en ambos casos.
-// =====================================================
-if (typeof window.isEventActive !== 'function') {
-    window.isEventActive = function(eventId) {
-        try {
-            const raw = localStorage.getItem('love_arcade_events_v1');
-            if (!raw) return false;
-            const { data, ts } = JSON.parse(raw);
-            // Caché expirado (> 24 h) → conservador: negar
-            if (!data || (Date.now() - ts) > 86_400_000) return false;
-            const ev = (data.activeEvents || []).find(e => e.id === eventId);
-            if (!ev) return false;
-            return Date.now() < new Date(ev.endDate).getTime();
-        } catch (_) {
-            return false;
-        }
-    };
-}
 
 // =====================================================
 // TEMAS
@@ -946,12 +886,7 @@ window.GameCenter = {
         }
         store.progress[gameId].push(levelId);
 
-        // [v10.0] Invasión de Monedas: si el evento coin_invasion_v1 está activo,
-        // el reward se multiplica ×1.5 antes de sumarse al saldo.
         let finalAmount = rewardAmount;
-        if (window.isEventActive('coin_invasion_v1')) {
-            finalAmount = Math.floor(rewardAmount * 1.5);
-        }
 
         // [v11.0] Multiplicador de bonificación con expiración (Hitos Personales).
         // Si el timestamp de expiración es posterior a ahora, aplicar el factor.
@@ -1302,10 +1237,7 @@ window.GameCenter = {
         }
 
         // ── 4. Calcular nueva racha ──
-        // [v10.0] Hot Streak Weekend: si streak_boost_v1 está activo, el
-        // incremento de racha pasa de +1 a +2 (el cap dailyStreakCap sigue vigente).
-        const streakBoost = window.isEventActive('streak_boost_v1') ? 2 : 1;
-        const newStreak = diffDays === 1 ? streak + streakBoost : 1;
+        const newStreak = diffDays === 1 ? streak + 1 : 1;
 
         const baseReward = Math.min(
             CONFIG.dailyReward + (newStreak - 1) * CONFIG.dailyStreakStep,
@@ -1409,11 +1341,7 @@ window.GameCenter = {
         const repairState = _getDailyRepairState();
         const diffDays = repairState.diffDays;
 
-        // [v10.1] Reflejar streak_boost_v1 en la previsualización de nextStreak.
-        // claimDaily() aplica el mismo cálculo; así la UI muestra siempre el
-        // valor real que se otorgará al reclamar (sin sorpresas).
-        const streakBoost = window.isEventActive?.('streak_boost_v1') ? 2 : 1;
-        const nextStreak  = diffDays === 1 ? streak + streakBoost : 1;
+        const nextStreak = diffDays === 1 ? streak + 1 : 1;
 
         const nextReward = Math.min(
             CONFIG.dailyReward + (nextStreak - 1) * CONFIG.dailyStreakStep,
@@ -1425,8 +1353,7 @@ window.GameCenter = {
             canClaim:     diffDays >= 1 && !repairState.desynced,
             repairAvailable: repairState.repairAvailable,
             repairCost: DAILY_REPAIR_COST,
-            canAffordRepair: repairState.canAffordRepair,
-            streakBoosted: streakBoost === 2
+            canAffordRepair: repairState.canAffordRepair
         };
     },
 
