@@ -2543,6 +2543,7 @@ const PROMO_CODES_HASHED = {
 | `ec029eed55db3414` | 1000 | LUNITA |
 | `f28aab1b9b359e78` | 6000 | HACO260526 |
 | `2bf4c2eb61f4e857` | 2000 | HLSEPENM |
+| `85b7e539867d4e35` | 2800 | MIKU9X0L |
 
 > Los hashes completos (64 caracteres) se encuentran en `PROMO_CODES_HASHED` dentro de `app.js`.
 
