@@ -153,6 +153,10 @@
 let allItems     = [];
 let activeFilter = 'NoObtenidos';
 let searchQuery  = '';
+// La revisión cambia en cada carga exitosa del catálogo. Evita falsos positivos
+// si un retry devuelve un catálogo diferente con la misma cantidad de ítems.
+let _catalogRevision = 0;
+let _lastCatalogSignature = null;
 let _pendingFilterFrame = null;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
@@ -188,6 +192,21 @@ const _shopRenderState = {
     cursor: 0,
     batchSize: 18
 };
+
+/**
+ * Identifica el contenido actualmente pintado sin serializar todo el catálogo.
+ * Para "NoObtenidos" el inventario sí altera qué cards deben existir, por lo que
+ * se incluye únicamente en ese caso; en los demás filtros basta refrescar cards.
+ */
+function _computeCatalogSignature() {
+    const inventoryPart = activeFilter === 'NoObtenidos'
+        ? allItems
+            .filter(item => !_isGiftItem(item))
+            .map(item => `${item.id}:${GameCenter.getBoughtCount(item.id) > 0 ? 1 : 0}`)
+            .join(',')
+        : '';
+    return `${_catalogRevision}|${activeFilter}|${searchQuery}|${inventoryPart}`;
+}
 
 /**
  * Agenda el filtrado de catálogo en el siguiente frame para colapsar ráfagas de input.
@@ -1499,6 +1518,10 @@ function filterItems() {
     }
 
     _updateGiftFilterGlow();
+
+    // La firma se actualiza después de resolver el fallback de "NoObtenidos",
+    // de modo que representa exactamente el estado que quedó visible.
+    if (activeFilter !== 'Regalos') _lastCatalogSignature = _computeCatalogSignature();
 }
 
 function resetFilters() {
@@ -1584,6 +1607,8 @@ function _buildShopCard(item, loading = 'lazy') {
 
     const card = document.createElement('article');
     card.className = 'glass-panel shop-card';
+    card.dataset.itemId = item.id;
+    card.dataset.owned = String(isOwned);
     card.innerHTML =
         `        <img src="${item.image}" alt="${item.name}" class="shop-img"
              loading="${loading}"
@@ -1600,6 +1625,33 @@ function _buildShopCard(item, loading = 'lazy') {
             ${actionHTML}
         </div>`;
     return card;
+}
+
+/**
+ * Sincroniza únicamente cards cuyo estado de propiedad cambió fuera del flujo
+ * normal de compra. No toca el grid ni el estado del render incremental.
+ */
+function _refreshBoughtBadges() {
+    const container = document.getElementById('shop-container');
+    if (!container) return;
+
+    container.querySelectorAll('.shop-card[data-item-id]').forEach(card => {
+        const item = allItems.find(candidate => candidate.id === Number(card.dataset.itemId));
+        if (!item) return;
+
+        const isOwned = GameCenter.getBoughtCount(item.id) > 0;
+        if (String(isOwned) === card.dataset.owned) return;
+
+        // Reemplazar solo la card afectada conserva el resto del grid, su cursor
+        // y el sentinel. El observer de precarga ya no observa cards obtenidas.
+        const loading = card.querySelector('.shop-img')?.getAttribute('loading') || 'lazy';
+        const replacement = _buildShopCard(item, loading);
+        _preloadObserver?.unobserve(card);
+        card.replaceWith(replacement);
+        if (_preloadObserver && replacement.querySelector('.shop-preview-btn')) {
+            _preloadObserver.observe(replacement);
+        }
+    });
 }
 
 function _teardownShopLazyRender() {
@@ -2312,27 +2364,28 @@ window.ShopView = {
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
             el.textContent = balance;
         });
-        // Re-aplicar filtros activos: si el usuario vuelve a la Tienda después de
-        // navegar al Home, el catálogo se refiltra con el estado previo de activeFilter
-        // y searchQuery en lugar de resetear a "Todos". Esto preserva el contexto
-        // de navegación y evita la frustración de perder un filtro aplicado.
-        if (allItems.length) filterItems();
+        // Regalos conserva su ciclo de vida propio. Para el grid, evitar destruir
+        // y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
+        const gridEl = document.getElementById('shop-container');
+        const signature = _computeCatalogSignature();
+        if (allItems.length && activeFilter !== 'Regalos'
+            && signature === _lastCatalogSignature
+            && gridEl?.querySelector('.shop-card')) {
+            _refreshBoughtBadges();
+        } else if (allItems.length) {
+            filterItems();
+        }
         _updateGiftFilterGlow();
 
     },
 
     /**
-     * Llamado por spa-router.js al SALIR de la vista de Tienda (v9.6).
-     * Desconecta el IntersectionObserver de precarga para liberar recursos
-     * cuando el catálogo no es visible. Se reconecta automáticamente en el
-     * próximo renderShop() al volver a la vista.
+     * Llamado por spa-router.js al salir de Tienda.
+     * El observer de precarga se conserva mientras el grid no cambie: así una
+     * reentrada con la misma firma no desconecta ni vuelve a observar las cards.
+     * renderShop() sigue siendo el único punto que lo reinicializa al cambiar DOM.
      */
-    onLeave() {
-        if (_preloadObserver) {
-            _preloadObserver.disconnect();
-            _preloadObserver = null;
-        }
-    }
+    onLeave() {}
 };
 
 // ── Carga del catálogo con manejo de errores y reintento ─────────────────────
@@ -2350,6 +2403,9 @@ function loadCatalog() {
     const errorEl   = document.getElementById('shop-error-state');
     const retryBtn  = document.getElementById('btn-retry-shop');
     const emptyEl   = document.getElementById('filter-empty');
+
+    // Forzar una renderización real tras cualquier recarga exitosa del catálogo.
+    _lastCatalogSignature = null;
 
     // Mostrar estado de carga; ocultar error previo y grid
     if (gridEl)  { gridEl.classList.add('hidden'); gridEl.innerHTML = ''; }
@@ -2382,6 +2438,7 @@ function loadCatalog() {
             const baseCatalog = items.filter(item => !_isGiftItem(item));
             const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
             allItems = [...baseCatalog, ...giftCatalog];
+            _catalogRevision += 1;
             if (gridEl) gridEl.innerHTML = '';
             filterItems();
             renderLibrary(allItems);
