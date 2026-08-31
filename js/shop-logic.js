@@ -1125,7 +1125,7 @@ function openPreviewModal(itemOrId) {
         actionsEl.innerHTML =
             `<button class="btn-ghost" style="flex:1; justify-content:center;" id="preview-close-btn">Volver</button>
              <button class="btn-primary preview-buy-btn" style="flex:2; justify-content:center;"
-                     data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
+                     data-id="${item.id}">
                  <svg class="icon" width="13" height="13" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
                  Canjear · ${finalPrice}
              </button>`;
@@ -1138,12 +1138,17 @@ function openPreviewModal(itemOrId) {
         document.getElementById('preview-close-btn')?.focus()
             ?? document.getElementById('preview-close')?.focus();
     });
-    actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async () => {
+    actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async (event) => {
+        const buyBtn = event.currentTarget;
+        const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
+        if (!item) {
+            console.warn('[Preview 2.0] Purchase item not found for', buyBtn.dataset.id,
+                '| allItems loaded:', allItems.length);
+            return;
+        }
+
         closePreviewModal();
-        const parsed = JSON.parse(
-            actionsEl.querySelector('.preview-buy-btn').dataset.item.replace(/&#39;/g, "'")
-        );
-        await initiatePurchase(parsed, null);
+        await initiatePurchase(item, null);
     });
 
     document.getElementById('preview-close-btn')?.addEventListener('click', () => {
@@ -1600,7 +1605,7 @@ function _buildShopCard(item, loading = 'lazy') {
                 </button>
                 <button class="btn-primary shop-buy-btn"
                         style="flex:1; justify-content:center; font-size:0.78rem; padding:7px;"
-                        data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
+                        data-id="${item.id}">
                     <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg> ${finalPrice}
                 </button>
            </div>`;
@@ -1739,12 +1744,14 @@ function _bindShopContainerDelegation() {
 
         const buyBtn = e.target.closest('.shop-buy-btn');
         if (buyBtn) {
-            try {
-                const item = JSON.parse(buyBtn.dataset.item.replace(/&#39;/g, "'"));
-                await initiatePurchase(item, buyBtn);
-            } catch (err) {
-                console.error('Error parsing item', err);
+            const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
+            if (!item) {
+                console.warn('[Shop] Purchase item not found for', buyBtn.dataset.id,
+                    '| allItems loaded:', allItems.length);
+                return;
             }
+
+            await initiatePurchase(item, buyBtn);
         }
     });
 }
