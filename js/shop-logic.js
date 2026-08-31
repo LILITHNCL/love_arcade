@@ -1629,7 +1629,7 @@ function _buildShopCard(item, loading = 'lazy') {
 
 /**
  * Sincroniza únicamente cards cuyo estado de propiedad cambió fuera del flujo
- * normal de compra. No toca el grid, cursor ni observers del render incremental.
+ * normal de compra. No toca el grid ni el estado del render incremental.
  */
 function _refreshBoughtBadges() {
     const container = document.getElementById('shop-container');
@@ -1646,6 +1646,7 @@ function _refreshBoughtBadges() {
         // y el sentinel. El observer de precarga ya no observa cards obtenidas.
         const loading = card.querySelector('.shop-img')?.getAttribute('loading') || 'lazy';
         const replacement = _buildShopCard(item, loading);
+        _preloadObserver?.unobserve(card);
         card.replaceWith(replacement);
         if (_preloadObserver && replacement.querySelector('.shop-preview-btn')) {
             _preloadObserver.observe(replacement);
@@ -2379,17 +2380,12 @@ window.ShopView = {
     },
 
     /**
-     * Llamado por spa-router.js al SALIR de la vista de Tienda (v9.6).
-     * Desconecta el IntersectionObserver de precarga para liberar recursos
-     * cuando el catálogo no es visible. Se reconecta automáticamente en el
-     * próximo renderShop() que requiera reconstruir el catálogo.
+     * Llamado por spa-router.js al salir de Tienda.
+     * El observer de precarga se conserva mientras el grid no cambie: así una
+     * reentrada con la misma firma no desconecta ni vuelve a observar las cards.
+     * renderShop() sigue siendo el único punto que lo reinicializa al cambiar DOM.
      */
-    onLeave() {
-        if (_preloadObserver) {
-            _preloadObserver.disconnect();
-            _preloadObserver = null;
-        }
-    }
+    onLeave() {}
 };
 
 // ── Carga del catálogo con manejo de errores y reintento ─────────────────────
