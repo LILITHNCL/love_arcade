@@ -648,7 +648,7 @@ function _showStorageToast(message, type = 'warning') {
 }
 
 function initInteractiveMicroFX() {
-    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .lte-card--interactive, .avatar-container';
+    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .avatar-container';
     const coarsePointerMql = window.matchMedia('(pointer: coarse)');
     const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
     let coarsePointer = coarsePointerMql.matches;
