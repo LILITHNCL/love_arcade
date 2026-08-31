@@ -3,9 +3,6 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Router de navegación para la arquitectura Single Page Application.
  *
- * [v10.0] Añadida vista 'events' al array VIEWS. Registra EventView.onEnter()
- *         y EventView.onLeave() en el ciclo de vida de _applyView().
- *
  * RESPONSABILIDADES:
  *  - Interceptar los clics en [data-view] de la navbar y la bottom-nav.
  *  - Alternar la clase .hidden entre #view-home y #view-shop.
@@ -48,7 +45,7 @@
 (function() {
     'use strict';
     
-    const VIEWS = ['home', 'shop', 'profile', 'events'];
+    const VIEWS = ['home', 'shop', 'profile'];
     
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
@@ -106,100 +103,6 @@
         runNext();
     }
 
-    async function _renderHomeEventsSummary() {
-        const container = document.getElementById('home-events-summary');
-        if (!container) return;
-
-        const createIcon = (name) => {
-            const svgNs = 'http://www.w3.org/2000/svg';
-            const svg = document.createElementNS(svgNs, 'svg');
-            svg.setAttribute('class', 'icon');
-            svg.setAttribute('width', '14');
-            svg.setAttribute('height', '14');
-            svg.setAttribute('aria-hidden', 'true');
-            const use = document.createElementNS(svgNs, 'use');
-            use.setAttribute('href', `#icon-${name}`);
-            svg.appendChild(use);
-            return svg;
-        };
-
-        const createIconLabel = (name, text, className) => {
-            const el = document.createElement('p');
-            if (className) el.className = className;
-            el.appendChild(createIcon(name));
-            el.appendChild(document.createTextNode(` ${text}`));
-            return el;
-        };
-
-        container.classList.add('hidden');
-        container.replaceChildren(
-            createIconLabel('sparkles', 'Eventos', 'home-events-summary-card__label'),
-            Object.assign(document.createElement('p'), {
-                className: 'home-events-summary-card__empty',
-                textContent: 'Cargando resumen...'
-            })
-        );
-
-        try {
-            const summary = await window.EventView?.getHomeEventsSummary?.(2);
-            if (!summary || !summary.activeCount) {
-                container.classList.add('hidden');
-                container.innerHTML = '';
-                return;
-            }
-
-            const urgent = summary.urgentEvent;
-            const secondary = summary.topEvents[1];
-
-            const header = document.createElement('div');
-            header.className = 'home-events-summary-card__header';
-            header.appendChild(createIconLabel('sparkles', 'Eventos activos', 'home-events-summary-card__label'));
-
-            const badge = document.createElement('span');
-            badge.className = 'home-events-summary-card__count-badge';
-            const strong = document.createElement('strong');
-            strong.textContent = String(summary.activeCount);
-            const liveLabel = document.createElement('span');
-            liveLabel.textContent = 'en vivo';
-            badge.append(strong, liveLabel);
-            header.appendChild(badge);
-
-            const layout = document.createElement('div');
-            layout.className = 'home-events-summary-card__layout';
-            const body = document.createElement('div');
-            body.className = 'home-events-summary-card__body';
-
-            body.appendChild(Object.assign(document.createElement('p'), {
-                className: 'home-events-summary-card__kicker',
-                textContent: 'Más urgente'
-            }));
-            body.appendChild(Object.assign(document.createElement('h3'), {
-                className: 'home-events-summary-card__title',
-                textContent: urgent.title || ''
-            }));
-            body.appendChild(createIconLabel('clock', `Termina en ${urgent.timeLeft || ''}`, 'home-events-summary-card__meta'));
-            body.appendChild(createIconLabel('gift', `${urgent.reward || ''}`, 'home-events-summary-card__reward'));
-            if (secondary) {
-                body.appendChild(createIconLabel('calendar', `También: ${secondary.title || ''} · ${secondary.timeLeft || ''}`, 'home-events-summary-card__secondary'));
-            }
-
-            const cta = document.createElement('button');
-            cta.type = 'button';
-            cta.className = 'btn-ghost home-events-summary-card__cta';
-            cta.dataset.homeOpenEvents = '';
-            cta.textContent = 'Ver eventos';
-
-            layout.append(body, cta);
-            container.replaceChildren(header, layout);
-
-            container.classList.remove('hidden');
-            container.querySelector('[data-home-open-events]')?.addEventListener('click', () => navigateTo('events'));
-        } catch (_) {
-            container.classList.add('hidden');
-            container.replaceChildren();
-        }
-    }
-    
     // ── Núcleo de transición (sin History API) ────────────────────────────────
     
     /**
@@ -266,19 +169,16 @@
                 const lifecycleTasks = [];
 
                 // [fix] onLeave debe dispararse según la vista que abandonamos,
-                // no según la vista destino. De lo contrario, transiciones como
-                // shop -> events no liberan recursos de ShopView.
+                // no según la vista destino. De lo contrario, las transiciones
+                // salientes no liberan recursos de la vista anterior.
                 if (previousView !== viewId) {
                     if (previousView === 'home') lifecycleTasks.push(() => window.HomeView?.onLeave?.());
                     if (previousView === 'shop') lifecycleTasks.push(() => window.ShopView?.onLeave?.());
-                    if (previousView === 'events') lifecycleTasks.push(() => window.EventView?.onLeave?.());
                 }
 
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.onEnter', () => window.HomeView?.onEnter?.()));
                 if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeView.refresh', () => window.HomeView?.refresh?.()));
-                if (viewId === 'home') lifecycleTasks.push(() => _profileViewCallback('HomeEventsSummary.render', () => { _renderHomeEventsSummary(); }));
                 if (viewId === 'shop') lifecycleTasks.push(() => _profileViewCallback('ShopView.onEnter', () => window.ShopView?.onEnter?.()));
-                if (viewId === 'events') lifecycleTasks.push(() => _profileViewCallback('EventView.onEnter', () => window.EventView?.onEnter?.()));
 
                 _drainLifecycleQueue(lifecycleTasks);
             }, 0);

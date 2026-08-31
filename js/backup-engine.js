@@ -12,9 +12,6 @@
         'gamecenter_v6_promos',
         'love_arcade_time_cache',
         'love_arcade_last_recipient',
-        'love_arcade_events_v1',
-        'la_hunt_progress_count',
-        'la_hunt_progress_ids',
         'la_ws_state',
         'la_ws_completedLevels',
         'la_shooter_settings',
@@ -33,8 +30,6 @@
     ];
 
     const DYNAMIC_PATTERNS = [
-        /^la_milestone_activated_/,
-        /^la_gacha_daily_/,
         /^puz_arcade_save_/,
         /^la_milestone_progress_/
     ];

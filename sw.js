@@ -1,7 +1,7 @@
 const APP_URL = '/';
 const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
 
-const CACHE_VERSION = 'v2.04.04.79';
+const CACHE_VERSION = 'v2.04.04.81';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -17,10 +17,8 @@ const APP_SHELL_FILES = [
   '/js/analytics.js',
   '/js/supabase-loader.js',
   '/js/push-notifications.js',
-  '/js/event-logic.js',
   '/js/backup-engine.js',
   '/data/shop-gifts.json',
-  '/data/events.json',
   '/data/shop.json',
   '/assets/icon/icon-512-any.png',
   '/assets/icon/icon-512-maskable.png',
@@ -94,8 +92,7 @@ function normalizePayload(payload = {}) {
   const semTagByType = {
     local_daily: slot ? `local-daily-${slot}` : 'local-daily',
     local_moon: 'local-moon',
-    local_shop: shopVersion ? `local-shop-v${shopVersion}` : 'local-shop',
-    local_event: 'local-event'
+    local_shop: shopVersion ? `local-shop-v${shopVersion}` : 'local-shop'
   };
   const resolvedTag = semTagByType[type] || (typeof safePayload.tag === 'string' && safePayload.tag.trim() ? safePayload.tag : 'love-arcade');
 
