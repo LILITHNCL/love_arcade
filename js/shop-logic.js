@@ -2398,6 +2398,28 @@ window.ShopView = {
 // ── Carga del catálogo con manejo de errores y reintento ─────────────────────
 
 /**
+ * Persiste el hash del catálogo fuera del camino crítico de renderizado.
+ * El hash solo informa el estado de notificaciones push, por lo que el grid y
+ * la biblioteca deben estar disponibles antes de calcularlo. La revisión evita
+ * que una carga anterior sobrescriba el hash de un reintento más reciente.
+ */
+function _scheduleCatalogHashPersistence(items, revision) {
+    const persistHash = () => {
+        if (_catalogRevision !== revision) return;
+        try {
+            const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
+            localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
+        } catch (_) {}
+    };
+
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(persistHash, { timeout: 1000 });
+    } else {
+        setTimeout(persistHash, 0);
+    }
+}
+
+/**
  * Descarga shop.json y renderiza el catálogo.
  * Si la petición falla (red, 404, 500), oculta el grid y muestra
  * #shop-error-state con un botón de reintento que vuelve a llamar a esta función.
@@ -2438,10 +2460,6 @@ function loadCatalog() {
             .catch(() => [])
     ])
         .then(([items, gifts]) => {
-            try {
-                const catalogHash = btoa(unescape(encodeURIComponent(JSON.stringify(items)))).slice(0, 120);
-                localStorage.setItem('love_arcade_shop_catalog_hash_v1', catalogHash);
-            } catch (_) {}
             const baseCatalog = items.filter(item => !_isGiftItem(item));
             const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
             allItems = [...baseCatalog, ...giftCatalog];
@@ -2449,6 +2467,7 @@ function loadCatalog() {
             if (gridEl) gridEl.innerHTML = '';
             filterItems();
             renderLibrary(allItems);
+            _scheduleCatalogHashPersistence(items, _catalogRevision);
         
             // Asegurar que el error state está oculto si se cargó correctamente
             if (errorEl) errorEl.classList.add('hidden');
