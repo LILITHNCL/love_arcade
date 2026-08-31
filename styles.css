@@ -1380,9 +1380,6 @@ body::before {
     color: white;
     z-index: 2;
 }
-.badge-new { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-.badge-hot { background: var(--error); box-shadow: 0 0 10px rgba(255,66,102,0.4); }
-
 .card-reward {
     position: absolute;
     bottom: 10px; right: 10px;
@@ -2032,21 +2029,6 @@ body::before {
 }
 .price-original { text-decoration: line-through; color: var(--price-original-aa); font-size: 0.72rem; font-weight: 400; }
 .price-sale { color: var(--price-sale-aa); font-size: 1rem; font-weight: 900; }
-.sale-pill {
-    background: var(--success-soft);
-    border: 1px solid rgba(34,208,122,0.3);
-    color: var(--success); font-size: 0.58rem; font-weight: 800;
-    text-transform: uppercase; padding: 2px 4px; border-radius: 8px;
-}
-
-.card-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 4px; }
-.card-tag {
-    background: var(--solid-surface-base);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-low); font-size: 0.58rem; font-weight: 600;
-    padding: 2px 5px; border-radius: 8px;
-}
-
 .vault-btn {
     background: linear-gradient(135deg, #22d07a, #16a85e) !important;
     color: #041a0a !important; font-weight: 800 !important;
@@ -4049,51 +4031,10 @@ svg { stroke-width: 2; }
     border: 1px solid rgba(99, 179, 237, 0.35);
 }
 
-.cloud-gatekeeper-kicker {
-    margin: 0 0 8px;
-    color: #63b3ed;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    font-size: 0.64rem;
-    font-weight: 700;
-}
-
 .cloud-gatekeeper-title {
     font-family: var(--font-display);
     font-size: 1.08rem;
     margin-bottom: 8px;
-}
-
-.cloud-gatekeeper-sub {
-    margin: 0 0 18px;
-    color: var(--text-low);
-    font-size: 0.77rem;
-    line-height: 1.45;
-}
-
-.cloud-gatekeeper-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.cloud-gatekeeper-tab {
-    border: 1px solid var(--border-mid);
-    background: var(--solid-surface-base);
-    color: var(--text-low);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.cloud-gatekeeper-tab.is-active {
-    border-color: var(--accent-border);
-    background: var(--accent-soft);
-    color: var(--accent);
 }
 
 .cloud-gatekeeper-panels {
@@ -4135,12 +4076,6 @@ svg { stroke-width: 2; }
     display: none;
 }
 
-.cloud-password-form {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-mid);
-}
-
 .cloud-password-input-wrap {
     position: relative;
 }
@@ -4166,74 +4101,9 @@ svg { stroke-width: 2; }
     color: var(--text-main);
 }
 
-.cloud-password-strength {
-    height: 7px;
-    border-radius: 99px;
-    background: rgba(113, 128, 150, 0.2);
-    overflow: hidden;
-    margin: 8px 0 6px;
-}
-
-.cloud-password-strength-bar {
-    width: 0%;
-    height: 100%;
-    border-radius: 99px;
-    transition: width .18s ease, background .25s ease;
-    background: linear-gradient(90deg, #f56565, #f6e05e);
-}
-
-.cloud-password-hint {
-    margin: 0 0 8px;
-    color: var(--text-low);
-    font-size: 0.67rem;
-    line-height: 1.4;
-}
-
-.cloud-password-generate-btn {
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 10px;
-    font-size: 0.75rem;
-}
-
-.cloud-email-change-banner {
-    margin: 8px 0 12px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(99, 179, 237, 0.4);
-    background: rgba(66, 153, 225, 0.14);
-    color: #cfe9ff;
-    font-size: 0.69rem;
-    line-height: 1.45;
-}
-
 /* ──────────────────────────────────────────────────────────
    Push notifications UI
    ────────────────────────────────────────────────────────── */
-
-.push-benefits {
-    background: linear-gradient(135deg, rgba(155, 89, 255, 0.10), rgba(79, 53, 160, 0.14));
-    border: 1px solid rgba(155, 89, 255, 0.28);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-}
-
-.push-benefits-title {
-    margin: 0 0 6px;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: var(--accent);
-}
-
-.push-benefits-list {
-    margin: 0;
-    padding-left: 18px;
-    display: grid;
-    gap: 3px;
-    color: var(--text-med);
-    font-size: 0.77rem;
-}
 
 .push-support-state {
     font-size: 0.8rem;
@@ -4258,12 +4128,6 @@ svg { stroke-width: 2; }
 .push-enable-btn.is-active:hover {
     transform: none;
     filter: none;
-}
-
-.push-help-note {
-    margin: 6px 0 0;
-    font-size: 0.72rem;
-    color: var(--text-low);
 }
 
 .push-recovery-card {
@@ -4296,9 +4160,6 @@ svg { stroke-width: 2; }
     color: var(--text-med);
 }
 
-@media (max-width: 640px) {
-    .push-rules-grid { grid-template-columns: 1fr; }
-}
     line-height: 1.2;
 
 /* ================================================================
@@ -4481,37 +4342,6 @@ svg { stroke-width: 2; }
 /* ================================================================
    PROFILE INTERNAL SCREENS — app-like account flows
    ================================================================ */
-.profile-name-row {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 18px;
-}
-
-.profile-name-row .profile-name { margin: 0; }
-
-.profile-name-edit {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 999px;
-    border: 1px solid var(--accent-border);
-    background: var(--accent-soft);
-    color: var(--accent);
-    box-shadow: var(--control-shadow-rest);
-    cursor: pointer;
-    transition: transform var(--motion-micro), box-shadow var(--motion-small), background-color var(--motion-small);
-}
-
-.profile-name-edit:hover,
-.profile-name-edit:focus-visible {
-    background: var(--solid-surface-float);
-    box-shadow: var(--control-shadow-hover);
-}
-
-.profile-name-edit:active { transform: scale(0.96); }
 
 .profile-screen {
     max-width: 760px;
@@ -4671,7 +4501,6 @@ svg { stroke-width: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .profile-name-edit,
     .profile-back-btn {
         transition: none;
     }
@@ -4735,14 +4564,6 @@ svg { stroke-width: 2; }
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-}
-
-.profile-edit-eyebrow {
-    margin: 0 0 4px;
-    color: var(--text-tertiary-aa);
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
 }
 
 .profile-edit-title {
