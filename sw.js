@@ -92,8 +92,7 @@ function normalizePayload(payload = {}) {
   const semTagByType = {
     local_daily: slot ? `local-daily-${slot}` : 'local-daily',
     local_moon: 'local-moon',
-    local_shop: shopVersion ? `local-shop-v${shopVersion}` : 'local-shop',
-    local_event: 'local-event'
+    local_shop: shopVersion ? `local-shop-v${shopVersion}` : 'local-shop'
   };
   const resolvedTag = semTagByType[type] || (typeof safePayload.tag === 'string' && safePayload.tag.trim() ? safePayload.tag : 'love-arcade');
 

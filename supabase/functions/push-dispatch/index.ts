@@ -96,83 +96,66 @@ Deno.serve(async (req) => {
 
     for (const st of reminderStates || []) {
       statesProcessed += 1;
-    const { localDate, slot } = getDailySlot(new Date(), Number(st.daily_timezone_offset_minutes || 0));
-    const alreadyNotifiedToday = String(st.daily_last_notified_on || '') === localDate
-      ? (st.daily_notified_slots || [])
-      : [];
-    const dueDaily = Boolean(st.daily_enabled)
-      && Boolean(st.daily_can_claim)
-      && Boolean(slot)
-      && !alreadyNotifiedToday.includes(slot);
-    const moonThresholdIso = st.moon_blessing_expires_at
-      ? new Date(new Date(st.moon_blessing_expires_at).getTime() - 12 * 60 * 60 * 1000).toISOString()
-      : null;
-    const dueMoon = st.moon_enabled && moonThresholdIso && moonThresholdIso <= nowIso
-      && (!st.last_moon_sent_at || st.last_moon_sent_at < moonThresholdIso);
-    const dueShop = st.shop_enabled && globalShopVersion > Number(st.last_shop_version_sent || 0);
-    const dueEvent = st.events_enabled && st.next_event_end_at
-      && new Date(new Date(st.next_event_end_at).getTime() - 6 * 60 * 60 * 1000).toISOString() <= nowIso
-      && JSON.stringify(st.active_event_ids || []) !== JSON.stringify(st.last_event_ids_sent || []);
+      const { localDate, slot } = getDailySlot(new Date(), Number(st.daily_timezone_offset_minutes || 0));
+      const alreadyNotifiedToday = String(st.daily_last_notified_on || '') === localDate
+        ? (st.daily_notified_slots || [])
+        : [];
+      const dueDaily = Boolean(st.daily_enabled)
+        && Boolean(st.daily_can_claim)
+        && Boolean(slot)
+        && !alreadyNotifiedToday.includes(slot);
+      const moonThresholdIso = st.moon_blessing_expires_at
+        ? new Date(new Date(st.moon_blessing_expires_at).getTime() - 12 * 60 * 60 * 1000).toISOString()
+        : null;
+      const dueMoon = st.moon_enabled && moonThresholdIso && moonThresholdIso <= nowIso
+        && (!st.last_moon_sent_at || st.last_moon_sent_at < moonThresholdIso);
+      const dueShop = st.shop_enabled && globalShopVersion > Number(st.last_shop_version_sent || 0);
+      const inserts: Array<Record<string, unknown>> = [];
+      const updates: Record<string, unknown> = {};
 
-    const inserts: Array<Record<string, unknown>> = [];
-    const updates: Record<string, unknown> = {};
-
-    if (dueDaily) {
-      inserts.push({
-        title: '🎁 Bono diario disponible',
-        body: 'Tu bono diario ya está listo. Reclámalo ahora en Love Arcade.',
-        payload_json: { url: '/#view=home', tag: `local-daily-${st.user_id}-${localDate}-${slot}`, view: 'home', type: 'local_daily' },
-        target_filter_json: { target: 'user_id', user_id: st.user_id },
-        scheduled_for: nowIso,
-        status: 'pending'
-      });
-      updates.last_daily_sent_at = nowIso;
-      updates.daily_last_notified_on = localDate;
-      updates.daily_notified_slots = [...alreadyNotifiedToday, slot];
-    }
-    if (dueMoon) {
-      inserts.push({
-        title: '🌙 Bendición Lunar por expirar',
-        body: 'Tu Bendición Lunar está por terminar. Extiéndela para conservar el bonus.',
-        payload_json: { url: '/#view=shop', tag: `local-moon-${st.user_id}-${new Date().getTime()}`, view: 'shop', type: 'local_moon' },
-        target_filter_json: { target: 'user_id', user_id: st.user_id },
-        scheduled_for: nowIso,
-        status: 'pending'
-      });
-      updates.last_moon_sent_at = nowIso;
-    }
-    if (dueShop) {
-      const { data: enqueued, error: enqueueErr } = await sb.rpc('enqueue_local_shop_campaign', {
-        p_user_id: st.user_id,
-        p_shop_version: globalShopVersion,
-        p_scheduled_for: nowIso
-      });
-
-      if (enqueueErr) {
-        enqueueErrors += 1;
-        console.error('[push-dispatch] enqueue_local_shop_campaign error', enqueueErr.message);
-      } else if (enqueued === true) {
-        updates.last_shop_sent_at = nowIso;
-        updates.last_shop_catalog_hash_sent = st.shop_catalog_hash || null;
-        updates.last_shop_version_sent = globalShopVersion;
-      } else {
-        enqueueDedupeSkipped += 1;
-        console.info(`[push-dispatch] local_shop dedupe skip user:${st.user_id} version:${globalShopVersion}`);
+      if (dueDaily) {
+        inserts.push({
+          title: '🎁 Bono diario disponible',
+          body: 'Tu bono diario ya está listo. Reclámalo ahora en Love Arcade.',
+          payload_json: { url: '/#view=home', tag: `local-daily-${st.user_id}-${localDate}-${slot}`, view: 'home', type: 'local_daily' },
+          target_filter_json: { target: 'user_id', user_id: st.user_id },
+          scheduled_for: nowIso,
+          status: 'pending'
+        });
+        updates.last_daily_sent_at = nowIso;
+        updates.daily_last_notified_on = localDate;
+        updates.daily_notified_slots = [...alreadyNotifiedToday, slot];
       }
-    }
-    if (dueEvent) {
-      inserts.push({
-        title: '⏳ Evento por terminar',
-        body: 'Un evento está por finalizar. Aprovecha las recompensas antes de que termine.',
-        payload_json: { url: '/#view=events', tag: `local-event-${st.user_id}-${new Date().getTime()}`, view: 'events', type: 'local_event' },
-        target_filter_json: { target: 'user_id', user_id: st.user_id },
-        scheduled_for: nowIso,
-        status: 'pending'
-      });
-      updates.last_event_sent_at = nowIso;
-      updates.last_event_ids_sent = st.active_event_ids || [];
-    }
+      if (dueMoon) {
+        inserts.push({
+          title: '🌙 Bendición Lunar por expirar',
+          body: 'Tu Bendición Lunar está por terminar. Extiéndela para conservar el bonus.',
+          payload_json: { url: '/#view=shop', tag: `local-moon-${st.user_id}-${new Date().getTime()}`, view: 'shop', type: 'local_moon' },
+          target_filter_json: { target: 'user_id', user_id: st.user_id },
+          scheduled_for: nowIso,
+          status: 'pending'
+        });
+        updates.last_moon_sent_at = nowIso;
+      }
+      if (dueShop) {
+        const { data: enqueued, error: enqueueErr } = await sb.rpc('enqueue_local_shop_campaign', {
+          p_user_id: st.user_id,
+          p_shop_version: globalShopVersion,
+          p_scheduled_for: nowIso
+        });
 
+        if (enqueueErr) {
+          enqueueErrors += 1;
+          console.error('[push-dispatch] enqueue_local_shop_campaign error', enqueueErr.message);
+        } else if (enqueued === true) {
+          updates.last_shop_sent_at = nowIso;
+          updates.last_shop_catalog_hash_sent = st.shop_catalog_hash || null;
+          updates.last_shop_version_sent = globalShopVersion;
+        } else {
+          enqueueDedupeSkipped += 1;
+          console.info(`[push-dispatch] local_shop dedupe skip user:${st.user_id} version:${globalShopVersion}`);
+        }
+      }
       if (inserts.length) {
         const { error: insertErr } = await sb.from('push_campaigns').insert(inserts);
         if (insertErr) {

@@ -5,7 +5,7 @@
 ## Objetivo
 Este documento centraliza la arquitectura y operación de notificaciones de Love Arcade en producción:
 - campañas remotas,
-- recordatorios locales procesados en backend (bono diario, tienda, eventos, bendición lunar),
+- recordatorios locales procesados en backend (bono diario, tienda, bendición lunar),
 - deduplicación robusta,
 - versionado de contenido de tienda.
 
@@ -83,8 +83,8 @@ Aplicar estas migraciones (en orden):
 - Máximo 3 notificaciones por día (1 por ventana).
 - `daily_notified_slots` restringido a: `morning`, `day`, `night`.
 
-### 3) Bendición lunar y eventos
-- Se evalúan por proximidad de expiración/fin según estado sincronizado.
+### 3) Bendición lunar
+- Se evalúa por proximidad de expiración según estado sincronizado.
 
 ---
 
