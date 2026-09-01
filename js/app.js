@@ -1699,8 +1699,47 @@ window.MailHelper = {
 
 let _pendingSyncRetries = 0;
 let _cloudSyncRetryTimer = null;
+let _deferredUIFrame = null;
+let _deferredCloudSyncHandle = null;
+let _pendingDeferredCloudSync = false;
 const MAX_SYNC_RETRIES = 3;
 const SYNC_RETRY_DELAY = 500;
+
+/**
+ * Deja que el navegador pinte el feedback de una mutación antes de recorrer
+ * el DOM completo. Varias escrituras dentro del mismo frame se coalescen para
+ * que updateUI() siempre lea el estado más reciente una sola vez.
+ */
+function _scheduleUIUpdate() {
+    if (_deferredUIFrame !== null) return;
+    _deferredUIFrame = requestAnimationFrame(() => {
+        _deferredUIFrame = null;
+        updateUI();
+    });
+}
+
+/**
+ * Ejecuta la sincronización cloud después del frame crítico de interacción.
+ * El timeout evita que requestIdleCallback la retrase indefinidamente durante
+ * actividad continua, y el fallback mantiene compatibilidad con Safari.
+ */
+function _scheduleCloudSync(immediateCloudSync) {
+    if (immediateCloudSync) _pendingDeferredCloudSync = true;
+    if (_deferredCloudSyncHandle !== null) return;
+
+    const run = () => {
+        _deferredCloudSyncHandle = null;
+        const shouldSyncImmediately = _pendingDeferredCloudSync;
+        _pendingDeferredCloudSync = false;
+        _syncCloudIfNeeded(shouldSyncImmediately);
+    };
+
+    if ('requestIdleCallback' in window) {
+        _deferredCloudSyncHandle = requestIdleCallback(run, { timeout: 200 });
+    } else {
+        _deferredCloudSyncHandle = setTimeout(run, 0);
+    }
+}
 
 function _scheduleImmediateCloudRetry() {
     if (_pendingSyncRetries >= MAX_SYNC_RETRIES) return;
@@ -1776,8 +1815,8 @@ function saveState(options = {}) {
         }
     }
 
-    updateUI();
-    _syncCloudIfNeeded(immediateCloudSync);
+    _scheduleUIUpdate();
+    _scheduleCloudSync(immediateCloudSync);
     checkStorageSize(payload.length);
 }
 
@@ -2555,6 +2594,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Evitar subir userAvatar dentro de game_data:
             // el avatar cloud vive en user_profiles.avatar_url y el binario en Storage.
             if ((key === CONFIG.stateKey || key === 'gamecenter_v6_promos') && typeof val === 'string') {
+                // El estado no suele incluir un avatar Base64. En esos casos se
+                // conserva el payload ya serializado y se evita parsearlo y
+                // serializarlo de nuevo durante cada sincronización.
+                const hasUserAvatar = val.indexOf('"userAvatar"') !== -1;
+                const hasNullUserAvatar = /"userAvatar"\s*:\s*null(?:\s*[,}])/.test(val);
+                if (!hasUserAvatar || hasNullUserAvatar) {
+                    snap[key] = val;
+                    return;
+                }
                 try {
                     const parsed = JSON.parse(val);
                     if (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'userAvatar')) {
