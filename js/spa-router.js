@@ -182,7 +182,9 @@
 
         // Fase 2 (next frame): operaciones no críticas del primer frame.
         requestAnimationFrame(() => {
-            window.GameCenter?.syncUI?.();
+            // Limita las consultas de sincronización a la vista recién mostrada;
+            // GameCenter también actualiza el chrome compartido (navbar).
+            window.GameCenter?.syncUI?.(viewEls[viewId]);
 
             if (anchor) {
                 const target = document.getElementById(anchor);

@@ -1565,16 +1565,15 @@ window.GameCenter = {
     }),
 
     /**
-     * Fuerza una sincronización visual completa del saldo en todos los
-     * indicadores de la UI (Navbar .coin-display + HUD .coin-display).
-     * Llamado por spa-router.js al navegar entre vistas para garantizar
-     * que el saldo sea siempre correcto al entrar a cualquier vista.
-     * Resetea _displayedCoins para que animateValue arranque desde el valor
-     * correcto en vez del último valor animado.
+     * Sincroniza el chrome compartido y, opcionalmente, una vista SPA concreta.
+     * Llamado por spa-router.js al navegar para evitar consultar los nodos de
+     * vistas ocultas. Sin `scope` conserva la sincronización global.
+     *
+     * @param {HTMLElement} [scope] Contenedor de la vista actualmente visible.
      */
-    syncUI: () => {
+    syncUI: (scope) => {
         _displayedCoins = store.coins;
-        updateUI();
+        updateUI({ scope });
     }
 };
 
@@ -1835,17 +1834,24 @@ function formatCoinsNavbar(n) {
     return (Number.isInteger(k) ? k : Math.floor(k * 10) / 10) + 'k';
 }
 
-function updateUI() {
-    // Separar elementos: navbar (formato abreviado) vs. el resto (número exacto)
+/**
+ * Actualiza toda la UI o solo el chrome compartido y una vista concreta.
+ *
+ * @param {{ scope?: HTMLElement }} [options]
+ */
+function updateUI({ scope } = {}) {
+    // La navbar está fuera de las vistas SPA y siempre es visible. El resto se
+    // limita a `scope` durante una navegación para no recorrer vistas ocultas.
     const navbarDisplays = Array.from(
         document.querySelectorAll('.navbar .coin-display')
     );
+    const displayRoot = scope || document;
     // Las vistas SPA permanecen montadas, pero solo una está visible. Excluir
     // contadores de una .view-section oculta evita escribir en ellos en cada
     // frame de animateValue(); syncUI() los actualiza al entrar en su vista.
     const otherDisplays = Array.from(
-        document.querySelectorAll('.coin-display:not(.navbar .coin-display)')
-    ).filter(el => !el.closest('.view-section.hidden'));
+        displayRoot.querySelectorAll('.coin-display')
+    ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
 
     if (_displayedCoins === store.coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
@@ -1872,18 +1878,28 @@ function updateUI() {
         }
     }
 
-    applyAvatar();
-    updateDailyButton();
-    updateMoonBlessingUI();
+    applyAvatar(scope);
+    updateDailyButton(scope);
+    updateMoonBlessingUI(scope);
 }
 
 /** Exponer formatCoinsNavbar para uso en shop.html si fuera necesario. */
 window.formatCoinsNavbar = formatCoinsNavbar;
 
-function applyAvatar() {
+function applyAvatar(scope) {
     if (!store.userAvatar) return;
-    // Selecciona el avatar de la navbar (#user-avatar-display) y el HUD (.hud-avatar)
-    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar').forEach(el => {
+    // La navbar es chrome compartido; los demás avatares se limitan a la vista
+    // entrante cuando syncUI() proporciona un scope.
+    const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
+    const avatars = scope
+        ? new Set([
+            document.getElementById('user-avatar-display'),
+            ...scope.querySelectorAll('#hud-avatar-display, #profile-avatar-display, .hud-avatar')
+        ])
+        : document.querySelectorAll(avatarSelector);
+
+    avatars.forEach(el => {
+        if (!el) return;
         el.style.backgroundImage = `url('${store.userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
@@ -1955,8 +1971,9 @@ function applyTheme(key) {
     }
 }
 
-function updateDailyButton() {
-    const btn = document.getElementById('btn-daily');
+function updateDailyButton(scope) {
+    const root = scope || document;
+    const btn = root.querySelector('#btn-daily');
     if (!btn) return;
 
     const can  = window.GameCenter.canClaimDaily();
@@ -1971,10 +1988,10 @@ function updateDailyButton() {
     btn.dataset.mode  = repairMode ? 'repair' : 'claim';
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
-    const labelEl = document.getElementById('hud-daily-label');
+    const labelEl = root.querySelector('#hud-daily-label');
     if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
 
-    const msg = document.getElementById('daily-msg');
+    const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {
         msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
         msg.style.color = '#facc15';
@@ -1982,7 +1999,7 @@ function updateDailyButton() {
     }
 
     // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
-    const rewardEl = document.getElementById('hud-reward-amount');
+    const rewardEl = root.querySelector('#hud-reward-amount');
     if (rewardEl) {
         // Solo actualizar la cifra; la etiqueta "BONO DIARIO" se queda fija
         if (repairMode) {
@@ -2010,9 +2027,16 @@ function updateDailyButton() {
     }
 }
 
-function updateMoonBlessingUI() {
+function updateMoonBlessingUI(scope) {
     const status   = window.GameCenter.getMoonBlessingStatus();
-    const moonBadges = document.querySelectorAll('.moon-blessing-badge');
+    // La insignia de la navbar es compartida; las demás se actualizan solo en
+    // la vista visible cuando la sincronización viene del router.
+    const moonBadges = scope
+        ? new Set([
+            ...document.querySelectorAll('.navbar .moon-blessing-badge'),
+            ...scope.querySelectorAll('.moon-blessing-badge')
+        ])
+        : document.querySelectorAll('.moon-blessing-badge');
 
     moonBadges.forEach(badge => {
         badge.classList.toggle('hidden', !status.active);
@@ -2022,9 +2046,10 @@ function updateMoonBlessingUI() {
     });
 
     // Botón de compra en tienda
-    const moonBtn = document.getElementById('btn-moon-blessing');
+    const root = scope || document;
+    const moonBtn = root.querySelector('#btn-moon-blessing');
     if (moonBtn) {
-        const statusEl = document.getElementById('moon-blessing-status');
+        const statusEl = root.querySelector('#moon-blessing-status');
         if (status.active) {
             moonBtn.textContent = 'Extender Bendición (+7 días)';
             if (statusEl) statusEl.textContent = `Activa hasta ${status.expiresAt}`;
