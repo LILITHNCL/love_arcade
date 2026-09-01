@@ -2020,7 +2020,8 @@ async function initiatePurchase(item, btn) {
             el.closest('.coin-badge')?.setAttribute('title', `${bal} monedas`);
         });
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
-        fireConfetti();
+        // Deja que el navegador pinte primero el saldo y las cards actualizadas.
+        _scheduleConfetti('purchase');
         // Analítica — buy_item: registra qué wallpaper se compró con todos sus detalles
         window.GhostAnalytics?.track('buy_item', {
             wallpaper:  item.name,
@@ -2064,6 +2065,18 @@ function shakeElement(el) {
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 let _confettiLoaderPromise = null;
+
+/**
+ * Detecta señales de capacidad limitada sin depender de user-agent sniffing.
+ * La heurística solo reduce la intensidad del efecto; nunca lo desactiva.
+ *
+ * @returns {boolean}
+ */
+function _isModestDevice() {
+    const cores = navigator.hardwareConcurrency;
+    return (Number.isFinite(cores) && cores <= 4) || _isDataSaverActive() || _isLowBandwidth();
+}
+
 function _getConfetti() {
     if (typeof window.confetti === 'function') return Promise.resolve(window.confetti);
     if (_confettiLoaderPromise) return _confettiLoaderPromise;
@@ -2080,7 +2093,17 @@ function _getConfetti() {
     return _confettiLoaderPromise;
 }
 
-async function fireConfetti() {
+/**
+ * Ejecuta el confeti después del próximo paint para no competir con la
+ * actualización síncrona de saldo, badges e inventario.
+ *
+ * @param {'purchase'|'redeem'} type
+ */
+function _scheduleConfetti(type) {
+    requestAnimationFrame(() => fireConfetti(type));
+}
+
+async function fireConfetti(type = 'purchase') {
     // No disparar si la pestaña está inactiva (performance)
     if (document.hidden) return;
     // Verificar que estamos en la vista de Tienda
@@ -2088,10 +2111,24 @@ async function fireConfetti() {
 
     const confettiFn = await _getConfetti();
     if (typeof confettiFn !== 'function') return; // fallback silencioso
+    // La carga lazy puede completar después de navegar o cambiar de pestaña.
+    if (document.hidden || window.SpaRouter?.getCurrentView?.() !== 'shop') return;
+
+    const modestDevice = _isModestDevice();
+    if (type === 'redeem') {
+        confettiFn({
+            particleCount: modestDevice ? 45 : 80,
+            spread: 100,
+            origin: { y: 0.4 },
+            colors: ['#fbbf24', '#9b59ff', '#22d07a']
+        });
+        return;
+    }
 
     const colors = ['#9b59ff', '#ff59b4', '#fbbf24', '#22d07a', '#00d4ff'];
-    confettiFn({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
-    confettiFn({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
+    const particleCount = modestDevice ? 30 : 55;
+    confettiFn({ particleCount, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
+    confettiFn({ particleCount, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -2139,10 +2176,9 @@ async function handleRedeem() {
                 el.closest('.coin-badge')?.setAttribute('title', `${bal} monedas`);
             });
             document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
-            if (!document.hidden) {
-                const confettiFn = await _getConfetti();
-                confettiFn?.({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
-            }
+            // El feedback crítico ya está actualizado; el efecto decorativo va
+            // en el siguiente frame y comparte los mismos guards que la compra.
+            _scheduleConfetti('redeem');
             // [v9.9.2] Fuente ÚNICA de track('redeem_code'): aquí, al final de la cadena
             // de éxito de UI. El disparo en app.js/redeemPromoCode() fue eliminado para
             // evitar el doble reporte. Código ofuscado con *** para no exponer texto plano.
