@@ -157,6 +157,9 @@ let searchQuery  = '';
 // si un retry devuelve un catálogo diferente con la misma cantidad de ítems.
 let _catalogRevision = 0;
 let _lastCatalogSignature = null;
+// Se invalida únicamente después de una compra exitosa. Así, al volver a la
+// Tienda sin cambios de inventario evitamos recomputar la firma completa.
+let _inventoryDirty = true;
 let _pendingFilterFrame = null;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
@@ -1772,6 +1775,7 @@ async function _handleGiftAction(itemId) {
             showToast('No se pudo reclamar el regalo ahora mismo.', 'error');
             return;
         }
+        _inventoryDirty = true;
         _rememberGiftClaim(item.id);
         showToast('¡Gracias por jugar hoy! Tu apoyo mantiene este mundo vivo.', 'success');
         window.GhostAnalytics?.track('gift_claimed', { item: item.name, requirement: item.requirements?.type || 'unknown' });
@@ -1969,6 +1973,7 @@ async function initiatePurchase(item, btn) {
 
     const result = GameCenter.buyItem(item);
     if (result.success) {
+        _inventoryDirty = true;
         filterItems();
         renderLibrary(allItems);
         // Actualizar displays: navbar con formato abreviado, resto con valor exacto.
@@ -2374,7 +2379,9 @@ window.ShopView = {
         // Regalos conserva su ciclo de vida propio. Para el grid, evitar destruir
         // y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
         const gridEl = document.getElementById('shop-container');
-        const signature = _computeCatalogSignature();
+        const signature = _inventoryDirty
+            ? _computeCatalogSignature()
+            : _lastCatalogSignature;
         if (allItems.length && activeFilter !== 'Regalos'
             && signature === _lastCatalogSignature
             && gridEl?.querySelector('.shop-card')) {
@@ -2382,6 +2389,7 @@ window.ShopView = {
         } else if (allItems.length) {
             filterItems();
         }
+        _inventoryDirty = false;
         _updateGiftFilterGlow();
 
     },
