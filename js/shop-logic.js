@@ -843,7 +843,7 @@ function _preloadItemHiRes(cardEl, item) {
 }
 
 /**
- * Crea (o recrea) el IntersectionObserver de precarga.
+ * Crea el IntersectionObserver de precarga para el catálogo actual.
  *
  * CONFIGURACIÓN v9.7:
  *  - rootMargin: '200px 0px 400px 0px'
@@ -874,41 +874,28 @@ function _preloadItemHiRes(cardEl, item) {
  *  despachen en un requestIdleCallback, sin bloquear el hilo principal durante
  *  ráfagas de scroll.
  *
- * Idempotente: si _preloadObserver ya existe la desconecta y cancela la cola
- * pendiente antes de crear una nueva (necesario tras renderShop()).
+ * El mapa abarca todo el catálogo filtrado, por lo que el mismo observer puede
+ * resolver tanto las tarjetas iniciales como los lotes que se añaden al hacer
+ * scroll. La observación de esos lotes se delega a _observeNewShopCards().
  *
- * Solo observa tarjetas de items NO comprados (identificadas por .shop-preview-btn).
- *
- * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
- * @param {object[]}    items     — Arreglo de items en el mismo orden del DOM.
+ * @param {object[]} items — Arreglo completo de items del render actual.
+ * @returns {IntersectionObserver|null}
  */
-function _initPreloadObserver(container, items) {
-    // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
-    // Esto evita que callbacks pendientes referencien nodos del DOM anterior.
-    if (_preloadObserver) {
-        _preloadObserver.disconnect();
-        _preloadObserver = null;
-    }
-    _preloadQueue.length = 0;
-    if (_preloadFlushId !== null) {
-        'cancelIdleCallback' in window
-            ? cancelIdleCallback(_preloadFlushId)
-            : clearTimeout(_preloadFlushId);
-        _preloadFlushId = null;
-    }
-
+function _createPreloadObserver(items) {
     // Degradación elegante: entornos sin soporte (browsers muy antiguos, SSR)
-    if (!('IntersectionObserver' in window)) return;
+    if (!('IntersectionObserver' in window)) return null;
 
     // Respetar preferencia de ahorro de datos del usuario.
     // En slow-2g o Data Saver, cualquier precarga consumiría recursos que el
     // usuario explícitamente quiere conservar.
-    if (_isDataSaverActive()) return;
+    if (_isDataSaverActive()) return null;
 
-    // Construir mapa id → item para O(1) lookup en el callback
+    // Construir mapa id → item para O(1) lookup en el callback. Debe incluir
+    // el catálogo completo, no solo el primer lote, porque el observer persiste
+    // durante los append incrementales.
     const itemMap = new Map(items.map(it => [it.id, it]));
 
-    _preloadObserver = new IntersectionObserver((entries) => {
+    return new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
 
@@ -943,11 +930,55 @@ function _initPreloadObserver(container, items) {
         // solo añadía latencia sin beneficio de precisión.
         threshold:  0
     });
+}
 
-    container.querySelectorAll('.shop-card').forEach(card => {
-        if (card.querySelector('.shop-preview-btn')) {
+/**
+ * Observa únicamente las tarjetas creadas por el lote incremental más reciente.
+ * El observer se crea una vez por render completo mediante _initPreloadObserver;
+ * si no existe, Data Saver o la falta de soporte ya desactivaron la precarga.
+ *
+ * @param {HTMLElement[]} cardEls — Tarjetas recién insertadas en el DOM.
+ */
+function _observeNewShopCards(cardEls) {
+    if (!_preloadObserver) return;
+
+    cardEls.forEach(card => {
+        if (!card.dataset.preloaded && card.querySelector('.shop-preview-btn')) {
             _preloadObserver.observe(card);
         }
+    });
+}
+
+/**
+ * Reinicia la precarga después de un render completo del catálogo.
+ *
+ * Idempotente: si _preloadObserver ya existe la desconecta y cancela la cola
+ * pendiente antes de crear una nueva. Solo se invoca cuando renderShop() vacía
+ * el grid; los lotes incrementales conservan este observer.
+ *
+ * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
+ * @param {object[]}    items     — Arreglo completo de items del render actual.
+ */
+function _initPreloadObserver(container, items) {
+    // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
+    // Esto evita que callbacks pendientes referencien nodos del DOM anterior.
+    if (_preloadObserver) {
+        _preloadObserver.disconnect();
+        _preloadObserver = null;
+    }
+    _preloadQueue.length = 0;
+    if (_preloadFlushId !== null) {
+        'cancelIdleCallback' in window
+            ? cancelIdleCallback(_preloadFlushId)
+            : clearTimeout(_preloadFlushId);
+        _preloadFlushId = null;
+    }
+
+    _preloadObserver = _createPreloadObserver(items);
+    if (!_preloadObserver) return;
+
+    container.querySelectorAll('.shop-card').forEach(card => {
+        _observeNewShopCards([card]);
     });
 }
 
@@ -1679,11 +1710,14 @@ function _appendShopBatch(container) {
     if (start >= end) return false;
 
     const frag = document.createDocumentFragment();
+    const newCards = [];
     for (let i = start; i < end; i += 1) {
         // Mark first 6 items of the entire catalog to load eagerly.
         // i is the global index in _shopRenderState.items.
         const loading = i < 6 ? 'eager' : 'lazy';
-        frag.appendChild(_buildShopCard(_shopRenderState.items[i], loading));
+        const card = _buildShopCard(_shopRenderState.items[i], loading);
+        newCards.push(card);
+        frag.appendChild(card);
     }
     if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
         container.insertBefore(frag, _shopLazySentinel);
@@ -1692,7 +1726,7 @@ function _appendShopBatch(container) {
     }
     _shopRenderState.cursor = end;
 
-    _initPreloadObserver(container, _shopRenderState.items.slice(0, end));
+    _observeNewShopCards(newCards);
     return end < _shopRenderState.items.length;
 }
 
@@ -1706,6 +1740,9 @@ function renderShop(items) {
     _shopRenderState.cursor = 0;
 
     if (!items.length) return;
+    // El DOM se acaba de reemplazar: esta es la única ruta que reinicia el
+    // observer y su cola. Los lotes siguientes solo observan sus cards nuevas.
+    _initPreloadObserver(container, items);
     const hasMore = _appendShopBatch(container);
     if (!hasMore) return;
 
