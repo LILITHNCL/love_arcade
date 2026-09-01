@@ -157,6 +157,9 @@ let searchQuery  = '';
 // si un retry devuelve un catálogo diferente con la misma cantidad de ítems.
 let _catalogRevision = 0;
 let _lastCatalogSignature = null;
+// Se invalida únicamente después de una compra exitosa. Así, al volver a la
+// Tienda sin cambios de inventario evitamos recomputar la firma completa.
+let _inventoryDirty = true;
 let _pendingFilterFrame = null;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
@@ -840,7 +843,7 @@ function _preloadItemHiRes(cardEl, item) {
 }
 
 /**
- * Crea (o recrea) el IntersectionObserver de precarga.
+ * Crea el IntersectionObserver de precarga para el catálogo actual.
  *
  * CONFIGURACIÓN v9.7:
  *  - rootMargin: '200px 0px 400px 0px'
@@ -871,41 +874,28 @@ function _preloadItemHiRes(cardEl, item) {
  *  despachen en un requestIdleCallback, sin bloquear el hilo principal durante
  *  ráfagas de scroll.
  *
- * Idempotente: si _preloadObserver ya existe la desconecta y cancela la cola
- * pendiente antes de crear una nueva (necesario tras renderShop()).
+ * El mapa abarca todo el catálogo filtrado, por lo que el mismo observer puede
+ * resolver tanto las tarjetas iniciales como los lotes que se añaden al hacer
+ * scroll. La observación de esos lotes se delega a _observeNewShopCards().
  *
- * Solo observa tarjetas de items NO comprados (identificadas por .shop-preview-btn).
- *
- * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
- * @param {object[]}    items     — Arreglo de items en el mismo orden del DOM.
+ * @param {object[]} items — Arreglo completo de items del render actual.
+ * @returns {IntersectionObserver|null}
  */
-function _initPreloadObserver(container, items) {
-    // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
-    // Esto evita que callbacks pendientes referencien nodos del DOM anterior.
-    if (_preloadObserver) {
-        _preloadObserver.disconnect();
-        _preloadObserver = null;
-    }
-    _preloadQueue.length = 0;
-    if (_preloadFlushId !== null) {
-        'cancelIdleCallback' in window
-            ? cancelIdleCallback(_preloadFlushId)
-            : clearTimeout(_preloadFlushId);
-        _preloadFlushId = null;
-    }
-
+function _createPreloadObserver(items) {
     // Degradación elegante: entornos sin soporte (browsers muy antiguos, SSR)
-    if (!('IntersectionObserver' in window)) return;
+    if (!('IntersectionObserver' in window)) return null;
 
     // Respetar preferencia de ahorro de datos del usuario.
     // En slow-2g o Data Saver, cualquier precarga consumiría recursos que el
     // usuario explícitamente quiere conservar.
-    if (_isDataSaverActive()) return;
+    if (_isDataSaverActive()) return null;
 
-    // Construir mapa id → item para O(1) lookup en el callback
+    // Construir mapa id → item para O(1) lookup en el callback. Debe incluir
+    // el catálogo completo, no solo el primer lote, porque el observer persiste
+    // durante los append incrementales.
     const itemMap = new Map(items.map(it => [it.id, it]));
 
-    _preloadObserver = new IntersectionObserver((entries) => {
+    return new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
 
@@ -940,11 +930,55 @@ function _initPreloadObserver(container, items) {
         // solo añadía latencia sin beneficio de precisión.
         threshold:  0
     });
+}
 
-    container.querySelectorAll('.shop-card').forEach(card => {
-        if (card.querySelector('.shop-preview-btn')) {
+/**
+ * Observa únicamente las tarjetas creadas por el lote incremental más reciente.
+ * El observer se crea una vez por render completo mediante _initPreloadObserver;
+ * si no existe, Data Saver o la falta de soporte ya desactivaron la precarga.
+ *
+ * @param {HTMLElement[]} cardEls — Tarjetas recién insertadas en el DOM.
+ */
+function _observeNewShopCards(cardEls) {
+    if (!_preloadObserver) return;
+
+    cardEls.forEach(card => {
+        if (!card.dataset.preloaded && card.querySelector('.shop-preview-btn')) {
             _preloadObserver.observe(card);
         }
+    });
+}
+
+/**
+ * Reinicia la precarga después de un render completo del catálogo.
+ *
+ * Idempotente: si _preloadObserver ya existe la desconecta y cancela la cola
+ * pendiente antes de crear una nueva. Solo se invoca cuando renderShop() vacía
+ * el grid; los lotes incrementales conservan este observer.
+ *
+ * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
+ * @param {object[]}    items     — Arreglo completo de items del render actual.
+ */
+function _initPreloadObserver(container, items) {
+    // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
+    // Esto evita que callbacks pendientes referencien nodos del DOM anterior.
+    if (_preloadObserver) {
+        _preloadObserver.disconnect();
+        _preloadObserver = null;
+    }
+    _preloadQueue.length = 0;
+    if (_preloadFlushId !== null) {
+        'cancelIdleCallback' in window
+            ? cancelIdleCallback(_preloadFlushId)
+            : clearTimeout(_preloadFlushId);
+        _preloadFlushId = null;
+    }
+
+    _preloadObserver = _createPreloadObserver(items);
+    if (!_preloadObserver) return;
+
+    container.querySelectorAll('.shop-card').forEach(card => {
+        _observeNewShopCards([card]);
     });
 }
 
@@ -1676,11 +1710,14 @@ function _appendShopBatch(container) {
     if (start >= end) return false;
 
     const frag = document.createDocumentFragment();
+    const newCards = [];
     for (let i = start; i < end; i += 1) {
         // Mark first 6 items of the entire catalog to load eagerly.
         // i is the global index in _shopRenderState.items.
         const loading = i < 6 ? 'eager' : 'lazy';
-        frag.appendChild(_buildShopCard(_shopRenderState.items[i], loading));
+        const card = _buildShopCard(_shopRenderState.items[i], loading);
+        newCards.push(card);
+        frag.appendChild(card);
     }
     if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
         container.insertBefore(frag, _shopLazySentinel);
@@ -1689,7 +1726,7 @@ function _appendShopBatch(container) {
     }
     _shopRenderState.cursor = end;
 
-    _initPreloadObserver(container, _shopRenderState.items.slice(0, end));
+    _observeNewShopCards(newCards);
     return end < _shopRenderState.items.length;
 }
 
@@ -1703,6 +1740,9 @@ function renderShop(items) {
     _shopRenderState.cursor = 0;
 
     if (!items.length) return;
+    // El DOM se acaba de reemplazar: esta es la única ruta que reinicia el
+    // observer y su cola. Los lotes siguientes solo observan sus cards nuevas.
+    _initPreloadObserver(container, items);
     const hasMore = _appendShopBatch(container);
     if (!hasMore) return;
 
@@ -1772,6 +1812,7 @@ async function _handleGiftAction(itemId) {
             showToast('No se pudo reclamar el regalo ahora mismo.', 'error');
             return;
         }
+        _inventoryDirty = true;
         _rememberGiftClaim(item.id);
         showToast('¡Gracias por jugar hoy! Tu apoyo mantiene este mundo vivo.', 'success');
         window.GhostAnalytics?.track('gift_claimed', { item: item.name, requirement: item.requirements?.type || 'unknown' });
@@ -1969,6 +2010,7 @@ async function initiatePurchase(item, btn) {
 
     const result = GameCenter.buyItem(item);
     if (result.success) {
+        _inventoryDirty = true;
         filterItems();
         renderLibrary(allItems);
         // Actualizar displays: navbar con formato abreviado, resto con valor exacto.
@@ -1978,7 +2020,8 @@ async function initiatePurchase(item, btn) {
             el.closest('.coin-badge')?.setAttribute('title', `${bal} monedas`);
         });
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
-        fireConfetti();
+        // Deja que el navegador pinte primero el saldo y las cards actualizadas.
+        _scheduleConfetti('purchase');
         // Analítica — buy_item: registra qué wallpaper se compró con todos sus detalles
         window.GhostAnalytics?.track('buy_item', {
             wallpaper:  item.name,
@@ -2022,6 +2065,18 @@ function shakeElement(el) {
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 let _confettiLoaderPromise = null;
+
+/**
+ * Detecta señales de capacidad limitada sin depender de user-agent sniffing.
+ * La heurística solo reduce la intensidad del efecto; nunca lo desactiva.
+ *
+ * @returns {boolean}
+ */
+function _isModestDevice() {
+    const cores = navigator.hardwareConcurrency;
+    return (Number.isFinite(cores) && cores <= 4) || _isDataSaverActive() || _isLowBandwidth();
+}
+
 function _getConfetti() {
     if (typeof window.confetti === 'function') return Promise.resolve(window.confetti);
     if (_confettiLoaderPromise) return _confettiLoaderPromise;
@@ -2038,7 +2093,17 @@ function _getConfetti() {
     return _confettiLoaderPromise;
 }
 
-async function fireConfetti() {
+/**
+ * Ejecuta el confeti después del próximo paint para no competir con la
+ * actualización síncrona de saldo, badges e inventario.
+ *
+ * @param {'purchase'|'redeem'} type
+ */
+function _scheduleConfetti(type) {
+    requestAnimationFrame(() => fireConfetti(type));
+}
+
+async function fireConfetti(type = 'purchase') {
     // No disparar si la pestaña está inactiva (performance)
     if (document.hidden) return;
     // Verificar que estamos en la vista de Tienda
@@ -2046,10 +2111,24 @@ async function fireConfetti() {
 
     const confettiFn = await _getConfetti();
     if (typeof confettiFn !== 'function') return; // fallback silencioso
+    // La carga lazy puede completar después de navegar o cambiar de pestaña.
+    if (document.hidden || window.SpaRouter?.getCurrentView?.() !== 'shop') return;
+
+    const modestDevice = _isModestDevice();
+    if (type === 'redeem') {
+        confettiFn({
+            particleCount: modestDevice ? 45 : 80,
+            spread: 100,
+            origin: { y: 0.4 },
+            colors: ['#fbbf24', '#9b59ff', '#22d07a']
+        });
+        return;
+    }
 
     const colors = ['#9b59ff', '#ff59b4', '#fbbf24', '#22d07a', '#00d4ff'];
-    confettiFn({ particleCount: 55, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
-    confettiFn({ particleCount: 55, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
+    const particleCount = modestDevice ? 30 : 55;
+    confettiFn({ particleCount, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors });
+    confettiFn({ particleCount, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -2097,10 +2176,9 @@ async function handleRedeem() {
                 el.closest('.coin-badge')?.setAttribute('title', `${bal} monedas`);
             });
             document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
-            if (!document.hidden) {
-                const confettiFn = await _getConfetti();
-                confettiFn?.({ particleCount: 80, spread: 100, origin: { y: 0.4 }, colors: ['#fbbf24','#9b59ff','#22d07a'] });
-            }
+            // El feedback crítico ya está actualizado; el efecto decorativo va
+            // en el siguiente frame y comparte los mismos guards que la compra.
+            _scheduleConfetti('redeem');
             // [v9.9.2] Fuente ÚNICA de track('redeem_code'): aquí, al final de la cadena
             // de éxito de UI. El disparo en app.js/redeemPromoCode() fue eliminado para
             // evitar el doble reporte. Código ofuscado con *** para no exponer texto plano.
@@ -2214,7 +2292,7 @@ function renderMoonBlessingStatus() {
     }
 }
 
-// ── Sale Banner + Economy Info ────────────────────────────────────────────────
+// ── Sale Banner ───────────────────────────────────────────────────────────────
 function initSaleBanner() {
     const eco    = window.ECONOMY;
     const banner = document.getElementById('sale-banner');
@@ -2228,18 +2306,6 @@ function initSaleBanner() {
             `${pct}% de descuento + ${Math.round(eco.cashbackRate * 100)}% de cashback en toda la tienda.`;
         if (badgeEl) badgeEl.textContent = `${pct}%`;
     }
-}
-
-function initEconomyInfo() {
-    const eco    = window.ECONOMY;
-    const saleEl = document.getElementById('eco-sale-status');
-    const cbEl   = document.getElementById('eco-cashback');
-    if (!saleEl || !cbEl) return;
-    const pct = Math.round((1 - eco.saleMultiplier) * 100);
-    saleEl.textContent = eco.isSaleActive ? `${pct}% OFF activo` : 'Sin oferta activa';
-    saleEl.className   = 'eco-badge' + (eco.isSaleActive ? ' eco-badge--sale' : '');
-    cbEl.textContent   = `${Math.round(eco.cashbackRate * 100)}% en cada compra`;
-    cbEl.className     = 'eco-badge eco-badge--green';
 }
 
 // ── Util ──────────────────────────────────────────────────────────────────────
@@ -2355,11 +2421,10 @@ async function _handleEmailConfirm() {
 window.ShopView = {
     /**
      * Llamado por spa-router.js cada vez que se entra a la vista de Tienda.
-     * Refresca el estado de economía y los badges de luna sin re-renderizar
-     * el catálogo completo (que ya está en memoria).
+     * Refresca los datos visibles sin re-renderizar el catálogo completo
+     * (que ya está en memoria).
      */
     onEnter() {
-        initEconomyInfo();
         renderMoonBlessingStatus();
         // Actualizar saldo en todos los coin-display:
         // la navbar usa el formato abreviado (ej: "25.5k") y el resto el valor exacto.
@@ -2374,7 +2439,9 @@ window.ShopView = {
         // Regalos conserva su ciclo de vida propio. Para el grid, evitar destruir
         // y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
         const gridEl = document.getElementById('shop-container');
-        const signature = _computeCatalogSignature();
+        const signature = _inventoryDirty
+            ? _computeCatalogSignature()
+            : _lastCatalogSignature;
         if (allItems.length && activeFilter !== 'Regalos'
             && signature === _lastCatalogSignature
             && gridEl?.querySelector('.shop-card')) {
@@ -2382,6 +2449,7 @@ window.ShopView = {
         } else if (allItems.length) {
             filterItems();
         }
+        _inventoryDirty = false;
         _updateGiftFilterGlow();
 
     },
@@ -2522,9 +2590,8 @@ function loadCatalog() {
 document.addEventListener('DOMContentLoaded', () => {
     _bindShopContainerDelegation();
 
-    // Inicializar banner y economía al cargar
+    // Inicializar banner y estado visible de la Tienda al cargar
     initSaleBanner();
-    initEconomyInfo();
     renderMoonBlessingStatus();
     renderStreakCalendar();
 

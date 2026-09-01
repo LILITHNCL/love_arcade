@@ -1565,16 +1565,15 @@ window.GameCenter = {
     }),
 
     /**
-     * Fuerza una sincronización visual completa del saldo en todos los
-     * indicadores de la UI (Navbar .coin-display + HUD .coin-display).
-     * Llamado por spa-router.js al navegar entre vistas para garantizar
-     * que el saldo sea siempre correcto al entrar a cualquier vista.
-     * Resetea _displayedCoins para que animateValue arranque desde el valor
-     * correcto en vez del último valor animado.
+     * Sincroniza el chrome compartido y, opcionalmente, una vista SPA concreta.
+     * Llamado por spa-router.js al navegar para evitar consultar los nodos de
+     * vistas ocultas. Sin `scope` conserva la sincronización global.
+     *
+     * @param {HTMLElement} [scope] Contenedor de la vista actualmente visible.
      */
-    syncUI: () => {
+    syncUI: (scope) => {
         _displayedCoins = store.coins;
-        updateUI();
+        updateUI({ scope });
     }
 };
 
@@ -1699,8 +1698,47 @@ window.MailHelper = {
 
 let _pendingSyncRetries = 0;
 let _cloudSyncRetryTimer = null;
+let _deferredUIFrame = null;
+let _deferredCloudSyncHandle = null;
+let _pendingDeferredCloudSync = false;
 const MAX_SYNC_RETRIES = 3;
 const SYNC_RETRY_DELAY = 500;
+
+/**
+ * Deja que el navegador pinte el feedback de una mutación antes de recorrer
+ * el DOM completo. Varias escrituras dentro del mismo frame se coalescen para
+ * que updateUI() siempre lea el estado más reciente una sola vez.
+ */
+function _scheduleUIUpdate() {
+    if (_deferredUIFrame !== null) return;
+    _deferredUIFrame = requestAnimationFrame(() => {
+        _deferredUIFrame = null;
+        updateUI();
+    });
+}
+
+/**
+ * Ejecuta la sincronización cloud después del frame crítico de interacción.
+ * El timeout evita que requestIdleCallback la retrase indefinidamente durante
+ * actividad continua, y el fallback mantiene compatibilidad con Safari.
+ */
+function _scheduleCloudSync(immediateCloudSync) {
+    if (immediateCloudSync) _pendingDeferredCloudSync = true;
+    if (_deferredCloudSyncHandle !== null) return;
+
+    const run = () => {
+        _deferredCloudSyncHandle = null;
+        const shouldSyncImmediately = _pendingDeferredCloudSync;
+        _pendingDeferredCloudSync = false;
+        _syncCloudIfNeeded(shouldSyncImmediately);
+    };
+
+    if ('requestIdleCallback' in window) {
+        _deferredCloudSyncHandle = requestIdleCallback(run, { timeout: 200 });
+    } else {
+        _deferredCloudSyncHandle = setTimeout(run, 0);
+    }
+}
 
 function _scheduleImmediateCloudRetry() {
     if (_pendingSyncRetries >= MAX_SYNC_RETRIES) return;
@@ -1776,8 +1814,8 @@ function saveState(options = {}) {
         }
     }
 
-    updateUI();
-    _syncCloudIfNeeded(immediateCloudSync);
+    _scheduleUIUpdate();
+    _scheduleCloudSync(immediateCloudSync);
     checkStorageSize(payload.length);
 }
 
@@ -1796,14 +1834,24 @@ function formatCoinsNavbar(n) {
     return (Number.isInteger(k) ? k : Math.floor(k * 10) / 10) + 'k';
 }
 
-function updateUI() {
-    // Separar elementos: navbar (formato abreviado) vs. el resto (número exacto)
+/**
+ * Actualiza toda la UI o solo el chrome compartido y una vista concreta.
+ *
+ * @param {{ scope?: HTMLElement }} [options]
+ */
+function updateUI({ scope } = {}) {
+    // La navbar está fuera de las vistas SPA y siempre es visible. El resto se
+    // limita a `scope` durante una navegación para no recorrer vistas ocultas.
     const navbarDisplays = Array.from(
         document.querySelectorAll('.navbar .coin-display')
     );
+    const displayRoot = scope || document;
+    // Las vistas SPA permanecen montadas, pero solo una está visible. Excluir
+    // contadores de una .view-section oculta evita escribir en ellos en cada
+    // frame de animateValue(); syncUI() los actualiza al entrar en su vista.
     const otherDisplays = Array.from(
-        document.querySelectorAll('.coin-display:not(.navbar .coin-display)')
-    );
+        displayRoot.querySelectorAll('.coin-display')
+    ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
 
     if (_displayedCoins === store.coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
@@ -1830,18 +1878,28 @@ function updateUI() {
         }
     }
 
-    applyAvatar();
-    updateDailyButton();
-    updateMoonBlessingUI();
+    applyAvatar(scope);
+    updateDailyButton(scope);
+    updateMoonBlessingUI(scope);
 }
 
 /** Exponer formatCoinsNavbar para uso en shop.html si fuera necesario. */
 window.formatCoinsNavbar = formatCoinsNavbar;
 
-function applyAvatar() {
+function applyAvatar(scope) {
     if (!store.userAvatar) return;
-    // Selecciona el avatar de la navbar (#user-avatar-display) y el HUD (.hud-avatar)
-    document.querySelectorAll('#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar').forEach(el => {
+    // La navbar es chrome compartido; los demás avatares se limitan a la vista
+    // entrante cuando syncUI() proporciona un scope.
+    const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
+    const avatars = scope
+        ? new Set([
+            document.getElementById('user-avatar-display'),
+            ...scope.querySelectorAll('#hud-avatar-display, #profile-avatar-display, .hud-avatar')
+        ])
+        : document.querySelectorAll(avatarSelector);
+
+    avatars.forEach(el => {
+        if (!el) return;
         el.style.backgroundImage = `url('${store.userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
@@ -1913,8 +1971,9 @@ function applyTheme(key) {
     }
 }
 
-function updateDailyButton() {
-    const btn = document.getElementById('btn-daily');
+function updateDailyButton(scope) {
+    const root = scope || document;
+    const btn = root.querySelector('#btn-daily');
     if (!btn) return;
 
     const can  = window.GameCenter.canClaimDaily();
@@ -1929,10 +1988,10 @@ function updateDailyButton() {
     btn.dataset.mode  = repairMode ? 'repair' : 'claim';
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
-    const labelEl = document.getElementById('hud-daily-label');
+    const labelEl = root.querySelector('#hud-daily-label');
     if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
 
-    const msg = document.getElementById('daily-msg');
+    const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {
         msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
         msg.style.color = '#facc15';
@@ -1940,7 +1999,7 @@ function updateDailyButton() {
     }
 
     // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
-    const rewardEl = document.getElementById('hud-reward-amount');
+    const rewardEl = root.querySelector('#hud-reward-amount');
     if (rewardEl) {
         // Solo actualizar la cifra; la etiqueta "BONO DIARIO" se queda fija
         if (repairMode) {
@@ -1968,9 +2027,16 @@ function updateDailyButton() {
     }
 }
 
-function updateMoonBlessingUI() {
+function updateMoonBlessingUI(scope) {
     const status   = window.GameCenter.getMoonBlessingStatus();
-    const moonBadges = document.querySelectorAll('.moon-blessing-badge');
+    // La insignia de la navbar es compartida; las demás se actualizan solo en
+    // la vista visible cuando la sincronización viene del router.
+    const moonBadges = scope
+        ? new Set([
+            ...document.querySelectorAll('.navbar .moon-blessing-badge'),
+            ...scope.querySelectorAll('.moon-blessing-badge')
+        ])
+        : document.querySelectorAll('.moon-blessing-badge');
 
     moonBadges.forEach(badge => {
         badge.classList.toggle('hidden', !status.active);
@@ -1980,9 +2046,10 @@ function updateMoonBlessingUI() {
     });
 
     // Botón de compra en tienda
-    const moonBtn = document.getElementById('btn-moon-blessing');
+    const root = scope || document;
+    const moonBtn = root.querySelector('#btn-moon-blessing');
     if (moonBtn) {
-        const statusEl = document.getElementById('moon-blessing-status');
+        const statusEl = root.querySelector('#moon-blessing-status');
         if (status.active) {
             moonBtn.textContent = 'Extender Bendición (+7 días)';
             if (statusEl) statusEl.textContent = `Activa hasta ${status.expiresAt}`;
@@ -2307,6 +2374,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ── Movimiento decorativo del HUD ──────────────────────────────────────
+    // Las dos animaciones son solo decorativas. Pausarlas fuera de la pestaña
+    // visible evita mantener trabajo continuo de compositor sin cambiar la UI
+    // que recibe el usuario al volver.
+    const syncHudMotionVisibility = () => {
+        document.querySelectorAll('.player-hud').forEach(hud => {
+            hud.classList.toggle('motion-paused', document.hidden);
+        });
+    };
+
+    syncHudMotionVisibility();
+    document.addEventListener('visibilitychange', syncHudMotionVisibility);
+
     // Refresco periódico cada 30 min por si la app permanece abierta mucho tiempo
     window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
         || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
@@ -2555,6 +2635,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Evitar subir userAvatar dentro de game_data:
             // el avatar cloud vive en user_profiles.avatar_url y el binario en Storage.
             if ((key === CONFIG.stateKey || key === 'gamecenter_v6_promos') && typeof val === 'string') {
+                // El estado no suele incluir un avatar Base64. En esos casos se
+                // conserva el payload ya serializado y se evita parsearlo y
+                // serializarlo de nuevo durante cada sincronización.
+                const hasUserAvatar = val.indexOf('"userAvatar"') !== -1;
+                const hasNullUserAvatar = /"userAvatar"\s*:\s*null(?:\s*[,}])/.test(val);
+                if (!hasUserAvatar || hasNullUserAvatar) {
+                    snap[key] = val;
+                    return;
+                }
                 try {
                     const parsed = JSON.parse(val);
                     if (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'userAvatar')) {
@@ -2966,6 +3055,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnOpenGate = document.getElementById('btn-cloud-open-gatekeeper');
         btnOpenGate?.addEventListener('click', () => {
+            _startSentinelBoot();
             openGate({ mode: 'login' });
         });
 
@@ -2982,7 +3072,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginForm?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
+            if (!_sbClient) {
+                setGateMsg('Preparando servicio…');
+                await _startSentinelBoot();
+                if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
+            }
 
             const email = document.getElementById('cloud-login-email')?.value?.trim();
             const password = document.getElementById('cloud-login-password')?.value || '';
@@ -3065,9 +3159,52 @@ document.addEventListener('DOMContentLoaded', () => {
         await _sentinelInit();
     }
 
-    _bootSentinel().catch(err => {
-        console.error('[Sentinel] Error en inicialización:', err);
-    });
+    // El SDK y la restauración de sesión no forman parte del primer paint. Se
+    // difieren hasta idle, pero una interacción con el Gatekeeper los inicia
+    // enseguida para que el login temprano no espere al timeout.
+    const SENTINEL_BOOT_IDLE_TIMEOUT_MS = 1800;
+    let _sentinelBootPromise = null;
+    let _sentinelBootIdleHandle = null;
+    let _sentinelBootIdleUsesRequestIdleCallback = false;
+
+    function _startSentinelBoot() {
+        if (_sentinelBootIdleHandle !== null) {
+            if (_sentinelBootIdleUsesRequestIdleCallback) {
+                window.cancelIdleCallback?.(_sentinelBootIdleHandle);
+            } else {
+                clearTimeout(_sentinelBootIdleHandle);
+            }
+            _sentinelBootIdleHandle = null;
+            _sentinelBootIdleUsesRequestIdleCallback = false;
+        }
+
+        if (_sentinelBootPromise) return _sentinelBootPromise;
+
+        _sentinelBootPromise = _bootSentinel().catch(err => {
+            console.error('[Sentinel] Error en inicialización:', err);
+        });
+        return _sentinelBootPromise;
+    }
+
+    function _scheduleSentinelBoot() {
+        const runBoot = () => {
+            _sentinelBootIdleHandle = null;
+            _sentinelBootIdleUsesRequestIdleCallback = false;
+            _startSentinelBoot();
+        };
+
+        if ('requestIdleCallback' in window) {
+            _sentinelBootIdleUsesRequestIdleCallback = true;
+            _sentinelBootIdleHandle = window.requestIdleCallback(runBoot, {
+                timeout: SENTINEL_BOOT_IDLE_TIMEOUT_MS
+            });
+            return;
+        }
+
+        _sentinelBootIdleHandle = setTimeout(runBoot, SENTINEL_BOOT_IDLE_TIMEOUT_MS);
+    }
+
+    _scheduleSentinelBoot();
 
     // Exponer API mínima para diagnóstico en DevTools
     // Nota: para subir avatares desde el frontend debe existir el bucket público `avatars`
