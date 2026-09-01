@@ -13,6 +13,7 @@
   const hasClientFactory = () => typeof global.supabase?.createClient === 'function';
 
   let resolvePromise;
+  let loadingStarted = false;
   const promise = new Promise((resolve) => {
     resolvePromise = resolve;
   });
@@ -39,6 +40,7 @@
     script.src = src;
     script.async = false;
     script.crossOrigin = 'anonymous';
+    script.fetchPriority = 'low';
 
     script.onload = () => {
       if (hasClientFactory()) {
@@ -64,8 +66,9 @@
   };
 
   global.__loadSupabaseSdk = function __loadSupabaseSdk() {
+    if (loadingStarted) return promise;
+    loadingStarted = true;
+    loadFrom(0);
     return promise;
   };
-
-  loadFrom(0);
 })(window);
