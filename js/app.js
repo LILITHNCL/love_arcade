@@ -3030,6 +3030,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnOpenGate = document.getElementById('btn-cloud-open-gatekeeper');
         btnOpenGate?.addEventListener('click', () => {
+            _startSentinelBoot();
             openGate({ mode: 'login' });
         });
 
@@ -3046,7 +3047,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginForm?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
+            if (!_sbClient) {
+                setGateMsg('Preparando servicio…');
+                await _startSentinelBoot();
+                if (!_sbClient) return setGateMsg('Servicio no disponible. Recarga la página.', true);
+            }
 
             const email = document.getElementById('cloud-login-email')?.value?.trim();
             const password = document.getElementById('cloud-login-password')?.value || '';
@@ -3129,9 +3134,52 @@ document.addEventListener('DOMContentLoaded', () => {
         await _sentinelInit();
     }
 
-    _bootSentinel().catch(err => {
-        console.error('[Sentinel] Error en inicialización:', err);
-    });
+    // El SDK y la restauración de sesión no forman parte del primer paint. Se
+    // difieren hasta idle, pero una interacción con el Gatekeeper los inicia
+    // enseguida para que el login temprano no espere al timeout.
+    const SENTINEL_BOOT_IDLE_TIMEOUT_MS = 1800;
+    let _sentinelBootPromise = null;
+    let _sentinelBootIdleHandle = null;
+    let _sentinelBootIdleUsesRequestIdleCallback = false;
+
+    function _startSentinelBoot() {
+        if (_sentinelBootIdleHandle !== null) {
+            if (_sentinelBootIdleUsesRequestIdleCallback) {
+                window.cancelIdleCallback?.(_sentinelBootIdleHandle);
+            } else {
+                clearTimeout(_sentinelBootIdleHandle);
+            }
+            _sentinelBootIdleHandle = null;
+            _sentinelBootIdleUsesRequestIdleCallback = false;
+        }
+
+        if (_sentinelBootPromise) return _sentinelBootPromise;
+
+        _sentinelBootPromise = _bootSentinel().catch(err => {
+            console.error('[Sentinel] Error en inicialización:', err);
+        });
+        return _sentinelBootPromise;
+    }
+
+    function _scheduleSentinelBoot() {
+        const runBoot = () => {
+            _sentinelBootIdleHandle = null;
+            _sentinelBootIdleUsesRequestIdleCallback = false;
+            _startSentinelBoot();
+        };
+
+        if ('requestIdleCallback' in window) {
+            _sentinelBootIdleUsesRequestIdleCallback = true;
+            _sentinelBootIdleHandle = window.requestIdleCallback(runBoot, {
+                timeout: SENTINEL_BOOT_IDLE_TIMEOUT_MS
+            });
+            return;
+        }
+
+        _sentinelBootIdleHandle = setTimeout(runBoot, SENTINEL_BOOT_IDLE_TIMEOUT_MS);
+    }
+
+    _scheduleSentinelBoot();
 
     // Exponer API mínima para diagnóstico en DevTools
     // Nota: para subir avatares desde el frontend debe existir el bucket público `avatars`
