@@ -777,9 +777,9 @@ function emergencyCleanup() {
     return changed;
 }
 
-function checkStorageSize() {
+function checkStorageSize(precomputedLength) {
     try {
-        const sizeKB = JSON.stringify(store).length / KB;
+        const sizeKB = (precomputedLength ?? JSON.stringify(store).length) / KB;
         if (sizeKB > STORE_WARNING_KB) {
             window.GhostAnalytics?.track('storage_warning', { size_kb: Math.round(sizeKB) });
             _showStorageToast(
@@ -1751,7 +1751,8 @@ function saveState(options = {}) {
         if (e?.name === 'QuotaExceededError') {
             const changed = emergencyCleanup();
             try {
-                localStorage.setItem(CONFIG.stateKey, JSON.stringify(store));
+                payload = JSON.stringify(store);
+                localStorage.setItem(CONFIG.stateKey, payload);
                 window.GhostAnalytics?.track('storage_cleaned', {
                     reason: 'quota_exceeded',
                     cleaned: changed
@@ -1777,7 +1778,7 @@ function saveState(options = {}) {
 
     updateUI();
     _syncCloudIfNeeded(immediateCloudSync);
-    checkStorageSize();
+    checkStorageSize(payload.length);
 }
 
 /**
