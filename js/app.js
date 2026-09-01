@@ -1840,9 +1840,12 @@ function updateUI() {
     const navbarDisplays = Array.from(
         document.querySelectorAll('.navbar .coin-display')
     );
+    // Las vistas SPA permanecen montadas, pero solo una está visible. Excluir
+    // contadores de una .view-section oculta evita escribir en ellos en cada
+    // frame de animateValue(); syncUI() los actualiza al entrar en su vista.
     const otherDisplays = Array.from(
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)')
-    );
+    ).filter(el => !el.closest('.view-section.hidden'));
 
     if (_displayedCoins === store.coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
