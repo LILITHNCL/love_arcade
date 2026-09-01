@@ -2292,7 +2292,7 @@ function renderMoonBlessingStatus() {
     }
 }
 
-// ── Sale Banner + Economy Info ────────────────────────────────────────────────
+// ── Sale Banner ───────────────────────────────────────────────────────────────
 function initSaleBanner() {
     const eco    = window.ECONOMY;
     const banner = document.getElementById('sale-banner');
@@ -2306,18 +2306,6 @@ function initSaleBanner() {
             `${pct}% de descuento + ${Math.round(eco.cashbackRate * 100)}% de cashback en toda la tienda.`;
         if (badgeEl) badgeEl.textContent = `${pct}%`;
     }
-}
-
-function initEconomyInfo() {
-    const eco    = window.ECONOMY;
-    const saleEl = document.getElementById('eco-sale-status');
-    const cbEl   = document.getElementById('eco-cashback');
-    if (!saleEl || !cbEl) return;
-    const pct = Math.round((1 - eco.saleMultiplier) * 100);
-    saleEl.textContent = eco.isSaleActive ? `${pct}% OFF activo` : 'Sin oferta activa';
-    saleEl.className   = 'eco-badge' + (eco.isSaleActive ? ' eco-badge--sale' : '');
-    cbEl.textContent   = `${Math.round(eco.cashbackRate * 100)}% en cada compra`;
-    cbEl.className     = 'eco-badge eco-badge--green';
 }
 
 // ── Util ──────────────────────────────────────────────────────────────────────
@@ -2433,11 +2421,10 @@ async function _handleEmailConfirm() {
 window.ShopView = {
     /**
      * Llamado por spa-router.js cada vez que se entra a la vista de Tienda.
-     * Refresca el estado de economía y los badges de luna sin re-renderizar
-     * el catálogo completo (que ya está en memoria).
+     * Refresca los datos visibles sin re-renderizar el catálogo completo
+     * (que ya está en memoria).
      */
     onEnter() {
-        initEconomyInfo();
         renderMoonBlessingStatus();
         // Actualizar saldo en todos los coin-display:
         // la navbar usa el formato abreviado (ej: "25.5k") y el resto el valor exacto.
@@ -2603,9 +2590,8 @@ function loadCatalog() {
 document.addEventListener('DOMContentLoaded', () => {
     _bindShopContainerDelegation();
 
-    // Inicializar banner y economía al cargar
+    // Inicializar banner y estado visible de la Tienda al cargar
     initSaleBanner();
-    initEconomyInfo();
     renderMoonBlessingStatus();
     renderStreakCalendar();
 
