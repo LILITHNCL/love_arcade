@@ -1871,6 +1871,11 @@ body::before {
 }
 
 /* Laser scan line */
+.sale-banner.hidden .sale-banner__ticket::after,
+.view-section.hidden .sale-banner__ticket::after {
+    animation-play-state: paused !important;
+    will-change: auto !important;
+}
 .sale-banner__ticket::after {
     content: '';
     position: absolute;

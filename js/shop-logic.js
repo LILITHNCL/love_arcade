@@ -839,114 +839,6 @@ function _preloadItemHiRes(cardEl, item) {
     img.src = url;
 }
 
-/**
- * Crea (o recrea) el IntersectionObserver de precarga.
- *
- * CONFIGURACIÓN v9.7:
- *  - rootMargin: '200px 0px 400px 0px'
- *      · Superior 200 px: anticipa el scroll hacia arriba.
- *      · Inferior 400 px: zona de precarga principal (~2 alturas de card).
- *        Con una conexión 4G promedio (5-10 MB/s) y una imagen optimizada
- *        en Cloudinary de ~80-150 KB, 400 px de margen equivalen a ~1.5 s
- *        de scroll tranquilo — suficiente para que la imagen esté en caché
- *        cuando el usuario llegue a la tarjeta.
- *      · Lados 0 px: sin margen horizontal. El catálogo es vertical; extender
- *        lateralmente activaría precargas en cards con overflow oculto.
- *  - threshold: 0
- *      Con rootMargin ya proveyendo el buffer, threshold: 0.1 añadía latencia
- *      extra (debía verse un 10 % del card dentro de la zona expandida antes
- *      de disparar). Con threshold: 0 el observer dispara en cuanto cualquier
- *      píxel del card entra en la zona, maximizando el tiempo de anticipación.
- *
- * GUARD DE CONEXIÓN (v9.7):
- *  - Si el usuario tiene Data Saver activo o conexión slow-2g, la función
- *    retorna sin crear el observer. La imagen se cargará al abrir el modal,
- *    que es el comportamiento pre-v9.6 — sin degradación funcional.
- *  - En conexión 2g (lenta pero funcional), el observer se crea normalmente
- *    pero el scheduler limita el lote a 2 imágenes por ciclo.
- *
- * SCHEDULER (v9.7):
- *  Usa _schedulePreloadItem() en lugar de _preloadItemHiRes() directamente
- *  para que múltiples entries del mismo ciclo del observer se encolen y se
- *  despachen en un requestIdleCallback, sin bloquear el hilo principal durante
- *  ráfagas de scroll.
- *
- * Idempotente: si _preloadObserver ya existe la desconecta y cancela la cola
- * pendiente antes de crear una nueva (necesario tras renderShop()).
- *
- * Solo observa tarjetas de items NO comprados (identificadas por .shop-preview-btn).
- *
- * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
- * @param {object[]}    items     — Arreglo de items en el mismo orden del DOM.
- */
-function _initPreloadObserver(container, items) {
-    // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
-    // Esto evita que callbacks pendientes referencien nodos del DOM anterior.
-    if (_preloadObserver) {
-        _preloadObserver.disconnect();
-        _preloadObserver = null;
-    }
-    _preloadQueue.length = 0;
-    if (_preloadFlushId !== null) {
-        'cancelIdleCallback' in window
-            ? cancelIdleCallback(_preloadFlushId)
-            : clearTimeout(_preloadFlushId);
-        _preloadFlushId = null;
-    }
-
-    // Degradación elegante: entornos sin soporte (browsers muy antiguos, SSR)
-    if (!('IntersectionObserver' in window)) return;
-
-    // Respetar preferencia de ahorro de datos del usuario.
-    // En slow-2g o Data Saver, cualquier precarga consumiría recursos que el
-    // usuario explícitamente quiere conservar.
-    if (_isDataSaverActive()) return;
-
-    // Construir mapa id → item para O(1) lookup en el callback
-    const itemMap = new Map(items.map(it => [it.id, it]));
-
-    _preloadObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-
-            const cardEl = entry.target;
-
-            // Si ya fue procesado en un ciclo anterior, solo dejar de observar
-            if (cardEl.dataset.preloaded) {
-                _preloadObserver?.unobserve(cardEl);
-                return;
-            }
-
-            // Resolver item desde el data-id del botón de preview
-            const previewBtn = cardEl.querySelector('.shop-preview-btn');
-            const rawId      = previewBtn?.dataset?.id;
-            const item       = rawId ? itemMap.get(parseInt(rawId, 10)) : null;
-
-            if (item) {
-                // Usar el scheduler para agrupar entries del mismo ciclo en un
-                // único lote idle, evitando N descargas simultáneas en scroll rápido
-                _schedulePreloadItem(cardEl, item);
-            }
-
-            // Dejar de observar — ya no hay trabajo pendiente en este elemento
-            _preloadObserver?.unobserve(cardEl);
-        });
-    }, {
-        // Superior 200 px (scroll hacia arriba) · Inferior 400 px (scroll principal)
-        // Sin margen horizontal para no activar cards fuera del flujo vertical
-        rootMargin: '200px 0px 400px 0px',
-        // threshold: 0 — disparar en cuanto cualquier píxel del card entra en la
-        // zona extendida. Con rootMargin ya proveyendo el buffer, esperar al 10 %
-        // solo añadía latencia sin beneficio de precisión.
-        threshold:  0
-    });
-
-    container.querySelectorAll('.shop-card').forEach(card => {
-        if (card.querySelector('.shop-preview-btn')) {
-            _preloadObserver.observe(card);
-        }
-    });
-}
 
 /**
  * Opens the preview modal with the dynamic mockup for the given item.
@@ -1675,12 +1567,15 @@ function _appendShopBatch(container) {
     const end   = Math.min(start + _shopRenderState.batchSize, _shopRenderState.items.length);
     if (start >= end) return false;
 
+    const newCards = [];
     const frag = document.createDocumentFragment();
     for (let i = start; i < end; i += 1) {
         // Mark first 6 items of the entire catalog to load eagerly.
         // i is the global index in _shopRenderState.items.
         const loading = i < 6 ? 'eager' : 'lazy';
-        frag.appendChild(_buildShopCard(_shopRenderState.items[i], loading));
+        const card = _buildShopCard(_shopRenderState.items[i], loading);
+        newCards.push(card);
+        frag.appendChild(card);
     }
     if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
         container.insertBefore(frag, _shopLazySentinel);
@@ -1689,8 +1584,40 @@ function _appendShopBatch(container) {
     }
     _shopRenderState.cursor = end;
 
-    _initPreloadObserver(container, _shopRenderState.items.slice(0, end));
+    _attachCardsToPreloadObserver(newCards);
     return end < _shopRenderState.items.length;
+}
+
+function _attachCardsToPreloadObserver(cardElements) {
+    if (!('IntersectionObserver' in window) || _isDataSaverActive()) return;
+    if (!_preloadObserver) {
+        _preloadObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const cardEl = entry.target;
+                if (cardEl.dataset.preloaded) {
+                    observer.unobserve(cardEl);
+                    return;
+                }
+                const previewBtn = cardEl.querySelector('.shop-preview-btn');
+                const rawId      = previewBtn?.dataset?.id;
+                const item       = rawId ? _shopRenderState.items.find(it => String(it.id) === String(rawId)) : null;
+                if (item) {
+                    _schedulePreloadItem(cardEl, item);
+                }
+                observer.unobserve(cardEl);
+            });
+        }, {
+            rootMargin: '200px 0px 400px 0px',
+            threshold: 0
+        });
+    }
+
+    cardElements.forEach(card => {
+        if (card.querySelector('.shop-preview-btn')) {
+            _preloadObserver.observe(card);
+        }
+    });
 }
 
 // ── Render: Catálogo (lazy incremental mounting) ─────────────────────────────
@@ -2374,11 +2301,15 @@ window.ShopView = {
         // Regalos conserva su ciclo de vida propio. Para el grid, evitar destruir
         // y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
         const gridEl = document.getElementById('shop-container');
+        const giftEl = document.getElementById('gift-carousel');
         const signature = _computeCatalogSignature();
         if (allItems.length && activeFilter !== 'Regalos'
             && signature === _lastCatalogSignature
             && gridEl?.querySelector('.shop-card')) {
             _refreshBoughtBadges();
+        } else if (allItems.length && activeFilter === 'Regalos'
+            && giftEl?.querySelector('.gift-card')) {
+            // Regalos grid already rendered with current items - skip re-render
         } else if (allItems.length) {
             filterItems();
         }
