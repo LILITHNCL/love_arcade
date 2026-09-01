@@ -911,6 +911,12 @@ body::before {
     animation: hudAmbientSweep 18s ease-in-out infinite alternate;
 }
 
+/* Ticket 06: el HUD no necesita animar detalles decorativos en background. */
+.player-hud.motion-paused::before,
+.player-hud.motion-paused .hud-avatar-ring {
+    animation-play-state: paused;
+}
+
 @keyframes hudAmbientSweep {
     0% {
         transform: translate3d(-8%, -4%, 0) scale(1) rotate(0.001deg);
