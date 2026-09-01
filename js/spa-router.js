@@ -57,6 +57,12 @@
     /** @type {string} */
     let currentView = 'home';
 
+    // La duración CSS es 250ms; el margen evita liberar la capa antes del
+    // último frame de composición. Solo una vista puede retener esta pista.
+    const VIEW_TRANSITION_LAYER_RELEASE_MS = 280;
+    let viewTransitionLayerTimer = null;
+    let transitioningViewEl = null;
+
     const scheduleIdle = window.requestIdleCallback
         ? (cb) => window.requestIdleCallback(cb, { timeout: 120 })
         : (cb) => setTimeout(() => cb({ didTimeout: true, timeRemaining: () => 0 }), 16);
@@ -132,6 +138,19 @@
     function _applyView(viewId, anchor) {
         if (!viewEls[viewId]) return;
         const previousView = currentView;
+
+        // Las vistas permanecen montadas durante toda la sesión. Promovemos
+        // únicamente la entrante y liberamos la promoción anterior si la
+        // navegación fue interrumpida antes de que acabara su transición.
+        if (viewTransitionLayerTimer !== null) {
+            clearTimeout(viewTransitionLayerTimer);
+            viewTransitionLayerTimer = null;
+        }
+        if (transitioningViewEl) {
+            transitioningViewEl.classList.remove('view-transitioning');
+        }
+        transitioningViewEl = viewEls[viewId];
+        transitioningViewEl.classList.add('view-transitioning');
         
         // [v9.2] Scroll reset ANTES de la transición de entrada.
         // behavior:'auto' evita scroll animado y mantiene compatibilidad amplia.
@@ -149,6 +168,12 @@
             if (!viewEl) return;
             viewEl.classList.toggle('hidden', id !== viewId);
         });
+
+        viewTransitionLayerTimer = setTimeout(() => {
+            transitioningViewEl?.classList.remove('view-transitioning');
+            transitioningViewEl = null;
+            viewTransitionLayerTimer = null;
+        }, VIEW_TRANSITION_LAYER_RELEASE_MS);
         
         currentView = viewId;
         window.AppScheduler?.setActiveView?.(viewId);

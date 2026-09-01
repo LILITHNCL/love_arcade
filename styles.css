@@ -473,19 +473,19 @@ button { font-family: var(--font-body); }
    El scroll reset se ejecuta ANTES de que empiece la transición
    de entrada (ver spa-router.js _applyView).
 
-   NOTA will-change: se declara aquí de forma permanente porque las
-   dos vistas SPA (home y shop) están SIEMPRE presentes en el DOM.
-   Promover ambas capas desde el inicio evita el coste de cálculo del
-   compositor justo en el momento de la transición, donde cualquier
-   jank es más perceptible. El coste de memoria (2 capas, sin texturas
-   de imagen) es despreciable y justificado por la suavidad obtenida.
+   will-change se activa de forma temporal mediante .view-transitioning
+   desde spa-router.js y se libera al terminar la transición. Así se evita
+   retener capas de composición de tamaño viewport mientras la SPA está en
+   reposo, sin cambiar la animación de entrada.
    ================================================================ */
 .view-section {
     opacity: 0;
     transform: translateY(10px);
     transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-    will-change: opacity, transform;
     contain: layout;
+}
+.view-section.view-transitioning {
+    will-change: opacity, transform;
 }
 .view-section:not(.hidden) {
     opacity: 1;
