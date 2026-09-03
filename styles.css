@@ -223,7 +223,16 @@ span + .icon,
     --radius-lg:  20px;
     --radius-xl:  28px;
     --nav-height: 68px;
-    --bottom-nav-height: 62px;
+    --pill-nav-height: 56px;
+    --pill-nav-offset: 16px;
+    /* Keep the fixed pill and document clearance in lockstep. The fallback
+       preserves the floating spacing in browsers without display cutouts. */
+    --pill-nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --pill-nav-bottom: calc(var(--pill-nav-safe-area-bottom) + var(--pill-nav-offset));
+    --pill-nav-clearance: calc(var(--pill-nav-height) + var(--pill-nav-bottom));
+    --pill-nav-track-max-width: 320px;
+    --pill-nav-track-inset: 4px;
+    --pill-nav-track-gap: 4px;
 
     /* ── Typography ── */
     --font-display: 'Exo 2', Arial, system-ui, sans-serif;
@@ -266,7 +275,7 @@ body {
     max-width: 100vw;
     position: relative;
     padding-top: var(--nav-height);
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: var(--pill-nav-clearance);
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -299,6 +308,7 @@ button { font-family: var(--font-body); }
     .btn-ghost,
     .btn-mail,
     .pill,
+    .pill-nav-item,
     .identity-chip,
     .gift-pill--cta,
     .search-clear,
@@ -352,9 +362,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .b-nav-item,
-    .nav-link
+    .gift-card
 ).interactive-ripple {
     position: relative;
     overflow: hidden;
@@ -370,9 +378,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .b-nav-item,
-    .nav-link
+    .gift-card
 ).interactive-ripple::after {
     content: '';
     position: absolute;
@@ -396,9 +402,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .b-nav-item,
-    .nav-link
+    .gift-card
 ).interactive-ripple.is-rippling::after {
     animation: tapRipple 420ms cubic-bezier(.2,.8,.2,1);
 }
@@ -680,43 +684,6 @@ body::before {
     text-shadow: 0 0 20px var(--accent-glow);
 }
 
-.nav-links { display: none; gap: 28px; }
-.nav-link {
-    color: var(--text-tertiary-aa);
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: color var(--motion-small), opacity var(--motion-small), transform var(--motion-micro);
-    position: relative;
-}
-.nav-link::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -3px;
-    width: 100%;
-    height: 2px;
-    background: currentColor;
-    opacity: 0.9;
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform var(--motion-small), opacity var(--motion-small);
-}
-.nav-link:hover { color: var(--text-secondary-aa); }
-.nav-link.active { color: var(--text-primary-aa); }
-.nav-link:hover::before,
-.nav-link:focus-visible::before,
-.nav-link.active::before {
-    transform: scaleX(1);
-}
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -26px; left: 0;
-    width: 100%; height: 2px;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-    border-radius: 2px;
-}
 .nav-user { display: flex; align-items: center; gap: 12px; }
 
 /* ── Coin Badge — 10% Glass exception: subtle translucent crystal on solid metal ── */
@@ -778,50 +745,122 @@ body::before {
 }
 
 /* ================================================================
-   BOTTOM NAV (mobile)
+   FLOATING PILL NAV (todas las plataformas)
    ================================================================ */
-.bottom-nav {
-    display: flex;
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    height: var(--bottom-nav-height);
-    /* Solid 3.0: deepest surface layer, no blur */
-    background: #050508;
-    border-top: 1px solid var(--border-subtle);
-    box-shadow: 0 -1px 0 rgba(255,255,255,0.04), 0 -4px 20px rgba(0,0,0,0.7);
+.pill-nav {
+    position: fixed;
+    right: 0;
+    /* No viewport-height unit: fixed positioning follows dynamic mobile
+       viewports without introducing a keyboard-driven layout calculation. */
+    bottom: var(--pill-nav-bottom);
+    left: 0;
     z-index: 1000;
-    justify-content: space-around; align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
 }
 
-.bottom-nav::before {
-    content: '';
+.pill-nav__track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--pill-nav-track-gap);
+    width: min(var(--pill-nav-track-max-width), calc(100vw - 32px));
+    min-height: var(--pill-nav-height);
+    padding: var(--pill-nav-track-inset);
+    background: var(--solid-surface-float);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    pointer-events: auto;
+}
+
+.pill-nav-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-low);
+    border-radius: var(--radius-lg);
+    z-index: 1;
+}
+
+.pill-nav-item.active {
+    /* Keep the active icon and section name as one centered group inside
+       the indicator, regardless of the label's length. */
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-on-accent-aa);
+}
+
+.pill-nav__indicator {
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
-    opacity: 0.5;
+    top: var(--pill-nav-track-inset);
+    bottom: var(--pill-nav-track-inset);
+    left: var(--pill-nav-track-inset);
+    width: var(--pill-nav-indicator-width, 0px);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
+    box-shadow: 0 0 20px var(--accent-glow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(var(--pill-nav-indicator-x, 0px));
 }
 
-.b-nav-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: var(--text-mute);
-    font-size: 0.65rem;
-    font-weight: 600;
-    gap: 4px;
-    flex: 1; height: 100%;
-    transition: color var(--motion-small), transform var(--motion-micro), opacity var(--motion-small);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+.pill-nav__indicator--ready {
+    opacity: 1;
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
 }
-.b-nav-item.active { color: var(--accent); }
-.b-nav-item:active,
-.b-nav-item.is-pressing {
-    transform: scale(0.96) translateY(1px);
+
+.pill-nav__indicator--moving {
+    will-change: transform;
 }
-.b-nav-item i { transition: 0.2s; }
-.b-nav-item.active i {
-    transform: translateY(-2px);
-    filter: drop-shadow(0 0 6px var(--accent-glow));
+
+.pill-nav-item__icon {
+    display: inline-flex;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.pill-nav-item__label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    clip-path: inset(0 100% 0 0);
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: clip-path 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+}
+
+.pill-nav-item.active .pill-nav-item__label {
+    /* Returning the label to the flex flow lets the icon + label group be
+       centered as a unit instead of anchoring the label to the left edge. */
+    position: static;
+    transform: none;
+    clip-path: inset(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pill-nav__indicator--ready {
+        transition: transform 0.01ms linear, opacity 0.01ms linear;
+    }
+
+    .pill-nav-item__label {
+        transition: opacity 0.01ms linear;
+    }
+}
+
+.pill-nav-item:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 /* ================================================================
@@ -2242,7 +2281,7 @@ body::before {
    ================================================================ */
 .toast {
     position: fixed;
-    bottom: calc(var(--bottom-nav-height) + 12px);
+    bottom: calc(var(--pill-nav-clearance) + 12px);
     left: 50%; transform: translateX(-50%) translateY(20px);
     padding: 12px 18px; border-radius: var(--radius-md);
     font-size: 0.82rem; font-weight: 600;
@@ -2804,13 +2843,25 @@ details[open] summary::after { transform: rotate(45deg); }
 /* ================================================================
    DESKTOP @media (min-width: 768px)
    ================================================================ */
+/* The floating pill is the only primary navigation on every platform.
+   These variables grow its usable mouse target without introducing a second
+   desktop navigation implementation or animating any layout property. */
+@media (min-width: 640px) {
+    :root {
+        --pill-nav-track-max-width: 360px;
+        --pill-nav-track-inset: 6px;
+        --pill-nav-track-gap: 6px;
+    }
+}
+
 @media (min-width: 768px) {
-    body { padding-bottom: 0; }
+    :root {
+        --pill-nav-track-max-width: 384px;
+        --pill-nav-offset: 20px;
+    }
 
     .navbar { padding: 0 28px; }
     .nav-brand span { display: inline; }
-    .nav-links { display: flex; }
-    .bottom-nav { display: none; }
 
     .container { padding: 36px 24px; }
     .section-title { font-size: 1.7rem; }
@@ -3948,9 +3999,7 @@ svg { stroke-width: 2; }
         summary,
         .game-card,
         .shop-card,
-        .gift-card,
-        .b-nav-item,
-        .nav-link
+        .gift-card
     ).interactive-ripple::after {
         animation: none !important;
         opacity: 0 !important;

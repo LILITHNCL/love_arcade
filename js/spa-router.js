@@ -4,9 +4,9 @@
  * Router de navegación para la arquitectura Single Page Application.
  *
  * RESPONSABILIDADES:
- *  - Interceptar los clics en [data-view] de la navbar y la bottom-nav.
+ *  - Interceptar los clics en [data-view] de la navbar y la pill-nav.
  *  - Alternar la clase .hidden entre #view-home y #view-shop.
- *  - Actualizar el estado visual activo en ambas navbars.
+ *  - Actualizar el estado visual y semántico activo en la pill-nav.
  *  - Llamar a window.GameCenter.syncUI() para sincronizar saldo en todos los
  *    indicadores (Navbar + HUD) inmediatamente tras la transición.
  *  - [v9.6] Añadida llamada a window.ShopView.onLeave() / window.HomeView.onLeave()
@@ -50,9 +50,19 @@
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
     /** @type {HTMLElement[]} */
-    let navLinks = [];
-    /** @type {HTMLElement[]} */
-    let bottomNavItems = [];
+    let pillNavItems = [];
+    /** @type {HTMLElement|null} */
+    let pillNavTrack = null;
+    /** @type {HTMLElement|null} */
+    let pillNavIndicator = null;
+    let pillNavResizeTimer = null;
+    let pillNavIndicatorLayerTimer = null;
+
+    // Coincide con la transición de transform del indicador en styles.css. El
+    // timeout es una red de seguridad para cambios de viewport o transiciones
+    // canceladas que no entreguen transitionend: la capa nunca queda promovida
+    // mientras el pill permanece en reposo.
+    const PILL_NAV_INDICATOR_LAYER_RELEASE_MS = 220;
     
     /** @type {string} */
     let currentView = 'home';
@@ -250,14 +260,53 @@
     }
     
     // ── Helpers privados ──────────────────────────────────────────────────────
+
+    /**
+     * Posiciona el único indicador de la píldora activa. La lectura de layout se
+     * hace una sola vez por navegación o tras un resize debounced; no se mide
+     * durante ningún frame de animación.
+     */
+    function _syncPillNavIndicator(viewId, animate) {
+        if (!pillNavTrack || !pillNavIndicator) return;
+        const activeItem = pillNavItems.find(item => item.dataset.view === viewId && !item.dataset.anchor);
+        if (!activeItem) return;
+
+        // El inset del track cambia en tablet/desktop; lo leemos junto con las
+        // demás mediciones puntuales para mantener el indicador alineado.
+        const trackInset = Number.parseFloat(
+            getComputedStyle(pillNavTrack).getPropertyValue('--pill-nav-track-inset')
+        ) || 4;
+        const offset = activeItem.offsetLeft - trackInset;
+        const nextX = `${offset}px`;
+        const currentX = pillNavIndicator.style.getPropertyValue('--pill-nav-indicator-x');
+
+        pillNavIndicator.style.setProperty('--pill-nav-indicator-x', `${offset}px`);
+        pillNavIndicator.style.setProperty('--pill-nav-indicator-width', `${activeItem.offsetWidth}px`);
+
+        // `will-change` se reserva exclusivamente para un desplazamiento real.
+        // Esto evita conservar una capa GPU cuando la sincronización inicial o
+        // una navegación a la vista ya activa no disparan transición alguna.
+        if (animate && currentX !== nextX && pillNavIndicator.classList.contains('pill-nav__indicator--ready')) {
+            clearTimeout(pillNavIndicatorLayerTimer);
+            pillNavIndicator.classList.add('pill-nav__indicator--moving');
+            pillNavIndicatorLayerTimer = setTimeout(() => {
+                pillNavIndicator.classList.remove('pill-nav__indicator--moving');
+                pillNavIndicatorLayerTimer = null;
+            }, PILL_NAV_INDICATOR_LAYER_RELEASE_MS);
+        }
+    }
     
     function _syncNavHighlight(viewId) {
-        navLinks.forEach(link => {
-            link.classList.toggle('active', link.dataset.view === viewId && !link.dataset.anchor);
+        pillNavItems.forEach(item => {
+            const isActive = item.dataset.view === viewId && !item.dataset.anchor;
+            item.classList.toggle('active', isActive);
+            if (isActive) {
+                item.setAttribute('aria-current', 'page');
+            } else {
+                item.removeAttribute('aria-current');
+            }
         });
-        bottomNavItems.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === viewId && !item.dataset.anchor);
-        });
+        _syncPillNavIndicator(viewId, true);
     }
     
     function _bindNavItem(el) {
@@ -286,8 +335,22 @@
             if (el) viewEls[id] = el;
         });
         
-        navLinks = Array.from(document.querySelectorAll('.nav-link[data-view]'));
-        bottomNavItems = Array.from(document.querySelectorAll('.b-nav-item[data-view]'));
+        pillNavItems = Array.from(document.querySelectorAll('.pill-nav-item[data-view]'));
+        pillNavTrack = document.querySelector('.pill-nav__track');
+        pillNavIndicator = document.querySelector('.pill-nav__indicator');
+
+        pillNavIndicator?.addEventListener('transitionend', (event) => {
+            if (event.propertyName === 'transform') {
+                clearTimeout(pillNavIndicatorLayerTimer);
+                pillNavIndicatorLayerTimer = null;
+                pillNavIndicator.classList.remove('pill-nav__indicator--moving');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            clearTimeout(pillNavResizeTimer);
+            pillNavResizeTimer = setTimeout(() => _syncPillNavIndicator(currentView, false), 120);
+        }, { passive: true });
 
         // Registrar listeners de navegación
         document.querySelectorAll('[data-view]').forEach(el => {
@@ -295,6 +358,7 @@
         });
         
         _syncNavHighlight('home');
+        requestAnimationFrame(() => pillNavIndicator?.classList.add('pill-nav__indicator--ready'));
         
         // ── History API: estado inicial ───────────────────────────────────────
         // replaceState (no pushState) para que la entrada inicial quede en el
