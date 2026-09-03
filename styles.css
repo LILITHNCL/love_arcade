@@ -362,8 +362,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .pill-nav-item
+    .gift-card
 ).interactive-ripple {
     position: relative;
     overflow: hidden;
@@ -379,8 +378,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .pill-nav-item
+    .gift-card
 ).interactive-ripple::after {
     content: '';
     position: absolute;
@@ -404,8 +402,7 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
-    .pill-nav-item
+    .gift-card
 ).interactive-ripple.is-rippling::after {
     animation: tapRipple 420ms cubic-bezier(.2,.8,.2,1);
 }
@@ -3995,8 +3992,7 @@ svg { stroke-width: 2; }
         summary,
         .game-card,
         .shop-card,
-        .gift-card,
-        .pill-nav-item
+        .gift-card
     ).interactive-ripple::after {
         animation: none !important;
         opacity: 0 !important;
