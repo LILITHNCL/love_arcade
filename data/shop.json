@@ -1396,7 +1396,7 @@
   {
     "id": 132,
     "name": "PvZ: GW2",
-    "price": 2000,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/pvz-gw2-6b43574c",
     "file": "pvz-gw2-6b43574c",
     "tags": [
@@ -1445,7 +1445,7 @@
   },
   {
     "id": 137,
-    "name": "Fleetway Super Sonic",
+    "name": "Fleetway",
     "price": 2000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/fleetway-super-sonic-e9981277",
     "file": "fleetway-super-sonic-e9981277.webp",
@@ -1465,7 +1465,7 @@
   },
   {
     "id": 139,
-    "name": "Knuckles the Echidna",
+    "name": "Knuckles",
     "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/knuckles-the-echidna-2ca1535a",
     "file": "knuckles-the-echidna-2ca1535a.webp",
@@ -1495,7 +1495,7 @@
   },
   {
     "id": 142,
-    "name": "Shadow the Hedgehog",
+    "name": "Shadow",
     "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow-the-hedgehog-2784f954",
     "file": "shadow-the-hedgehog-2784f954.webp",
@@ -1505,7 +1505,7 @@
   },
   {
     "id": 143,
-    "name": "Sonic the Hedgehog",
+    "name": "Sonic",
     "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sonic-the-hedgehog-c8350e05",
     "file": "sonic-the-hedgehog-c8350e05.webp",
