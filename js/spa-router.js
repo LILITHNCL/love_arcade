@@ -264,7 +264,12 @@
         const activeItem = pillNavItems.find(item => item.dataset.view === viewId && !item.dataset.anchor);
         if (!activeItem) return;
 
-        const offset = activeItem.offsetLeft - 4;
+        // El inset del track cambia en tablet/desktop; lo leemos junto con las
+        // demás mediciones puntuales para mantener el indicador alineado.
+        const trackInset = Number.parseFloat(
+            getComputedStyle(pillNavTrack).getPropertyValue('--pill-nav-track-inset')
+        ) || 4;
+        const offset = activeItem.offsetLeft - trackInset;
         pillNavIndicator.style.setProperty('--pill-nav-indicator-x', `${offset}px`);
         pillNavIndicator.style.setProperty('--pill-nav-indicator-width', `${activeItem.offsetWidth}px`);
 
