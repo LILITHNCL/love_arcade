@@ -119,8 +119,8 @@ const SYNC_SALT = 'love_arcade_v75_integrity_2026';
 // =====================================================
 const ECONOMY = {
     isSaleActive:   true,
-    saleMultiplier: 0.70,
-    saleLabel:      '30% OFF',
+    saleMultiplier: 0.00,
+    saleLabel:      '10% OFF',
     cashbackRate:   0.1
 };
 window.ECONOMY = ECONOMY;
