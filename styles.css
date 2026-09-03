@@ -225,7 +225,11 @@ span + .icon,
     --nav-height: 68px;
     --pill-nav-height: 56px;
     --pill-nav-offset: 16px;
-    --pill-nav-clearance: calc(var(--pill-nav-height) + var(--pill-nav-offset) + env(safe-area-inset-bottom));
+    /* Keep the fixed pill and document clearance in lockstep. The fallback
+       preserves the floating spacing in browsers without display cutouts. */
+    --pill-nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --pill-nav-bottom: calc(var(--pill-nav-safe-area-bottom) + var(--pill-nav-offset));
+    --pill-nav-clearance: calc(var(--pill-nav-height) + var(--pill-nav-bottom));
     --pill-nav-track-max-width: 320px;
     --pill-nav-track-inset: 4px;
     --pill-nav-track-gap: 4px;
@@ -749,7 +753,9 @@ body::before {
 .pill-nav {
     position: fixed;
     right: 0;
-    bottom: calc(env(safe-area-inset-bottom) + var(--pill-nav-offset));
+    /* No viewport-height unit: fixed positioning follows dynamic mobile
+       viewports without introducing a keyboard-driven layout calculation. */
+    bottom: var(--pill-nav-bottom);
     left: 0;
     z-index: 1000;
     display: flex;
