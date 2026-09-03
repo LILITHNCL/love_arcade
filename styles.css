@@ -301,6 +301,7 @@ button { font-family: var(--font-body); }
     .btn-ghost,
     .btn-mail,
     .pill,
+    .pill-nav-item,
     .identity-chip,
     .gift-pill--cta,
     .search-clear,

@@ -277,7 +277,11 @@
         pillNavItems.forEach(item => {
             const isActive = item.dataset.view === viewId && !item.dataset.anchor;
             item.classList.toggle('active', isActive);
-            item.toggleAttribute('aria-current', isActive);
+            if (isActive) {
+                item.setAttribute('aria-current', 'page');
+            } else {
+                item.removeAttribute('aria-current');
+            }
         });
         _syncPillNavIndicator(viewId, true);
     }
