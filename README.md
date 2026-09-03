@@ -108,4 +108,4 @@ Consulta `love-arcade-coin-system.md` para el contrato completo de integración.
 
 ## Versión
 
-**v11.5** — Performance & Accessibility Audit · High-fluency optimizations for low-end devices · WCAG 2.2 Compliance
+**v14.2** — Floating Pill Navigation · navegación principal unificada para móvil, tablet y desktop · estado SPA, accesibilidad y movimiento reducido preservados

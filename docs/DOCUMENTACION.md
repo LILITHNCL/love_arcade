@@ -1,5 +1,5 @@
 # 📚 Documentación Técnica — Love Arcade
-### Plataforma de Recompensas · v14.0 Gatekeeper Security & UX Refactor · v13.0 Sentinel Cloud Sync · v12.1 Body Parser Hardening · v12.0 Telegram Proxy & Secure Telemetry · Shadow-Gate · Hardening & Error Detection · Ghost Analytics v12.1 · Word Hunt Progression Metrics · Mobile Performance Pass · CDN Offline Resilience
+### Plataforma de Recompensas · v14.2 Floating Pill Navigation · v14.0 Gatekeeper Security & UX Refactor · v13.0 Sentinel Cloud Sync · v12.1 Body Parser Hardening · v12.0 Telegram Proxy & Secure Telemetry · Shadow-Gate · Hardening & Error Detection · Ghost Analytics v12.1 · Word Hunt Progression Metrics · Mobile Performance Pass · CDN Offline Resilience
 
 ---
 
@@ -35,6 +35,7 @@
 2ad. [Novedades en v13.0 — Sentinel Cloud Sync (Supabase)](#2ad-novedades-en-v130--sentinel-cloud-sync-supabase)
 2ae. [Novedades en v14.0 — Gatekeeper Security & UX Refactor](#2ae-novedades-en-v140--gatekeeper-security--ux-refactor)
 2af. [Novedades en v14.1 — Gestión robusta de cuota localStorage y avatares](#2af-novedades-en-v141--gestión-robusta-de-cuota-localstorage-y-avatares)
+2ag. [Novedades en v14.2 — Floating Pill Navigation](#2ag-novedades-en-v142--floating-pill-navigation)
 3. [Arquitectura del Proyecto](#3-arquitectura-del-proyecto)
 4. [Estructura de Archivos](#4-estructura-de-archivos)
 5. [app.js — El Motor](#5-appjs--el-motor)
@@ -4217,12 +4218,6 @@ Si los valores siguen siendo los defaults, revisar los logs de la función serve
 | `api/report.js` | **Modificado** | v12.1. Añadido `export const config` con `bodyParser: { sizeLimit: '16kb' }`. Nuevo helper privado `_parseBody(req)` con cobertura de los cuatro estados posibles de `req.body`. Sustitución de `req.body \|\| {}` por `await _parseBody(req)` en el paso 5. Footer del mensaje de Telegram actualizado a v12.1. |
 | `DOCUMENTACION.md` | **Modificado** | Sección §2ac añadida. ToC actualizado. Header actualizado a v12.1. |
 
----
-
-*Love Arcade · Documentación técnica v13.0 + Ghost Analytics v12.1 (Sentinel Cloud Sync · Body Parser Hardening · Telegram Proxy · Doble Candado · Word Hunt Progression Metrics)*
-*Arquitectura: vanilla JS + Vercel Serverless + Supabase (Auth + PostgreSQL JSONB) · Compatible con GitHub Pages (frontend) + Vercel (proxy + serverless)*
----
-
 ## 2ad. Novedades en v13.0 — Sentinel Cloud Sync (Supabase)
 
 ### Visión General
@@ -4510,6 +4505,80 @@ Para que la subida de avatares cloud funcione en producción:
 
 - `userAvatar` **no debe viajar** dentro de `game_data` en cloud sync.
 - El binario/archivo vive en Supabase Storage (`avatars`) y sólo se persiste la URL pública en `user_profiles.avatar_url`.
+
+---
+
+## 2ag. Novedades en v14.2 — Floating Pill Navigation
+
+### Changelog
+
+| Área | Cambio |
+|---|---|
+| **Navegación** | La navegación principal se unifica en un único `<nav class="pill-nav">` fijo y flotante para móvil, tablet y desktop. Sustituye por completo los enlaces superiores `.nav-links` y la antigua bottom nav. |
+| **Estado activo** | Un único indicador `.pill-nav__indicator` se mueve bajo el ítem activo. El ítem seleccionado muestra icono y etiqueta; los demás conservan sus iconos y sus etiquetas permanecen disponibles en el DOM. |
+| **Accesibilidad** | Los enlaces nativos mantienen nombre accesible, foco visible, objetivo mínimo de 44 × 44 px y `aria-current="page"` en la ruta activa. |
+| **Rendimiento** | El indicador se reposiciona con una lectura puntual de layout por navegación o resize con debounce; `will-change` se activa solo durante el movimiento y se libera al terminar. |
+
+### Arquitectura del componente
+
+El componente se monta una sola vez en `index.html`. Su track contiene los tres enlaces raíz (`home`, `shop` y `profile`) y el indicador compartido. No existe una implementación paralela para desktop: el mismo componente baja de forma flotante en las tres plataformas.
+
+```html
+<nav class="pill-nav" aria-label="Navegación principal">
+  <div class="pill-nav__track">
+    <div class="pill-nav__indicator" aria-hidden="true"></div>
+    <a class="pill-nav-item" data-view="home">…</a>
+    <a class="pill-nav-item" data-view="shop">…</a>
+    <a class="pill-nav-item" data-view="profile">…</a>
+  </div>
+</nav>
+```
+
+Cada etiqueta `.pill-nav-item__label` existe siempre. CSS la revela solo para el enlace activo con `clip-path`; no se elimina con `display: none`, de modo que el contenido y el nombre del enlace siguen disponibles para tecnologías asistenciales.
+
+### Contrato con `spa-router.js`
+
+`SpaRouter` conserva la única fuente de verdad de la vista: `currentView`, sincronizada con la History API. La pill nav es una proyección de ese estado, nunca un estado de navegación propio.
+
+- **No cambiar ni eliminar `data-view`.** Cada enlace raíz debe conservar exactamente `home`, `shop` o `profile`; el router los usa para enlazar el clic con la vista y para actualizar el estado activo.
+- **No modificar la API pública.** `window.SpaRouter.navigateTo(viewId, anchor, replace)` y `window.SpaRouter.getCurrentView()` son contratos consumibles por el resto de la aplicación.
+- **No duplicar el estado activo.** `_syncNavHighlight(viewId)` aplica `.active` y `aria-current="page"`, y después actualiza el indicador. Los listeners se registran una vez al cargar el DOM.
+- **Indicador medido de forma acotada.** `_syncPillNavIndicator()` lee las dimensiones del ítem activo una vez por cambio de vista; el `resize` se agrupa con un debounce de 120 ms. No deben añadirse mediciones en un bucle de animación.
+
+### Tema, responsive y movimiento
+
+La navegación no introduce colores propios. El track usa `--solid-surface-float` y `--border-subtle`; el indicador consume `--accent-soft`, `--accent-border`, `--accent-glow` y el texto activo usa `--text-on-accent-aa`. Estos tokens proceden del sistema `THEMES` de `js/app.js` y de su inicialización crítica, por lo que cualquier cambio de color debe reutilizar tokens existentes en vez de hardcodear valores.
+
+El layout es mobile-first y usa `position: fixed` con `--pill-nav-bottom`, calculado a partir de `env(safe-area-inset-bottom)` y un offset. `body` reserva `--pill-nav-clearance` para que el contenido, los toasts y los controles de la vista no queden detrás de la píldora. En 640 px y 768 px solo aumentan las variables de ancho, inset, separación y offset: no se activa una segunda navegación de escritorio.
+
+La animación se limita a `transform`, `opacity` y `clip-path`: el indicador usa una transición de 200 ms y el label se revela en 220 ms. Con `prefers-reduced-motion: reduce`, ambas transiciones se reducen a un cambio prácticamente instantáneo. No se debe animar tamaño, posición de layout, sombras o márgenes.
+
+La píldora es una superficie sólida: no usa `backdrop-filter`. Esta política evita el coste de rasterización adicional en móviles y mantiene la regla de superficies Arcade Solid 3.0. El único `will-change` permitido es el temporal de `.pill-nav__indicator--moving`; se retira al recibir `transitionend` o al cumplirse la red de seguridad del router.
+
+### Añadir una cuarta sección
+
+Para incorporar una nueva ruta primaria, el cambio debe hacerse de forma coordinada:
+
+1. Añadir el enlace `.pill-nav-item` con su `data-view` nuevo y su label en `index.html`.
+2. Añadir el `<symbol>` SVG correspondiente al sprite de `index.html` y referenciarlo desde el nuevo enlace con `<use href="#icon-NOMBRE">`.
+3. Añadir el nuevo id a `VIEWS` en `js/spa-router.js`.
+4. Crear la sección de vista correspondiente con el id `view-NUEVO_ID` en `index.html` y conectar su ciclo de vida si la vista lo requiere.
+5. Verificar navegación directa, History API, foco, `aria-current`, los cinco temas y el comportamiento en móvil, tablet y desktop.
+
+No se debe crear una segunda barra de navegación ni gestionar manualmente `.active`: el router detectará el nuevo enlace por `.pill-nav-item[data-view]` y actualizará el indicador con la misma ruta de código.
+
+### Resumen de cambios por archivo (v14.2)
+
+| Archivo | Tipo | Cambios clave |
+|---|---|---|
+| `index.html` | Modificado | Único markup de la pill nav, sprite SVG y vistas que componen las rutas primarias. |
+| `styles.css` | Modificado | Tokens de tamaño y safe area, estilo responsive de la píldora, reveal del label, foco visible y política de movimiento reducido/sin blur. |
+| `js/spa-router.js` | Modificado | Sincronización visual y semántica de la pill nav, indicador compartido, medición puntual y liberación temporal de la capa GPU. |
+| `sw.js` | Modificado | Cache-busting del app shell tras los cambios de navegación. |
+| `README.md` | Modificado | Versión de producto actualizada para reflejar la navegación flotante. |
+| `docs/DOCUMENTACION.md` | Modificado | Sección §2ag, índice, changelog, contrato de mantenimiento y resumen de archivos. |
+
+---
 ## Actualización de rendimiento de Tienda (abril 2026)
 
 ### Objetivo
@@ -4588,3 +4657,8 @@ Reducir el tiempo de apertura del preview, disminuir carga del DOM en la vista d
   2. **Baúl de Recuerdos**: acceso a colección completa en grid desplegable.
 - El carrusel dejó de comportarse como banda continua: ahora usa snap estricto por tarjeta para evitar vistas partidas entre dos imágenes.
 - Se añadió badge visual de **Obtenido** dentro de las cards del carrusel para distinguir regalos reclamados.
+
+---
+
+*Love Arcade · Documentación técnica v14.2 + Ghost Analytics v12.1 (Floating Pill Navigation · Sentinel Cloud Sync · Body Parser Hardening · Telegram Proxy · Doble Candado · Word Hunt Progression Metrics)*
+*Arquitectura: vanilla JS + Vercel Serverless + Supabase (Auth + PostgreSQL JSONB) · Compatible con GitHub Pages (frontend) + Vercel (proxy + serverless)*
