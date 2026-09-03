@@ -796,7 +796,7 @@ body::before {
     border: 1px solid var(--accent-border);
     border-radius: var(--radius-lg);
     background: var(--accent-soft);
-    box-shadow: var(--shadow-glow);
+    box-shadow: 0 0 20px var(--accent-glow);
     opacity: 0;
     pointer-events: none;
     transform: translateX(var(--pill-nav-indicator-x, 0px));
