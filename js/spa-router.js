@@ -4,9 +4,9 @@
  * Router de navegación para la arquitectura Single Page Application.
  *
  * RESPONSABILIDADES:
- *  - Interceptar los clics en [data-view] de la navbar y la bottom-nav.
+ *  - Interceptar los clics en [data-view] de la navbar y la pill-nav.
  *  - Alternar la clase .hidden entre #view-home y #view-shop.
- *  - Actualizar el estado visual activo en ambas navbars.
+ *  - Actualizar el estado visual y semántico activo en la pill-nav.
  *  - Llamar a window.GameCenter.syncUI() para sincronizar saldo en todos los
  *    indicadores (Navbar + HUD) inmediatamente tras la transición.
  *  - [v9.6] Añadida llamada a window.ShopView.onLeave() / window.HomeView.onLeave()
@@ -50,9 +50,7 @@
     /** @type {Object.<string, HTMLElement>} */
     let viewEls = {};
     /** @type {HTMLElement[]} */
-    let navLinks = [];
-    /** @type {HTMLElement[]} */
-    let bottomNavItems = [];
+    let pillNavItems = [];
     
     /** @type {string} */
     let currentView = 'home';
@@ -252,11 +250,10 @@
     // ── Helpers privados ──────────────────────────────────────────────────────
     
     function _syncNavHighlight(viewId) {
-        navLinks.forEach(link => {
-            link.classList.toggle('active', link.dataset.view === viewId && !link.dataset.anchor);
-        });
-        bottomNavItems.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === viewId && !item.dataset.anchor);
+        pillNavItems.forEach(item => {
+            const isActive = item.dataset.view === viewId && !item.dataset.anchor;
+            item.classList.toggle('active', isActive);
+            item.toggleAttribute('aria-current', isActive);
         });
     }
     
@@ -286,8 +283,7 @@
             if (el) viewEls[id] = el;
         });
         
-        navLinks = Array.from(document.querySelectorAll('.nav-link[data-view]'));
-        bottomNavItems = Array.from(document.querySelectorAll('.b-nav-item[data-view]'));
+        pillNavItems = Array.from(document.querySelectorAll('.pill-nav-item[data-view]'));
 
         // Registrar listeners de navegación
         document.querySelectorAll('[data-view]').forEach(el => {
