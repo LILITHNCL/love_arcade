@@ -56,6 +56,13 @@
     /** @type {HTMLElement|null} */
     let pillNavIndicator = null;
     let pillNavResizeTimer = null;
+    let pillNavIndicatorLayerTimer = null;
+
+    // Coincide con la transición de transform del indicador en styles.css. El
+    // timeout es una red de seguridad para cambios de viewport o transiciones
+    // canceladas que no entreguen transitionend: la capa nunca queda promovida
+    // mientras el pill permanece en reposo.
+    const PILL_NAV_INDICATOR_LAYER_RELEASE_MS = 220;
     
     /** @type {string} */
     let currentView = 'home';
@@ -270,11 +277,22 @@
             getComputedStyle(pillNavTrack).getPropertyValue('--pill-nav-track-inset')
         ) || 4;
         const offset = activeItem.offsetLeft - trackInset;
+        const nextX = `${offset}px`;
+        const currentX = pillNavIndicator.style.getPropertyValue('--pill-nav-indicator-x');
+
         pillNavIndicator.style.setProperty('--pill-nav-indicator-x', `${offset}px`);
         pillNavIndicator.style.setProperty('--pill-nav-indicator-width', `${activeItem.offsetWidth}px`);
 
-        if (animate && pillNavIndicator.classList.contains('pill-nav__indicator--ready')) {
+        // `will-change` se reserva exclusivamente para un desplazamiento real.
+        // Esto evita conservar una capa GPU cuando la sincronización inicial o
+        // una navegación a la vista ya activa no disparan transición alguna.
+        if (animate && currentX !== nextX && pillNavIndicator.classList.contains('pill-nav__indicator--ready')) {
+            clearTimeout(pillNavIndicatorLayerTimer);
             pillNavIndicator.classList.add('pill-nav__indicator--moving');
+            pillNavIndicatorLayerTimer = setTimeout(() => {
+                pillNavIndicator.classList.remove('pill-nav__indicator--moving');
+                pillNavIndicatorLayerTimer = null;
+            }, PILL_NAV_INDICATOR_LAYER_RELEASE_MS);
         }
     }
     
@@ -323,6 +341,8 @@
 
         pillNavIndicator?.addEventListener('transitionend', (event) => {
             if (event.propertyName === 'transform') {
+                clearTimeout(pillNavIndicatorLayerTimer);
+                pillNavIndicatorLayerTimer = null;
                 pillNavIndicator.classList.remove('pill-nav__indicator--moving');
             }
         });
