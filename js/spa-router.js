@@ -51,6 +51,11 @@
     let viewEls = {};
     /** @type {HTMLElement[]} */
     let pillNavItems = [];
+    /** @type {HTMLElement|null} */
+    let pillNavTrack = null;
+    /** @type {HTMLElement|null} */
+    let pillNavIndicator = null;
+    let pillNavResizeTimer = null;
     
     /** @type {string} */
     let currentView = 'home';
@@ -248,6 +253,25 @@
     }
     
     // ── Helpers privados ──────────────────────────────────────────────────────
+
+    /**
+     * Posiciona el único indicador de la píldora activa. La lectura de layout se
+     * hace una sola vez por navegación o tras un resize debounced; no se mide
+     * durante ningún frame de animación.
+     */
+    function _syncPillNavIndicator(viewId, animate) {
+        if (!pillNavTrack || !pillNavIndicator) return;
+        const activeItem = pillNavItems.find(item => item.dataset.view === viewId && !item.dataset.anchor);
+        if (!activeItem) return;
+
+        const offset = activeItem.offsetLeft - 4;
+        pillNavIndicator.style.setProperty('--pill-nav-indicator-x', `${offset}px`);
+        pillNavIndicator.style.setProperty('--pill-nav-indicator-width', `${activeItem.offsetWidth}px`);
+
+        if (animate && pillNavIndicator.classList.contains('pill-nav__indicator--ready')) {
+            pillNavIndicator.classList.add('pill-nav__indicator--moving');
+        }
+    }
     
     function _syncNavHighlight(viewId) {
         pillNavItems.forEach(item => {
@@ -255,6 +279,7 @@
             item.classList.toggle('active', isActive);
             item.toggleAttribute('aria-current', isActive);
         });
+        _syncPillNavIndicator(viewId, true);
     }
     
     function _bindNavItem(el) {
@@ -284,6 +309,19 @@
         });
         
         pillNavItems = Array.from(document.querySelectorAll('.pill-nav-item[data-view]'));
+        pillNavTrack = document.querySelector('.pill-nav__track');
+        pillNavIndicator = document.querySelector('.pill-nav__indicator');
+
+        pillNavIndicator?.addEventListener('transitionend', (event) => {
+            if (event.propertyName === 'transform') {
+                pillNavIndicator.classList.remove('pill-nav__indicator--moving');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            clearTimeout(pillNavResizeTimer);
+            pillNavResizeTimer = setTimeout(() => _syncPillNavIndicator(currentView, false), 120);
+        }, { passive: true });
 
         // Registrar listeners de navegación
         document.querySelectorAll('[data-view]').forEach(el => {
@@ -291,6 +329,7 @@
         });
         
         _syncNavHighlight('home');
+        requestAnimationFrame(() => pillNavIndicator?.classList.add('pill-nav__indicator--ready'));
         
         // ── History API: estado inicial ───────────────────────────────────────
         // replaceState (no pushState) para que la entrada inicial quede en el
