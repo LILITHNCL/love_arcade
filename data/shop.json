@@ -1516,11 +1516,31 @@
   {
     "id": 144,
     "name": "Sunna x Sonic",
-    "price": 2000,
+    "price": 1000,
     "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sunna-x-sonic-aeae1d00",
     "file": "sunna-x-sonic-aeae1d00.webp",
     "tags": [
       "Mobile"
+    ]
+  },
+  {
+    "id": 145,
+    "name": "Shadow Sprite",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/shadow-sprite-98a0ee82",
+    "file": "shadow-sprite-98a0ee82.webp",
+    "tags": [
+      "Stickers"
+    ]
+  },
+  {
+    "id": 146,
+    "name": "Sonic Sprite",
+    "price": 500,
+    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/sonic-sprite-c61e3929",
+    "file": "sonic-sprite-c61e3929.webp",
+    "tags": [
+      "Stickers"
     ]
   }
 ]
