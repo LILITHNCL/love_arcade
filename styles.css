@@ -754,11 +754,12 @@ body::before {
 }
 
 .pill-nav__track {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 4px;
+    width: min(320px, calc(100vw - 32px));
     min-height: var(--pill-nav-height);
-    max-width: calc(100vw - 32px);
     padding: 4px;
     background: var(--solid-surface-float);
     border: 1px solid var(--border-subtle);
@@ -772,21 +773,42 @@ body::before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 44px;
+    flex: 1 1 0;
     min-width: 44px;
     min-height: 44px;
     color: var(--text-low);
     border-radius: var(--radius-lg);
+    z-index: 1;
 }
 
 .pill-nav-item.active {
     justify-content: flex-start;
-    flex-basis: 102px;
     padding: 0 12px;
     color: var(--text-on-accent-aa);
-    background: var(--accent-soft);
+}
+
+.pill-nav__indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: var(--pill-nav-indicator-width, 0px);
     border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
     box-shadow: var(--shadow-glow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(var(--pill-nav-indicator-x, 0px));
+}
+
+.pill-nav__indicator--ready {
+    opacity: 1;
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+}
+
+.pill-nav__indicator--moving {
+    will-change: transform;
 }
 
 .pill-nav-item__icon {
@@ -805,10 +827,21 @@ body::before {
     font-family: var(--font-display);
     font-size: 0.78rem;
     font-weight: 700;
+    transition: clip-path 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
 }
 
 .pill-nav-item.active .pill-nav-item__label {
     clip-path: inset(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pill-nav__indicator--ready {
+        transition: transform 0.01ms linear, opacity 0.01ms linear;
+    }
+
+    .pill-nav-item__label {
+        transition: opacity 0.01ms linear;
+    }
 }
 
 .pill-nav-item:focus-visible {
