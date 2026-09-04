@@ -66,15 +66,7 @@
         }
 
         var promise = Promise.resolve()
-            .then(function MAREJIG_startLoad() {
-                MAREJIG_progress(18, 'Cargando vista previa');
-                return MAREJIG_loadImageElement(MAREJIG_Cloudinary.buildThumbnailUrl(level, 'large'))
-                    .catch(function MAREJIG_ignorePreviewError(error) {
-                        console.warn('[MAREJIG] Thumbnail de carga no disponible', error.message);
-                        return null;
-                    });
-            })
-            .then(function MAREJIG_loadFull(preview) {
+            .then(function MAREJIG_loadFull() {
                 MAREJIG_progress(46, 'Cargando imagen completa');
                 return MAREJIG_loadImageElement(MAREJIG_Cloudinary.buildFullUrl(level, profile)).then(function MAREJIG_fullLoaded(img) {
                     MAREJIG_progress(78, 'Decodificando imagen');
@@ -83,7 +75,6 @@
                         return {
                             levelId: level.id,
                             profile: profile,
-                            preview: preview,
                             image: img,
                             drawable: drawableResult.drawable,
                             drawableKind: drawableResult.kind,
@@ -98,7 +89,6 @@
                 return {
                     levelId: level.id,
                     profile: profile,
-                    preview: null,
                     image: null,
                     drawable: null,
                     drawableKind: 'fallback',
