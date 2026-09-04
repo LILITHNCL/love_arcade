@@ -1987,7 +1987,10 @@ function deriveThemeRoles(hex) {
         accentSoft:   `color-mix(in srgb, ${accent} 28%, #0b0d14 72%)`,
         accentBorder: `color-mix(in srgb, ${accent} 62%, #20263a 38%)`,
         accentGlow:   `color-mix(in srgb, ${accent} 34%, #0a0d18 66%)`,
-        onAccent: luminance > 0.5 ? '#0b0d14' : '#ffffff'
+        // Mantener el texto claro para la paleta actual; el umbral deja el
+        // contraste oscuro reservado para superficies realmente claras (blanco
+        // y futuros colores próximos), sin depender de la key del theme.
+        onAccent: luminance > 0.7 ? '#0b0d14' : '#ffffff'
     };
 }
 
