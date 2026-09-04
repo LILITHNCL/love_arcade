@@ -52,7 +52,8 @@
         var raw=localStorage.getItem(KEY);
         if(!raw) return;
         var theme=JSON.parse(raw).theme;
-        if(!theme||!T[theme]) return;
+        // Violeta coincide exactamente con los roles base de :root; no sobreescribir.
+        if(!theme||!T[theme]||theme==='violet') return;
         var d=document.documentElement,r=deriveThemeRoles(T[theme]);
         if(!r) return;
         d.style.setProperty('--accent',        r.accent);
