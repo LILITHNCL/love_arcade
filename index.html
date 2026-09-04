@@ -46,7 +46,7 @@
         var m=typeof hex==='string'&&hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
         if(!m) return null;
         var h=m[1].length===3?m[1].replace(/./g,function(c){return c+c;}):m[1],a='#'+h.toUpperCase(),rgb=[0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16)/255;}),l=rgb.map(function(c){return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}),lum=.2126*l[0]+.7152*l[1]+.0722*l[2];
-        return {accent:a,accentHover:'color-mix(in srgb, '+a+' 82%, #ffffff 18%)',accentDim:'color-mix(in srgb, '+a+' 72%, #0b0d14 28%)',accentSoft:'color-mix(in srgb, '+a+' 28%, #0b0d14 72%)',accentBorder:'color-mix(in srgb, '+a+' 62%, #20263a 38%)',accentGlow:'color-mix(in srgb, '+a+' 34%, #0a0d18 66%)',onAccent:lum>.5?'#0b0d14':'#ffffff'};
+        return {accent:a,accentHover:'color-mix(in srgb, '+a+' 82%, #ffffff 18%)',accentDim:'color-mix(in srgb, '+a+' 72%, #0b0d14 28%)',accentSoft:'color-mix(in srgb, '+a+' 28%, #0b0d14 72%)',accentBorder:'color-mix(in srgb, '+a+' 62%, #20263a 38%)',accentGlow:'color-mix(in srgb, '+a+' 34%, #0a0d18 66%)',onAccent:lum>.7?'#0b0d14':'#ffffff'};
       }
       try {
         var raw=localStorage.getItem(KEY);

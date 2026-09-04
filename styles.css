@@ -134,7 +134,8 @@ span + .icon,
     --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
 
     --on-accent:          #ffffff;
-    --text-on-accent-aa:  var(--text-primary-aa);
+    /* Alias de compatibilidad para consumidores externos heredados. */
+    --text-on-accent-aa:  var(--on-accent);
     --text-on-warning-aa: #1b1200;
     --text-on-success-aa: #04190b;
     --text-on-danger-aa:  #ffffff;
@@ -573,7 +574,7 @@ body::before {
     background:
         linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 42%),
         linear-gradient(135deg, var(--accent), var(--accent-dim));
-    color: var(--text-on-accent-aa);
+    color: var(--on-accent);
     border: none;
     padding: 11px 22px;
     border-radius: var(--radius-sm);
@@ -796,7 +797,8 @@ body::before {
        the indicator, regardless of the label's length. */
     justify-content: center;
     gap: 6px;
-    color: var(--text-on-accent-aa);
+    /* El indicador usa una mezcla tenue, no una superficie accent sólida. */
+    color: var(--text-primary-aa);
 }
 
 .pill-nav__indicator {
@@ -1621,7 +1623,8 @@ body::before {
 .shop-tab:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
 .shop-tab.active {
     background: var(--accent-soft-aa);
-    color: var(--text-on-accent-aa);
+    /* El fondo es --accent-soft-aa; conservar contraste sobre la mezcla oscura. */
+    color: var(--text-primary-aa);
     font-weight: 800;
     box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
 }
@@ -1695,7 +1698,8 @@ body::before {
 .pill:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
 .pill.active {
     background: var(--accent-soft-aa);
-    color: var(--text-on-accent-aa);
+    /* El fondo es --accent-soft-aa; conservar contraste sobre la mezcla oscura. */
+    color: var(--text-primary-aa);
     font-weight: 800;
     box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
 }
@@ -4874,7 +4878,7 @@ svg { stroke-width: 2; }
     border-radius: 14px;
     border: none;
     background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-    color: var(--text-on-accent-aa);
+    color: var(--on-accent);
     font-family: var(--font-display);
     font-weight: 950;
     cursor: pointer;
