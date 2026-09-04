@@ -721,7 +721,7 @@ body::before {
 .avatar-edit-icon {
     position: absolute; bottom: -2px; right: -2px;
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
     border-radius: 50%;
     width: 14px; height: 14px;
     display: flex; align-items: center; justify-content: center;
@@ -790,7 +790,7 @@ body::before {
     justify-content: center;
     gap: 6px;
     /* The indicator is stronger than generic accent-soft surfaces. */
-    color: var(--text-primary-aa);
+    color: var(--on-accent);
 }
 
 .pill-nav__indicator {
@@ -1615,8 +1615,7 @@ body::before {
 .shop-tab:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
 .shop-tab.active {
     background: var(--accent-soft-aa);
-    /* El fondo es --accent-soft-aa; conservar contraste sobre la mezcla oscura. */
-    color: var(--text-primary-aa);
+    color: var(--on-accent);
     font-weight: 800;
     box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
 }
@@ -1690,8 +1689,7 @@ body::before {
 .pill:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
 .pill.active {
     background: var(--accent-soft-aa);
-    /* El fondo es --accent-soft-aa; conservar contraste sobre la mezcla oscura. */
-    color: var(--text-primary-aa);
+    color: var(--on-accent);
     font-weight: 800;
     box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
 }
@@ -2023,6 +2021,10 @@ body::before {
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     box-shadow: 0 4px 12px var(--accent-glow);
 }
+#promo-section .promo-icon-wrap,
+.settings-card .promo-icon-wrap {
+    color: var(--on-accent);
+}
 .promo-input-group { display: flex; flex-direction: column; gap: 8px; }
 .promo-input {
     width: 100%;
@@ -2124,6 +2126,7 @@ body::before {
 }
 .memory-card__chip--export {
     background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    color: var(--on-accent);
     box-shadow: 0 4px 14px var(--accent-glow);
 }
 .memory-card__chip--import {
@@ -2194,7 +2197,7 @@ body::before {
     contain: paint;
 }
 .theme-btn:hover { color: var(--text-high); background: var(--solid-surface-float); box-shadow: var(--control-shadow-hover); }
-.theme-btn--active { background: var(--accent-soft); color: var(--text-high); box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08); }
+.theme-btn--active { background: var(--accent-soft); color: var(--on-accent); box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08); }
 .theme-swatch {
     width: 18px; height: 18px;
     border-radius: 50%;
