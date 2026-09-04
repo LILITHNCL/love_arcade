@@ -209,6 +209,16 @@
         return group;
     }
 
+    function MAREJIG_moveGroupBy(scene, group, dx, dy) {
+        if (!group) return group;
+        var offsetX = Number(dx) || 0;
+        var offsetY = Number(dy) || 0;
+        group.x += offsetX;
+        group.y += offsetY;
+        if (MAREJIG_Groups) MAREJIG_Groups.translateGroupBounds(scene, group.id, offsetX, offsetY);
+        return group;
+    }
+
     function MAREJIG_isFreeBounds(scene, bounds, ignoredIds, gap, allowBoard) {
         var ignore = ignoredIds || [];
         var world = scene.world;
@@ -296,9 +306,9 @@
         return group;
     }
 
-    function MAREJIG_clampGroupToWorld(scene, group) {
+    function MAREJIG_clampGroupToWorld(scene, group, boundsAreCurrent) {
         if (!scene || !group || !scene.world || group.lockedToBoard) return group;
-        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        if (!boundsAreCurrent && MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         var bounds = group.bounds || { x: group.x, y: group.y, width: 0, height: 0 };
         var minX = scene.world.x;
         var maxX = scene.world.x + Math.max(0, scene.world.width - bounds.width);
@@ -306,9 +316,11 @@
         var maxY = scene.world.y + Math.max(0, scene.world.height - bounds.height);
         var nextX = MAREJIG_clamp(bounds.x, minX, maxX);
         var nextY = MAREJIG_clamp(bounds.y, minY, maxY);
-        group.x += nextX - bounds.x;
-        group.y += nextY - bounds.y;
-        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        var offsetX = nextX - bounds.x;
+        var offsetY = nextY - bounds.y;
+        group.x += offsetX;
+        group.y += offsetY;
+        if (MAREJIG_Groups) MAREJIG_Groups.translateGroupBounds(scene, group.id, offsetX, offsetY);
         return group;
     }
 
@@ -723,7 +735,7 @@
 
     windowObject.MAREJIG_Scene = Object.freeze({
         createScene: MAREJIG_createScene, layoutScene: MAREJIG_layoutScene, reflowScene: MAREJIG_reflowScene,
-        ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld,
+        ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld, moveGroupBy: MAREJIG_moveGroupBy,
         clampCamera: MAREJIG_clampCamera, screenToWorld: MAREJIG_screenToWorld, worldToScreen: MAREJIG_worldToScreen,
         placeGroupNaturally: MAREJIG_placeGroupNaturally, placeSegmentAsCompactCluster: MAREJIG_placeSegmentAsCompactCluster, placeRevealedSegmentNearFocus: MAREJIG_placeRevealedSegmentNearFocus,
         focusCameraOnBounds: MAREJIG_focusCameraOnBounds, getMainFocusBounds: MAREJIG_getMainFocusBounds,
