@@ -2000,6 +2000,47 @@ function deriveThemeRoles(hex) {
     };
 }
 
+/**
+ * Construye el selector de temas desde la única fuente de verdad pública.
+ * Los valores de color solo se escriben en el DOM a partir de THEMES, por lo
+ * que añadir o ajustar un tema no requiere mantener HTML o CSS en paralelo.
+ */
+function renderThemeGrid() {
+    const grid = document.getElementById('theme-grid');
+    if (!grid) return;
+
+    const fragment = document.createDocumentFragment();
+    Object.entries(window.THEMES).forEach(([key, theme]) => {
+        const button = document.createElement('button');
+        button.className = 'theme-btn';
+        button.type = 'button';
+        button.dataset.theme = key;
+        button.setAttribute('aria-pressed', 'false');
+
+        const swatch = document.createElement('span');
+        swatch.className = 'theme-swatch';
+        swatch.style.setProperty('--theme-swatch-color', theme.accent);
+
+        const name = document.createElement('span');
+        name.className = 'theme-name';
+        name.textContent = theme.name;
+
+        const check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        check.classList.add('icon', 'theme-check');
+        check.setAttribute('width', '12');
+        check.setAttribute('height', '12');
+        check.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '#icon-check');
+        check.append(use);
+
+        button.append(swatch, name, check);
+        fragment.append(button);
+    });
+
+    grid.replaceChildren(fragment);
+}
+
 function applyTheme(key) {
     const t    = THEMES[key] || THEMES.violet;
     const root = document.documentElement;
@@ -2336,6 +2377,7 @@ window.revealUI = revealUI;
 // 1. TEMA — elimina el "salto violeta" para cualquier usuario con otro tema.
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
+renderThemeGrid();
 applyTheme(store.theme || 'violet');
 
 if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
@@ -2513,10 +2555,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // shop-logic.js eliminó su propio listener durante la migración SPA; este es
     // el único registro. setTheme() actualiza el store, los CSS vars, la clase
     // theme-{key} en <body> y el estado visual de todos los .theme-btn.
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (window.GameCenter) window.GameCenter.setTheme(btn.dataset.theme);
-        });
+    document.getElementById('theme-grid')?.addEventListener('click', (event) => {
+        const button = event.target.closest('.theme-btn');
+        if (button && window.GameCenter) {
+            window.GameCenter.setTheme(button.dataset.theme);
+        }
     });
 
     // NOTA: El listener de #btn-moon-blessing fue eliminado en v9.x (SPA Migration).
