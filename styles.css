@@ -250,17 +250,6 @@ span + .icon,
     --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
-/* ── WCAG AA contrast fixes for bright themes ── */
-[data-theme="pink"],
-[data-theme="cyan"] {
-    --text-med: #e2e2f0;
-    --text-low: #b4b4c8;
-}
-[data-theme="gold"] {
-    --text-med: #e5e5e7;
-    --text-low: #b0b0c0;
-}
-
 /* ================================================================
    RESET & BASE
    ================================================================ */
