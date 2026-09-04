@@ -198,6 +198,15 @@ span + .icon,
     --accent-soft:  var(--accent-soft-aa);
     --accent-border: var(--accent-border-aa);
 
+    /* ── Navigation palette ──
+       The navigation surfaces retain a trace of the active theme while
+       remaining deliberately quieter than the page content. The selected
+       section, by contrast, uses the unmuted accent as the primary cue. */
+    --nav-surface:        color-mix(in srgb, var(--accent) 14%, var(--surface-0) 86%);
+    --nav-surface-border: color-mix(in srgb, var(--accent) 30%, var(--surface-3) 70%);
+    --nav-active:         var(--accent);
+    --nav-active-text:    var(--surface-0);
+
     /* ── Text Scale ── */
     --text-high: var(--text-primary-aa);
     --text-med:  var(--text-secondary-aa);
@@ -255,6 +264,10 @@ span + .icon,
 [data-theme="gold"] {
     --text-med: #e5e5e7;
     --text-low: #b0b0c0;
+}
+/* Carmesí necesita texto claro sobre el acento para conservar contraste AA. */
+[data-theme="crimson"] {
+    --nav-active-text: #ffffff;
 }
 
 /* ================================================================
@@ -648,9 +661,9 @@ body::before {
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 18px;
     z-index: 1000;
-    /* Solid 3.0: no backdrop-filter, deep solid panel with hard-edge border */
-    background: #0d0e15;
-    border-bottom: 1px solid var(--border-subtle);
+    /* Deep, low-saturation expression of the selected theme. */
+    background: var(--nav-surface);
+    border-bottom: 1px solid var(--nav-surface-border);
     box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.6);
 }
 
@@ -768,8 +781,8 @@ body::before {
     width: min(var(--pill-nav-track-max-width), calc(100vw - 32px));
     min-height: var(--pill-nav-height);
     padding: var(--pill-nav-track-inset);
-    background: var(--solid-surface-float);
-    border: 1px solid var(--border-subtle);
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-surface-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     pointer-events: auto;
@@ -793,7 +806,7 @@ body::before {
        the indicator, regardless of the label's length. */
     justify-content: center;
     gap: 6px;
-    color: var(--text-on-accent-aa);
+    color: var(--nav-active-text);
 }
 
 .pill-nav__indicator {
@@ -802,9 +815,9 @@ body::before {
     bottom: var(--pill-nav-track-inset);
     left: var(--pill-nav-track-inset);
     width: var(--pill-nav-indicator-width, 0px);
-    border: 1px solid var(--accent-border);
+    border: 1px solid var(--nav-active);
     border-radius: var(--radius-lg);
-    background: var(--accent-soft);
+    background: var(--nav-active);
     box-shadow: 0 0 20px var(--accent-glow);
     opacity: 0;
     pointer-events: none;
