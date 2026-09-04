@@ -118,6 +118,20 @@
         return scene;
     }
 
+    function MAREJIG_translateGroupBounds(scene, groupId, dx, dy) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group) return null;
+        var offsetX = Number(dx) || 0;
+        var offsetY = Number(dy) || 0;
+        if (!offsetX && !offsetY) return group.bounds;
+        [group.bounds, group.hitBounds].forEach(function MAREJIG_translateBounds(bounds) {
+            if (!bounds) return;
+            bounds.x += offsetX;
+            bounds.y += offsetY;
+        });
+        return group.bounds;
+    }
+
     function MAREJIG_pointInRect(point, rect) {
         return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
     }
@@ -209,8 +223,8 @@
         if (!group) return;
         group.outlineDirty = true;
         group.groupOutline = null;
-        group.groupOutlinePath = null;
-        group.groupOutlinePathKey = null;
+        group.renderPaths = null;
+        group.renderPathsKey = null;
     }
 
     function MAREJIG_getAdjacencyEdges(scene, pieceId) {
@@ -291,8 +305,10 @@
         target.zIndex = Math.max(Number(target.zIndex) || 0, Number(source.zIndex) || 0);
         target.outlineDirty = true;
         target.groupOutline = null;
-        target.groupOutlinePath = null;
-        target.groupOutlinePathKey = null;
+        target.renderPaths = null;
+        target.renderPathsKey = null;
+        source.renderPaths = null;
+        source.renderPathsKey = null;
         delete groups[sourceGroupId];
         return groups;
     }
@@ -369,6 +385,7 @@
         getPieceWorldRect: MAREJIG_getPieceWorldRect,
         recalculateGroupBounds: MAREJIG_recalculateGroupBounds,
         recalculateAllGroupBounds: MAREJIG_recalculateAllGroupBounds,
+        translateGroupBounds: MAREJIG_translateGroupBounds,
         bringGroupToFront: MAREJIG_bringGroupToFront,
         hitTest: MAREJIG_hitTest,
         getTouchPadding: MAREJIG_getTouchPadding,

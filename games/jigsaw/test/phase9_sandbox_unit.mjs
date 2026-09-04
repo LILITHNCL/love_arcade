@@ -18,6 +18,20 @@ function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox
  assert.match(input,/MAREJIG_Scene\.screenToWorld\(scene, screen\)/,'hit testing converts screen coordinates to world coordinates');
 }
 {
+ class FakePath2D { static instances=[]; constructor(){this.commands=[];FakePath2D.instances.push(this);} rect(...args){this.commands.push(['rect',...args]);} moveTo(...args){this.commands.push(['moveTo',...args]);} lineTo(...args){this.commands.push(['lineTo',...args]);} }
+ const queue=[]; const {sandbox,scene}=fixture({Path2D:FakePath2D,requestAnimationFrame(callback){queue.push(callback);return queue.length;},cancelAnimationFrame(){},addEventListener(){},removeEventListener(){}});
+ const gradient={addColorStop(){}}; const context={save(){},restore(){},setTransform(){},clearRect(){},createLinearGradient(){return gradient;},fillRect(){},beginPath(){},arc(){},fill(){},scale(){},translate(){},setLineDash(){},strokeRect(){},stroke(){},clip(){},drawImage(){},moveTo(){},lineTo(){},rect(){},fillText(){}};
+ const canvas={width:0,height:0,clientWidth:390,clientHeight:844,getBoundingClientRect(){return {width:390,height:844};},getContext(){return context;}};
+ vm.runInContext(fs.readFileSync(path.join(jsDir,'MAREJIG_renderer.js'),'utf8'),sandbox,{filename:'MAREJIG_renderer.js'});
+ sandbox.MAREJIG_Renderer.init(canvas); sandbox.MAREJIG_Renderer.setScene(scene); sandbox.MAREJIG_Renderer.render();
+ const firstBuildCount=FakePath2D.instances.length; assert(firstBuildCount>0,'renderer builds local Path2D geometry when supported');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); assert.equal(FakePath2D.instances.length,firstBuildCount,'dirty repaint reuses group paths when topology and scale are unchanged');
+ const [source,target]=Object.values(scene.groups).filter(group=>group.visible); sandbox.MAREJIG_Groups.mergeSceneGroups(scene,source.id,target.id,{dx:0,dy:0}); assert.equal(source.renderPaths,null,'merge releases paths held by the removed group');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); const afterMergeCount=FakePath2D.instances.length; assert.equal(afterMergeCount,firstBuildCount+2,'merge rebuilds cached clip and outline paths for its new topology');
+ sandbox.MAREJIG_Scene.layoutScene(scene,844,390); assert(Object.values(scene.groups).every(group=>group.renderPaths===null),'layout invalidates cached paths when piece scale changes');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); assert(FakePath2D.instances.length>afterMergeCount,'renderer rebuilds paths after scale invalidation');
+}
+{
  const {sandbox,scene}=fixture();
  assert(scene.world.width>=scene.viewport.width*1.8 && scene.world.height>=scene.viewport.height*1.5,'world exceeds viewport recommendations');
  const ids=sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).map(id=>scene.pieces[id].groupId); const positions=ids.map(id=>scene.groups[id]).map(g=>[Math.round(g.x),Math.round(g.y)]);
@@ -33,6 +47,14 @@ function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox
  const handlers={}; const canvas={style:{},getBoundingClientRect(){return {left:0,top:0};},addEventListener(name,fn){handlers[name]=fn;},removeEventListener(){},setPointerCapture(){}}; const renderer={markDirty(){}}; sandbox.MAREJIG_Input.attach(canvas,scene,renderer,{});
  handlers.pointerdown({pointerId:1,clientX:1,clientY:1,preventDefault(){}}); assert.equal(sandbox.MAREJIG_Input.state.mode,'panning','pointerdown on empty background starts pan'); sandbox.MAREJIG_Input.cancelInteraction();
  const group=Object.values(scene.groups).find(g=>g.visible); const screen=sandbox.MAREJIG_Scene.worldToScreen(scene,{x:group.bounds.x+2,y:group.bounds.y+2}); handlers.pointerdown({pointerId:2,clientX:screen.x,clientY:screen.y,preventDefault(){}}); assert.equal(sandbox.MAREJIG_Input.state.mode,'dragging','pointerdown on visible piece starts group drag');
+}
+{
+ const queue=[]; const {sandbox,scene}=fixture({requestAnimationFrame(cb){queue.push(cb);return queue.length;},cancelAnimationFrame(){},navigator:{}}); vm.runInContext(fs.readFileSync(path.join(jsDir,'MAREJIG_input.js'),'utf8'),sandbox,{filename:'MAREJIG_input.js'});
+ const handlers={}; const canvas={style:{},getBoundingClientRect(){return {left:0,top:0};},addEventListener(name,fn){handlers[name]=fn;},removeEventListener(){},setPointerCapture(){}}; sandbox.MAREJIG_Input.attach(canvas,scene,{markDirty(){}},{});
+ const group=Object.values(scene.groups).find(g=>g.visible); let pointer=sandbox.MAREJIG_Scene.worldToScreen(scene,{x:group.bounds.x+2,y:group.bounds.y+2}); handlers.pointerdown({pointerId:3,clientX:pointer.x,clientY:pointer.y,preventDefault(){}});
+ [[-100000,0],[200000,0],[0,-100000],[0,200000]].forEach(([dx,dy])=>{ pointer={x:pointer.x+dx,y:pointer.y+dy}; handlers.pointermove({pointerId:3,clientX:pointer.x,clientY:pointer.y,preventDefault(){}}); queue.shift()(); const epsilon=0.001; assert(group.bounds.x>=scene.world.x-epsilon&&group.bounds.x+group.bounds.width<=scene.world.x+scene.world.width+epsilon&&group.bounds.y>=scene.world.y-epsilon&&group.bounds.y+group.bounds.height<=scene.world.y+scene.world.height+epsilon,'incremental drag clamp keeps bounds inside every world edge'); const hit=sandbox.MAREJIG_Groups.hitTest(scene,{x:group.bounds.x+2,y:group.bounds.y+2}); assert.equal(hit.groupId,group.id,'hit testing follows a group after incremental movement'); });
+ const other=Object.values(scene.groups).find(candidate=>candidate.visible&&candidate.id!==group.id); const merged=sandbox.MAREJIG_Groups.mergeSceneGroups(scene,group.id,other.id,{dx:0,dy:0}); assert(merged,'merge remains compatible with incrementally translated bounds'); const mergedHit=sandbox.MAREJIG_Groups.hitTest(scene,{x:merged.bounds.x+2,y:merged.bounds.y+2}); assert.equal(mergedHit.groupId,merged.id,'hit testing works after merge');
+ const save={levelId:scene.level.id,puzzleSeed:scene.puzzle.seed,groups:Object.values(scene.groups).map(candidate=>({groupId:candidate.id,pieceIds:candidate.pieceIds.slice(),anchorPieceId:candidate.anchorPieceId,x:candidate.x,y:candidate.y,zIndex:candidate.zIndex,visible:candidate.visible,lockedToBoard:candidate.lockedToBoard})),pieces:Object.values(scene.pieces).map(piece=>({pieceId:piece.id,groupId:piece.groupId,revealed:piece.visible,locked:false})),completedSegmentIds:[],revealedSegmentIds:[scene.puzzle.segments.order[0]],currentSegmentIndex:0,elapsedMs:0,moves:0}; assert(sandbox.MAREJIG_Scene.applySave(scene,save),'resume rebuilds bounds after incremental drag'); const resumedHit=sandbox.MAREJIG_Groups.hitTest(scene,{x:merged.bounds.x+2,y:merged.bounds.y+2}); assert.equal(resumedHit.groupId,merged.id,'hit testing remains correct after resuming');
 }
 {
  const sandbox=load(['MAREJIG_shapes.js']); const outline=sandbox.MAREJIG_Shapes.buildCellsOutline([{x:0,y:0},{x:1,y:0}]); assert.equal(outline.segments.length,6,'merged outline omits shared edge');

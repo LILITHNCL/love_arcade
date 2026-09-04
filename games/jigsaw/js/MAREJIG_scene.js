@@ -209,6 +209,16 @@
         return group;
     }
 
+    function MAREJIG_moveGroupBy(scene, group, dx, dy) {
+        if (!group) return group;
+        var offsetX = Number(dx) || 0;
+        var offsetY = Number(dy) || 0;
+        group.x += offsetX;
+        group.y += offsetY;
+        if (MAREJIG_Groups) MAREJIG_Groups.translateGroupBounds(scene, group.id, offsetX, offsetY);
+        return group;
+    }
+
     function MAREJIG_isFreeBounds(scene, bounds, ignoredIds, gap, allowBoard) {
         var ignore = ignoredIds || [];
         var world = scene.world;
@@ -296,9 +306,9 @@
         return group;
     }
 
-    function MAREJIG_clampGroupToWorld(scene, group) {
+    function MAREJIG_clampGroupToWorld(scene, group, boundsAreCurrent) {
         if (!scene || !group || !scene.world || group.lockedToBoard) return group;
-        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        if (!boundsAreCurrent && MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
         var bounds = group.bounds || { x: group.x, y: group.y, width: 0, height: 0 };
         var minX = scene.world.x;
         var maxX = scene.world.x + Math.max(0, scene.world.width - bounds.width);
@@ -306,9 +316,11 @@
         var maxY = scene.world.y + Math.max(0, scene.world.height - bounds.height);
         var nextX = MAREJIG_clamp(bounds.x, minX, maxX);
         var nextY = MAREJIG_clamp(bounds.y, minY, maxY);
-        group.x += nextX - bounds.x;
-        group.y += nextY - bounds.y;
-        if (MAREJIG_Groups) MAREJIG_Groups.recalculateGroupBounds(scene, group.id);
+        var offsetX = nextX - bounds.x;
+        var offsetY = nextY - bounds.y;
+        group.x += offsetX;
+        group.y += offsetY;
+        if (MAREJIG_Groups) MAREJIG_Groups.translateGroupBounds(scene, group.id, offsetX, offsetY);
         return group;
     }
 
@@ -536,6 +548,7 @@
     function MAREJIG_layoutScene(scene, viewportWidth, viewportHeight) {
         var firstLayout = !scene.viewport.width || !scene.board.width;
         var oldCenter = firstLayout ? null : MAREJIG_screenToWorld(scene, { x: scene.viewport.width / 2, y: scene.viewport.height / 2 });
+        var previousPieceScale = scene.staging.pieceScale;
         var ratio = scene.board.cols / scene.board.rows;
         var portrait = viewportHeight >= viewportWidth;
         var portraitScale = scene.board.cols >= 16 ? 1.45 : 1.35;
@@ -562,6 +575,11 @@
         scene.staging.width = scene.world.width;
         scene.staging.height = scene.world.height;
         scene.staging.pieceScale = Math.max(28, scene.board.cellSize * 0.98);
+        if (previousPieceScale !== scene.staging.pieceScale && MAREJIG_Groups) {
+            Object.keys(scene.groups).forEach(function MAREJIG_invalidateScaledGroup(groupId) {
+                MAREJIG_Groups.invalidateGroupOutline(scene, groupId);
+            });
+        }
         if (firstLayout) MAREJIG_placeInitialSegmentCentered(scene);
         MAREJIG_getVisibleGroups(scene).forEach(function MAREJIG_placeVisibleGroup(group, index) {
             if (!group.positioned) MAREJIG_placeGroupNaturally(scene, group, scene.ui.activeSegmentId + ':' + index + ':' + group.id);
@@ -585,7 +603,7 @@
         if (Number(save.puzzleSeed) && Number(save.puzzleSeed) !== Number(scene.puzzle.seed)) return false;
         var nextGroups = {};
         (save.groups || []).forEach(function MAREJIG_restoreGroup(saved) {
-            nextGroups[saved.groupId] = Object.assign({}, scene.groups[saved.groupId] || {}, saved, { id: saved.groupId, pieceIds: saved.pieceIds.slice(), anchorPieceId: saved.anchorPieceId || saved.pieceIds[0], positioned: true, outlineDirty: true, groupOutline: null });
+            nextGroups[saved.groupId] = Object.assign({}, scene.groups[saved.groupId] || {}, saved, { id: saved.groupId, pieceIds: saved.pieceIds.slice(), anchorPieceId: saved.anchorPieceId || saved.pieceIds[0], positioned: true, outlineDirty: true, groupOutline: null, renderPaths: null, renderPathsKey: null });
         });
         if (!Object.keys(nextGroups).length) return false;
         scene.groups = nextGroups;
@@ -723,7 +741,7 @@
 
     windowObject.MAREJIG_Scene = Object.freeze({
         createScene: MAREJIG_createScene, layoutScene: MAREJIG_layoutScene, reflowScene: MAREJIG_reflowScene,
-        ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld,
+        ensureVisibleGroups: MAREJIG_ensureVisibleGroups, clampGroupToWorld: MAREJIG_clampGroupToWorld, moveGroupBy: MAREJIG_moveGroupBy,
         clampCamera: MAREJIG_clampCamera, screenToWorld: MAREJIG_screenToWorld, worldToScreen: MAREJIG_worldToScreen,
         placeGroupNaturally: MAREJIG_placeGroupNaturally, placeSegmentAsCompactCluster: MAREJIG_placeSegmentAsCompactCluster, placeRevealedSegmentNearFocus: MAREJIG_placeRevealedSegmentNearFocus,
         focusCameraOnBounds: MAREJIG_focusCameraOnBounds, getMainFocusBounds: MAREJIG_getMainFocusBounds,
