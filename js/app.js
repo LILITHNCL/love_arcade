@@ -129,12 +129,41 @@ window.ECONOMY = ECONOMY;
 // TEMAS
 // =====================================================
 const THEMES = {
-    violet:  { accent: '#9b59ff', name: 'Violeta' },
-    pink:    { accent: '#ff59b4', name: 'Rosa Neón' },
-    cyan:    { accent: '#00d4ff', name: 'Cyan Arcade' },
-    gold:    { accent: '#f59e0b', name: 'Dorado' },
-    crimson: { accent: '#e11d48', name: 'Carmesí Arcade' }
+    red:        { accent: '#FF3B30', name: 'Rojo' },
+    brick:      { accent: '#C0392B', name: 'Ladrillo' },
+    rose:       { accent: '#FF375F', name: 'Rosa Intenso' },
+    magenta:    { accent: '#FF2D92', name: 'Magenta' },
+    orange:     { accent: '#FF9500', name: 'Naranja' },
+    amber_deep: { accent: '#E67E22', name: 'Ámbar Profundo' },
+    yellow:     { accent: '#FFCC00', name: 'Amarillo' },
+    gold_soft:  { accent: '#F4D03F', name: 'Dorado Suave' },
+    lime:       { accent: '#A8E063', name: 'Lima' },
+    green:      { accent: '#30D158', name: 'Verde' },
+    emerald:    { accent: '#2ECC71', name: 'Esmeralda' },
+    teal:       { accent: '#1ABC9C', name: 'Verde Azulado' },
+    ocean:      { accent: '#006689', name: 'Océano' },
+    cyan:       { accent: '#26C6DA', name: 'Cian' },
+    sky:        { accent: '#5AC8FA', name: 'Cielo' },
+    blue:       { accent: '#0A84FF', name: 'Azul' },
+    azure:      { accent: '#2196F3', name: 'Azur' },
+    indigo:     { accent: '#5856D6', name: 'Índigo' },
+    violet:     { accent: '#7C3AED', name: 'Violeta' },
+    purple:     { accent: '#9B59B6', name: 'Púrpura' },
+    sienna:     { accent: '#A0522D', name: 'Siena' },
+    bronze:     { accent: '#8B6914', name: 'Bronce' },
+    graphite:   { accent: '#636366', name: 'Grafito' },
+    slate:      { accent: '#48484A', name: 'Pizarra' },
+    white:      { accent: '#FFFFFF', name: 'Blanco' }
 };
+
+// Convierte selecciones retiradas a la alternativa cromática más cercana.
+// `cyan` y `violet` se conservan como claves para no invalidar selecciones existentes.
+const LEGACY_THEME_FALLBACK = {
+    pink: 'magenta',
+    gold: 'yellow',
+    crimson: 'red'
+};
+
 window.THEMES = THEMES;
 
 // =====================================================
@@ -447,6 +476,12 @@ function migrateState(loadedStore) {
     };
 
     const merged = { ...defaults, ...loadedStore };
+
+    // v14.7 — Migración de los themes retirados a la paleta de 25 opciones.
+    // Mantiene la intención cromática antes de que applyTheme() aplique el fallback visual.
+    if (merged.theme && !THEMES[merged.theme]) {
+        merged.theme = LEGACY_THEME_FALLBACK[merged.theme] || 'violet';
+    }
 
     // Migración: lastDaily (string fecha) → daily.lastClaim (timestamp)
     if (merged.lastDaily && merged.daily.lastClaim === 0) {

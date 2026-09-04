@@ -2204,6 +2204,33 @@ body::before {
     flex-shrink: 0;
     box-shadow: 0 0 8px currentColor;
 }
+
+/* TICKET-02: swatches estáticos; TICKET-08 los derivará de THEMES. */
+.theme-btn[data-theme="red"] .theme-swatch { background: #FF3B30; color: #FF3B30; }
+.theme-btn[data-theme="brick"] .theme-swatch { background: #C0392B; color: #C0392B; }
+.theme-btn[data-theme="rose"] .theme-swatch { background: #FF375F; color: #FF375F; }
+.theme-btn[data-theme="magenta"] .theme-swatch { background: #FF2D92; color: #FF2D92; }
+.theme-btn[data-theme="orange"] .theme-swatch { background: #FF9500; color: #FF9500; }
+.theme-btn[data-theme="amber_deep"] .theme-swatch { background: #E67E22; color: #E67E22; }
+.theme-btn[data-theme="yellow"] .theme-swatch { background: #FFCC00; color: #FFCC00; }
+.theme-btn[data-theme="gold_soft"] .theme-swatch { background: #F4D03F; color: #F4D03F; }
+.theme-btn[data-theme="lime"] .theme-swatch { background: #A8E063; color: #A8E063; }
+.theme-btn[data-theme="green"] .theme-swatch { background: #30D158; color: #30D158; }
+.theme-btn[data-theme="emerald"] .theme-swatch { background: #2ECC71; color: #2ECC71; }
+.theme-btn[data-theme="teal"] .theme-swatch { background: #1ABC9C; color: #1ABC9C; }
+.theme-btn[data-theme="ocean"] .theme-swatch { background: #006689; color: #006689; }
+.theme-btn[data-theme="cyan"] .theme-swatch { background: #26C6DA; color: #26C6DA; }
+.theme-btn[data-theme="sky"] .theme-swatch { background: #5AC8FA; color: #5AC8FA; }
+.theme-btn[data-theme="blue"] .theme-swatch { background: #0A84FF; color: #0A84FF; }
+.theme-btn[data-theme="azure"] .theme-swatch { background: #2196F3; color: #2196F3; }
+.theme-btn[data-theme="indigo"] .theme-swatch { background: #5856D6; color: #5856D6; }
+.theme-btn[data-theme="violet"] .theme-swatch { background: #7C3AED; color: #7C3AED; }
+.theme-btn[data-theme="purple"] .theme-swatch { background: #9B59B6; color: #9B59B6; }
+.theme-btn[data-theme="sienna"] .theme-swatch { background: #A0522D; color: #A0522D; }
+.theme-btn[data-theme="bronze"] .theme-swatch { background: #8B6914; color: #8B6914; }
+.theme-btn[data-theme="graphite"] .theme-swatch { background: #636366; color: #636366; }
+.theme-btn[data-theme="slate"] .theme-swatch { background: #48484A; color: #48484A; }
+.theme-btn[data-theme="white"] .theme-swatch { background: #FFFFFF; color: #FFFFFF; }
 .theme-name { flex: 1; text-align: left; }
 .theme-check { color: var(--accent); opacity: 0; transition: opacity 0.18s; flex-shrink: 0; }
 .theme-btn--active .theme-check { opacity: 1; }
