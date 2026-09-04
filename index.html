@@ -38,31 +38,31 @@
     <script>
     !function(){
       var KEY='gamecenter_v6_promos';
-      // Mapa de temas: [accent, glow] — debe coincidir con THEMES en app.js
+      // Mapa de temas: debe coincidir con THEMES en app.js.
       var T={
-        violet: ['#9b59ff','rgba(155,89,255,0.4)'],
-        pink:   ['#ff59b4','rgba(255,89,180,0.4)'],
-        cyan:   ['#00d4ff','rgba(0,212,255,0.4)'],
-        gold:   ['#f59e0b','rgba(245,158,11,0.4)'],
-        crimson:['#e11d48','rgba(225,29,72,0.4)']
+        violet:'#9b59ff', pink:'#ff59b4', cyan:'#00d4ff', gold:'#f59e0b', crimson:'#e11d48'
       };
+      function deriveThemeRoles(hex){
+        var m=typeof hex==='string'&&hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if(!m) return null;
+        var h=m[1].length===3?m[1].replace(/./g,function(c){return c+c;}):m[1],a='#'+h.toUpperCase(),rgb=[0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16)/255;}),l=rgb.map(function(c){return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}),lum=.2126*l[0]+.7152*l[1]+.0722*l[2];
+        return {accent:a,accentHover:'color-mix(in srgb, '+a+' 82%, #ffffff 18%)',accentDim:'color-mix(in srgb, '+a+' 72%, #0b0d14 28%)',accentSoft:'color-mix(in srgb, '+a+' 28%, #0b0d14 72%)',accentBorder:'color-mix(in srgb, '+a+' 62%, #20263a 38%)',accentGlow:'color-mix(in srgb, '+a+' 34%, #0a0d18 66%)',onAccent:lum>.5?'#0b0d14':'#ffffff'};
+      }
       try {
         var raw=localStorage.getItem(KEY);
         if(!raw) return;
         var theme=JSON.parse(raw).theme;
-        // Violeta es el valor por defecto en :root — no necesita override
-        if(!theme||!T[theme]||theme==='violet') return;
-        var d=document.documentElement,
-            accent=T[theme][0],
-            glow  =T[theme][1];
-        // Sobreescribir las 6 custom properties de acento
-        d.style.setProperty('--accent',        accent);
-        d.style.setProperty('--accent-hover',  accent+'cc');
-        d.style.setProperty('--accent-glow',   glow);
-        d.style.setProperty('--accent-dim',    accent+'99');
-        d.style.setProperty('--accent-soft',   glow.replace(/[\d.]+\)$/,'0.12)'));
-        d.style.setProperty('--accent-border', glow.replace(/[\d.]+\)$/,'0.38)'));
-        // data-theme activa las reglas WCAG de contraste en styles.css
+        if(!theme||!T[theme]) return;
+        var d=document.documentElement,r=deriveThemeRoles(T[theme]);
+        if(!r) return;
+        d.style.setProperty('--accent',        r.accent);
+        d.style.setProperty('--accent-hover',  r.accentHover);
+        d.style.setProperty('--accent-glow',   r.accentGlow);
+        d.style.setProperty('--accent-dim',    r.accentDim);
+        d.style.setProperty('--accent-soft',   r.accentSoft);
+        d.style.setProperty('--accent-border', r.accentBorder);
+        d.style.setProperty('--on-accent',     r.onAccent);
+        // data-theme conserva los hooks de estilo específicos del tema.
         d.setAttribute('data-theme', theme);
       } catch(e) { /* localStorage no disponible — continuar con tema por defecto */ }
     }();
