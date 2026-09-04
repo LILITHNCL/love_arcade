@@ -223,8 +223,8 @@
         if (!group) return;
         group.outlineDirty = true;
         group.groupOutline = null;
-        group.groupOutlinePath = null;
-        group.groupOutlinePathKey = null;
+        group.renderPaths = null;
+        group.renderPathsKey = null;
     }
 
     function MAREJIG_getAdjacencyEdges(scene, pieceId) {
@@ -305,8 +305,10 @@
         target.zIndex = Math.max(Number(target.zIndex) || 0, Number(source.zIndex) || 0);
         target.outlineDirty = true;
         target.groupOutline = null;
-        target.groupOutlinePath = null;
-        target.groupOutlinePathKey = null;
+        target.renderPaths = null;
+        target.renderPathsKey = null;
+        source.renderPaths = null;
+        source.renderPathsKey = null;
         delete groups[sourceGroupId];
         return groups;
     }

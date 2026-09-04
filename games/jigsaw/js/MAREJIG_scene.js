@@ -548,6 +548,7 @@
     function MAREJIG_layoutScene(scene, viewportWidth, viewportHeight) {
         var firstLayout = !scene.viewport.width || !scene.board.width;
         var oldCenter = firstLayout ? null : MAREJIG_screenToWorld(scene, { x: scene.viewport.width / 2, y: scene.viewport.height / 2 });
+        var previousPieceScale = scene.staging.pieceScale;
         var ratio = scene.board.cols / scene.board.rows;
         var portrait = viewportHeight >= viewportWidth;
         var portraitScale = scene.board.cols >= 16 ? 1.45 : 1.35;
@@ -574,6 +575,11 @@
         scene.staging.width = scene.world.width;
         scene.staging.height = scene.world.height;
         scene.staging.pieceScale = Math.max(28, scene.board.cellSize * 0.98);
+        if (previousPieceScale !== scene.staging.pieceScale && MAREJIG_Groups) {
+            Object.keys(scene.groups).forEach(function MAREJIG_invalidateScaledGroup(groupId) {
+                MAREJIG_Groups.invalidateGroupOutline(scene, groupId);
+            });
+        }
         if (firstLayout) MAREJIG_placeInitialSegmentCentered(scene);
         MAREJIG_getVisibleGroups(scene).forEach(function MAREJIG_placeVisibleGroup(group, index) {
             if (!group.positioned) MAREJIG_placeGroupNaturally(scene, group, scene.ui.activeSegmentId + ':' + index + ':' + group.id);
@@ -597,7 +603,7 @@
         if (Number(save.puzzleSeed) && Number(save.puzzleSeed) !== Number(scene.puzzle.seed)) return false;
         var nextGroups = {};
         (save.groups || []).forEach(function MAREJIG_restoreGroup(saved) {
-            nextGroups[saved.groupId] = Object.assign({}, scene.groups[saved.groupId] || {}, saved, { id: saved.groupId, pieceIds: saved.pieceIds.slice(), anchorPieceId: saved.anchorPieceId || saved.pieceIds[0], positioned: true, outlineDirty: true, groupOutline: null });
+            nextGroups[saved.groupId] = Object.assign({}, scene.groups[saved.groupId] || {}, saved, { id: saved.groupId, pieceIds: saved.pieceIds.slice(), anchorPieceId: saved.anchorPieceId || saved.pieceIds[0], positioned: true, outlineDirty: true, groupOutline: null, renderPaths: null, renderPathsKey: null });
         });
         if (!Object.keys(nextGroups).length) return false;
         scene.groups = nextGroups;

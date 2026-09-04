@@ -18,6 +18,20 @@ function fixture(extra={}){ const sandbox=load(files,extra); const level=sandbox
  assert.match(input,/MAREJIG_Scene\.screenToWorld\(scene, screen\)/,'hit testing converts screen coordinates to world coordinates');
 }
 {
+ class FakePath2D { static instances=[]; constructor(){this.commands=[];FakePath2D.instances.push(this);} rect(...args){this.commands.push(['rect',...args]);} moveTo(...args){this.commands.push(['moveTo',...args]);} lineTo(...args){this.commands.push(['lineTo',...args]);} }
+ const queue=[]; const {sandbox,scene}=fixture({Path2D:FakePath2D,requestAnimationFrame(callback){queue.push(callback);return queue.length;},cancelAnimationFrame(){},addEventListener(){},removeEventListener(){}});
+ const gradient={addColorStop(){}}; const context={save(){},restore(){},setTransform(){},clearRect(){},createLinearGradient(){return gradient;},fillRect(){},beginPath(){},arc(){},fill(){},scale(){},translate(){},setLineDash(){},strokeRect(){},stroke(){},clip(){},drawImage(){},moveTo(){},lineTo(){},rect(){},fillText(){}};
+ const canvas={width:0,height:0,clientWidth:390,clientHeight:844,getBoundingClientRect(){return {width:390,height:844};},getContext(){return context;}};
+ vm.runInContext(fs.readFileSync(path.join(jsDir,'MAREJIG_renderer.js'),'utf8'),sandbox,{filename:'MAREJIG_renderer.js'});
+ sandbox.MAREJIG_Renderer.init(canvas); sandbox.MAREJIG_Renderer.setScene(scene); sandbox.MAREJIG_Renderer.render();
+ const firstBuildCount=FakePath2D.instances.length; assert(firstBuildCount>0,'renderer builds local Path2D geometry when supported');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); assert.equal(FakePath2D.instances.length,firstBuildCount,'dirty repaint reuses group paths when topology and scale are unchanged');
+ const [source,target]=Object.values(scene.groups).filter(group=>group.visible); sandbox.MAREJIG_Groups.mergeSceneGroups(scene,source.id,target.id,{dx:0,dy:0}); assert.equal(source.renderPaths,null,'merge releases paths held by the removed group');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); const afterMergeCount=FakePath2D.instances.length; assert.equal(afterMergeCount,firstBuildCount+2,'merge rebuilds cached clip and outline paths for its new topology');
+ sandbox.MAREJIG_Scene.layoutScene(scene,844,390); assert(Object.values(scene.groups).every(group=>group.renderPaths===null),'layout invalidates cached paths when piece scale changes');
+ scene.ui.dirty=true; sandbox.MAREJIG_Renderer.render(); assert(FakePath2D.instances.length>afterMergeCount,'renderer rebuilds paths after scale invalidation');
+}
+{
  const {sandbox,scene}=fixture();
  assert(scene.world.width>=scene.viewport.width*1.8 && scene.world.height>=scene.viewport.height*1.5,'world exceeds viewport recommendations');
  const ids=sandbox.MAREJIG_Scene.getVisiblePieceIds(scene).map(id=>scene.pieces[id].groupId); const positions=ids.map(id=>scene.groups[id]).map(g=>[Math.round(g.x),Math.round(g.y)]);
