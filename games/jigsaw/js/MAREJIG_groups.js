@@ -118,6 +118,20 @@
         return scene;
     }
 
+    function MAREJIG_translateGroupBounds(scene, groupId, dx, dy) {
+        var group = scene && scene.groups ? scene.groups[groupId] : null;
+        if (!group) return null;
+        var offsetX = Number(dx) || 0;
+        var offsetY = Number(dy) || 0;
+        if (!offsetX && !offsetY) return group.bounds;
+        [group.bounds, group.hitBounds].forEach(function MAREJIG_translateBounds(bounds) {
+            if (!bounds) return;
+            bounds.x += offsetX;
+            bounds.y += offsetY;
+        });
+        return group.bounds;
+    }
+
     function MAREJIG_pointInRect(point, rect) {
         return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
     }
@@ -369,6 +383,7 @@
         getPieceWorldRect: MAREJIG_getPieceWorldRect,
         recalculateGroupBounds: MAREJIG_recalculateGroupBounds,
         recalculateAllGroupBounds: MAREJIG_recalculateAllGroupBounds,
+        translateGroupBounds: MAREJIG_translateGroupBounds,
         bringGroupToFront: MAREJIG_bringGroupToFront,
         hitTest: MAREJIG_hitTest,
         getTouchPadding: MAREJIG_getTouchPadding,
