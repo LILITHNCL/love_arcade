@@ -133,6 +133,7 @@ span + .icon,
     --text-tertiary-aa:  #aebbd3;
     --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
 
+    --on-accent:          var(--text-primary-aa);
     --text-on-accent-aa:  var(--text-primary-aa);
     --text-on-warning-aa: #1b1200;
     --text-on-success-aa: #04190b;
@@ -193,6 +194,7 @@ span + .icon,
 
     /* ── Accent (overridden by applyTheme) ── */
     --accent:       var(--accent-500);
+    --accent-hover: var(--accent-400);
     --accent-dim:   rgba(155, 89, 255, 0.55);
     --accent-glow:  var(--accent-glow-aa);
     --accent-soft:  var(--accent-soft-aa);

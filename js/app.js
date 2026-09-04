@@ -129,11 +129,11 @@ window.ECONOMY = ECONOMY;
 // TEMAS
 // =====================================================
 const THEMES = {
-    violet:  { accent: '#9b59ff', glow: 'rgba(155, 89, 255, 0.4)',  name: 'Violeta' },
-    pink:    { accent: '#ff59b4', glow: 'rgba(255, 89, 180, 0.4)',  name: 'Rosa Neón' },
-    cyan:    { accent: '#00d4ff', glow: 'rgba(0, 212, 255, 0.4)',   name: 'Cyan Arcade' },
-    gold:    { accent: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)',  name: 'Dorado' },
-    crimson: { accent: '#e11d48', glow: 'rgba(225, 29, 72, 0.4)',   name: 'Carmesí Arcade' }
+    violet:  { accent: '#9b59ff', name: 'Violeta' },
+    pink:    { accent: '#ff59b4', name: 'Rosa Neón' },
+    cyan:    { accent: '#00d4ff', name: 'Cyan Arcade' },
+    gold:    { accent: '#f59e0b', name: 'Dorado' },
+    crimson: { accent: '#e11d48', name: 'Carmesí Arcade' }
 };
 window.THEMES = THEMES;
 
@@ -1920,17 +1920,55 @@ function applyIdentity() {
     if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
 }
 
+/**
+ * Deriva los roles de color que consumen los componentes del arcade.
+ * Acepta #RGB y #RRGGBB para no depender de concatenaciones de alpha sobre
+ * strings CSS. Los roles de mezcla se resuelven nativamente con color-mix().
+ *
+ * @param {string} hex
+ * @returns {{accent: string, accentHover: string, accentDim: string, accentSoft: string, accentBorder: string, accentGlow: string, onAccent: string}}
+ */
+function deriveThemeRoles(hex) {
+    const match = typeof hex === 'string'
+        && hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!match) throw new TypeError(`Invalid theme accent: ${hex}`);
+
+    const digits = match[1].length === 3
+        ? match[1].split('').map(channel => channel + channel).join('')
+        : match[1];
+    const accent = `#${digits.toUpperCase()}`;
+    const rgb = [0, 2, 4].map(offset => parseInt(digits.slice(offset, offset + 2), 16) / 255);
+    const linear = rgb.map(channel => (
+        channel <= 0.04045
+            ? channel / 12.92
+            : ((channel + 0.055) / 1.055) ** 2.4
+    ));
+    const luminance = (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+
+    return {
+        accent,
+        accentHover:  `color-mix(in srgb, ${accent} 82%, #ffffff 18%)`,
+        accentDim:    `color-mix(in srgb, ${accent} 72%, #0b0d14 28%)`,
+        accentSoft:   `color-mix(in srgb, ${accent} 28%, #0b0d14 72%)`,
+        accentBorder: `color-mix(in srgb, ${accent} 62%, #20263a 38%)`,
+        accentGlow:   `color-mix(in srgb, ${accent} 34%, #0a0d18 66%)`,
+        onAccent: luminance > 0.5 ? '#0b0d14' : '#ffffff'
+    };
+}
+
 function applyTheme(key) {
     const t    = THEMES[key] || THEMES.violet;
     const root = document.documentElement;
+    const roles = deriveThemeRoles(t.accent);
 
     // ── CSS custom properties (retrocompatibilidad con juegos) ────────────────
-    root.style.setProperty('--accent',       t.accent);
-    root.style.setProperty('--accent-hover', t.accent + 'cc');
-    root.style.setProperty('--accent-glow',  t.glow);
-    root.style.setProperty('--accent-dim',    t.accent + '99');
-    root.style.setProperty('--accent-soft',   t.glow.replace(/[\d.]+\)$/, '0.12)'));
-    root.style.setProperty('--accent-border', t.glow.replace(/[\d.]+\)$/, '0.38)'));
+    root.style.setProperty('--accent',        roles.accent);
+    root.style.setProperty('--accent-hover',  roles.accentHover);
+    root.style.setProperty('--accent-glow',   roles.accentGlow);
+    root.style.setProperty('--accent-dim',    roles.accentDim);
+    root.style.setProperty('--accent-soft',   roles.accentSoft);
+    root.style.setProperty('--accent-border', roles.accentBorder);
+    root.style.setProperty('--on-accent',     roles.onAccent);
 
     // ── Clase en <body>: eliminar todas las anteriores y añadir la nueva ──────
     // Este es el mecanismo principal para que CSS pueda usar
