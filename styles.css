@@ -152,6 +152,7 @@ span + .icon,
     --accent-400: color-mix(in srgb, var(--accent-500) 82%, #ffffff 18%);
     --accent-300: #c4b5fd;
     --accent-soft-aa:   color-mix(in srgb, var(--accent) 28%, #0b0d14 72%);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 44%, #0b0d14 56%);
     --accent-border-aa: color-mix(in srgb, var(--accent) 62%, #20263a 38%);
     --accent-glow-aa:   color-mix(in srgb, var(--accent) 34%, #0a0d18 66%);
     --success-500: #22d07a;
@@ -173,6 +174,8 @@ span + .icon,
     --solid-surface-float:   #141620;
     --solid-surface-hi:      #1a1d2e;
     --solid-surface-deep:    var(--surface-1);
+    /* Theme-aware persistent navigation surface; remains deep for white. */
+    --surface-nav: color-mix(in srgb, var(--accent) 8%, #050508 92%);
 
     /* Premium edges — no white/grey outlines; depth comes from tone + shadow. */
     --border-subtle:   transparent;
@@ -642,7 +645,7 @@ body::before {
     padding: 0 18px;
     z-index: 1000;
     /* Solid 3.0: no backdrop-filter, deep solid panel with hard-edge border */
-    background: #0d0e15;
+    background: var(--surface-nav);
     border-bottom: 1px solid var(--border-subtle);
     box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.6);
 }
@@ -761,7 +764,7 @@ body::before {
     width: min(var(--pill-nav-track-max-width), calc(100vw - 32px));
     min-height: var(--pill-nav-height);
     padding: var(--pill-nav-track-inset);
-    background: var(--solid-surface-float);
+    background: var(--surface-nav);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
@@ -786,7 +789,7 @@ body::before {
        the indicator, regardless of the label's length. */
     justify-content: center;
     gap: 6px;
-    /* El indicador usa una mezcla tenue, no una superficie accent sólida. */
+    /* The indicator is stronger than generic accent-soft surfaces. */
     color: var(--text-primary-aa);
 }
 
@@ -798,7 +801,7 @@ body::before {
     width: var(--pill-nav-indicator-width, 0px);
     border: 1px solid var(--accent-border);
     border-radius: var(--radius-lg);
-    background: var(--accent-soft);
+    background: var(--accent-soft-strong);
     box-shadow: 0 0 20px var(--accent-glow);
     opacity: 0;
     pointer-events: none;
