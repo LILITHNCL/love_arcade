@@ -1961,7 +1961,7 @@ function applyIdentity() {
  * strings CSS. Los roles de mezcla se resuelven nativamente con color-mix().
  *
  * @param {string} hex
- * @returns {{accent: string, accentHover: string, accentDim: string, accentSoft: string, accentBorder: string, accentGlow: string, onAccent: string}}
+ * @returns {{accent: string, accentHover: string, accentDim: string, accentSoft: string, accentSoftStrong: string, accentBorder: string, accentGlow: string, surfaceNav: string, onAccent: string}}
  */
 function deriveThemeRoles(hex) {
     const match = typeof hex === 'string'
@@ -1985,8 +1985,14 @@ function deriveThemeRoles(hex) {
         accentHover:  `color-mix(in srgb, ${accent} 82%, #ffffff 18%)`,
         accentDim:    `color-mix(in srgb, ${accent} 72%, #0b0d14 28%)`,
         accentSoft:   `color-mix(in srgb, ${accent} 28%, #0b0d14 72%)`,
+        // Reserved for compact active navigation surfaces. This keeps the
+        // indicator recognisably tied to the selected accent without making
+        // every existing --accent-soft consumer more prominent.
+        accentSoftStrong: `color-mix(in srgb, ${accent} 44%, #0b0d14 56%)`,
         accentBorder: `color-mix(in srgb, ${accent} 62%, #20263a 38%)`,
         accentGlow:   `color-mix(in srgb, ${accent} 34%, #0a0d18 66%)`,
+        // Persistent navigation chrome stays deep even with the white theme.
+        surfaceNav:    `color-mix(in srgb, ${accent} 8%, #050508 92%)`,
         // Mantener el texto claro para la paleta actual; el umbral deja el
         // contraste oscuro reservado para superficies realmente claras (blanco
         // y futuros colores próximos), sin depender de la key del theme.
@@ -2005,7 +2011,9 @@ function applyTheme(key) {
     root.style.setProperty('--accent-glow',   roles.accentGlow);
     root.style.setProperty('--accent-dim',    roles.accentDim);
     root.style.setProperty('--accent-soft',   roles.accentSoft);
+    root.style.setProperty('--accent-soft-strong', roles.accentSoftStrong);
     root.style.setProperty('--accent-border', roles.accentBorder);
+    root.style.setProperty('--surface-nav',   roles.surfaceNav);
     root.style.setProperty('--on-accent',     roles.onAccent);
 
     // ── Clase en <body>: eliminar todas las anteriores y añadir la nueva ──────
