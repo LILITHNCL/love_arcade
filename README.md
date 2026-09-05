@@ -48,6 +48,7 @@ love_arcade/
 ├── js/
 │   ├── app.js          — Motor principal + Sentinel Cloud Sync (Supabase opcional)
 │   ├── shop-logic.js   — Módulo de Tienda (catálogo, compras, sync)
+│   ├── streak-hub.js   — Andamiaje del Daily Streak Hub (API visual y de reclamo)
 │   ├── spa-router.js   — Router SPA con History API
 │   └── sync-worker.js  — Web Worker: Base64 + SHA-256
 ├── api/                — Endpoints serverless de Vercel (proxy/config/reportes)
