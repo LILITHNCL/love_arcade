@@ -57,7 +57,7 @@
  *  - store.nickname (string, max 15 chars): nombre personalizado del usuario.
  *  - store.gender ('o'|'a'|'@'): sufijo del saludo ("Bienvenid@").
  *  - migrateState(): incluye validación silenciosa de ambos campos nuevos.
- *  - applyIdentity(): escribe nickname y sufijo en el DOM de forma síncrona
+ *  - applyIdentity(): escribe el nickname en el DOM de forma síncrona
  *    antes de revealUI(), manteniendo la Zero-Flicker Initiative.
  *  - GameCenter.setIdentity(nickname, gender): guarda y aplica identidad.
  *  - GameCenter.getIdentity(): lectura segura de nickname y gender.
@@ -1942,15 +1942,13 @@ function applyAvatar(scope) {
 }
 
 /**
- * Escribe el nickname y el sufijo de género en el DOM del HUD de forma síncrona.
+ * Escribe el nickname en el DOM del HUD de forma síncrona.
  * Llamada antes de revealUI() para que el usuario nunca vea el estado por defecto.
  * Si el store no tiene nickname, no modifica el DOM (el modal se encargará).
  */
 function applyIdentity() {
-    const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
     const profileNameEl = document.getElementById('profile-title');
-    if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
     if (nicknameEl) nicknameEl.textContent = store.nickname || '';
     if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
 }
@@ -2114,7 +2112,7 @@ function updateDailyButton(scope) {
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
     const labelEl = root.querySelector('#hud-daily-label');
-    if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
+    if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'RECLAMAR RACHA';
 
     const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {

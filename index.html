@@ -309,68 +309,65 @@
              ═══════════════════════════════════════════ -->
         <div id="view-home" class="view-section">
 
-            <!-- ── PLAYER HUD ── -->
+            <!-- ── STREAK HUB ── -->
             <div class="player-hud">
-
-                <div class="hud-top">
-                    <div class="hud-avatar-wrap" aria-hidden="true">
-                        <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
-                            <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
+                <section class="streak-hub" data-streak-state="available" aria-labelledby="streak-hub-title">
+                    <header class="streak-hub-identity">
+                        <div class="hud-avatar-wrap" aria-hidden="true">
+                            <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
+                                <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
+                            </div>
+                            <div class="hud-avatar-ring"></div>
                         </div>
-                        <div class="hud-avatar-ring"></div>
-                    </div>
-                    <div class="hud-info">
-                        <p class="hud-greeting">
-                            Bienvenid<span id="pref-suffix">@</span> de vuelta
-                        </p>
-                        <div class="hud-name-row">
-                            <p class="hud-name" id="display-nickname"></p>
-                            <span id="cloud-sync-indicator" class="hud-cloud-sync-indicator" aria-live="polite" title="Sincronización en la nube">
-                                <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
-                                Nube
-                            </span>
+                        <div class="hud-info">
+                            <div class="hud-name-row">
+                                <p class="hud-name" id="display-nickname"></p>
+                                <span id="cloud-sync-indicator" class="hud-cloud-sync-indicator" aria-live="polite" title="Sincronización en la nube">
+                                    <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
+                                    Nube
+                                </span>
+                            </div>
                         </div>
-                        <p class="hud-status">
-                            <span class="hud-status-dot"></span>
-                            <span>En línea</span>
-                        </p>
-                    </div>
-                </div>
+                    </header>
 
-                <div class="hud-balance-row">
-                    <div class="hud-balance">
-                        <span class="hud-balance-label">Monedas</span>
-                        <div class="hud-balance-amount">
-                            <svg class="icon" width="18" height="18" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-                            <span class="coin-display">0</span>
+                    <div class="streak-hub-main">
+                        <div class="streak-hub-flame" aria-hidden="true">
+                            <svg class="icon" width="42" height="42"><use href="#icon-flame"></use></svg>
+                        </div>
+                        <p class="streak-hub-kicker">Tu racha</p>
+                        <p class="streak-hub-value"><span id="streak-count">0</span> <span>días</span></p>
+                        <p class="streak-hub-status" id="streak-hub-title">Racha activa</p>
+                    </div>
+
+                    <div class="streak-hub-action">
+                        <button id="btn-daily" class="hud-daily-btn" aria-label="Reclamar bono diario" aria-describedby="daily-msg daily-countdown">
+                            <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
+                            <span class="hud-daily-label" id="hud-daily-label">RECLAMAR RACHA</span>
+                            <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
+                            <span class="hud-daily-coin-label">monedas</span>
+                        </button>
+                        <div id="daily-countdown" class="hud-countdown hidden">
+                            Racha asegurada · vuelve en <span id="countdown-display">--:--:--</span>
+                        </div>
+                        <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
+                    </div>
+
+                    <div class="streak-hub-progress">
+                        <div class="streak-hub-progress-heading">
+                            <span>Progreso de racha</span>
+                            <span class="streak-progress-detail">7 días visibles</span>
+                        </div>
+                        <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
+                            <div class="streak-day"></div>
                         </div>
                     </div>
-
-                    <button id="btn-daily" class="hud-daily-btn" aria-label="Reclamar bono diario" aria-describedby="daily-msg daily-countdown">
-                        <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
-                        <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
-                        <span class="hud-daily-label" id="hud-daily-label">BONO DIARIO</span>
-                    </button>
-                </div>
-
-                <div id="daily-countdown" class="hud-countdown hidden">
-                    Próximo bono en: <span id="countdown-display">--:--:--</span>
-                </div>
-                <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
-
-                <div class="hud-streak">
-                    <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
-                    <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                    </div>
-                    <span class="streak-count" id="streak-count">×1</span>
-                </div>
+                </section>
             </div>
 
             <!-- ── GAME CARDS ── -->
@@ -1345,7 +1342,7 @@
                 else if (i === streak && streak < 7) d.classList.add('today');
             });
             const countEl = document.getElementById('streak-count');
-            if (countEl) countEl.textContent = `×${streak}`;
+            if (countEl) countEl.textContent = String(streak);
             const daysEl = document.getElementById('streak-days');
             if (daysEl) daysEl.setAttribute('aria-label', `Racha actual: ${streak} día${streak !== 1 ? 's' : ''} de 7 segmentos visibles`);
 
