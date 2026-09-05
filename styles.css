@@ -1604,6 +1604,36 @@ body::before {
     100% { transform: scale(1); }
 }
 
+/* Partículas efímeras del reclamo; se destruyen al terminar coinFly. */
+.streak-coin-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 5;
+}
+.streak-coin-burst .coin {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff3c4, #fbbf24 60%, #b8790a 100%);
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.7);
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    animation: coinFly 700ms cubic-bezier(.2, .8, .2, 1) forwards;
+}
+@keyframes coinFly {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    15%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--coin-x, 0px)), calc(-50% + var(--coin-y, -160px))) scale(1) rotate(220deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .streak-coin-burst .coin { animation-duration: 260ms; }
+}
+
 .streak-hub-copy {
     display: flex;
     align-items: center;
