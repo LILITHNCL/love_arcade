@@ -2548,6 +2548,12 @@ document.addEventListener('DOMContentLoaded', () => {
             //  o dejarlo desactivado con el contador si fue exitoso).
             updateDailyButton();
             window.StreakHub?.playClaimSequence?.(result);
+
+            // Mostrar de inmediato los hitos desbloqueados por este reclamo.
+            // El retraso deja que termine primero el feedback visual del claim.
+            if (result.success) {
+                setTimeout(() => { showStreakMilestoneModal(); }, 600);
+            }
         });
     }
 
