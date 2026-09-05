@@ -256,7 +256,6 @@ Gestionan hitos de racha reclamados una sola vez.
 
 En `index.html`, la vista de inicio incluye:
 
-- saldo de monedas;
 - botón `#btn-daily`;
 - icono de regalo;
 - monto `#hud-reward-amount`;
@@ -265,6 +264,8 @@ En `index.html`, la vista de inicio incluye:
 - mensaje `#daily-msg`;
 - barra `#streak-days` con 7 segmentos;
 - contador `#streak-count`.
+
+El HUD ya no muestra el saludo con sufijo de género (`#pref-suffix`), el indicador fijo "En línea" ni un segundo saldo de monedas. El saludo competía con la jerarquía de la racha, el indicador no estaba conectado a un estado real de conectividad y el saldo duplicaba el contador de la navbar. El nickname (`#display-nickname`) y el indicador de sincronización cloud (`#cloud-sync-indicator`) se conservan para la identidad y el estado de sincronización reales.
 
 ### 9.2 Estados del botón
 
