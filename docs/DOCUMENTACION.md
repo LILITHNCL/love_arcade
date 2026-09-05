@@ -4600,7 +4600,11 @@ Las animaciones en bucle se restringen a `transform` y `opacity` en capas aislad
 
 `#streak-count-big` usa `var(--font-display)`, peso 900 y cifras tabulares para que los cambios de dígito no alteren el ancho de la composición. El estado del fuego controla el tratamiento del número con selectores de hermanos adyacentes: dorado/naranja cuando está disponible, plata cuando la racha ya se reclamó y gris cuando aún está bloqueada. Esto evita una segunda fuente de estado en JavaScript. La barra existente `#streak-days` conserva sus siete segmentos y se presenta como micro-progreso semanal debajo del CTA; el countdown usa `var(--font-mono)` para priorizar la legibilidad temporal.
 
-La futura secuencia de reclamo puede aplicar temporalmente `.is-bumping` al número para un pulso único de escala. La animación no se ejecuta por sí sola y, por tanto, no añade trabajo continuo en reposo.
+### Secuencia de reclamo
+
+Tras un `GameCenter.claimDaily()` exitoso, el listener existente de `#btn-daily` conserva toda su lógica de negocio y llama a `window.StreakHub.playClaimSequence(result)`. La secuencia fija temporalmente el fuego en `claiming` durante 480 ms; después refresca el estado final `claimed`, aplica `.is-bumping` una vez a `#streak-count-big` y crea ocho monedas decorativas dentro de `#streak-coin-burst`.
+
+Cada moneda usa únicamente `transform` y `opacity` durante `coinFly`, se elimina al recibir `animationend` y se acorta a 260 ms bajo `prefers-reduced-motion: reduce`. El burst no se genera si el reclamo no tuvo éxito. El contenedor permanece con `aria-hidden="true"`: el resultado sigue comunicándose mediante `#daily-msg` y su región `role="status"`. La llamada opcional a `playClaimAudio()` queda preparada para el ticket de audio y la vibración se limita a dispositivos que la permiten dentro de una activación de usuario.
 
 ---
 ## Actualización de rendimiento de Tienda (abril 2026)

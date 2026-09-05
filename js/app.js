@@ -2547,6 +2547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // (puede habilitarlo si el reclamo falló por error recuperable,
             //  o dejarlo desactivado con el contador si fue exitoso).
             updateDailyButton();
+            window.StreakHub?.playClaimSequence?.(result);
         });
     }
 
