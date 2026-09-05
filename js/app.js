@@ -129,12 +129,41 @@ window.ECONOMY = ECONOMY;
 // TEMAS
 // =====================================================
 const THEMES = {
-    violet:  { accent: '#9b59ff', glow: 'rgba(155, 89, 255, 0.4)',  name: 'Violeta' },
-    pink:    { accent: '#ff59b4', glow: 'rgba(255, 89, 180, 0.4)',  name: 'Rosa Neón' },
-    cyan:    { accent: '#00d4ff', glow: 'rgba(0, 212, 255, 0.4)',   name: 'Cyan Arcade' },
-    gold:    { accent: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)',  name: 'Dorado' },
-    crimson: { accent: '#e11d48', glow: 'rgba(225, 29, 72, 0.4)',   name: 'Carmesí Arcade' }
+    red:        { accent: '#FF3B30', name: 'Rojo' },
+    brick:      { accent: '#C0392B', name: 'Ladrillo' },
+    rose:       { accent: '#FF375F', name: 'Rosa Intenso' },
+    magenta:    { accent: '#FF2D92', name: 'Magenta' },
+    orange:     { accent: '#FF9500', name: 'Naranja' },
+    amber_deep: { accent: '#E67E22', name: 'Ámbar Profundo' },
+    yellow:     { accent: '#FFCC00', name: 'Amarillo' },
+    gold_soft:  { accent: '#F4D03F', name: 'Dorado Suave' },
+    lime:       { accent: '#A8E063', name: 'Lima' },
+    green:      { accent: '#30D158', name: 'Verde' },
+    emerald:    { accent: '#2ECC71', name: 'Esmeralda' },
+    teal:       { accent: '#1ABC9C', name: 'Verde Azulado' },
+    ocean:      { accent: '#006689', name: 'Océano' },
+    cyan:       { accent: '#26C6DA', name: 'Cian' },
+    sky:        { accent: '#5AC8FA', name: 'Cielo' },
+    blue:       { accent: '#0A84FF', name: 'Azul' },
+    azure:      { accent: '#2196F3', name: 'Azur' },
+    indigo:     { accent: '#5856D6', name: 'Índigo' },
+    violet:     { accent: '#7C3AED', name: 'Violeta' },
+    purple:     { accent: '#9B59B6', name: 'Púrpura' },
+    sienna:     { accent: '#A0522D', name: 'Siena' },
+    bronze:     { accent: '#8B6914', name: 'Bronce' },
+    graphite:   { accent: '#636366', name: 'Grafito' },
+    slate:      { accent: '#48484A', name: 'Pizarra' },
+    white:      { accent: '#FFFFFF', name: 'Blanco' }
 };
+
+// Convierte selecciones retiradas a la alternativa cromática más cercana.
+// `cyan` y `violet` se conservan como claves para no invalidar selecciones existentes.
+const LEGACY_THEME_FALLBACK = {
+    pink: 'magenta',
+    gold: 'yellow',
+    crimson: 'red'
+};
+
 window.THEMES = THEMES;
 
 // =====================================================
@@ -447,6 +476,12 @@ function migrateState(loadedStore) {
     };
 
     const merged = { ...defaults, ...loadedStore };
+
+    // v14.7 — Migración de los themes retirados a la paleta de 25 opciones.
+    // Mantiene la intención cromática antes de que applyTheme() aplique el fallback visual.
+    if (merged.theme && !THEMES[merged.theme]) {
+        merged.theme = LEGACY_THEME_FALLBACK[merged.theme] || 'violet';
+    }
 
     // Migración: lastDaily (string fecha) → daily.lastClaim (timestamp)
     if (merged.lastDaily && merged.daily.lastClaim === 0) {
@@ -1920,17 +1955,107 @@ function applyIdentity() {
     if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
 }
 
+/**
+ * Deriva los roles de color que consumen los componentes del arcade.
+ * Acepta #RGB y #RRGGBB para no depender de concatenaciones de alpha sobre
+ * strings CSS. Los roles de mezcla se resuelven nativamente con color-mix().
+ *
+ * @param {string} hex
+ * @returns {{accent: string, accentHover: string, accentDim: string, accentSoft: string, accentSoftStrong: string, accentBorder: string, accentGlow: string, surfaceNav: string, onAccent: string}}
+ */
+function deriveThemeRoles(hex) {
+    const match = typeof hex === 'string'
+        && hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!match) throw new TypeError(`Invalid theme accent: ${hex}`);
+
+    const digits = match[1].length === 3
+        ? match[1].split('').map(channel => channel + channel).join('')
+        : match[1];
+    const accent = `#${digits.toUpperCase()}`;
+    const rgb = [0, 2, 4].map(offset => parseInt(digits.slice(offset, offset + 2), 16) / 255);
+    const linear = rgb.map(channel => (
+        channel <= 0.04045
+            ? channel / 12.92
+            : ((channel + 0.055) / 1.055) ** 2.4
+    ));
+    const luminance = (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+
+    return {
+        accent,
+        accentHover:  `color-mix(in srgb, ${accent} 82%, #ffffff 18%)`,
+        accentDim:    `color-mix(in srgb, ${accent} 72%, #0b0d14 28%)`,
+        accentSoft:   `color-mix(in srgb, ${accent} 28%, #0b0d14 72%)`,
+        // Reserved for compact active navigation surfaces. This keeps the
+        // indicator recognisably tied to the selected accent without making
+        // every existing --accent-soft consumer more prominent.
+        accentSoftStrong: `color-mix(in srgb, ${accent} 44%, #0b0d14 56%)`,
+        accentBorder: `color-mix(in srgb, ${accent} 62%, #20263a 38%)`,
+        accentGlow:   `color-mix(in srgb, ${accent} 34%, #0a0d18 66%)`,
+        // Persistent navigation chrome stays deep even with the white theme.
+        surfaceNav:    `color-mix(in srgb, ${accent} 8%, #050508 92%)`,
+        // Mantener el texto claro para la paleta actual; el umbral deja el
+        // contraste oscuro reservado para superficies realmente claras (blanco
+        // y futuros colores próximos), sin depender de la key del theme.
+        onAccent: luminance > 0.7 ? '#0b0d14' : '#ffffff'
+    };
+}
+
+/**
+ * Construye el selector de temas desde la única fuente de verdad pública.
+ * Los valores de color solo se escriben en el DOM a partir de THEMES, por lo
+ * que añadir o ajustar un tema no requiere mantener HTML o CSS en paralelo.
+ */
+function renderThemeGrid() {
+    const grid = document.getElementById('theme-grid');
+    if (!grid) return;
+
+    const fragment = document.createDocumentFragment();
+    Object.entries(window.THEMES).forEach(([key, theme]) => {
+        const button = document.createElement('button');
+        button.className = 'theme-btn';
+        button.type = 'button';
+        button.dataset.theme = key;
+        button.setAttribute('aria-pressed', 'false');
+
+        const swatch = document.createElement('span');
+        swatch.className = 'theme-swatch';
+        swatch.style.setProperty('--theme-swatch-color', theme.accent);
+
+        const name = document.createElement('span');
+        name.className = 'theme-name';
+        name.textContent = theme.name;
+
+        const check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        check.classList.add('icon', 'theme-check');
+        check.setAttribute('width', '12');
+        check.setAttribute('height', '12');
+        check.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '#icon-check');
+        check.append(use);
+
+        button.append(swatch, name, check);
+        fragment.append(button);
+    });
+
+    grid.replaceChildren(fragment);
+}
+
 function applyTheme(key) {
     const t    = THEMES[key] || THEMES.violet;
     const root = document.documentElement;
+    const roles = deriveThemeRoles(t.accent);
 
     // ── CSS custom properties (retrocompatibilidad con juegos) ────────────────
-    root.style.setProperty('--accent',       t.accent);
-    root.style.setProperty('--accent-hover', t.accent + 'cc');
-    root.style.setProperty('--accent-glow',  t.glow);
-    root.style.setProperty('--accent-dim',    t.accent + '99');
-    root.style.setProperty('--accent-soft',   t.glow.replace(/[\d.]+\)$/, '0.12)'));
-    root.style.setProperty('--accent-border', t.glow.replace(/[\d.]+\)$/, '0.38)'));
+    root.style.setProperty('--accent',        roles.accent);
+    root.style.setProperty('--accent-hover',  roles.accentHover);
+    root.style.setProperty('--accent-glow',   roles.accentGlow);
+    root.style.setProperty('--accent-dim',    roles.accentDim);
+    root.style.setProperty('--accent-soft',   roles.accentSoft);
+    root.style.setProperty('--accent-soft-strong', roles.accentSoftStrong);
+    root.style.setProperty('--accent-border', roles.accentBorder);
+    root.style.setProperty('--surface-nav',   roles.surfaceNav);
+    root.style.setProperty('--on-accent',     roles.onAccent);
 
     // ── Clase en <body>: eliminar todas las anteriores y añadir la nueva ──────
     // Este es el mecanismo principal para que CSS pueda usar
@@ -2252,6 +2377,7 @@ window.revealUI = revealUI;
 // 1. TEMA — elimina el "salto violeta" para cualquier usuario con otro tema.
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
+renderThemeGrid();
 applyTheme(store.theme || 'violet');
 
 if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
@@ -2429,10 +2555,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // shop-logic.js eliminó su propio listener durante la migración SPA; este es
     // el único registro. setTheme() actualiza el store, los CSS vars, la clase
     // theme-{key} en <body> y el estado visual de todos los .theme-btn.
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (window.GameCenter) window.GameCenter.setTheme(btn.dataset.theme);
-        });
+    document.getElementById('theme-grid')?.addEventListener('click', (event) => {
+        const button = event.target.closest('.theme-btn');
+        if (button && window.GameCenter) {
+            window.GameCenter.setTheme(button.dataset.theme);
+        }
     });
 
     // NOTA: El listener de #btn-moon-blessing fue eliminado en v9.x (SPA Migration).

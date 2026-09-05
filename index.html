@@ -38,31 +38,34 @@
     <script>
     !function(){
       var KEY='gamecenter_v6_promos';
-      // Mapa de temas: [accent, glow] — debe coincidir con THEMES en app.js
+      // Mapa de temas: debe coincidir con THEMES en app.js.
       var T={
-        violet: ['#9b59ff','rgba(155,89,255,0.4)'],
-        pink:   ['#ff59b4','rgba(255,89,180,0.4)'],
-        cyan:   ['#00d4ff','rgba(0,212,255,0.4)'],
-        gold:   ['#f59e0b','rgba(245,158,11,0.4)'],
-        crimson:['#e11d48','rgba(225,29,72,0.4)']
+        red:'#FF3B30',brick:'#C0392B',rose:'#FF375F',magenta:'#FF2D92',orange:'#FF9500',amber_deep:'#E67E22',yellow:'#FFCC00',gold_soft:'#F4D03F',lime:'#A8E063',green:'#30D158',emerald:'#2ECC71',teal:'#1ABC9C',ocean:'#006689',cyan:'#26C6DA',sky:'#5AC8FA',blue:'#0A84FF',azure:'#2196F3',indigo:'#5856D6',violet:'#7C3AED',purple:'#9B59B6',sienna:'#A0522D',bronze:'#8B6914',graphite:'#636366',slate:'#48484A',white:'#FFFFFF'
       };
+      function deriveThemeRoles(hex){
+        var m=typeof hex==='string'&&hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if(!m) return null;
+        var h=m[1].length===3?m[1].replace(/./g,function(c){return c+c;}):m[1],a='#'+h.toUpperCase(),rgb=[0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16)/255;}),l=rgb.map(function(c){return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}),lum=.2126*l[0]+.7152*l[1]+.0722*l[2];
+        return {accent:a,accentHover:'color-mix(in srgb, '+a+' 82%, #ffffff 18%)',accentDim:'color-mix(in srgb, '+a+' 72%, #0b0d14 28%)',accentSoft:'color-mix(in srgb, '+a+' 28%, #0b0d14 72%)',accentSoftStrong:'color-mix(in srgb, '+a+' 44%, #0b0d14 56%)',accentBorder:'color-mix(in srgb, '+a+' 62%, #20263a 38%)',accentGlow:'color-mix(in srgb, '+a+' 34%, #0a0d18 66%)',surfaceNav:'color-mix(in srgb, '+a+' 8%, #050508 92%)',onAccent:lum>.7?'#0b0d14':'#ffffff'};
+      }
       try {
         var raw=localStorage.getItem(KEY);
         if(!raw) return;
         var theme=JSON.parse(raw).theme;
-        // Violeta es el valor por defecto en :root — no necesita override
+        // Violeta coincide exactamente con los roles base de :root; no sobreescribir.
         if(!theme||!T[theme]||theme==='violet') return;
-        var d=document.documentElement,
-            accent=T[theme][0],
-            glow  =T[theme][1];
-        // Sobreescribir las 6 custom properties de acento
-        d.style.setProperty('--accent',        accent);
-        d.style.setProperty('--accent-hover',  accent+'cc');
-        d.style.setProperty('--accent-glow',   glow);
-        d.style.setProperty('--accent-dim',    accent+'99');
-        d.style.setProperty('--accent-soft',   glow.replace(/[\d.]+\)$/,'0.12)'));
-        d.style.setProperty('--accent-border', glow.replace(/[\d.]+\)$/,'0.38)'));
-        // data-theme activa las reglas WCAG de contraste en styles.css
+        var d=document.documentElement,r=deriveThemeRoles(T[theme]);
+        if(!r) return;
+        d.style.setProperty('--accent',        r.accent);
+        d.style.setProperty('--accent-hover',  r.accentHover);
+        d.style.setProperty('--accent-glow',   r.accentGlow);
+        d.style.setProperty('--accent-dim',    r.accentDim);
+        d.style.setProperty('--accent-soft',   r.accentSoft);
+        d.style.setProperty('--accent-soft-strong', r.accentSoftStrong);
+        d.style.setProperty('--accent-border', r.accentBorder);
+        d.style.setProperty('--surface-nav',   r.surfaceNav);
+        d.style.setProperty('--on-accent',     r.onAccent);
+        // data-theme conserva los hooks de estilo específicos del tema.
         d.setAttribute('data-theme', theme);
       } catch(e) { /* localStorage no disponible — continuar con tema por defecto */ }
     }();
@@ -700,29 +703,29 @@
                 </div>
 
                 <div class="profile-action-grid" aria-label="Opciones de perfil">
-                    <button class="profile-action-card" type="button" data-profile-target="sync">
-                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Sincronización</span><span class="profile-action-card__desc">Guarda tu progreso y llévalo contigo.</span></span>
-                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
-                    </button>
-                    <button class="profile-action-card" type="button" data-profile-target="notifications">
-                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-bell"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Recibe avisos cuando haya recompensas o novedades.</span></span>
-                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
-                    </button>
                     <button class="profile-action-card" type="button" data-profile-target="personalization">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-palette"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Personalización</span><span class="profile-action-card__desc">Elige cómo quieres que se vea tu página.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Personalización</span><span class="profile-action-card__desc">Cambia el tema de la app.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                     <button class="profile-action-card" type="button" data-profile-target="upgrades">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-moon"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Mejoras</span><span class="profile-action-card__desc">Activa extras especiales para tu experiencia.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Mejoras</span><span class="profile-action-card__desc">Desbloquea extras y mejoras.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                     <button class="profile-action-card" type="button" data-profile-target="history">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-scroll-text"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Historial</span><span class="profile-action-card__desc">Revisa tus monedas, compras y recompensas.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Historial</span><span class="profile-action-card__desc">Monedas, compras y recompensas.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="sync">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Sincronización</span><span class="profile-action-card__desc">Copias de seguridad</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="notifications">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-bell"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Novedades y avisos importantes.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                 </div>
@@ -735,15 +738,9 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Progreso seguro</p>
                         <h2 class="section-title">Sincronización</h2>
                         <p class="section-subtitle">Guarda tu avance y llévalo contigo.</p>
                     </div>
-                </div>
-
-                <div class="profile-info-strip">
-                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Respaldo protegido</span>
-                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Recuperación segura</span>
                 </div>
 
                 <div class="memory-card">
@@ -788,7 +785,7 @@
                 </div>
 
                 <!-- ── NUBE: Sentinel Cloud Sync v14.0 ── -->
-                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35); margin-top:8px;">
+                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35);">
                     <div class="memory-card__header">
                         <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(99,179,237,0.25),rgba(66,153,225,0.15)); border:1px solid rgba(99,179,237,0.4);">
                             <svg class="icon" width="18" height="18" aria-hidden="true" style="color:#63b3ed;"><use href="#icon-download-cloud"></use></svg>
@@ -828,9 +825,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Avisos útiles</p>
                         <h2 class="section-title">Notificaciones</h2>
-                        <p class="section-subtitle">Elige si quieres recibir recordatorios importantes.</p>
                     </div>
                 </div>
                 <div class="profile-screen-card" id="push-notifications-card">
@@ -874,14 +869,12 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Tu estilo</p>
                         <h2 class="section-title">Personalización</h2>
-                        <p class="section-subtitle">Elige el color que combine con tu página.</p>
                     </div>
                 </div>
 
                 <!-- Tema de color -->
-                <div class="glass-panel settings-card" style="margin-bottom:1rem;">
+                <div class="glass-panel settings-card">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.1rem;">
                         <div class="promo-icon-wrap">
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-palette"></use></svg>
@@ -891,33 +884,7 @@
                             <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Este color se aplicará a la interfaz principal.</p>
                         </div>
                     </div>
-                    <div class="theme-grid">
-                        <button class="theme-btn" data-theme="violet">
-                            <span class="theme-swatch" style="background:#9b59ff;"></span>
-                            <span class="theme-name">Violeta</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="pink">
-                            <span class="theme-swatch" style="background:#ff59b4;"></span>
-                            <span class="theme-name">Rosa Neón</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="cyan">
-                            <span class="theme-swatch" style="background:#00d4ff;"></span>
-                            <span class="theme-name">Cyan Arcade</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="gold">
-                            <span class="theme-swatch" style="background:#f59e0b;"></span>
-                            <span class="theme-name">Dorado</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="crimson">
-                            <span class="theme-swatch" style="background:#e11d48;"></span>
-                            <span class="theme-name">Carmesí</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                    </div>
+                    <div class="theme-grid" id="theme-grid"></div>
                 </div>
 
             </section>
@@ -928,9 +895,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Detalles especiales</p>
                         <h2 class="section-title">Mejoras</h2>
-                        <p class="section-subtitle">Activa extras para darle más brillo a tu experiencia.</p>
                     </div>
                 </div>
                 <!-- Bendición Lunar -->
@@ -986,9 +951,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Tus movimientos</p>
                         <h2 class="section-title">Historial</h2>
-                        <p class="section-subtitle">Revisa tus monedas, compras y recompensas.</p>
                     </div>
                 </div>
                 <!-- Movimientos de monedas -->
