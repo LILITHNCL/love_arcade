@@ -36,6 +36,7 @@
 2ae. [Novedades en v14.0 — Gatekeeper Security & UX Refactor](#2ae-novedades-en-v140--gatekeeper-security--ux-refactor)
 2af. [Novedades en v14.1 — Gestión robusta de cuota localStorage y avatares](#2af-novedades-en-v141--gestión-robusta-de-cuota-localstorage-y-avatares)
 2ag. [Novedades en v14.2 — Floating Pill Navigation](#2ag-novedades-en-v142--floating-pill-navigation)
+2ah. [Daily Streak Hub: Fire Widget](#2ah--daily-streak-hub-fire-widget)
 3. [Arquitectura del Proyecto](#3-arquitectura-del-proyecto)
 4. [Estructura de Archivos](#4-estructura-de-archivos)
 5. [app.js — El Motor](#5-appjs--el-motor)
@@ -4578,6 +4579,22 @@ No se debe crear una segunda barra de navegación ni gestionar manualmente `.act
 | `sw.js` | Modificado | Cache-busting del app shell tras los cambios de navegación. |
 | `README.md` | Modificado | Versión de producto actualizada para reflejar la navegación flotante. |
 | `docs/DOCUMENTACION.md` | Modificado | Sección §2ag, índice, changelog, contrato de mantenimiento y resumen de archivos. |
+
+---
+
+## 2ah — Daily Streak Hub: Fire Widget
+
+El widget de fuego del Daily Streak Hub usa el SVG inline de `index.html` y CSS nativo; no incorpora Canvas, librerías ni nodos generados en tiempo de ejecución. El SVG se compone de tres capas independientes (`.flame-layer--back`, `--mid` y `--core`), un halo `.streak-flame__glow` y seis partículas `.spark` escalonadas.
+
+| Estado de `data-state` | Tratamiento visual |
+|---|---|
+| `locked` | Llama gris y atenuada, halo casi imperceptible y sin chispas. |
+| `available` | Llama vívida, halo intenso pulsante y seis chispas ascendentes. |
+| `claimed` | Llama aún visible, desaturada y más lenta; sin chispas. |
+| `repair` | Tono ámbar suave que solicita atención sin recurrir a una alerta agresiva; sin chispas. |
+| `claiming` | Pausa el vaivén y ejecuta un burst puntual de 480 ms antes de que la futura sincronización de estado restaure el estado final. |
+
+Las animaciones en bucle se restringen a `transform` y `opacity` en capas aisladas. El desenfoque del halo permanece estático, baja de 18 px a 10 px para `pointer: coarse` y no se ejecutan animaciones bajo `prefers-reduced-motion: reduce`; así la llama conserva su significado visual sin movimiento continuo. El SVG es decorativo y permanece oculto a tecnologías asistenciales con `aria-hidden="true"`; la información de la racha vive en los elementos de texto adyacentes.
 
 ---
 ## Actualización de rendimiento de Tienda (abril 2026)

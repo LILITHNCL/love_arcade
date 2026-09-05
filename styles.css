@@ -1353,6 +1353,202 @@ body::before {
 }
 
 /* ================================================================
+   DAILY STREAK HUB — Fire Widget
+   GPU-only: transform + opacity en bucle. filter:blur() estático
+   (nunca se recalcula por frame, solo se anima opacity/scale del
+   elemento que lo contiene). Sigue el mismo patrón que
+   .hud-avatar-ring (powerRingRotate) y .mockup-bg-offline::before
+   (neonFlowDrift) ya existentes en este archivo.
+   ================================================================ */
+
+.hub-identity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.hub-identity-row__avatar { position: relative; flex-shrink: 0; }
+.hub-identity-row .hud-avatar { width: 32px; height: 32px; }
+.hub-identity-row .hud-avatar svg { width: 14px; height: 14px; }
+.hub-identity-row__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-secondary-aa);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hub-identity-row__name span { color: var(--text-high); }
+
+.streak-hub-cta {
+    all: unset;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 8px 8px 4px;
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    transition: transform 160ms cubic-bezier(.22,1,.36,1);
+}
+@media (hover: hover) and (pointer: fine) {
+    .streak-hub-cta:hover { transform: translateY(-2px); }
+}
+.streak-hub-cta:active { transform: scale(0.98); }
+.streak-hub-cta:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-aa) 78%, transparent);
+}
+.streak-hub-cta:disabled { cursor: not-allowed; }
+
+.streak-flame {
+    position: relative;
+    width: 108px;
+    height: 144px;
+    contain: layout paint;
+    transform: translateZ(0);
+    margin-bottom: 2px;
+}
+
+.streak-flame__glow {
+    position: absolute;
+    inset: -30%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,138,30,0.55) 0%, rgba(255,90,20,0.18) 45%, transparent 72%);
+    filter: blur(18px);
+    opacity: var(--flame-glow-opacity, 0.15);
+    animation: flameGlowPulse 2.6s ease-in-out infinite;
+    will-change: opacity, transform;
+    pointer-events: none;
+}
+@keyframes flameGlowPulse {
+    0%, 100% { opacity: calc(var(--flame-glow-opacity, 0.15) * 0.8); transform: scale(1); }
+    50%      { opacity: var(--flame-glow-opacity, 0.15); transform: scale(1.06); }
+}
+
+.streak-flame__svg { position: relative; z-index: 1; display: block; width: 100%; height: 100%; }
+
+.flame-layer {
+    transform-origin: 60px 150px;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+.flame-layer--back { animation-name: flameSwayBack; animation-duration: 3.4s; }
+.flame-layer--mid  { animation-name: flameSwayMid;  animation-duration: 2.6s; animation-delay: -0.6s; }
+.flame-layer--core { animation-name: flameSwayCore; animation-duration: 1.9s; animation-delay: -1.1s; }
+
+@keyframes flameSwayBack {
+    0%   { transform: scaleY(1)    scaleX(1)    skewX(0deg); }
+    25%  { transform: scaleY(1.04) scaleX(0.98) skewX(-1.5deg); }
+    50%  { transform: scaleY(0.97) scaleX(1.02) skewX(1deg); }
+    75%  { transform: scaleY(1.03) scaleX(0.99) skewX(-0.8deg); }
+    100% { transform: scaleY(1)    scaleX(1)    skewX(0deg); }
+}
+@keyframes flameSwayMid {
+    0%   { transform: scaleY(1)    skewX(0deg); }
+    30%  { transform: scaleY(1.06) skewX(2deg); }
+    60%  { transform: scaleY(0.95) skewX(-1.5deg); }
+    100% { transform: scaleY(1)    skewX(0deg); }
+}
+@keyframes flameSwayCore {
+    0%   { transform: scaleY(1)    scaleX(1); }
+    40%  { transform: scaleY(1.08) scaleX(0.94); }
+    70%  { transform: scaleY(0.93) scaleX(1.05); }
+    100% { transform: scaleY(1)    scaleX(1); }
+}
+
+.streak-flame__sparks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.spark {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #ffcf5c;
+    box-shadow: 0 0 6px 1px rgba(255,180,60,0.8);
+    opacity: 0;
+    animation: sparkRise 2.8s ease-in infinite;
+}
+.spark--1 { left: 46%; --spark-drift: 8px;  animation-delay: 0s; }
+.spark--2 { left: 58%; --spark-drift: -14px; animation-delay: .5s; }
+.spark--3 { left: 40%; --spark-drift: 4px;  animation-delay: 1.1s; }
+.spark--4 { left: 63%; --spark-drift: -6px; animation-delay: 1.6s; }
+.spark--5 { left: 50%; --spark-drift: 10px; animation-delay: 2.0s; }
+.spark--6 { left: 52%; --spark-drift: -10px; animation-delay: .9s; }
+
+@keyframes sparkRise {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.6); }
+    10%  { opacity: 1; }
+    70%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translate(var(--spark-drift, 6px), -78px) scale(0.2); }
+}
+
+/* ── Estado: locked (nunca reclamado / streak 0) ── */
+.streak-flame[data-state="locked"] {
+    --flame-glow-opacity: 0.10;
+    filter: grayscale(0.55) brightness(0.62);
+}
+.streak-flame[data-state="locked"] .streak-flame__sparks,
+.streak-flame[data-state="claimed"] .streak-flame__sparks {
+    display: none;
+}
+
+/* ── Estado: available (listo para reclamar) — el más intenso ── */
+.streak-flame[data-state="available"] {
+    --flame-glow-opacity: 0.55;
+}
+
+/* ── Estado: claimed (ya reclamado hoy) — vivo pero calmado ── */
+.streak-flame[data-state="claimed"] {
+    --flame-glow-opacity: 0.22;
+    filter: saturate(0.72) brightness(0.88);
+}
+.streak-flame[data-state="claimed"] .flame-layer--back { animation-duration: 4.6s; }
+.streak-flame[data-state="claimed"] .flame-layer--mid  { animation-duration: 3.6s; }
+.streak-flame[data-state="claimed"] .flame-layer--core { animation-duration: 2.8s; }
+
+/* ── Estado: repair (racha en riesgo, recuperable) — ámbar de alerta suave ── */
+.streak-flame[data-state="repair"] {
+    --flame-glow-opacity: 0.30;
+    filter: hue-rotate(-14deg) saturate(0.85);
+}
+.streak-flame[data-state="repair"] .streak-flame__sparks { display: none; }
+
+/* ── Estado: claiming (burst momentáneo) ── */
+.streak-flame[data-state="claiming"] .flame-layer { animation-play-state: paused; }
+.streak-flame[data-state="claiming"] .streak-flame__svg {
+    animation: flameBurst 480ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes flameBurst {
+    0%   { transform: scale(1);    filter: brightness(1); }
+    40%  { transform: scale(1.18); filter: brightness(1.55); }
+    100% { transform: scale(1.02); filter: brightness(1.05); }
+}
+
+/* ── Reducción en dispositivos táctiles (mismo patrón que el resto del proyecto) ── */
+@media (pointer: coarse) {
+    .streak-flame__glow { filter: blur(10px); }
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .streak-flame .flame-layer,
+    .streak-flame__glow,
+    .spark,
+    .streak-flame__svg {
+        animation: none !important;
+    }
+    .streak-flame[data-state="available"] .streak-flame__glow { opacity: 0.5; }
+    .streak-flame[data-state="claimed"] .streak-flame__glow  { opacity: 0.2; }
+}
+
+/* ================================================================
    GAME CARDS — Mobile-first 5:7 hub tiles
    ================================================================ */
 .games-grid {
