@@ -277,7 +277,23 @@ El HUD ya no muestra el saludo con sufijo de género (`#pref-suffix`), el indica
 
 Cuando la Bendición Lunar está activa, el monto visible del botón suma `info.nextReward + 90`.
 
-### 9.3 Cuenta regresiva
+La etiqueta fija `#hud-daily-label` conserva el texto `DÍAS`. `updateDailyButton()` escribe el
+copy contextual en `#hud-daily-cta-text`: `Toca para reclamar` durante un reclamo normal y
+`Reparar racha` cuando existe una reparación disponible.
+
+### 9.3 Sincronización visual del hub
+
+`js/streak-hub.js` expone `window.StreakHub.refresh()`, que llama a `_syncFlameState()` sin crear
+timers nuevos. La función obtiene `GameCenter.getStreakInfo()` y `GameCenter.canClaimDaily()` para
+sincronizar `#streak-flame[data-state]`, `#streak-count-big` y la etiqueta accesible de
+`.streak-hub-number`.
+
+Los estados visuales son `locked` (racha inicial en cero y bono disponible), `available` (bono
+disponible), `repair` (racha recuperable) y `claimed` (bono ya reclamado). El refresco se ejecuta
+al cargar el DOM y desde los puntos de refresco ya existentes de `HomeView` y del HUD posterior al
+clic, por lo que no duplica el intervalo de countdown.
+
+### 9.4 Cuenta regresiva
 
 `updateCountdownDisplay()` muestra el countdown cuando `canClaimDaily()` es falso. Calcula la próxima medianoche local con:
 
@@ -288,7 +304,7 @@ tomorrow.setHours(24, 0, 0, 0);
 
 Luego renderiza `HH:MM:SS`. El intervalo se registra en `window.AppScheduler` con frecuencia de 250 ms, pero internamente agrupa por segundo para no reescribir innecesariamente el DOM.
 
-### 9.4 Barra visual de racha
+### 9.5 Barra visual de racha
 
 `updateStreakBar()` actualiza 7 segmentos:
 

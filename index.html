@@ -1436,6 +1436,7 @@
             refresh() {
                 updateCountdownDisplay();
                 updateStreakBar();
+                window.StreakHub?.refresh?.();
             },
             /**
              * Llamado por spa-router.js al SALIR de la vista Inicio (v9.6).
@@ -1999,6 +2000,7 @@
                     setTimeout(() => {
                         updateCountdownDisplay();
                         updateStreakBar();
+                        window.StreakHub?.refresh?.();
                     }, 80);
                 });
             }
