@@ -2113,8 +2113,8 @@ function updateDailyButton(scope) {
     btn.dataset.mode  = repairMode ? 'repair' : 'claim';
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
-    const labelEl = root.querySelector('#hud-daily-label');
-    if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
+    const ctaTextEl = root.querySelector('#hud-daily-cta-text');
+    if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
 
     const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {
@@ -2126,7 +2126,7 @@ function updateDailyButton(scope) {
     // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
     const rewardEl = root.querySelector('#hud-reward-amount');
     if (rewardEl) {
-        // Solo actualizar la cifra; la etiqueta "BONO DIARIO" se queda fija
+        // Solo actualizar la cifra; la etiqueta "DÍAS" se queda fija.
         if (repairMode) {
             rewardEl.textContent = `${info.repairCost} 🪙`;
         } else if (!can) {
