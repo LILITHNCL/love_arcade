@@ -1675,9 +1675,30 @@ body::before {
 }
 
 .hud-countdown {
-    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px auto 0;
+    padding: 4px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: var(--solid-surface-deep);
+    font-size: 0.72rem;
+    color: var(--text-low);
+}
+.hud-countdown::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+}
+#countdown-display {
     font-family: var(--font-mono);
-    text-align: center;
+    font-weight: 700;
+    color: var(--text-med);
+    letter-spacing: 0.03em;
 }
 
 @media (min-width: 768px) {
