@@ -1548,6 +1548,113 @@ body::before {
     .streak-flame[data-state="claimed"] .streak-flame__glow  { opacity: 0.2; }
 }
 
+/* ── Daily Streak Hub: streak statistic and supporting HUD ── */
+.streak-hub-number {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    margin-top: -8px;
+}
+.streak-hub-number__value {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.2rem, 11vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #fff6c8, #ffb238 55%, #ff6a1a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 26px rgba(255, 138, 30, 0.35);
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.streak-hub-number__label {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-low);
+    margin-top: -2px;
+}
+
+/* Claimed is secured rather than claimable, so it uses a calm silver value. */
+#streak-flame[data-state="claimed"] + .streak-hub-number .streak-hub-number__value {
+    background: linear-gradient(180deg, #f4f6ff, #c7ceee 60%, #9aa4d6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 18px rgba(155, 164, 214, 0.28);
+}
+
+/* A first-time streak remains visually subdued until it can be established. */
+#streak-flame[data-state="locked"] + .streak-hub-number .streak-hub-number__value {
+    background: none;
+    -webkit-text-fill-color: var(--text-mute);
+    color: var(--text-mute);
+    text-shadow: none;
+}
+
+/* Applied once by the claim sequence in Ticket-06. */
+.streak-hub-number__value.is-bumping {
+    animation: streakNumberBump 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes streakNumberBump {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.14); }
+    100% { transform: scale(1); }
+}
+
+.streak-hub-copy {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary-aa);
+}
+.streak-hub-copy__amount {
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    font-weight: 900;
+    color: var(--gold);
+}
+
+/* Micro-progreso semanal: reuse the existing seven segments below the CTA. */
+.streak-days {
+    display: flex;
+    gap: 5px;
+    width: min(260px, 100%);
+    margin: 10px auto 0;
+}
+.streak-day {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--solid-surface-deep);
+    border: 1px solid var(--border-subtle);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.streak-day.active {
+    background: linear-gradient(90deg, #ffb238, #ff6a1a);
+    border-color: rgba(255, 138, 30, 0.5);
+    box-shadow: 0 0 10px rgba(255, 138, 30, 0.45);
+}
+.streak-day.today {
+    animation: streakPulse 1.5s ease-in-out infinite;
+}
+
+.hud-countdown {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .streak-flame { width: 132px; height: 176px; }
+    .streak-hub-number__value { font-size: clamp(2.6rem, 6vw, 3.6rem); }
+}
+
 /* ================================================================
    GAME CARDS — Mobile-first 5:7 hub tiles
    ================================================================ */

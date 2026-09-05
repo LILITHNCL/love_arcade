@@ -4596,6 +4596,12 @@ El widget de fuego del Daily Streak Hub usa el SVG inline de `index.html` y CSS 
 
 Las animaciones en bucle se restringen a `transform` y `opacity` en capas aisladas. El desenfoque del halo permanece estático, baja de 18 px a 10 px para `pointer: coarse` y no se ejecutan animaciones bajo `prefers-reduced-motion: reduce`; así la llama conserva su significado visual sin movimiento continuo. El SVG es decorativo y permanece oculto a tecnologías asistenciales con `aria-hidden="true"`; la información de la racha vive en los elementos de texto adyacentes.
 
+### Tratamiento del número
+
+`#streak-count-big` usa `var(--font-display)`, peso 900 y cifras tabulares para que los cambios de dígito no alteren el ancho de la composición. El estado del fuego controla el tratamiento del número con selectores de hermanos adyacentes: dorado/naranja cuando está disponible, plata cuando la racha ya se reclamó y gris cuando aún está bloqueada. Esto evita una segunda fuente de estado en JavaScript. La barra existente `#streak-days` conserva sus siete segmentos y se presenta como micro-progreso semanal debajo del CTA; el countdown usa `var(--font-mono)` para priorizar la legibilidad temporal.
+
+La futura secuencia de reclamo puede aplicar temporalmente `.is-bumping` al número para un pulso único de escala. La animación no se ejecuta por sí sola y, por tanto, no añade trabajo continuo en reposo.
+
 ---
 ## Actualización de rendimiento de Tienda (abril 2026)
 
