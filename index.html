@@ -1314,11 +1314,15 @@
          1. analytics.js  → Ghost Analytics, telemetría
          2. supabase-loader.js → Expone carga diferida de Supabase SDK (CDN + fallback)
          3. milestones-config.js → Catálogo de hitos de racha (fuente de verdad)
-         4. app.js        → GameCenter, store, updateUI (núcleo)
+         4. lifecycle-scheduler.js → Coordinación de intervalos por ciclo de vida
+         5. app.js        → GameCenter, store, updateUI (núcleo)
                             Incluye Sentinel Cloud Sync v13.0:
                             StorageInterceptor + Supabase auth/sync
-         5. shop-logic.js → Catálogo, compras, sync, ajustes
-         6. spa-router.js → Navegación SPA entre vistas
+         6. backup-engine.js, push-notifications.js y shop-logic.js
+                            → Backup, notificaciones y Tienda
+         7. streak-hub.js → Widget de fuego, animaciones de reclamo,
+                            audio sintetizado
+         8. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1330,6 +1334,7 @@
     <script src="js/backup-engine.js"></script>
     <script src="js/push-notifications.js"></script>
     <script src="js/shop-logic.js"></script>
+    <script src="js/streak-hub.js"></script>
     <script src="js/spa-router.js"></script>
 
     <script>

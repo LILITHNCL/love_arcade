@@ -1780,6 +1780,7 @@ love_arcade/
 │   ├── app.js              # Motor principal — GameCenter API v9.0
 │   │                       #   + getState(), syncUI() (nuevos en v9.0)
 │   ├── shop-logic.js       # Módulo de Tienda — extraído de shop.html (nuevo en v9.0)
+│   ├── streak-hub.js       # Daily Streak Hub — API visual y secuencia de reclamo
 │   ├── spa-router.js       # Router SPA — v9.2, scroll-before-transition (v10.1)
 │   └── sync-worker.js      # Web Worker — Base64 + checksum SHA-256 (sin cambios)
 │
