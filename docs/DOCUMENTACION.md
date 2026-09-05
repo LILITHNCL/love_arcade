@@ -4606,6 +4606,10 @@ Tras un `GameCenter.claimDaily()` exitoso, el listener existente de `#btn-daily`
 
 Cada moneda usa únicamente `transform` y `opacity` durante `coinFly`, se elimina al recibir `animationend` y se acorta a 260 ms bajo `prefers-reduced-motion: reduce`. El burst no se genera si el reclamo no tuvo éxito. El contenedor permanece con `aria-hidden="true"`: el resultado sigue comunicándose mediante `#daily-msg` y su región `role="status"`. La llamada opcional a `playClaimAudio()` queda preparada para el ticket de audio y la vibración se limita a dispositivos que la permiten dentro de una activación de usuario.
 
+### Corrección de celebración de hitos
+
+El listener de `#btn-daily` también programa `showStreakMilestoneModal()` 600 ms después de un reclamo exitoso. Antes, un hito alcanzado al reclamar solo se detectaba en la siguiente carga de la aplicación. El retardo evita competir con el feedback del reclamo y `showStreakMilestoneModal()` conserva su protección `_streakMilestoneModalLocked` contra aperturas reentrantes.
+
 ---
 ## Actualización de rendimiento de Tienda (abril 2026)
 

@@ -538,6 +538,7 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 4. **Accesibilidad de anuncios.** Los mensajes dinámicos no están garantizados para screen readers.
 5. **Focus management del modal.** El modal declara semántica, pero no se observa focus trap/restauración explícita.
 6. **Notificaciones calculan `nextDailyTs` como `now + 24h`.** La lógica core es medianoche local; el recordatorio podría no coincidir exactamente con el próximo reset calendario, aunque el dispatch también usa slots y `daily_can_claim`.
+7. **Resuelto — el modal de hito no se abría tras el reclamo diario.** El listener de `#btn-daily` programa `showStreakMilestoneModal()` 600 ms después de un `claimDaily()` exitoso. Así el hito recién alcanzado se celebra en la misma sesión, después del feedback visual del reclamo y respetando el bloqueo de reentradas existente.
 
 ## 22. Recomendaciones
 
