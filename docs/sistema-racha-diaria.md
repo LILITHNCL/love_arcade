@@ -254,16 +254,15 @@ Gestionan hitos de racha reclamados una sola vez.
 
 ### 9.1 HUD diario
 
-En `index.html`, la vista de inicio incluye:
+En `index.html`, la vista de inicio incluye el contenedor `#player-hud` con:
 
-- botón `#btn-daily`;
-- icono de regalo;
-- monto `#hud-reward-amount`;
-- etiqueta `BONO DIARIO`;
-- countdown `#daily-countdown` con `#countdown-display`;
-- mensaje `#daily-msg`;
-- barra `#streak-days` con 7 segmentos;
-- contador `#streak-count`.
+- fila de identidad compacta: `#hud-avatar-display`, `#display-nickname` y `#cloud-sync-indicator`;
+- botón raíz `#btn-daily` para reclamar el bono diario;
+- fuego decorativo `#streak-flame` y número visual de racha `#streak-count-big`;
+- etiqueta de días `#hud-daily-label`, copy `#streak-hub-copy` y monto `#hud-reward-amount`;
+- micro-progreso `#streak-days` con 7 segmentos y contador semántico de respaldo `#streak-count`;
+- countdown `#daily-countdown` con `#countdown-display` y mensaje `#daily-msg`;
+- contenedor reservado `#streak-coin-burst` para el feedback de reclamo.
 
 El HUD ya no muestra el saludo con sufijo de género (`#pref-suffix`), el indicador fijo "En línea" ni un segundo saldo de monedas. El saludo competía con la jerarquía de la racha, el indicador no estaba conectado a un estado real de conectividad y el saldo duplicaba el contador de la navbar. El nickname (`#display-nickname`) y el indicador de sincronización cloud (`#cloud-sync-indicator`) se conservan para la identidad y el estado de sincronización reales.
 
