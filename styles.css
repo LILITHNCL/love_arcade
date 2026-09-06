@@ -947,9 +947,12 @@ body::before {
     animation: hudAmbientSweep 18s ease-in-out infinite alternate;
 }
 
-/* Ticket 06: el HUD no necesita animar detalles decorativos en background. */
+/* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
 .player-hud.motion-paused::before,
-.player-hud.motion-paused .hud-avatar-ring {
+.player-hud.motion-paused .hud-avatar-ring,
+.player-hud.motion-paused .flame-layer,
+.player-hud.motion-paused .streak-flame__glow,
+.player-hud.motion-paused .spark {
     animation-play-state: paused;
 }
 

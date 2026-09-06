@@ -4594,7 +4594,7 @@ El widget de fuego del Daily Streak Hub usa el SVG inline de `index.html` y CSS 
 | `repair` | Tono ámbar suave que solicita atención sin recurrir a una alerta agresiva; sin chispas. |
 | `claiming` | Pausa el vaivén y ejecuta un burst puntual de 480 ms antes de que la futura sincronización de estado restaure el estado final. |
 
-Las animaciones en bucle se restringen a `transform` y `opacity` en capas aisladas. El desenfoque del halo permanece estático, baja de 18 px a 10 px para `pointer: coarse` y no se ejecutan animaciones bajo `prefers-reduced-motion: reduce`; así la llama conserva su significado visual sin movimiento continuo. El SVG es decorativo y permanece oculto a tecnologías asistenciales con `aria-hidden="true"`; la información de la racha vive en los elementos de texto adyacentes.
+Las animaciones en bucle se restringen a `transform` y `opacity` en capas aisladas. El desenfoque del halo permanece estático, baja de 18 px a 10 px para `pointer: coarse` y no se ejecutan animaciones bajo `prefers-reduced-motion: reduce`; así la llama conserva su significado visual sin movimiento continuo. El SVG es decorativo y permanece oculto a tecnologías asistenciales con `aria-hidden="true"`; la información de la racha vive en los elementos de texto adyacentes. Como salvaguarda adicional, el fuego y sus chispas se integran en el sistema existente `.player-hud.motion-paused`: el listener de visibilidad ya establecido pausa `.flame-layer`, `.streak-flame__glow` y `.spark` sin crear mecanismos ni temporizadores nuevos.
 
 ### Tratamiento del número
 
