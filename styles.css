@@ -895,7 +895,14 @@ body::before {
    PLAYER HUD — Dashboard Header
    ================================================================ */
 .player-hud {
-    background: var(--solid-surface-float);
+    /*
+     * Static, very-low-alpha turbulence lives below the animated fields. It
+     * breaks long low-light ramps without becoming a visible grain layer or
+     * crawling independently from the colour fields.
+     */
+    background-color: var(--solid-surface-float);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .035'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
     padding: 18px;
@@ -916,23 +923,46 @@ body::before {
 .player-hud::before {
     content: '';
     position: absolute;
-    inset: -35%;
+    inset: -38%;
     background:
-        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 48%),
-        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 42%);
+        radial-gradient(ellipse 64% 58% at 18% 24%, color-mix(in srgb, var(--accent-soft) 92%, transparent) 0%, color-mix(in srgb, var(--accent-soft) 72%, transparent) 26%, color-mix(in srgb, var(--accent-soft) 26%, transparent) 54%, transparent 76%),
+        radial-gradient(ellipse 54% 62% at 84% 68%, color-mix(in srgb, var(--accent) 19%, transparent) 0%, color-mix(in srgb, var(--accent) 12%, transparent) 31%, color-mix(in srgb, var(--accent) 4%, transparent) 57%, transparent 78%);
     opacity: 0;
-    transform: translate3d(-6%, -2%, 0) rotate(0.001deg);
+    transform: translate3d(-7%, -4%, 0) scale(1.02);
     pointer-events: none;
-    will-change: transform, opacity;
 }
 
 .player-hud::after {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: -32%;
     border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background:
+        radial-gradient(ellipse 58% 54% at 76% 22%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.032) 28%, rgba(255,255,255,0.009) 53%, transparent 76%),
+        radial-gradient(ellipse 50% 64% at 30% 78%, color-mix(in srgb, var(--accent-soft) 48%, transparent) 0%, color-mix(in srgb, var(--accent-soft) 20%, transparent) 38%, transparent 72%),
+        linear-gradient(180deg, rgba(255,255,255,0.026), transparent 38%);
+    opacity: 0;
+    transform: translate3d(5%, 4%, 0) scale(1.01);
     pointer-events: none;
+}
+
+/*
+ * Oklab keeps the low-saturation falloff perceptually even. The preceding
+ * sRGB gradients are the fallback for browsers without CSS Color 4 support.
+ */
+@supports (background: radial-gradient(in oklab, red, transparent)) {
+    .player-hud::before {
+        background:
+            radial-gradient(in oklab, ellipse 64% 58% at 18% 24%, color-mix(in srgb, var(--accent-soft) 92%, transparent) 0%, color-mix(in srgb, var(--accent-soft) 72%, transparent) 26%, color-mix(in srgb, var(--accent-soft) 26%, transparent) 54%, transparent 76%),
+            radial-gradient(in oklab, ellipse 54% 62% at 84% 68%, color-mix(in srgb, var(--accent) 19%, transparent) 0%, color-mix(in srgb, var(--accent) 12%, transparent) 31%, color-mix(in srgb, var(--accent) 4%, transparent) 57%, transparent 78%);
+    }
+
+    .player-hud::after {
+        background:
+            radial-gradient(in oklab, ellipse 58% 54% at 76% 22%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.032) 28%, rgba(255,255,255,0.009) 53%, transparent 76%),
+            radial-gradient(in oklab, ellipse 50% 64% at 30% 78%, color-mix(in srgb, var(--accent-soft) 48%, transparent) 0%, color-mix(in srgb, var(--accent-soft) 20%, transparent) 38%, transparent 72%),
+            linear-gradient(180deg, rgba(255,255,255,0.026), transparent 38%);
+    }
 }
 /* Clase añadida por revealUI() en app.js tras el init síncrono completo */
 .player-hud.is-ready {
@@ -943,34 +973,74 @@ body::before {
 }
 
 .player-hud.is-ready::before {
-    opacity: 0.72;
-    animation: hudAmbientSweep 18s ease-in-out infinite alternate;
+    opacity: 0.66;
+    will-change: transform;
+    animation: hudAmbientSweep 29s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+.player-hud.is-ready::after {
+    opacity: 0.74;
+    will-change: transform;
+    animation: hudAmbientDrift 41s cubic-bezier(0.45, 0, 0.55, 1) -13s infinite alternate;
 }
 
 /* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
 .player-hud.motion-paused::before,
+.player-hud.motion-paused::after,
 .player-hud.motion-paused .hud-avatar-ring,
 .player-hud.motion-paused .flame-layer,
 .player-hud.motion-paused .spark {
     animation-play-state: paused;
 }
 
+.player-hud.motion-paused::before,
+.player-hud.motion-paused::after {
+    will-change: auto;
+}
+
 @keyframes hudAmbientSweep {
     0% {
-        transform: translate3d(-8%, -4%, 0) scale(1) rotate(0.001deg);
+        transform: translate3d(-8%, -5%, 0) scale(1.02);
     }
-    50% {
-        transform: translate3d(5%, -1%, 0) scale(1.03) rotate(0.001deg);
+    31% {
+        transform: translate3d(3%, -7%, 0) scale(1.07);
+    }
+    68% {
+        transform: translate3d(8%, 4%, 0) scale(1.01);
     }
     100% {
-        transform: translate3d(8%, 3%, 0) scale(1.01) rotate(0.001deg);
+        transform: translate3d(-2%, 8%, 0) scale(1.05);
+    }
+}
+
+@keyframes hudAmbientDrift {
+    0% {
+        transform: translate3d(6%, 5%, 0) scale(1.01);
+    }
+    24% {
+        transform: translate3d(-5%, 1%, 0) scale(1.06);
+    }
+    57% {
+        transform: translate3d(-7%, -6%, 0) scale(1.03);
+    }
+    79% {
+        transform: translate3d(4%, -8%, 0) scale(1.07);
+    }
+    100% {
+        transform: translate3d(8%, -1%, 0) scale(1.02);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .player-hud.is-ready::before,
+    .player-hud.is-ready::after,
     .filter-btn-gift.has-unclaimed {
         animation: none;
+    }
+
+    .player-hud.is-ready::before,
+    .player-hud.is-ready::after {
+        will-change: auto;
     }
 }
 
