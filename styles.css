@@ -916,16 +916,22 @@ body::before {
 .player-hud::before {
     content: '';
     position: absolute;
-    inset: -35%;
-    background:
-        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 48%),
-        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 42%);
-    opacity: 0;
-    transform: translate3d(-12%, -5%, 0) scale(1) rotate(-1deg);
-    /* Diffuses low-contrast gradient steps over the dark HUD surface. */
-    filter: blur(26px);
+    inset: 0;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 55%),
+        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 48%),
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--accent) 12%, var(--solid-surface-float) 88%) 0%,
+            var(--solid-surface-float) 55%,
+            var(--solid-surface-hi) 100%
+        );
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+    background-size: 200px 200px, cover, cover, cover;
+    opacity: 0.72;
     pointer-events: none;
-    will-change: transform, opacity;
+    border-radius: inherit;
 }
 
 .player-hud::after {
@@ -933,7 +939,11 @@ body::before {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background-repeat: repeat, no-repeat;
+    background-size: 200px 200px, cover;
     pointer-events: none;
 }
 /* Clase añadida por revealUI() en app.js tras el init síncrono completo */
@@ -945,8 +955,8 @@ body::before {
 }
 
 .player-hud.is-ready::before {
-    opacity: 0.72;
-    animation: hudAmbientSweep 14s linear infinite;
+    /* Ticket-06 bridge: the legacy animation is removed in Ticket-07. */
+    animation: none;
 }
 
 /* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
@@ -4183,9 +4193,9 @@ svg { stroke-width: 2; }
         filter: blur(12px) !important;
     }
 
-    /* Keep the ambient HUD diffusion affordable on touch hardware. */
+    /* The static HUD ambient has no filter to reduce on touch hardware. */
     .player-hud::before {
-        filter: blur(8px);
+        filter: none;
     }
 }
 
