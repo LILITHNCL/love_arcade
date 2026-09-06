@@ -190,6 +190,16 @@ assert.match(html, /id="daily-msg" class="daily-msg" role="status" aria-live="po
 assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
 assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
 assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
+assert.match(
+  css,
+  /\.player-hud::before\s*\{[\s\S]*?filter:\s*blur\(26px\);/,
+  'The Player HUD gradient must use the desktop anti-banding blur.'
+);
+assert.match(
+  css,
+  /@media \(pointer: coarse\)[\s\S]*?\.player-hud::before\s*\{[\s\S]*?filter:\s*blur\(8px\);/,
+  'Touch hardware must use the lower-cost Player HUD blur.'
+);
 assert.match(css, /\.player-hud\.motion-paused \.flame-layer/);
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame \.flame-layer/);
 assert.match(css, /\.streak-flame__svg\s*\{[\s\S]*?filter:\s*[\s\S]*?drop-shadow\(0 0 4px[\s\S]*?drop-shadow\(0 0 10px[\s\S]*?drop-shadow\(0 0 20px/);
