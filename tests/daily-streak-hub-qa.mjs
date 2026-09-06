@@ -192,36 +192,28 @@ assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/)
 assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
 assert.match(
   css,
-  /\.player-hud::before\s*\{[\s\S]*?filter:\s*blur\(26px\);/,
-  'The Player HUD gradient must use the desktop anti-banding blur.'
+  /\.player-hud::before\s*\{[\s\S]*?inset:\s*0;[\s\S]*?background-image:[\s\S]*?feTurbulence[\s\S]*?radial-gradient\(circle at 20% 30%, var\(--accent-soft\), transparent 55%\)[\s\S]*?radial-gradient\(circle at 85% 72%, rgba\(255,255,255,0\.07\), transparent 48%\)[\s\S]*?linear-gradient\([\s\S]*?135deg,[\s\S]*?color-mix\(in srgb, var\(--accent\) 12%, var\(--solid-surface-float\) 88%\)[\s\S]*?background-repeat:\s*repeat, no-repeat, no-repeat, no-repeat;[\s\S]*?background-size:\s*200px 200px, cover, cover, cover;[\s\S]*?opacity:\s*0\.72;/,
+  'The Player HUD must use the static, theme-aware dithered ambient composition.'
 );
 assert.match(
   css,
-  /@media \(pointer: coarse\)[\s\S]*?\.player-hud::before\s*\{[\s\S]*?filter:\s*blur\(8px\);/,
-  'Touch hardware must use the lower-cost Player HUD blur.'
+  /\.player-hud::after\s*\{[\s\S]*?background-image:[\s\S]*?feTurbulence[\s\S]*?linear-gradient\(180deg, rgba\(255,255,255,0\.035\), transparent 42%\)[\s\S]*?background-repeat:\s*repeat, no-repeat;[\s\S]*?background-size:\s*200px 200px, cover;/,
+  'The static HUD sheen must also receive dithering.'
 );
 assert.match(
   css,
-  /\.player-hud\.is-ready::before\s*\{[\s\S]*?animation:\s*hudAmbientSweep 14s linear infinite;/,
-  'The ambient halo must keep its closed 14-second linear motion cycle.'
+  /\.player-hud\.is-ready::before\s*\{[\s\S]*?animation:\s*none;/,
+  'The static ambient halo must not start an animation when the HUD becomes ready.'
 );
 assert.doesNotMatch(
-  css.match(/\.player-hud\.is-ready::before\s*\{[\s\S]*?\}/)?.[0] || '',
-  /alternate/,
-  'The ambient halo must not reverse through an alternate animation direction.'
+  css.match(/\.player-hud::before\s*\{[\s\S]*?\n\}/)?.[0] || '',
+  /(?:transform|will-change|filter):/,
+  'The static ambient composition must not retain transform, layer-promotion, or blur work.'
 );
-
-const ambientKeyframes = css.match(/@keyframes hudAmbientSweep\s*\{([\s\S]*?)\n\}/)?.[1] || '';
-assert.match(ambientKeyframes, /0%\s*\{\s*transform:\s*translate3d\(-12%, -5%, 0\) scale\(1\) rotate\(-1deg\);/);
-assert.match(ambientKeyframes, /25%\s*\{\s*transform:\s*translate3d\(7%, -12%, 0\) scale\(1\.04\) rotate\(0\.8deg\);/);
-assert.match(ambientKeyframes, /50%\s*\{\s*transform:\s*translate3d\(14%, 3%, 0\) scale\(1\.02\) rotate\(2deg\);/);
-assert.match(ambientKeyframes, /75%\s*\{\s*transform:\s*translate3d\(-4%, 12%, 0\) scale\(1\.05\) rotate\(0deg\);/);
-assert.match(ambientKeyframes, /100%\s*\{\s*transform:\s*translate3d\(-12%, -5%, 0\) scale\(1\) rotate\(-1deg\);/);
-assert.doesNotMatch(ambientKeyframes, /rotate\(0\.001deg\)/, 'The obsolete no-op rotation must not return.');
 assert.match(
   css,
-  /\.player-hud\.motion-paused::before[\s\S]*?animation-play-state:\s*paused;/,
-  'Background-tab visibility must pause the ambient halo.'
+  /@media \(pointer: coarse\)[\s\S]*?\.player-hud::before\s*\{[\s\S]*?filter:\s*none;/,
+  'Touch hardware must not restore the removed HUD blur.'
 );
 assert.match(
   css,
