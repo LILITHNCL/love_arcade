@@ -467,16 +467,19 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 
 ### 17.1 Fortalezas existentes
 
-- El botón diario es un `<button>` nativo.
+- El botón diario es un `<button type="button">` nativo; conserva la navegación por Tab y la activación con Enter/Espacio.
+- `updateDailyButton()` mantiene el nombre accesible como «Reclamar bono diario» o «Reparar racha diaria» según el estado.
 - Los iconos decorativos usan `aria-hidden="true"`.
+- La llama decorativa `#streak-flame` usa `aria-hidden="true"` y `aria-live="off"`; el resultado del reclamo se anuncia una sola vez desde `#daily-msg`.
+- El número del hub y la barra semanal publican etiquetas dinámicas con la racha actual mediante `role="img"` y `aria-label`.
+- `.streak-hub-cta:focus-visible` usa el token de alto contraste `--focus-ring-aa`.
 - El modal de hito usa `role="dialog"`, `aria-modal="true"` y `aria-labelledby`.
 - El botón de reclamar hito es nativo y tiene texto visible.
 
 ### 17.2 Riesgos / oportunidades
 
-- `#btn-daily` no tiene `aria-label`; aunque tiene texto visible, el monto dinámico puede hacer que el nombre accesible sea poco claro. Recomendación: `aria-label="Reclamar bono diario"` y actualizar `aria-describedby` hacia el monto/estado si se quiere más contexto.
-- `#daily-msg` ya incluye `role="status"` y `aria-live="polite"`, por lo que los mensajes de éxito, bloqueo y reparación se anuncian a tecnologías de asistencia.
-- La barra de racha usa `div` visuales sin texto accesible. Recomendación: añadir un texto oculto o `aria-label` en el contenedor, por ejemplo “Racha actual: 5 días”.
+- `#daily-msg` usa `role="status"` y `aria-live="polite"`, por lo que los mensajes de éxito, bloqueo y reparación se anuncian a tecnologías de asistencia. No deben añadirse anuncios paralelos para el fuego ni el burst de monedas.
+- El contraste de los gradientes dorado (`available`) y plata (`claimed`) debe revisarse manualmente contra `--solid-surface-float`, usando el color más oscuro de cada gradiente y un mínimo de 3:1 para texto grande.
 - El modal de hito no implementa explícitamente focus trap ni restauración de foco. Recomendación: al abrir, enfocar el botón de reclamo; al cerrar, devolver foco al botón diario o al disparador relevante.
 - El countdown puede beneficiarse de `aria-live="polite"` con cuidado para no anunciar cada segundo; mejor anunciar cambios de estado, no cada tick.
 
