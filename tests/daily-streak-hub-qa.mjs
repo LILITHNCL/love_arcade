@@ -200,6 +200,39 @@ assert.match(
   /@media \(pointer: coarse\)[\s\S]*?\.player-hud::before\s*\{[\s\S]*?filter:\s*blur\(8px\);/,
   'Touch hardware must use the lower-cost Player HUD blur.'
 );
+assert.match(
+  css,
+  /\.player-hud\.is-ready::before\s*\{[\s\S]*?animation:\s*hudAmbientSweep 14s linear infinite;/,
+  'The ambient halo must keep its closed 14-second linear motion cycle.'
+);
+assert.doesNotMatch(
+  css.match(/\.player-hud\.is-ready::before\s*\{[\s\S]*?\}/)?.[0] || '',
+  /alternate/,
+  'The ambient halo must not reverse through an alternate animation direction.'
+);
+
+const ambientKeyframes = css.match(/@keyframes hudAmbientSweep\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+assert.match(ambientKeyframes, /0%\s*\{\s*transform:\s*translate3d\(-12%, -5%, 0\) scale\(1\) rotate\(-1deg\);/);
+assert.match(ambientKeyframes, /25%\s*\{\s*transform:\s*translate3d\(7%, -12%, 0\) scale\(1\.04\) rotate\(0\.8deg\);/);
+assert.match(ambientKeyframes, /50%\s*\{\s*transform:\s*translate3d\(14%, 3%, 0\) scale\(1\.02\) rotate\(2deg\);/);
+assert.match(ambientKeyframes, /75%\s*\{\s*transform:\s*translate3d\(-4%, 12%, 0\) scale\(1\.05\) rotate\(0deg\);/);
+assert.match(ambientKeyframes, /100%\s*\{\s*transform:\s*translate3d\(-12%, -5%, 0\) scale\(1\) rotate\(-1deg\);/);
+assert.doesNotMatch(ambientKeyframes, /rotate\(0\.001deg\)/, 'The obsolete no-op rotation must not return.');
+assert.match(
+  css,
+  /\.player-hud\.motion-paused::before[\s\S]*?animation-play-state:\s*paused;/,
+  'Background-tab visibility must pause the ambient halo.'
+);
+assert.match(
+  css,
+  /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.player-hud\.is-ready::before,[\s\S]*?animation:\s*none;/,
+  'Reduced-motion users must receive a static ambient halo.'
+);
+assert.match(
+  appSource,
+  /hud\.classList\.toggle\('motion-paused', document\.hidden\);/,
+  'The visibility lifecycle must continue to drive the HUD motion pause state.'
+);
 assert.match(css, /\.player-hud\.motion-paused \.flame-layer/);
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame \.flame-layer/);
 assert.match(css, /\.streak-flame__svg\s*\{[\s\S]*?filter:\s*[\s\S]*?drop-shadow\(0 0 4px[\s\S]*?drop-shadow\(0 0 10px[\s\S]*?drop-shadow\(0 0 20px/);
