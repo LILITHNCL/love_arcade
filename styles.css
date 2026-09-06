@@ -954,40 +954,14 @@ body::before {
         0 0 28px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.player-hud.is-ready::before {
-    /* Ticket-06 bridge: the legacy animation is removed in Ticket-07. */
-    animation: none;
-}
-
 /* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
-.player-hud.motion-paused::before,
 .player-hud.motion-paused .hud-avatar-ring,
 .player-hud.motion-paused .flame-layer,
 .player-hud.motion-paused .spark {
     animation-play-state: paused;
 }
 
-/* Closed, linear orbit keeps the halo moving without an alternate reversal pause. */
-@keyframes hudAmbientSweep {
-    0% {
-        transform: translate3d(-12%, -5%, 0) scale(1) rotate(-1deg);
-    }
-    25% {
-        transform: translate3d(7%, -12%, 0) scale(1.04) rotate(0.8deg);
-    }
-    50% {
-        transform: translate3d(14%, 3%, 0) scale(1.02) rotate(2deg);
-    }
-    75% {
-        transform: translate3d(-4%, 12%, 0) scale(1.05) rotate(0deg);
-    }
-    100% {
-        transform: translate3d(-12%, -5%, 0) scale(1) rotate(-1deg);
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .player-hud.is-ready::before,
     .filter-btn-gift.has-unclaimed {
         animation: none;
     }
@@ -4193,10 +4167,6 @@ svg { stroke-width: 2; }
         filter: blur(12px) !important;
     }
 
-    /* The static HUD ambient has no filter to reduce on touch hardware. */
-    .player-hud::before {
-        filter: none;
-    }
 }
 
 

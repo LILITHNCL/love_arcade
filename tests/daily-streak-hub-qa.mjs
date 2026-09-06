@@ -200,25 +200,16 @@ assert.match(
   /\.player-hud::after\s*\{[\s\S]*?background-image:[\s\S]*?feTurbulence[\s\S]*?linear-gradient\(180deg, rgba\(255,255,255,0\.035\), transparent 42%\)[\s\S]*?background-repeat:\s*repeat, no-repeat;[\s\S]*?background-size:\s*200px 200px, cover;/,
   'The static HUD sheen must also receive dithering.'
 );
-assert.match(
-  css,
-  /\.player-hud\.is-ready::before\s*\{[\s\S]*?animation:\s*none;/,
-  'The static ambient halo must not start an animation when the HUD becomes ready.'
-);
+assert.doesNotMatch(css, /hudAmbientSweep/, 'The retired ambient animation must have no residual references.');
 assert.doesNotMatch(
   css.match(/\.player-hud::before\s*\{[\s\S]*?\n\}/)?.[0] || '',
   /(?:transform|will-change|filter):/,
   'The static ambient composition must not retain transform, layer-promotion, or blur work.'
 );
-assert.match(
+assert.doesNotMatch(
   css,
-  /@media \(pointer: coarse\)[\s\S]*?\.player-hud::before\s*\{[\s\S]*?filter:\s*none;/,
-  'Touch hardware must not restore the removed HUD blur.'
-);
-assert.match(
-  css,
-  /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.player-hud\.is-ready::before,[\s\S]*?animation:\s*none;/,
-  'Reduced-motion users must receive a static ambient halo.'
+  /\.player-hud\.is-ready::before|\.player-hud\.motion-paused::before/,
+  'The static ambient must not remain in animation-specific selectors.'
 );
 assert.match(
   appSource,
@@ -226,6 +217,7 @@ assert.match(
   'The visibility lifecycle must continue to drive the HUD motion pause state.'
 );
 assert.match(css, /\.player-hud\.motion-paused \.flame-layer/);
+assert.match(css, /\.player-hud\.motion-paused \.hud-avatar-ring,[\s\S]*?\.player-hud\.motion-paused \.flame-layer,[\s\S]*?\.player-hud\.motion-paused \.spark\s*\{[\s\S]*?animation-play-state:\s*paused;/);
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame \.flame-layer/);
 assert.match(css, /\.streak-flame__svg\s*\{[\s\S]*?filter:\s*[\s\S]*?drop-shadow\(0 0 4px[\s\S]*?drop-shadow\(0 0 10px[\s\S]*?drop-shadow\(0 0 20px/);
 assert.match(css, /\.streak-flame\s*\{[\s\S]*?contain:\s*layout;[\s\S]*?overflow:\s*visible;/);

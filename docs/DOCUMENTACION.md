@@ -4622,6 +4622,10 @@ Se eligieron SVG inline y CSS nativo frente a Canvas o librerías de animación 
 
 El listener de visibilidad ya existente añade `.motion-paused` a `.player-hud` cuando la pestaña queda oculta. Las reglas de `styles.css` pausan las capas del fuego, halo y chispas con `animation-play-state: paused`; no se añadieron listeners ni timers de visibilidad específicos al módulo. El SVG decorativo usa `aria-hidden="true"`; el número publica la racha mediante `role="img"` y etiqueta dinámica, y `.streak-hub-cta:focus-visible` conserva un anillo de foco con `--focus-ring-aa`.
 
+### Changelog — ambient estático del Player HUD (Ticket-07)
+
+El antiguo `hudAmbientSweep` se retiró por completo. El halo animado seguía mostrando banding pese al blur y mantenía trabajo continuo de compositor en la pantalla con mayor tiempo de uso de la aplicación. Lo reemplaza el ambient estático del HUD: un degradado construido con los tokens de tema y una textura de ruido/dithering de baja opacidad. Al no tener movimiento, el halo ya no participa en las reglas de pausa por visibilidad ni en `prefers-reduced-motion`; estas conservan su alcance sobre el fuego, las chispas y el anillo de avatar que sí se animan.
+
 ### Corrección de celebración de hitos
 
 **Changelog independiente — Ticket-08.** El listener de `#btn-daily` en `js/app.js` programa `showStreakMilestoneModal()` 600 ms después de un `GameCenter.claimDaily()` exitoso. Antes del arreglo, un hito alcanzado por ese reclamo se detectaba recién en una carga posterior. El retraso deja terminar el feedback de reclamo y la función conserva el candado `_streakMilestoneModalLocked` contra aperturas reentrantes.
