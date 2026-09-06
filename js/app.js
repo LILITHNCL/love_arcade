@@ -2489,9 +2489,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Movimiento decorativo del HUD ──────────────────────────────────────
-    // Las dos animaciones son solo decorativas. Pausarlas fuera de la pestaña
-    // visible evita mantener trabajo continuo de compositor sin cambiar la UI
-    // que recibe el usuario al volver.
+    // Las animaciones del fuego, las chispas y el anillo son decorativas.
+    // Pausarlas fuera de la pestaña visible evita trabajo continuo de compositor
+    // sin cambiar la UI que recibe el usuario al volver.
     const syncHudMotionVisibility = () => {
         document.querySelectorAll('.player-hud').forEach(hud => {
             hud.classList.toggle('motion-paused', document.hidden);
