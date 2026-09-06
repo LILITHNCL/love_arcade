@@ -1,6 +1,59 @@
 (function StreakHubModule() {
   'use strict';
 
+  let _streakAudioCtx = null;
+
+  function _getStreakAudioCtx() {
+    if (_streakAudioCtx) return _streakAudioCtx;
+
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor) return null;
+
+    try {
+      _streakAudioCtx = new AudioContextConstructor();
+    } catch (_) {
+      _streakAudioCtx = null;
+    }
+
+    return _streakAudioCtx;
+  }
+
+  /**
+   * Reproduce un arpegio corto de recompensa sin descargar assets. Esta función
+   * se invoca de forma síncrona desde el gesto de reclamo para respetar las
+   * políticas de autoplay; cualquier fallo de Web Audio es opcional.
+   */
+  function playClaimAudio() {
+    try {
+      const context = _getStreakAudioCtx();
+      if (!context) return;
+
+      if (context.state === 'suspended' && typeof context.resume === 'function') {
+        const resumeResult = context.resume();
+        resumeResult?.catch?.(() => {});
+      }
+
+      const now = context.currentTime;
+      const notes = [660, 880, 1320];
+      notes.forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const start = now + (index * 0.07);
+
+        oscillator.type = 'triangle';
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.4);
+      });
+    } catch (_) {
+      // El audio nunca debe interrumpir un reclamo diario válido.
+    }
+  }
+
   /**
    * Traduce el estado de negocio existente a la representación visual del hub.
    * No crea timers: se invoca desde los puntos de refresco ya establecidos.
@@ -82,12 +135,14 @@
     }
 
     flameEl.dataset.state = 'claiming';
+    // Crear/reanudar el contexto dentro del click preserva el permiso de audio,
+    // aunque el feedback visual finalice 480 ms después.
+    playClaimAudio();
 
     window.setTimeout(() => {
       refresh();
       _bumpStreakNumber();
       _spawnCoinBurst(8);
-      window.StreakHub.playClaimAudio?.();
 
       if (navigator.vibrate && (navigator.userActivation?.isActive || navigator.userActivation?.hasBeenActive)) {
         navigator.vibrate([12, 30, 18]);
@@ -97,6 +152,7 @@
 
   window.StreakHub = {
     refresh,
+    playClaimAudio,
     playClaimSequence
   };
 
