@@ -2678,6 +2678,17 @@ Sin cambios en v8.0. Cada operación que modifica el saldo genera una entrada en
 
 El store mantiene un máximo de 50 entradas (reducido desde 150 en v14.1, ver §2af). La pestaña Ajustes muestra las 50 más recientes con scroll.
 
+### 17.1 Checklist de accesibilidad — Daily Streak Hub
+
+El hub conserva el botón nativo `#btn-daily`, por lo que se puede enfocar con Tab y activar con Enter o Espacio. Antes de publicar cambios en este flujo, comprobar:
+
+- [ ] El nombre accesible del botón es **«Reclamar bono diario»** o, cuando corresponde, **«Reparar racha diaria»**.
+- [ ] `#daily-msg` conserva `role="status"` y `aria-live="polite"`; el resultado del reclamo debe anunciarse desde ese único canal.
+- [ ] La llama decorativa `#streak-flame` permanece fuera del árbol de accesibilidad con `aria-hidden="true"` y `aria-live="off"`.
+- [ ] `.streak-hub-number` y `#streak-days` exponen la racha actual mediante sus etiquetas `aria-label` dinámicas.
+- [ ] Al navegar con teclado, `.streak-hub-cta:focus-visible` muestra el anillo de foco basado en `--focus-ring-aa`.
+- [ ] El color más oscuro de los gradientes de los números `available` y `claimed` mantiene, como mínimo, contraste 3:1 frente a `--solid-surface-float`.
+
 ---
 
 ## 18. Flujos de Usuario
