@@ -192,5 +192,8 @@ assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/)
 assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
 assert.match(css, /\.player-hud\.motion-paused \.flame-layer/);
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame \.flame-layer/);
+assert.match(css, /\.streak-flame__svg\s*\{[\s\S]*?filter:\s*[\s\S]*?drop-shadow\(0 0 4px[\s\S]*?drop-shadow\(0 0 10px[\s\S]*?drop-shadow\(0 0 20px/);
+assert.match(css, /\.streak-flame\s*\{[\s\S]*?contain:\s*layout;[\s\S]*?overflow:\s*visible;/);
+assert.doesNotMatch(css, /\.streak-flame__glow\s*\{/);
 
 console.log('Daily Streak Hub QA checks passed.');
