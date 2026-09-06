@@ -1,5 +1,5 @@
 # 📚 Documentación Técnica — Love Arcade
-### Plataforma de Recompensas · v14.2 Floating Pill Navigation · v14.0 Gatekeeper Security & UX Refactor · v13.0 Sentinel Cloud Sync · v12.1 Body Parser Hardening · v12.0 Telegram Proxy & Secure Telemetry · Shadow-Gate · Hardening & Error Detection · Ghost Analytics v12.1 · Word Hunt Progression Metrics · Mobile Performance Pass · CDN Offline Resilience
+### Plataforma de Recompensas · v14.3 Daily Streak Hub · v14.2 Floating Pill Navigation · v14.0 Gatekeeper Security & UX Refactor · v13.0 Sentinel Cloud Sync · v12.1 Body Parser Hardening · v12.0 Telegram Proxy & Secure Telemetry · Shadow-Gate · Hardening & Error Detection · Ghost Analytics v12.1 · Word Hunt Progression Metrics · Mobile Performance Pass · CDN Offline Resilience
 
 ---
 
@@ -36,7 +36,7 @@
 2ae. [Novedades en v14.0 — Gatekeeper Security & UX Refactor](#2ae-novedades-en-v140--gatekeeper-security--ux-refactor)
 2af. [Novedades en v14.1 — Gestión robusta de cuota localStorage y avatares](#2af-novedades-en-v141--gestión-robusta-de-cuota-localstorage-y-avatares)
 2ag. [Novedades en v14.2 — Floating Pill Navigation](#2ag-novedades-en-v142--floating-pill-navigation)
-2ah. [Daily Streak Hub: Fire Widget](#2ah--daily-streak-hub-fire-widget)
+2ah. [Daily Streak Hub Redesign (Fire Widget)](#2ah--daily-streak-hub-redesign-fire-widget)
 3. [Arquitectura del Proyecto](#3-arquitectura-del-proyecto)
 4. [Estructura de Archivos](#4-estructura-de-archivos)
 5. [app.js — El Motor](#5-appjs--el-motor)
@@ -342,16 +342,15 @@ Se llama en el bloque INIT síncrono de `app.js`, justo después de `applyAvatar
 
 ### HUD Dinámico (`index.html`)
 
-El saludo estático "Bienvenido de vuelta / Lilith" se reemplaza:
+La identidad visible del HUD se presenta en una fila compacta dentro del Daily Streak Hub:
 
 ```html
-<p class="hud-greeting">
-    Bienvenid<span id="pref-suffix">@</span> de vuelta
+<p class="hub-identity-row__name">
+    Hola, <span id="display-nickname"></span>
 </p>
-<p class="hud-name" id="display-nickname"></p>
 ```
 
-El `<span id="pref-suffix">` hereda los estilos de `.hud-greeting`. El `<p id="display-nickname">` usa `.hud-name` con `min-height: 1.3em` para evitar colapso de layout durante el init.
+`applyIdentity()` sigue actualizando `#display-nickname` de forma síncrona antes de `revealUI()`. El campo opcional `#pref-suffix` se consulta de forma defensiva para compatibilidad con el perfil, pero ya no forma parte del markup del HUD.
 
 ---
 
@@ -4593,39 +4592,53 @@ No se debe crear una segunda barra de navegación ni gestionar manualmente `.act
 
 ---
 
-## 2ah — Daily Streak Hub: Fire Widget
+## §2ah — Daily Streak Hub Redesign (Fire Widget)
 
-El widget de fuego del Daily Streak Hub usa el SVG inline de `index.html` y CSS nativo; no incorpora Canvas, librerías ni nodos generados en tiempo de ejecución. El SVG se compone de tres capas independientes (`.flame-layer--back`, `--mid` y `--core`), un halo `.streak-flame__glow` y seis partículas `.spark` escalonadas.
+### Motivación
 
-| Estado de `data-state` | Tratamiento visual |
-|---|---|
-| `locked` | Llama gris y atenuada, halo casi imperceptible y sin chispas. |
-| `available` | Llama vívida, halo intenso pulsante y seis chispas ascendentes. |
-| `claimed` | Llama aún visible, desaturada y más lenta; sin chispas. |
-| `repair` | Tono ámbar suave que solicita atención sin recurrir a una alerta agresiva; sin chispas. |
-| `claiming` | Pausa el vaivén y ejecuta un burst puntual de 480 ms antes de que la futura sincronización de estado restaure el estado final. |
+El HUD de Inicio pasó de repartir la atención entre un saludo, un indicador de conectividad sin fuente de datos, un saldo repetido y el reclamo diario, a dar prioridad a la racha. La decisión de retirar esos elementos está documentada en la [auditoría §2.4 del rediseño](daily-streak-hub-redesign.md#24-elementos-redundantes-o-de-bajo-valor-detectados-hecho--inferencia): el saldo ya vive en la navbar, el indicador no representaba conectividad real y el saludo extenso competía con la jerarquía de juego. La fila de identidad conserva el avatar, `#display-nickname` y `#cloud-sync-indicator`, que sí tienen función vigente.
 
-Las animaciones en bucle se restringen a `transform` y `opacity` en capas aisladas. El desenfoque del halo permanece estático, baja de 18 px a 10 px para `pointer: coarse` y no se ejecutan animaciones bajo `prefers-reduced-motion: reduce`; así la llama conserva su significado visual sin movimiento continuo. El SVG es decorativo y permanece oculto a tecnologías asistenciales con `aria-hidden="true"`; la información de la racha vive en los elementos de texto adyacentes. Como salvaguarda adicional, el fuego y sus chispas se integran en el sistema existente `.player-hud.motion-paused`: el listener de visibilidad ya establecido pausa `.flame-layer`, `.streak-flame__glow` y `.spark` sin crear mecanismos ni temporizadores nuevos.
+El resultado es un único botón nativo, `#btn-daily`, que contiene el fuego, el número de racha y el CTA. Se preservan los IDs consumidos por la lógica existente: `#hud-daily-label`, `#hud-daily-cta-text`, `#hud-reward-amount`, `#streak-days`, `#streak-count`, `#daily-countdown`, `#countdown-display` y `#daily-msg`.
 
-### Tratamiento del número
+### Arquitectura
 
-`#streak-count-big` usa `var(--font-display)`, peso 900 y cifras tabulares para que los cambios de dígito no alteren el ancho de la composición. El estado del fuego controla el tratamiento del número con selectores de hermanos adyacentes: dorado/naranja cuando está disponible, plata cuando la racha ya se reclamó y gris cuando aún está bloqueada. Esto evita una segunda fuente de estado en JavaScript. La barra existente `#streak-days` conserva sus siete segmentos y se presenta como micro-progreso semanal debajo del CTA; el countdown usa `var(--font-mono)` para priorizar la legibilidad temporal.
+`index.html` declara el SVG inline decorativo `#streak-flame`: tres paths independientes (`.flame-layer--back`, `.flame-layer--mid` y `.flame-layer--core`), el halo `.streak-flame__glow` y seis `.spark`. El estado de negocio no se duplica en el DOM: `js/streak-hub.js` lee `GameCenter.getStreakInfo()` y `GameCenter.canClaimDaily()` y escribe únicamente `data-state` en `#streak-flame`, además de actualizar `#streak-count-big` y el nombre accesible de `.streak-hub-number`.
 
-### Secuencia de reclamo
+`window.StreakHub.refresh()` no crea temporizadores y se invoca al cargar y desde los refrescos existentes del HUD. Tras un reclamo exitoso, `window.StreakHub.playClaimSequence(result)` fija el estado temporal, reproduce el audio sintético, y al cabo de 480 ms refresca el estado, aplica el bump del número y crea ocho monedas efímeras en `#streak-coin-burst`. El canal semántico del resultado sigue siendo `#daily-msg[role="status"][aria-live="polite"]`; tanto el fuego como las monedas están ocultos a tecnologías asistenciales.
 
-Tras un `GameCenter.claimDaily()` exitoso, el listener existente de `#btn-daily` conserva toda su lógica de negocio y llama a `window.StreakHub.playClaimSequence(result)`. La secuencia fija temporalmente el fuego en `claiming` durante 480 ms; después refresca el estado final `claimed`, aplica `.is-bumping` una vez a `#streak-count-big` y crea ocho monedas decorativas dentro de `#streak-coin-burst`.
+### Tabla de estados
 
-Cada moneda usa únicamente `transform` y `opacity` durante `coinFly`, se elimina al recibir `animationend` y se acorta a 260 ms bajo `prefers-reduced-motion: reduce`. El burst no se genera si el reclamo no tuvo éxito. El contenedor permanece con `aria-hidden="true"`: el resultado sigue comunicándose mediante `#daily-msg` y su región `role="status"`. La llamada opcional a `playClaimAudio()` queda preparada para el ticket de audio y la vibración se limita a dispositivos que la permiten dentro de una activación de usuario.
+| Estado | Condición que lo asigna `StreakHub` | Mapeo en DOM | Resultado visual y de interacción |
+|---|---|---|---|
+| `locked` | `info.streak === 0` y el bono está disponible | `#streak-flame[data-state="locked"]` | Llama tenue y gris, sin chispas; el CTA sigue disponible para establecer la primera racha. |
+| `available` | El bono se puede reclamar y no hay reparación pendiente | `#streak-flame[data-state="available"]` | Llama intensa, halo con mayor opacidad y seis chispas; `updateDailyButton()` mantiene el CTA de reclamo. |
+| `repair` | `info.repairAvailable` | `#streak-flame[data-state="repair"]` | Tono ámbar, sin chispas; el botón usa modo `repair` y abre el flujo de reparación existente. |
+| `claiming` | Reclamo exitoso durante la secuencia de 480 ms | `#streak-flame[data-state="claiming"]` | Pausa las capas y ejecuta `flameBurst`; no es un estado persistido. |
+| `claimed` | El bono no está disponible y no aplica reparación | `#streak-flame[data-state="claimed"]` | Llama calmada y desaturada, sin chispas; el countdown comunica el siguiente bono. |
+
+### Decisiones de rendimiento y accesibilidad
+
+Se eligieron SVG inline y CSS nativo frente a Canvas o librerías de animación porque el widget tiene tres capas, seis partículas estáticas y estados discretos: no necesita un render loop, una dependencia nueva ni nodos de escena generados por JavaScript. Las animaciones recurrentes del fuego y las chispas usan `transform` y `opacity`; el blur del halo no se anima. En `pointer: coarse`, el blur baja a 10 px y `prefers-reduced-motion: reduce` detiene las animaciones del fuego, halo, chispas y burst, conservando los estados por color e intensidad estática.
+
+El listener de visibilidad ya existente añade `.motion-paused` a `.player-hud` cuando la pestaña queda oculta. Las reglas de `styles.css` pausan las capas del fuego, halo y chispas con `animation-play-state: paused`; no se añadieron listeners ni timers de visibilidad específicos al módulo. El SVG decorativo usa `aria-hidden="true"`; el número publica la racha mediante `role="img"` y etiqueta dinámica, y `.streak-hub-cta:focus-visible` conserva un anillo de foco con `--focus-ring-aa`.
 
 ### Corrección de celebración de hitos
 
-El listener de `#btn-daily` también programa `showStreakMilestoneModal()` 600 ms después de un reclamo exitoso. Antes, un hito alcanzado al reclamar solo se detectaba en la siguiente carga de la aplicación. El retardo evita competir con el feedback del reclamo y `showStreakMilestoneModal()` conserva su protección `_streakMilestoneModalLocked` contra aperturas reentrantes.
+**Changelog independiente — Ticket-08.** El listener de `#btn-daily` en `js/app.js` programa `showStreakMilestoneModal()` 600 ms después de un `GameCenter.claimDaily()` exitoso. Antes del arreglo, un hito alcanzado por ese reclamo se detectaba recién en una carga posterior. El retraso deja terminar el feedback de reclamo y la función conserva el candado `_streakMilestoneModalLocked` contra aperturas reentrantes.
 
-### Changelog — Cleanup del HUD legado posterior al rediseño
+### Archivos modificados
 
-Se retiraron de `styles.css` las clases sin consumidores `.hud-greeting`, `.hud-status`, `.hud-status-dot`, `.hud-balance`, `.hud-balance-label`, `.hud-balance-amount`, `.hud-daily-btn`, `.hud-daily-reward` y `.hud-daily-label`, además de sus pseudo-elementos, reglas de estado, media queries y las animaciones `blink` y `dailyBtnPulse`. También se eliminó `.hud-balance-row`, ya que el envolvente correspondiente no forma parte del markup actual. `updateDailyButton()` conserva exclusivamente la actualización del markup vigente del Daily Streak Hub; la rama del botón clásico, inalcanzable en la SPA, fue eliminada. Los IDs públicos del hub, incluido `#btn-daily`, se conservan sin cambios.
+| Archivo | Cambio |
+|---|---|
+| `index.html` | Estructura del hub, SVG del fuego, IDs preservados, contador y contenedor de monedas; carga `js/streak-hub.js`. |
+| `styles.css` | Estados `data-state`, animaciones del fuego y reclamo, número, micro-progreso, reducción de movimiento y pausa por visibilidad. |
+| `js/streak-hub.js` | Sincronización visual, secuencia de reclamo, audio Web Audio API, burst de monedas y haptics opcionales. |
+| `js/app.js` | Invoca la secuencia de reclamo y abre el modal de hito tras un reclamo exitoso. |
+| `docs/sistema-racha-diaria.md` | Contrato técnico y UX del sistema de racha actualizado para el nuevo hub. |
+| `README.md` | Versión y estructura de archivos actualizadas. |
 
 ---
+
 ## Actualización de rendimiento de Tienda (abril 2026)
 
 ### Objetivo
