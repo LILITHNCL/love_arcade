@@ -201,10 +201,16 @@ assert.match(
   'The static HUD sheen must also receive dithering.'
 );
 assert.doesNotMatch(css, /hudAmbientSweep/, 'The retired ambient animation must have no residual references.');
+const playerHudAmbient = css.match(/\.player-hud::before\s*\{[\s\S]*?\n\}/)?.[0] || '';
+assert.match(
+  playerHudAmbient,
+  /filter:\s*blur\(12px\);/,
+  'The static ambient composition must apply the optional 12px cosmetic blur.'
+);
 assert.doesNotMatch(
-  css.match(/\.player-hud::before\s*\{[\s\S]*?\n\}/)?.[0] || '',
-  /(?:transform|will-change|filter):/,
-  'The static ambient composition must not retain transform, layer-promotion, or blur work.'
+  playerHudAmbient,
+  /(?:transform|will-change):/,
+  'The static ambient composition must not retain transform or layer-promotion work.'
 );
 assert.doesNotMatch(
   css,

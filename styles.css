@@ -929,6 +929,7 @@ body::before {
         );
     background-repeat: repeat, no-repeat, no-repeat, no-repeat;
     background-size: 200px 200px, cover, cover, cover;
+    filter: blur(12px);
     opacity: 0.72;
     pointer-events: none;
     border-radius: inherit;
