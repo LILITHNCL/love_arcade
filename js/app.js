@@ -2123,7 +2123,7 @@ function updateDailyButton(scope) {
         msg.style.opacity = '1';
     }
 
-    // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
+    // El único botón diario de la SPA contiene el importe específico del hub.
     const rewardEl = root.querySelector('#hud-reward-amount');
     if (rewardEl) {
         // Solo actualizar la cifra; la etiqueta "DÍAS" se queda fija.
@@ -2136,19 +2136,7 @@ function updateDailyButton(scope) {
             const total = info.nextReward + (moonStatus.active ? 90 : 0);
             rewardEl.textContent = `+${total}`;
         }
-        return; // HUD manejado: salir para no tocar el span genérico
-    }
-
-    // Botón clásico (por si se usa en otra vista)
-    const span = btn.querySelector('span');
-    if (span) {
-        if (!can) {
-            span.textContent = `Vuelve mañana · Racha: ${info.streak}`;
-        } else {
-            const moonStatus = window.GameCenter.getMoonBlessingStatus();
-            const moonNote   = moonStatus.active ? ' +Luna' : '';
-            span.textContent = `Bono Diario (+${info.nextReward}${moonNote})`;
-        }
+        return;
     }
 }
 

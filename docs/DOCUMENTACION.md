@@ -4621,6 +4621,10 @@ Cada moneda usa únicamente `transform` y `opacity` durante `coinFly`, se elimin
 
 El listener de `#btn-daily` también programa `showStreakMilestoneModal()` 600 ms después de un reclamo exitoso. Antes, un hito alcanzado al reclamar solo se detectaba en la siguiente carga de la aplicación. El retardo evita competir con el feedback del reclamo y `showStreakMilestoneModal()` conserva su protección `_streakMilestoneModalLocked` contra aperturas reentrantes.
 
+### Changelog — Cleanup del HUD legado posterior al rediseño
+
+Se retiraron de `styles.css` las clases sin consumidores `.hud-greeting`, `.hud-status`, `.hud-status-dot`, `.hud-balance`, `.hud-balance-label`, `.hud-balance-amount`, `.hud-daily-btn`, `.hud-daily-reward` y `.hud-daily-label`, además de sus pseudo-elementos, reglas de estado, media queries y las animaciones `blink` y `dailyBtnPulse`. También se eliminó `.hud-balance-row`, ya que el envolvente correspondiente no forma parte del markup actual. `updateDailyButton()` conserva exclusivamente la actualización del markup vigente del Daily Streak Hub; la rama del botón clásico, inalcanzable en la SPA, fue eliminada. Los IDs públicos del hub, incluido `#btn-daily`, se conservan sin cambios.
+
 ---
 ## Actualización de rendimiento de Tienda (abril 2026)
 
