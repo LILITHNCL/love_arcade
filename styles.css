@@ -951,7 +951,6 @@ body::before {
 .player-hud.motion-paused::before,
 .player-hud.motion-paused .hud-avatar-ring,
 .player-hud.motion-paused .flame-layer,
-.player-hud.motion-paused .streak-flame__glow,
 .player-hud.motion-paused .spark {
     animation-play-state: paused;
 }
@@ -1246,28 +1245,25 @@ body::before {
     position: relative;
     width: 108px;
     height: 144px;
-    contain: layout paint;
+    /* Paint containment would crop the SVG filter outside this box. */
+    contain: layout;
+    overflow: visible;
     transform: translateZ(0);
     margin-bottom: 2px;
 }
 
-.streak-flame__glow {
-    position: absolute;
-    inset: -30%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,138,30,0.55) 0%, rgba(255,90,20,0.18) 45%, transparent 72%);
-    filter: blur(18px);
-    opacity: var(--flame-glow-opacity, 0.15);
-    animation: flameGlowPulse 2.6s ease-in-out infinite;
-    will-change: opacity, transform;
-    pointer-events: none;
+.streak-flame__svg {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* The filter is calculated from the rendered SVG alpha, never its box. */
+    filter:
+        drop-shadow(0 0 4px var(--flame-glow-near, rgba(255, 213, 100, 0.16)))
+        drop-shadow(0 0 10px var(--flame-glow-mid, rgba(255, 116, 25, 0.12)))
+        drop-shadow(0 0 20px var(--flame-glow-far, rgba(255, 73, 18, 0.08)));
 }
-@keyframes flameGlowPulse {
-    0%, 100% { opacity: calc(var(--flame-glow-opacity, 0.15) * 0.8); transform: scale(1); }
-    50%      { opacity: var(--flame-glow-opacity, 0.15); transform: scale(1.06); }
-}
-
-.streak-flame__svg { position: relative; z-index: 1; display: block; width: 100%; height: 100%; }
 
 .flame-layer {
     transform-origin: 60px 150px;
@@ -1330,7 +1326,9 @@ body::before {
 
 /* ── Estado: locked (nunca reclamado / streak 0) ── */
 .streak-flame[data-state="locked"] {
-    --flame-glow-opacity: 0.10;
+    --flame-glow-near: rgba(255, 213, 100, 0.07);
+    --flame-glow-mid: rgba(255, 116, 25, 0.05);
+    --flame-glow-far: rgba(255, 73, 18, 0.03);
     filter: grayscale(0.55) brightness(0.62);
 }
 .streak-flame[data-state="locked"] .streak-flame__sparks,
@@ -1340,12 +1338,16 @@ body::before {
 
 /* ── Estado: available (listo para reclamar) — el más intenso ── */
 .streak-flame[data-state="available"] {
-    --flame-glow-opacity: 0.55;
+    --flame-glow-near: rgba(255, 221, 119, 0.44);
+    --flame-glow-mid: rgba(255, 123, 28, 0.32);
+    --flame-glow-far: rgba(255, 73, 18, 0.20);
 }
 
 /* ── Estado: claimed (ya reclamado hoy) — vivo pero calmado ── */
 .streak-flame[data-state="claimed"] {
-    --flame-glow-opacity: 0.22;
+    --flame-glow-near: rgba(255, 213, 100, 0.18);
+    --flame-glow-mid: rgba(255, 116, 25, 0.13);
+    --flame-glow-far: rgba(255, 73, 18, 0.08);
     filter: saturate(0.72) brightness(0.88);
 }
 .streak-flame[data-state="claimed"] .flame-layer--back { animation-duration: 4.6s; }
@@ -1354,7 +1356,9 @@ body::before {
 
 /* ── Estado: repair (racha en riesgo, recuperable) — ámbar de alerta suave ── */
 .streak-flame[data-state="repair"] {
-    --flame-glow-opacity: 0.30;
+    --flame-glow-near: rgba(255, 213, 100, 0.24);
+    --flame-glow-mid: rgba(255, 116, 25, 0.18);
+    --flame-glow-far: rgba(255, 73, 18, 0.12);
     filter: hue-rotate(-14deg) saturate(0.85);
 }
 .streak-flame[data-state="repair"] .streak-flame__sparks { display: none; }
@@ -1370,21 +1374,13 @@ body::before {
     100% { transform: scale(1.02); filter: brightness(1.05); }
 }
 
-/* ── Reducción en dispositivos táctiles (mismo patrón que el resto del proyecto) ── */
-@media (pointer: coarse) {
-    .streak-flame__glow { filter: blur(10px); }
-}
-
 /* ── prefers-reduced-motion ── */
 @media (prefers-reduced-motion: reduce) {
     .streak-flame .flame-layer,
-    .streak-flame__glow,
     .spark,
     .streak-flame__svg {
         animation: none !important;
     }
-    .streak-flame[data-state="available"] .streak-flame__glow { opacity: 0.5; }
-    .streak-flame[data-state="claimed"] .streak-flame__glow  { opacity: 0.2; }
 }
 
 /* ── Daily Streak Hub: streak statistic and supporting HUD ── */
