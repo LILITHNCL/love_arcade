@@ -4752,6 +4752,36 @@ svg { stroke-width: 2; }
     border: 1px solid var(--border-subtle);
 }
 
+/* En pantallas estrechas, apilar el importe bajo el detalle evita que el
+   movimiento compita por el mismo ancho y mantiene el motivo completo visible. */
+@media (max-width: 719px) {
+    #view-profile .history-entry {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        align-items: start;
+        column-gap: 10px;
+        row-gap: 6px;
+    }
+
+    #view-profile .history-icon {
+        grid-row: span 2;
+        margin-top: 1px;
+    }
+
+    #view-profile .history-motivo {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+    }
+
+    #view-profile .history-amount {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
 @media (min-width: 720px) {
     #view-profile .theme-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .profile-coming-soon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
