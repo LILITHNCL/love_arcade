@@ -26,6 +26,7 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | Archivo | Rol dentro del sistema |
 |---|---|
 | `js/app.js` | Fuente principal de lógica: configuración económica, estado, migración, reclamo, cálculo de racha, Bendición Lunar, hitos, UI y listener del botón diario. |
+| `js/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
 | `index.html` | Estructura del HUD diario, barra de racha, panel de racha en configuración y modal de hito. |
 | `styles.css` | Estilos visuales, estados, animaciones y modal de hitos. |
 | `js/milestones-config.js` | Catálogo de hitos de racha y recompensas. |
@@ -252,55 +253,35 @@ Gestionan hitos de racha reclamados una sola vez.
 
 ## 9. UX en la pantalla de inicio
 
-### 9.1 HUD diario
+### 9.1 Estructura del Daily Streak Hub
 
-En `index.html`, la vista de inicio incluye:
+En `index.html`, `#player-hud` conserva una fila de identidad compacta con `#hud-avatar-display`, `#display-nickname` y `#cloud-sync-indicator`. El único control de reclamo es el botón nativo `#btn-daily.streak-hub-cta`; contiene el fuego decorativo `#streak-flame`, el número grande `#streak-count-big`, la etiqueta `#hud-daily-label`, el copy `#streak-hub-copy` con `#hud-daily-cta-text` y el importe `#hud-reward-amount`.
 
-- saldo de monedas;
-- botón `#btn-daily`;
-- icono de regalo;
-- monto `#hud-reward-amount`;
-- etiqueta `BONO DIARIO`;
-- countdown `#daily-countdown` con `#countdown-display`;
-- mensaje `#daily-msg`;
-- barra `#streak-days` con 7 segmentos;
-- contador `#streak-count`.
+Debajo del botón se mantienen `#streak-days` (siete segmentos) y `#streak-count` (respaldo visualmente oculto para `updateStreakBar()`), `#daily-countdown` con `#countdown-display`, `#daily-msg`, y el contenedor decorativo `#streak-coin-burst`. Esta estructura conserva los IDs que consume la lógica de negocio y permite que toda la zona de fuego, número y CTA sea táctil y operable por teclado.
 
-### 9.2 Estados del botón
+### 9.2 Estados visuales
 
-`updateDailyButton()` aplica dos estados principales:
+`window.StreakHub.refresh()` consulta `GameCenter.getStreakInfo()` y `GameCenter.canClaimDaily()` y escribe el resultado en `#streak-flame[data-state]`. El atributo es la única representación visual adicional del estado; no sustituye ni persiste el estado de `GameCenter`.
 
-| Estado | UI |
-|---|---|
-| Puede reclamar | Botón habilitado, opacidad `1`, cursor `pointer`, monto `+total`. |
-| Ya reclamó | Botón deshabilitado, opacidad `0.5`, cursor `not-allowed`, muestra `×streak`. |
+| Estado | Condición | Tratamiento |
+|---|---|---|
+| `locked` | Racha `0` y bono disponible | Fuego atenuado, sin chispas, listo para iniciar la racha. |
+| `available` | Bono disponible sin reparación | Fuego intenso, halo y chispas; CTA de reclamo activo. |
+| `repair` | `repairAvailable` es verdadero | Fuego ámbar sin chispas; el CTA se presenta como reparación. |
+| `claiming` | Reclamo exitoso durante 480 ms | Burst puntual; estado transitorio no persistido. |
+| `claimed` | Bono ya reclamado sin reparación | Fuego calmado y countdown visible. |
 
-Cuando la Bendición Lunar está activa, el monto visible del botón suma `info.nextReward + 90`.
+`updateDailyButton()` conserva la autoridad sobre `disabled`, `data-mode`, el nombre accesible del botón, el texto del CTA y el importe. En modo normal muestra `+total`, donde el total incluye los 90 de Bendición Lunar cuando está activa; tras reclamar muestra `×streak`; en reparación muestra el coste de reparación.
 
-### 9.3 Cuenta regresiva
+### 9.3 Sincronización y feedback de reclamo
 
-`updateCountdownDisplay()` muestra el countdown cuando `canClaimDaily()` es falso. Calcula la próxima medianoche local con:
+El módulo `js/streak-hub.js` se carga después de `app.js`. No crea polling: se refresca al cargar el DOM, mediante `HomeView.refresh()` y después de los refrescos ya existentes del HUD. Tras un resultado exitoso, `playClaimSequence(result)` coloca el fuego en `claiming`, llama al audio sintetizado dentro del gesto de usuario y, 480 ms después, restaura el estado final, anima una vez `#streak-count-big` y genera ocho monedas en `#streak-coin-burst` que se eliminan al terminar su animación. Si el reclamo falla, no genera el burst y solo refresca el estado.
 
-```js
-const tomorrow = new Date(now);
-tomorrow.setHours(24, 0, 0, 0);
-```
+El resultado textual continúa en `#daily-msg[role="status"][aria-live="polite"]`, visible durante 3.5 segundos. El fuego y las monedas son decorativos y no emiten anuncios adicionales.
 
-Luego renderiza `HH:MM:SS`. El intervalo se registra en `window.AppScheduler` con frecuencia de 250 ms, pero internamente agrupa por segundo para no reescribir innecesariamente el DOM.
+### 9.4 Cuenta regresiva y micro-progreso
 
-### 9.4 Barra visual de racha
-
-`updateStreakBar()` actualiza 7 segmentos:
-
-- segmentos con índice menor a `streak` reciben `.active`;
-- el siguiente segmento, si `streak < 7`, recibe `.today`;
-- `#streak-count` muestra `×{streak}`.
-
-Nota técnica: si la racha supera 7, los 7 segmentos quedan activos y el contador textual conserva el valor real.
-
-### 9.5 Mensajes
-
-Después de hacer clic, `#daily-msg` muestra `result.message`, usa verde para éxito y amarillo para error, y se desvanece después de 3.5 segundos.
+`updateCountdownDisplay()` muestra `#daily-countdown` cuando `canClaimDaily()` es falso y actualiza `#countdown-display` por segundo mediante el grupo `countdown` de `window.AppScheduler`. `updateStreakBar()` conserva los siete segmentos de `#streak-days`: los anteriores a la racha reciben `.active`, el siguiente recibe `.today` mientras la racha sea menor de siete, y `#streak-count` conserva el valor textual completo cuando la racha supera siete.
 
 ## 10. UX en configuración / tienda
 
@@ -449,43 +430,17 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 
 ## 17. Accesibilidad
 
-### 17.1 Fortalezas existentes
-
-- El botón diario es un `<button>` nativo.
-- Los iconos decorativos usan `aria-hidden="true"`.
-- El modal de hito usa `role="dialog"`, `aria-modal="true"` y `aria-labelledby`.
-- El botón de reclamar hito es nativo y tiene texto visible.
-
-### 17.2 Riesgos / oportunidades
-
-- `#btn-daily` no tiene `aria-label`; aunque tiene texto visible, el monto dinámico puede hacer que el nombre accesible sea poco claro. Recomendación: `aria-label="Reclamar bono diario"` y actualizar `aria-describedby` hacia el monto/estado si se quiere más contexto.
-- `#daily-msg` ya incluye `role="status"` y `aria-live="polite"`, por lo que los mensajes de éxito, bloqueo y reparación se anuncian a tecnologías de asistencia.
-- La barra de racha usa `div` visuales sin texto accesible. Recomendación: añadir un texto oculto o `aria-label` en el contenedor, por ejemplo “Racha actual: 5 días”.
-- El modal de hito no implementa explícitamente focus trap ni restauración de foco. Recomendación: al abrir, enfocar el botón de reclamo; al cerrar, devolver foco al botón diario o al disparador relevante.
-- El countdown puede beneficiarse de `aria-live="polite"` con cuidado para no anunciar cada segundo; mejor anunciar cambios de estado, no cada tick.
+- `#btn-daily` es un `<button type="button">` nativo, por lo que conserva Tab, Enter y Espacio. `updateDailyButton()` alterna su nombre accesible entre «Reclamar bono diario» y «Reparar racha diaria».
+- El botón enlaza `#daily-msg`, `#daily-countdown` y `#streak-hub-copy` mediante `aria-describedby`. `.streak-hub-cta:focus-visible` usa un anillo de foco basado en `--focus-ring-aa`.
+- `#streak-flame` y `#streak-coin-burst` son decorativos y usan `aria-hidden="true"`; el fuego además declara `aria-live="off"`. `.streak-hub-number` usa `role="img"` y `StreakHub` actualiza su `aria-label` con la racha actual.
+- `#daily-msg` es el único canal de anuncio del resultado: `role="status"` y `aria-live="polite"`. No deben añadirse anuncios duplicados para el burst, chispas o audio.
+- El modal de reparación enfoca el botón de confirmación al abrirse y devuelve el foco a `#btn-daily` al cerrarse. El contraste de los números en gradiente debe verificarse visualmente frente al fondo al cambiar tokens de tema.
 
 ## 18. Motion y rendimiento UX
 
-### 18.1 Motion existente
+El fuego se compone de capas SVG, halo y chispas CSS. Las animaciones repetidas usan `transform` y `opacity`; el halo no anima su `filter: blur()`. `claiming` ejecuta un burst de 480 ms y el reclamo exitoso genera ocho monedas efímeras que se eliminan en `animationend`; el número recibe un bump único. El audio se sintetiza con Web Audio API y la vibración solo se solicita cuando el navegador la permite dentro de la activación de usuario.
 
-- El botón diario disponible tiene un pulso sutil en `::after`.
-- Hover del botón usa `transform` y `box-shadow`.
-- La barra de racha usa `.today` con `streakPulse` animando `box-shadow`.
-- El modal de hito usa `streakMilestonePop` con `opacity` y `transform`.
-- Los efectos de recompensa usan `transform` y `opacity`.
-
-### 18.2 Buenas decisiones
-
-- El botón deshabilitado detiene animación.
-- Se evita red durante el reclamo, por lo que la interacción se siente instantánea.
-- `revealUI()` retrasa la aparición del HUD hasta que el estado real ya fue aplicado, evitando flicker y layout shift inicial.
-- El countdown evita escrituras por frame y actualiza por segundo.
-
-### 18.3 Riesgos / oportunidades
-
-- Algunas animaciones de racha usan `box-shadow`, que puede ser más costoso que `opacity/transform`. No es grave por el tamaño pequeño, pero conviene mantenerlo acotado.
-- Existe una regla global `prefers-reduced-motion` que detiene los pulsos del botón, la barra de racha, los modales de racha y el brillo flotante de recompensas.
-- `streakMilestonePop` dura 500 ms; para feedback de interacción suele ser largo. Como es una celebración modal, puede ser aceptable, pero debería respetar reducción de movimiento.
+Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce` desactiva las animaciones de fuego, halo, chispas y burst, y acorta la duración de las monedas a 260 ms; `pointer: coarse` reduce el blur del halo a 10 px. Al ocultar la pestaña, el listener existente añade `.motion-paused` a `.player-hud`, con lo que `styles.css` pausa las capas del fuego, el halo y las chispas. `StreakHub.refresh()` no crea timers y reutiliza los puntos de refresco del HUD; el countdown sigue bajo `AppScheduler` y evita escrituras redundantes dentro del mismo segundo.
 
 ## 19. Estados de UX cubiertos
 
@@ -522,6 +477,7 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 4. **Accesibilidad de anuncios.** Los mensajes dinámicos no están garantizados para screen readers.
 5. **Focus management del modal.** El modal declara semántica, pero no se observa focus trap/restauración explícita.
 6. **Notificaciones calculan `nextDailyTs` como `now + 24h`.** La lógica core es medianoche local; el recordatorio podría no coincidir exactamente con el próximo reset calendario, aunque el dispatch también usa slots y `daily_can_claim`.
+7. **Resuelto — el modal de hito no se abría tras el reclamo diario.** El listener de `#btn-daily` programa `showStreakMilestoneModal()` 600 ms después de un `claimDaily()` exitoso. Así el hito recién alcanzado se celebra en la misma sesión, después del feedback visual del reclamo y respetando el bloqueo de reentradas existente.
 
 ## 22. Recomendaciones
 

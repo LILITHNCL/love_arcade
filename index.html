@@ -38,31 +38,34 @@
     <script>
     !function(){
       var KEY='gamecenter_v6_promos';
-      // Mapa de temas: [accent, glow] — debe coincidir con THEMES en app.js
+      // Mapa de temas: debe coincidir con THEMES en app.js.
       var T={
-        violet: ['#9b59ff','rgba(155,89,255,0.4)'],
-        pink:   ['#ff59b4','rgba(255,89,180,0.4)'],
-        cyan:   ['#00d4ff','rgba(0,212,255,0.4)'],
-        gold:   ['#f59e0b','rgba(245,158,11,0.4)'],
-        crimson:['#e11d48','rgba(225,29,72,0.4)']
+        red:'#FF3B30',brick:'#C0392B',rose:'#FF375F',magenta:'#FF2D92',orange:'#FF9500',amber_deep:'#E67E22',yellow:'#FFCC00',gold_soft:'#F4D03F',lime:'#A8E063',green:'#30D158',emerald:'#2ECC71',teal:'#1ABC9C',ocean:'#006689',cyan:'#26C6DA',sky:'#5AC8FA',blue:'#0A84FF',azure:'#2196F3',indigo:'#5856D6',violet:'#7C3AED',purple:'#9B59B6',sienna:'#A0522D',bronze:'#8B6914',graphite:'#636366',slate:'#48484A',white:'#FFFFFF'
       };
+      function deriveThemeRoles(hex){
+        var m=typeof hex==='string'&&hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if(!m) return null;
+        var h=m[1].length===3?m[1].replace(/./g,function(c){return c+c;}):m[1],a='#'+h.toUpperCase(),rgb=[0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16)/255;}),l=rgb.map(function(c){return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}),lum=.2126*l[0]+.7152*l[1]+.0722*l[2];
+        return {accent:a,accentHover:'color-mix(in srgb, '+a+' 82%, #ffffff 18%)',accentDim:'color-mix(in srgb, '+a+' 72%, #0b0d14 28%)',accentSoft:'color-mix(in srgb, '+a+' 28%, #0b0d14 72%)',accentSoftStrong:'color-mix(in srgb, '+a+' 44%, #0b0d14 56%)',accentBorder:'color-mix(in srgb, '+a+' 62%, #20263a 38%)',accentGlow:'color-mix(in srgb, '+a+' 34%, #0a0d18 66%)',surfaceNav:'color-mix(in srgb, '+a+' 8%, #050508 92%)',onAccent:lum>.7?'#0b0d14':'#ffffff'};
+      }
       try {
         var raw=localStorage.getItem(KEY);
         if(!raw) return;
         var theme=JSON.parse(raw).theme;
-        // Violeta es el valor por defecto en :root — no necesita override
+        // Violeta coincide exactamente con los roles base de :root; no sobreescribir.
         if(!theme||!T[theme]||theme==='violet') return;
-        var d=document.documentElement,
-            accent=T[theme][0],
-            glow  =T[theme][1];
-        // Sobreescribir las 6 custom properties de acento
-        d.style.setProperty('--accent',        accent);
-        d.style.setProperty('--accent-hover',  accent+'cc');
-        d.style.setProperty('--accent-glow',   glow);
-        d.style.setProperty('--accent-dim',    accent+'99');
-        d.style.setProperty('--accent-soft',   glow.replace(/[\d.]+\)$/,'0.12)'));
-        d.style.setProperty('--accent-border', glow.replace(/[\d.]+\)$/,'0.38)'));
-        // data-theme activa las reglas WCAG de contraste en styles.css
+        var d=document.documentElement,r=deriveThemeRoles(T[theme]);
+        if(!r) return;
+        d.style.setProperty('--accent',        r.accent);
+        d.style.setProperty('--accent-hover',  r.accentHover);
+        d.style.setProperty('--accent-glow',   r.accentGlow);
+        d.style.setProperty('--accent-dim',    r.accentDim);
+        d.style.setProperty('--accent-soft',   r.accentSoft);
+        d.style.setProperty('--accent-soft-strong', r.accentSoftStrong);
+        d.style.setProperty('--accent-border', r.accentBorder);
+        d.style.setProperty('--surface-nav',   r.surfaceNav);
+        d.style.setProperty('--on-accent',     r.onAccent);
+        // data-theme conserva los hooks de estilo específicos del tema.
         d.setAttribute('data-theme', theme);
       } catch(e) { /* localStorage no disponible — continuar con tema por defecto */ }
     }();
@@ -307,67 +310,94 @@
         <div id="view-home" class="view-section">
 
             <!-- ── PLAYER HUD ── -->
-            <div class="player-hud">
+            <div class="player-hud" id="player-hud">
 
-                <div class="hud-top">
-                    <div class="hud-avatar-wrap" aria-hidden="true">
+                <!-- Fila de identidad — compacta, secundaria -->
+                <div class="hub-identity-row">
+                    <div class="hud-avatar-wrap hub-identity-row__avatar">
                         <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
-                            <svg class="icon" width="24" height="24" aria-hidden="true"><use href="#icon-user"></use></svg>
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                         </div>
                         <div class="hud-avatar-ring"></div>
                     </div>
-                    <div class="hud-info">
-                        <p class="hud-greeting">
-                            Bienvenid<span id="pref-suffix">@</span> de vuelta
-                        </p>
-                        <div class="hud-name-row">
-                            <p class="hud-name" id="display-nickname"></p>
-                            <span id="cloud-sync-indicator" class="hud-cloud-sync-indicator" aria-live="polite" title="Sincronización en la nube">
-                                <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
-                                Nube
-                            </span>
-                        </div>
-                        <p class="hud-status">
-                            <span class="hud-status-dot"></span>
-                            <span>En línea</span>
-                        </p>
-                    </div>
+                    <p class="hub-identity-row__name">
+                        Hola, <span id="display-nickname"></span>
+                    </p>
+                    <span id="cloud-sync-indicator" class="hud-cloud-sync-indicator" aria-live="polite" title="Sincronización en la nube">
+                        <svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-upload-cloud"></use></svg>
+                        Nube
+                    </span>
                 </div>
 
-                <div class="hud-balance-row">
-                    <div class="hud-balance">
-                        <span class="hud-balance-label">Monedas</span>
-                        <div class="hud-balance-amount">
-                            <svg class="icon" width="18" height="18" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-                            <span class="coin-display">0</span>
+                <!-- Daily Streak Hub — el fuego es el protagonista -->
+                <button type="button"
+                        id="btn-daily"
+                        class="streak-hub-cta"
+                        aria-describedby="daily-msg daily-countdown streak-hub-copy"
+                        aria-label="Reclamar bono diario">
+
+                    <div class="streak-flame" id="streak-flame" data-state="locked" aria-hidden="true" aria-live="off">
+                        <svg class="streak-flame__svg" viewBox="0 0 120 160" width="120" height="160" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="flameOuter" x1="0" y1="1" x2="0" y2="0">
+                                    <stop offset="0%" stop-color="#ffb238" stop-opacity="0.9"/>
+                                    <stop offset="60%" stop-color="#ff6a1a" stop-opacity="0.85"/>
+                                    <stop offset="100%" stop-color="#c81d1d" stop-opacity="0.7"/>
+                                </linearGradient>
+                                <linearGradient id="flameCore" x1="0" y1="1" x2="0" y2="0">
+                                    <stop offset="0%" stop-color="#fff6c8"/>
+                                    <stop offset="35%" stop-color="#ffd23f"/>
+                                    <stop offset="70%" stop-color="#ff7a1a"/>
+                                    <stop offset="100%" stop-color="#ff3d1a"/>
+                                </linearGradient>
+                            </defs>
+                            <path class="flame-layer flame-layer--back" fill="url(#flameOuter)"
+                                  d="M60,150 C20,130 15,90 35,55 C40,45 35,35 30,20 C55,30 70,15 65,0 C95,20 105,55 90,85 C110,75 105,55 100,45 C120,70 115,110 90,135 C100,120 95,105 85,100 C88,125 75,145 60,150 Z"/>
+                            <path class="flame-layer flame-layer--mid" fill="url(#flameCore)" opacity="0.92"
+                                  d="M60,148 C32,130 30,100 45,70 C48,62 45,52 40,40 C58,48 68,35 64,22 C86,38 92,62 82,84 C96,78 92,62 88,55 C102,72 100,100 82,120 C88,110 84,98 76,94 C78,114 70,128 60,148 Z"/>
+                            <path class="flame-layer flame-layer--core" fill="#fff3c4" opacity="0.95"
+                                  d="M60,145 C46,132 45,112 54,92 C56,86 54,78 51,70 C60,75 66,66 63,58 C74,68 78,84 71,98 C79,94 77,84 74,80 C82,90 81,106 71,120 C74,113 71,106 66,103 C67,116 63,126 60,145 Z"/>
+                        </svg>
+                        <div class="streak-flame__sparks">
+                            <span class="spark spark--1"></span>
+                            <span class="spark spark--2"></span>
+                            <span class="spark spark--3"></span>
+                            <span class="spark spark--4"></span>
+                            <span class="spark spark--5"></span>
+                            <span class="spark spark--6"></span>
                         </div>
                     </div>
 
-                    <button id="btn-daily" class="hud-daily-btn" aria-label="Reclamar bono diario" aria-describedby="daily-msg daily-countdown">
-                        <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-gift"></use></svg>
-                        <span class="hud-daily-reward" id="hud-reward-amount">+20</span>
-                        <span class="hud-daily-label" id="hud-daily-label">BONO DIARIO</span>
-                    </button>
+                    <div class="streak-hub-number" role="img" aria-label="Racha actual">
+                        <span class="streak-hub-number__value" id="streak-count-big">0</span>
+                        <span class="streak-hub-number__label" id="hud-daily-label">DÍAS</span>
+                    </div>
+
+                    <p class="streak-hub-copy" id="streak-hub-copy">
+                        <span id="hud-daily-cta-text">Toca para reclamar</span>
+                        <span class="streak-hub-copy__amount" id="hud-reward-amount">+20</span>
+                    </p>
+                </button>
+
+                <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
+                    <div class="streak-day"></div>
                 </div>
+                <!-- Conservado para updateStreakBar(); el valor principal será #streak-count-big. -->
+                <span class="streak-count visually-hidden" id="streak-count">×0</span>
 
                 <div id="daily-countdown" class="hud-countdown hidden">
                     Próximo bono en: <span id="countdown-display">--:--:--</span>
                 </div>
                 <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
 
-                <div class="hud-streak">
-                    <span class="streak-label"><svg class="icon" width="11" height="11" aria-hidden="true"><use href="#icon-flame"></use></svg> Racha</span>
-                    <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                        <div class="streak-day"></div>
-                    </div>
-                    <span class="streak-count" id="streak-count">×1</span>
-                </div>
+                <!-- Contenedor del coin burst; se usa en Ticket-06. -->
+                <div class="streak-coin-burst" id="streak-coin-burst" aria-hidden="true"></div>
             </div>
 
             <!-- ── GAME CARDS ── -->
@@ -700,29 +730,29 @@
                 </div>
 
                 <div class="profile-action-grid" aria-label="Opciones de perfil">
-                    <button class="profile-action-card" type="button" data-profile-target="sync">
-                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Sincronización</span><span class="profile-action-card__desc">Guarda tu progreso y llévalo contigo.</span></span>
-                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
-                    </button>
-                    <button class="profile-action-card" type="button" data-profile-target="notifications">
-                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-bell"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Recibe avisos cuando haya recompensas o novedades.</span></span>
-                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
-                    </button>
                     <button class="profile-action-card" type="button" data-profile-target="personalization">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-palette"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Personalización</span><span class="profile-action-card__desc">Elige cómo quieres que se vea tu página.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Personalización</span><span class="profile-action-card__desc">Cambia el tema de la app.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                     <button class="profile-action-card" type="button" data-profile-target="upgrades">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-moon"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Mejoras</span><span class="profile-action-card__desc">Activa extras especiales para tu experiencia.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Mejoras</span><span class="profile-action-card__desc">Desbloquea extras y mejoras.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                     <button class="profile-action-card" type="button" data-profile-target="history">
                         <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-scroll-text"></use></svg></span>
-                        <span class="profile-action-card__body"><span class="profile-action-card__title">Historial</span><span class="profile-action-card__desc">Revisa tus monedas, compras y recompensas.</span></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Historial</span><span class="profile-action-card__desc">Monedas, compras y recompensas.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="sync">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Sincronización</span><span class="profile-action-card__desc">Copias de seguridad</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button class="profile-action-card" type="button" data-profile-target="notifications">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-bell"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Novedades y avisos importantes.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
                 </div>
@@ -735,15 +765,9 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Progreso seguro</p>
                         <h2 class="section-title">Sincronización</h2>
                         <p class="section-subtitle">Guarda tu avance y llévalo contigo.</p>
                     </div>
-                </div>
-
-                <div class="profile-info-strip">
-                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-shield-check"></use></svg> Respaldo protegido</span>
-                    <span><svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-lock"></use></svg> Recuperación segura</span>
                 </div>
 
                 <div class="memory-card">
@@ -788,7 +812,7 @@
                 </div>
 
                 <!-- ── NUBE: Sentinel Cloud Sync v14.0 ── -->
-                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35); margin-top:8px;">
+                <div class="memory-card" id="cloud-sync-card" style="border-color:rgba(99,179,237,0.35);">
                     <div class="memory-card__header">
                         <div class="memory-card__chip" style="background:linear-gradient(135deg,rgba(99,179,237,0.25),rgba(66,153,225,0.15)); border:1px solid rgba(99,179,237,0.4);">
                             <svg class="icon" width="18" height="18" aria-hidden="true" style="color:#63b3ed;"><use href="#icon-download-cloud"></use></svg>
@@ -828,9 +852,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Avisos útiles</p>
                         <h2 class="section-title">Notificaciones</h2>
-                        <p class="section-subtitle">Elige si quieres recibir recordatorios importantes.</p>
                     </div>
                 </div>
                 <div class="profile-screen-card" id="push-notifications-card">
@@ -874,14 +896,12 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Tu estilo</p>
                         <h2 class="section-title">Personalización</h2>
-                        <p class="section-subtitle">Elige el color que combine con tu página.</p>
                     </div>
                 </div>
 
                 <!-- Tema de color -->
-                <div class="glass-panel settings-card" style="margin-bottom:1rem;">
+                <div class="glass-panel settings-card">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.1rem;">
                         <div class="promo-icon-wrap">
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-palette"></use></svg>
@@ -891,33 +911,7 @@
                             <p style="margin:0; font-size:0.72rem; color:var(--text-low);">Este color se aplicará a la interfaz principal.</p>
                         </div>
                     </div>
-                    <div class="theme-grid">
-                        <button class="theme-btn" data-theme="violet">
-                            <span class="theme-swatch" style="background:#9b59ff;"></span>
-                            <span class="theme-name">Violeta</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="pink">
-                            <span class="theme-swatch" style="background:#ff59b4;"></span>
-                            <span class="theme-name">Rosa Neón</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="cyan">
-                            <span class="theme-swatch" style="background:#00d4ff;"></span>
-                            <span class="theme-name">Cyan Arcade</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="gold">
-                            <span class="theme-swatch" style="background:#f59e0b;"></span>
-                            <span class="theme-name">Dorado</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                        <button class="theme-btn" data-theme="crimson">
-                            <span class="theme-swatch" style="background:#e11d48;"></span>
-                            <span class="theme-name">Carmesí</span>
-                            <svg class="icon theme-check" width="12" height="12" aria-hidden="true"><use href="#icon-check"></use></svg>
-                        </button>
-                    </div>
+                    <div class="theme-grid" id="theme-grid"></div>
                 </div>
 
             </section>
@@ -928,9 +922,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Detalles especiales</p>
                         <h2 class="section-title">Mejoras</h2>
-                        <p class="section-subtitle">Activa extras para darle más brillo a tu experiencia.</p>
                     </div>
                 </div>
                 <!-- Bendición Lunar -->
@@ -986,9 +978,7 @@
                         <span aria-hidden="true">←</span> Volver
                     </button>
                     <div>
-                        <p class="profile-screen-kicker">Tus movimientos</p>
                         <h2 class="section-title">Historial</h2>
-                        <p class="section-subtitle">Revisa tus monedas, compras y recompensas.</p>
                     </div>
                 </div>
                 <!-- Movimientos de monedas -->
@@ -1351,11 +1341,15 @@
          1. analytics.js  → Ghost Analytics, telemetría
          2. supabase-loader.js → Expone carga diferida de Supabase SDK (CDN + fallback)
          3. milestones-config.js → Catálogo de hitos de racha (fuente de verdad)
-         4. app.js        → GameCenter, store, updateUI (núcleo)
+         4. lifecycle-scheduler.js → Coordinación de intervalos por ciclo de vida
+         5. app.js        → GameCenter, store, updateUI (núcleo)
                             Incluye Sentinel Cloud Sync v13.0:
                             StorageInterceptor + Supabase auth/sync
-         5. shop-logic.js → Catálogo, compras, sync, ajustes
-         6. spa-router.js → Navegación SPA entre vistas
+         6. backup-engine.js, push-notifications.js y shop-logic.js
+                            → Backup, notificaciones y Tienda
+         7. streak-hub.js → Widget de fuego, animaciones de reclamo,
+                            audio sintetizado
+         8. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1367,6 +1361,7 @@
     <script src="js/backup-engine.js"></script>
     <script src="js/push-notifications.js"></script>
     <script src="js/shop-logic.js"></script>
+    <script src="js/streak-hub.js"></script>
     <script src="js/spa-router.js"></script>
 
     <script>
@@ -1440,6 +1435,7 @@
             refresh() {
                 updateCountdownDisplay();
                 updateStreakBar();
+                window.StreakHub?.refresh?.();
             },
             /**
              * Llamado por spa-router.js al SALIR de la vista Inicio (v9.6).
@@ -2003,6 +1999,7 @@
                     setTimeout(() => {
                         updateCountdownDisplay();
                         updateStreakBar();
+                        window.StreakHub?.refresh?.();
                     }, 80);
                 });
             }
