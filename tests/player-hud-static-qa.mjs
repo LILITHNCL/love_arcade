@@ -13,6 +13,7 @@ function cssRule(selector) {
 
 const ambient = cssRule('.player-hud::before');
 const sheen = cssRule('.player-hud::after');
+const hudContent = cssRule('.player-hud > *');
 
 assert.match(ambient, /inset:\s*0;/);
 assert.match(ambient, /feTurbulence/);
@@ -23,12 +24,17 @@ assert.match(ambient, /background-repeat:\s*repeat, no-repeat, no-repeat, no-rep
 assert.match(ambient, /background-size:\s*200px 200px, cover, cover, cover;/);
 assert.match(ambient, /filter:\s*blur\(12px\);/);
 assert.match(ambient, /opacity:\s*0\.72;/);
+assert.match(ambient, /z-index:\s*0;/);
 assert.doesNotMatch(ambient, /\b(?:animation|transition|transform|will-change)\s*:/);
 
 assert.match(sheen, /feTurbulence/);
 assert.match(sheen, /linear-gradient\(180deg, rgba\(255,255,255,0\.035\), transparent 42%\)/);
 assert.match(sheen, /background-repeat:\s*repeat, no-repeat;/);
 assert.match(sheen, /background-size:\s*200px 200px, cover;/);
+assert.match(sheen, /z-index:\s*0;/);
+
+assert.match(hudContent, /position:\s*relative;/);
+assert.match(hudContent, /z-index:\s*1;/);
 
 assert.doesNotMatch(css, /\.player-hud\.is-ready::before|\.player-hud\.motion-paused::before/);
 assert.doesNotMatch(css, /hudAmbientSweep/);

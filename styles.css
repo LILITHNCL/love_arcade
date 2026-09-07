@@ -933,6 +933,7 @@ body::before {
     opacity: 0.72;
     pointer-events: none;
     border-radius: inherit;
+    z-index: 0;
 }
 
 .player-hud::after {
@@ -946,6 +947,15 @@ body::before {
     background-repeat: repeat, no-repeat;
     background-size: 200px 200px, cover;
     pointer-events: none;
+    z-index: 0;
+}
+
+/* Keep both decorative pseudo-elements behind every HUD control and label.
+   Without this explicit layer boundary, ::after is painted after the HUD's
+   content and its sheen/noise reduces the perceived contrast of the text. */
+.player-hud > * {
+    position: relative;
+    z-index: 1;
 }
 /* Clase añadida por revealUI() en app.js tras el init síncrono completo */
 .player-hud.is-ready {
@@ -1477,6 +1487,24 @@ body::before {
     font-size: 0.88rem;
     font-weight: 900;
     color: var(--gold);
+}
+
+/* A ready-to-claim streak needs an unmistakable visual hierarchy. The
+   availability state is set by StreakHub on the HUD and CTA together, so the
+   supporting copy and the next daily segment never look disabled. */
+.player-hud[data-streak-state="available"] .streak-hub-number__label {
+    color: #ffe4a3;
+}
+.player-hud[data-streak-state="available"] .streak-hub-copy {
+    color: #fff3c4;
+}
+.player-hud[data-streak-state="available"] .streak-hub-copy__amount {
+    color: #ffd166;
+}
+.player-hud[data-streak-state="available"] .streak-day.today {
+    background: #ffb238;
+    border-color: rgba(255, 210, 63, 0.78);
+    box-shadow: 0 0 12px rgba(255, 178, 56, 0.62);
 }
 
 /* Micro-progreso semanal: reuse the existing seven segments below the CTA. */

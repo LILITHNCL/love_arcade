@@ -62,6 +62,8 @@
     const flameEl = document.getElementById('streak-flame');
     const bigNumberEl = document.getElementById('streak-count-big');
     const numberWrapEl = bigNumberEl?.closest('.streak-hub-number');
+    const hubEl = document.getElementById('player-hud');
+    const dailyButtonEl = document.getElementById('btn-daily');
     if (!flameEl) return;
 
     const info = window.GameCenter?.getStreakInfo?.();
@@ -71,8 +73,6 @@
     let state;
     if (info.repairAvailable) {
       state = 'repair';
-    } else if (info.streak === 0 && can) {
-      state = 'locked';
     } else if (can) {
       state = 'available';
     } else {
@@ -80,6 +80,10 @@
     }
 
     flameEl.dataset.state = state;
+    // The available state communicates claimability, even for a first claim
+    // with a zero-day streak. Keep it on the surrounding UI for CSS states.
+    if (hubEl) hubEl.dataset.streakState = state;
+    if (dailyButtonEl) dailyButtonEl.dataset.streakState = state;
 
     if (bigNumberEl) bigNumberEl.textContent = String(info.streak);
     if (numberWrapEl) {

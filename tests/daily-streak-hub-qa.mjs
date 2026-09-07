@@ -54,12 +54,16 @@ function createHarness({ info, canClaim, withAudioContext = false }) {
   const bigNumber = new FakeElement();
   const numberWrap = new FakeElement();
   const burst = new FakeElement();
+  const hub = new FakeElement();
+  const dailyButton = new FakeElement();
   bigNumber.numberWrap = numberWrap;
 
   const elements = new Map([
     ['streak-flame', flame],
     ['streak-count-big', bigNumber],
-    ['streak-coin-burst', burst]
+    ['streak-coin-burst', burst],
+    ['player-hud', hub],
+    ['btn-daily', dailyButton]
   ]);
   const scheduled = [];
   const audioEvents = {
@@ -132,11 +136,11 @@ function createHarness({ info, canClaim, withAudioContext = false }) {
   context.window.window = context.window;
   vm.runInNewContext(hubSource, context, { filename: 'js/streak-hub.js' });
 
-  return { audioEvents, bigNumber, burst, context, flame, numberWrap, scheduled };
+  return { audioEvents, bigNumber, burst, context, dailyButton, flame, hub, numberWrap, scheduled };
 }
 
 const stateCases = [
-  [{ streak: 0, repairAvailable: false }, true, 'locked'],
+  [{ streak: 0, repairAvailable: false }, true, 'available'],
   [{ streak: 4, repairAvailable: false }, true, 'available'],
   [{ streak: 4, repairAvailable: true }, true, 'repair'],
   [{ streak: 4, repairAvailable: false }, false, 'claimed']
@@ -146,6 +150,8 @@ for (const [info, canClaim, expectedState] of stateCases) {
   const harness = createHarness({ info, canClaim });
   harness.context.window.StreakHub.refresh();
   assert.equal(harness.flame.dataset.state, expectedState);
+  assert.equal(harness.dailyButton.dataset.streakState, expectedState);
+  assert.equal(harness.hub.dataset.streakState, expectedState);
   assert.equal(harness.bigNumber.textContent, String(info.streak));
   assert.equal(
     harness.numberWrap.getAttribute('aria-label'),
@@ -188,6 +194,14 @@ assert.match(html, /<button type="button"\s+id="btn-daily"/);
 assert.match(html, /aria-describedby="daily-msg daily-countdown streak-hub-copy"/);
 assert.match(html, /id="daily-msg" class="daily-msg" role="status" aria-live="polite"/);
 assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
+const initialHudBlock = html.match(
+  /\/\/ ── Inicialización SÍNCRONA del HUD[\s\S]*?const modalA11yState/
+)?.[0] || '';
+assert.match(
+  initialHudBlock,
+  /updateStreakBar\(\);[\s\S]*?updateCountdownDisplay\(\);[\s\S]*?window\.StreakHub\?\.refresh\?\.\(\);/,
+  'The streak visual state must be synchronized before the Player HUD is first revealed.'
+);
 assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
 assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
 assert.match(
@@ -224,6 +238,8 @@ assert.match(
 );
 assert.match(css, /\.player-hud\.motion-paused \.flame-layer/);
 assert.match(css, /\.player-hud\.motion-paused \.hud-avatar-ring,[\s\S]*?\.player-hud\.motion-paused \.flame-layer,[\s\S]*?\.player-hud\.motion-paused \.spark\s*\{[\s\S]*?animation-play-state:\s*paused;/);
+assert.match(css, /\.player-hud\[data-streak-state="available"\] \.streak-hub-copy\s*\{[\s\S]*?color:\s*#fff3c4;/);
+assert.match(css, /\.player-hud\[data-streak-state="available"\] \.streak-day\.today\s*\{[\s\S]*?background:\s*#ffb238;/);
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame \.flame-layer/);
 assert.match(css, /\.streak-flame__svg\s*\{[\s\S]*?filter:\s*[\s\S]*?drop-shadow\(0 0 4px[\s\S]*?drop-shadow\(0 0 10px[\s\S]*?drop-shadow\(0 0 20px/);
 assert.match(css, /\.streak-flame\s*\{[\s\S]*?contain:\s*layout;[\s\S]*?overflow:\s*visible;/);
