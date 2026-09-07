@@ -71,10 +71,10 @@
     let state;
     if (info.repairAvailable) {
       state = 'repair';
-    } else if (info.streak === 0 && can) {
-      state = 'locked';
     } else if (can) {
       state = 'available';
+    } else if (info.streak === 0) {
+      state = 'locked';
     } else {
       state = 'claimed';
     }

@@ -136,7 +136,8 @@ function createHarness({ info, canClaim, withAudioContext = false }) {
 }
 
 const stateCases = [
-  [{ streak: 0, repairAvailable: false }, true, 'locked'],
+  [{ streak: 0, repairAvailable: false }, true, 'available'],
+  [{ streak: 0, repairAvailable: false }, false, 'locked'],
   [{ streak: 4, repairAvailable: false }, true, 'available'],
   [{ streak: 4, repairAvailable: true }, true, 'repair'],
   [{ streak: 4, repairAvailable: false }, false, 'claimed']
