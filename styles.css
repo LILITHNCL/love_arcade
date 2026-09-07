@@ -1489,6 +1489,24 @@ body::before {
     color: var(--gold);
 }
 
+/* A ready-to-claim streak needs an unmistakable visual hierarchy. The
+   availability state is set by StreakHub on the HUD and CTA together, so the
+   supporting copy and the next daily segment never look disabled. */
+.player-hud[data-streak-state="available"] .streak-hub-number__label {
+    color: #ffe4a3;
+}
+.player-hud[data-streak-state="available"] .streak-hub-copy {
+    color: #fff3c4;
+}
+.player-hud[data-streak-state="available"] .streak-hub-copy__amount {
+    color: #ffd166;
+}
+.player-hud[data-streak-state="available"] .streak-day.today {
+    background: #ffb238;
+    border-color: rgba(255, 210, 63, 0.78);
+    box-shadow: 0 0 12px rgba(255, 178, 56, 0.62);
+}
+
 /* Micro-progreso semanal: reuse the existing seven segments below the CTA. */
 .streak-days {
     display: flex;
