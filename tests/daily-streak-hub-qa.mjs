@@ -192,6 +192,36 @@ assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
 assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
 assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
 assert.match(
+  appSource,
+  /else if \(can\) \{\s*ctaTextEl\.textContent = 'Toca para reclamar';\s*\} else if \(info\.streak === 0\) \{\s*ctaTextEl\.textContent = 'Bono diario no disponible';\s*\} else \{\s*ctaTextEl\.textContent = 'Racha asegurada hoy';/,
+  'The CTA copy must distinguish an available claim, a locked zero streak, and a secured streak.'
+);
+assert.match(
+  css,
+  /#streak-flame\[data-state="available"\] ~ \.streak-hub-copy\s*\{[\s\S]*?color:\s*var\(--gold\);[\s\S]*?font-weight:\s*800;/,
+  'Available CTA copy must have an explicit, high-contrast accent treatment.'
+);
+assert.match(
+  css,
+  /#streak-flame\[data-state="claimed"\] ~ \.streak-hub-copy\s*\{[\s\S]*?color:\s*var\(--text-secondary-aa\);/,
+  'Claimed CTA copy must use a calm, legible state treatment.'
+);
+assert.match(
+  css,
+  /\.streak-flame\[data-state="available"\]\s*\{[\s\S]*?animation:\s*streakPulse 1\.5s ease-in-out infinite;/,
+  'Available flames must reuse the existing subtle pulse.'
+);
+assert.match(
+  css,
+  /\.player-hud\.motion-paused \.streak-flame\[data-state="available"\]\s*\{[\s\S]*?animation-play-state:\s*paused;/,
+  'The available-flame pulse must pause while the document is hidden.'
+);
+assert.match(
+  css,
+  /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.streak-flame\[data-state="available"\]\s*\{[\s\S]*?animation:\s*none !important;/,
+  'The available-flame pulse must be removed for reduced-motion users.'
+);
+assert.match(
   css,
   /\.player-hud::before\s*\{[\s\S]*?inset:\s*0;[\s\S]*?background-image:[\s\S]*?feTurbulence[\s\S]*?radial-gradient\(circle at 20% 30%, var\(--accent-soft\), transparent 55%\)[\s\S]*?radial-gradient\(circle at 85% 72%, rgba\(255,255,255,0\.07\), transparent 48%\)[\s\S]*?linear-gradient\([\s\S]*?135deg,[\s\S]*?color-mix\(in srgb, var\(--accent\) 12%, var\(--solid-surface-float\) 88%\)[\s\S]*?background-repeat:\s*repeat, no-repeat, no-repeat, no-repeat;[\s\S]*?background-size:\s*200px 200px, cover, cover, cover;[\s\S]*?opacity:\s*0\.72;/,
   'The Player HUD must use the static, theme-aware dithered ambient composition.'

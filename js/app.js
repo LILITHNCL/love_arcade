@@ -2113,7 +2113,17 @@ function updateDailyButton(scope) {
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
     const ctaTextEl = root.querySelector('#hud-daily-cta-text');
-    if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
+    if (ctaTextEl) {
+        if (repairMode) {
+            ctaTextEl.textContent = 'Reparar racha';
+        } else if (can) {
+            ctaTextEl.textContent = 'Toca para reclamar';
+        } else if (info.streak === 0) {
+            ctaTextEl.textContent = 'Bono diario no disponible';
+        } else {
+            ctaTextEl.textContent = 'Racha asegurada hoy';
+        }
+    }
 
     const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {

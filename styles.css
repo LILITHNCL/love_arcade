@@ -1335,6 +1335,7 @@ body::before {
     --flame-glow-near: rgba(255, 221, 119, 0.44);
     --flame-glow-mid: rgba(255, 123, 28, 0.32);
     --flame-glow-far: rgba(255, 73, 18, 0.20);
+    animation: streakPulse 1.5s ease-in-out infinite;
 }
 
 /* ── Estado: claimed (ya reclamado hoy) — vivo pero calmado ── */
@@ -1372,7 +1373,8 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
     .streak-flame .flame-layer,
     .spark,
-    .streak-flame__svg {
+    .streak-flame__svg,
+    .streak-flame[data-state="available"] {
         animation: none !important;
     }
 }
@@ -1479,6 +1481,22 @@ body::before {
     color: var(--gold);
 }
 
+/* El copy comunica el estado sin depender de la opacidad del botón. */
+#streak-flame[data-state="available"] ~ .streak-hub-copy {
+    color: var(--gold);
+    font-weight: 800;
+}
+#streak-flame[data-state="claimed"] ~ .streak-hub-copy {
+    color: var(--text-secondary-aa);
+    font-weight: 700;
+}
+#streak-flame[data-state="locked"] ~ .streak-hub-copy {
+    color: var(--text-secondary-aa);
+}
+#streak-flame[data-state="repair"] ~ .streak-hub-copy {
+    color: #facc15;
+}
+
 /* Micro-progreso semanal: reuse the existing seven segments below the CTA. */
 .streak-days {
     display: flex;
@@ -1501,6 +1519,11 @@ body::before {
 }
 .streak-day.today {
     animation: streakPulse 1.5s ease-in-out infinite;
+}
+
+/* Ticket-04: pausa el pulso de disponibilidad junto al resto del HUD. */
+.player-hud.motion-paused .streak-flame[data-state="available"] {
+    animation-play-state: paused;
 }
 
 .hud-countdown {
