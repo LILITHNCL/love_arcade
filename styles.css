@@ -91,7 +91,7 @@ html {
     height: 1em;
 }
 
-/* Icono estrella rellena (coin-badge, hud-balance, precio en cards) */
+/* Icono estrella rellena (coin-badge y precio en cards) */
 .icon--star-filled {
     fill: #fbbf24;
     stroke: none;
@@ -916,14 +916,23 @@ body::before {
 .player-hud::before {
     content: '';
     position: absolute;
-    inset: -35%;
-    background:
-        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 48%),
-        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 42%);
-    opacity: 0;
-    transform: translate3d(-6%, -2%, 0) rotate(0.001deg);
+    inset: 0;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 55%),
+        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 48%),
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--accent) 12%, var(--solid-surface-float) 88%) 0%,
+            var(--solid-surface-float) 55%,
+            var(--solid-surface-hi) 100%
+        );
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+    background-size: 200px 200px, cover, cover, cover;
+    filter: blur(12px);
+    opacity: 0.72;
     pointer-events: none;
-    will-change: transform, opacity;
+    border-radius: inherit;
 }
 
 .player-hud::after {
@@ -931,7 +940,11 @@ body::before {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background-repeat: repeat, no-repeat;
+    background-size: 200px 200px, cover;
     pointer-events: none;
 }
 /* Clase añadida por revealUI() en app.js tras el init síncrono completo */
@@ -942,32 +955,14 @@ body::before {
         0 0 28px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.player-hud.is-ready::before {
-    opacity: 0.72;
-    animation: hudAmbientSweep 18s ease-in-out infinite alternate;
-}
-
-/* Ticket 06: el HUD no necesita animar detalles decorativos en background. */
-.player-hud.motion-paused::before,
-.player-hud.motion-paused .hud-avatar-ring {
+/* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
+.player-hud.motion-paused .hud-avatar-ring,
+.player-hud.motion-paused .flame-layer,
+.player-hud.motion-paused .spark {
     animation-play-state: paused;
 }
 
-@keyframes hudAmbientSweep {
-    0% {
-        transform: translate3d(-8%, -4%, 0) scale(1) rotate(0.001deg);
-    }
-    50% {
-        transform: translate3d(5%, -1%, 0) scale(1.03) rotate(0.001deg);
-    }
-    100% {
-        transform: translate3d(8%, 3%, 0) scale(1.01) rotate(0.001deg);
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .player-hud.is-ready::before,
-    .hud-daily-btn:not(:disabled)::after,
     .filter-btn-gift.has-unclaimed {
         animation: none;
     }
@@ -1047,15 +1042,6 @@ body::before {
 }
 
 .hud-info { flex: 1; min-width: 0; }
-.hud-greeting {
-    font-family: var(--font-display);
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--text-tertiary-aa);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 2px;
-}
 .hud-name {
     font-family: var(--font-display);
     font-size: 1.05rem;
@@ -1129,160 +1115,6 @@ body::before {
     0%, 100% { box-shadow: 0 0 0 rgba(99, 179, 237, 0); }
     50%      { box-shadow: 0 0 14px rgba(99, 179, 237, 0.45); }
 }
-.hud-status {
-    font-size: 0.72rem;
-    color: var(--text-tertiary-aa);
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.hud-status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 6px var(--success-glow);
-    animation: blink 2s ease-in-out infinite;
-}
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-.hud-balance-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.hud-balance {
-    background: var(--solid-surface-deep);
-    border: 1px solid var(--accent-border);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    position: relative;
-    overflow: hidden;
-}
-.hud-balance::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--accent), var(--accent-dim));
-    border-radius: 3px 0 0 3px;
-}
-.hud-balance-label {
-    font-size: 0.62rem;
-    font-weight: 600;
-    color: var(--text-tertiary-aa);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-.hud-balance-amount {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: var(--gold);
-    letter-spacing: -0.5px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-shadow: 0 0 20px var(--gold-glow);
-}
-
-.hud-daily-btn {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #120900;
-    border: none;
-    border-radius: var(--radius-md);
-    /* Dimensiones fijas para evitar deformación cuando cambia el texto */
-    width: 72px;
-    flex: 0 0 72px;      /* no crece ni se encoge */
-    min-height: 64px;
-    height: 100%;
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: 0.78rem;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    transition: transform 160ms cubic-bezier(.22,1,.36,1), box-shadow 160ms ease-out, opacity 150ms ease-out;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
-    position: relative;
-    overflow: hidden;   /* recorta texto que pueda desbordar */
-}
-.hud-daily-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-    opacity: 0;
-    transition: opacity 160ms ease-out;
-}
-.hud-daily-btn::after {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    border-radius: calc(var(--radius-md) - 3px);
-    background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.26), transparent 58%);
-    opacity: 0;
-    transform: scale(0.96);
-    pointer-events: none;
-}
-.hud-daily-btn:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 8px 28px rgba(251, 191, 36, 0.5);
-}
-.hud-daily-btn:hover::before { opacity: 1; }
-.hud-daily-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    animation: none; /* asegurar que el pulse se detiene cuando está desactivado */
-}
-
-/* Pulse sutil cuando el bono está disponible — llama la atención sin distraer.
- * Se detiene automáticamente con :disabled (animation:none arriba).
- * prefers-reduced-motion lo desactiva para usuarios sensibles al movimiento. */
-@keyframes dailyBtnPulse {
-    0%, 100% { opacity: 0; transform: scale(0.96); }
-    50%       { opacity: 0.8; transform: scale(1); }
-}
-.hud-daily-btn:not(:disabled)::after {
-    animation: dailyBtnPulse 2.4s ease-in-out infinite;
-}
-.hud-daily-btn:hover:not(:disabled)::after {
-    animation: none; /* parar pulse durante hover; la escala ya es suficiente feedback */
-}
-.hud-daily-reward {
-    font-size: 1.05rem;
-    font-weight: 900;
-    color: #120900;
-    line-height: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 64px;
-}
-.hud-daily-label {
-    font-size: 0.55rem;
-    opacity: 0.75;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 64px;
-}
-
 /* Streak bar */
 .hud-streak {
     display: flex;
@@ -1350,6 +1182,357 @@ body::before {
     min-height: 1rem;
     transition: opacity 0.4s;
     opacity: 0;
+}
+
+/* ================================================================
+   DAILY STREAK HUB — Fire Widget
+   GPU-only: transform + opacity en bucle. filter:blur() estático
+   (nunca se recalcula por frame, solo se anima opacity/scale del
+   elemento que lo contiene). Sigue el mismo patrón que
+   .hud-avatar-ring (powerRingRotate) y .mockup-bg-offline::before
+   (neonFlowDrift) ya existentes en este archivo.
+   ================================================================ */
+
+.hub-identity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.hub-identity-row__avatar { position: relative; flex-shrink: 0; }
+.hub-identity-row .hud-avatar { width: 32px; height: 32px; }
+.hub-identity-row .hud-avatar svg { width: 14px; height: 14px; }
+.hub-identity-row__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-secondary-aa);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hub-identity-row__name span { color: var(--text-high); }
+
+.streak-hub-cta {
+    all: unset;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 8px 8px 4px;
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    transition: transform 160ms cubic-bezier(.22,1,.36,1);
+}
+@media (hover: hover) and (pointer: fine) {
+    .streak-hub-cta:hover { transform: translateY(-2px); }
+}
+.streak-hub-cta:active { transform: scale(0.98); }
+.streak-hub-cta:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-aa) 78%, transparent);
+}
+.streak-hub-cta:disabled { cursor: not-allowed; }
+
+.streak-flame {
+    position: relative;
+    width: 108px;
+    height: 144px;
+    /* Paint containment would crop the SVG filter outside this box. */
+    contain: layout;
+    overflow: visible;
+    transform: translateZ(0);
+    margin-bottom: 2px;
+}
+
+.streak-flame__svg {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* The filter is calculated from the rendered SVG alpha, never its box. */
+    filter:
+        drop-shadow(0 0 4px var(--flame-glow-near, rgba(255, 213, 100, 0.16)))
+        drop-shadow(0 0 10px var(--flame-glow-mid, rgba(255, 116, 25, 0.12)))
+        drop-shadow(0 0 20px var(--flame-glow-far, rgba(255, 73, 18, 0.08)));
+}
+
+.flame-layer {
+    transform-origin: 60px 150px;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+.flame-layer--back { animation-name: flameSwayBack; animation-duration: 3.4s; }
+.flame-layer--mid  { animation-name: flameSwayMid;  animation-duration: 2.6s; animation-delay: -0.6s; }
+.flame-layer--core { animation-name: flameSwayCore; animation-duration: 1.9s; animation-delay: -1.1s; }
+
+@keyframes flameSwayBack {
+    0%   { transform: scaleY(1)    scaleX(1)    skewX(0deg); }
+    25%  { transform: scaleY(1.04) scaleX(0.98) skewX(-1.5deg); }
+    50%  { transform: scaleY(0.97) scaleX(1.02) skewX(1deg); }
+    75%  { transform: scaleY(1.03) scaleX(0.99) skewX(-0.8deg); }
+    100% { transform: scaleY(1)    scaleX(1)    skewX(0deg); }
+}
+@keyframes flameSwayMid {
+    0%   { transform: scaleY(1)    skewX(0deg); }
+    30%  { transform: scaleY(1.06) skewX(2deg); }
+    60%  { transform: scaleY(0.95) skewX(-1.5deg); }
+    100% { transform: scaleY(1)    skewX(0deg); }
+}
+@keyframes flameSwayCore {
+    0%   { transform: scaleY(1)    scaleX(1); }
+    40%  { transform: scaleY(1.08) scaleX(0.94); }
+    70%  { transform: scaleY(0.93) scaleX(1.05); }
+    100% { transform: scaleY(1)    scaleX(1); }
+}
+
+.streak-flame__sparks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.spark {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #ffcf5c;
+    box-shadow: 0 0 6px 1px rgba(255,180,60,0.8);
+    opacity: 0;
+    animation: sparkRise 2.8s ease-in infinite;
+}
+.spark--1 { left: 46%; --spark-drift: 8px;  animation-delay: 0s; }
+.spark--2 { left: 58%; --spark-drift: -14px; animation-delay: .5s; }
+.spark--3 { left: 40%; --spark-drift: 4px;  animation-delay: 1.1s; }
+.spark--4 { left: 63%; --spark-drift: -6px; animation-delay: 1.6s; }
+.spark--5 { left: 50%; --spark-drift: 10px; animation-delay: 2.0s; }
+.spark--6 { left: 52%; --spark-drift: -10px; animation-delay: .9s; }
+
+@keyframes sparkRise {
+    0%   { opacity: 0; transform: translate(0,0) scale(0.6); }
+    10%  { opacity: 1; }
+    70%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translate(var(--spark-drift, 6px), -78px) scale(0.2); }
+}
+
+/* ── Estado: locked (nunca reclamado / streak 0) ── */
+.streak-flame[data-state="locked"] {
+    --flame-glow-near: rgba(255, 213, 100, 0.07);
+    --flame-glow-mid: rgba(255, 116, 25, 0.05);
+    --flame-glow-far: rgba(255, 73, 18, 0.03);
+    filter: grayscale(0.55) brightness(0.62);
+}
+.streak-flame[data-state="locked"] .streak-flame__sparks,
+.streak-flame[data-state="claimed"] .streak-flame__sparks {
+    display: none;
+}
+
+/* ── Estado: available (listo para reclamar) — el más intenso ── */
+.streak-flame[data-state="available"] {
+    --flame-glow-near: rgba(255, 221, 119, 0.44);
+    --flame-glow-mid: rgba(255, 123, 28, 0.32);
+    --flame-glow-far: rgba(255, 73, 18, 0.20);
+}
+
+/* ── Estado: claimed (ya reclamado hoy) — vivo pero calmado ── */
+.streak-flame[data-state="claimed"] {
+    --flame-glow-near: rgba(255, 213, 100, 0.18);
+    --flame-glow-mid: rgba(255, 116, 25, 0.13);
+    --flame-glow-far: rgba(255, 73, 18, 0.08);
+    filter: saturate(0.72) brightness(0.88);
+}
+.streak-flame[data-state="claimed"] .flame-layer--back { animation-duration: 4.6s; }
+.streak-flame[data-state="claimed"] .flame-layer--mid  { animation-duration: 3.6s; }
+.streak-flame[data-state="claimed"] .flame-layer--core { animation-duration: 2.8s; }
+
+/* ── Estado: repair (racha en riesgo, recuperable) — ámbar de alerta suave ── */
+.streak-flame[data-state="repair"] {
+    --flame-glow-near: rgba(255, 213, 100, 0.24);
+    --flame-glow-mid: rgba(255, 116, 25, 0.18);
+    --flame-glow-far: rgba(255, 73, 18, 0.12);
+    filter: hue-rotate(-14deg) saturate(0.85);
+}
+.streak-flame[data-state="repair"] .streak-flame__sparks { display: none; }
+
+/* ── Estado: claiming (burst momentáneo) ── */
+.streak-flame[data-state="claiming"] .flame-layer { animation-play-state: paused; }
+.streak-flame[data-state="claiming"] .streak-flame__svg {
+    animation: flameBurst 480ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes flameBurst {
+    0%   { transform: scale(1);    filter: brightness(1); }
+    40%  { transform: scale(1.18); filter: brightness(1.55); }
+    100% { transform: scale(1.02); filter: brightness(1.05); }
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .streak-flame .flame-layer,
+    .spark,
+    .streak-flame__svg {
+        animation: none !important;
+    }
+}
+
+/* ── Daily Streak Hub: streak statistic and supporting HUD ── */
+.streak-hub-number {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    margin-top: -8px;
+}
+.streak-hub-number__value {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.2rem, 11vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #fff6c8, #ffb238 55%, #ff6a1a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 26px rgba(255, 138, 30, 0.35);
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.streak-hub-number__label {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-low);
+    margin-top: -2px;
+}
+
+/* Claimed is secured rather than claimable, so it uses a calm silver value. */
+#streak-flame[data-state="claimed"] + .streak-hub-number .streak-hub-number__value {
+    background: linear-gradient(180deg, #f4f6ff, #c7ceee 60%, #9aa4d6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 18px rgba(155, 164, 214, 0.28);
+}
+
+/* A first-time streak remains visually subdued until it can be established. */
+#streak-flame[data-state="locked"] + .streak-hub-number .streak-hub-number__value {
+    background: none;
+    -webkit-text-fill-color: var(--text-mute);
+    color: var(--text-mute);
+    text-shadow: none;
+}
+
+/* Applied once by the claim sequence in Ticket-06. */
+.streak-hub-number__value.is-bumping {
+    animation: streakNumberBump 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes streakNumberBump {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.14); }
+    100% { transform: scale(1); }
+}
+
+/* Partículas efímeras del reclamo; se destruyen al terminar coinFly. */
+.streak-coin-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 5;
+}
+.streak-coin-burst .coin {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff3c4, #fbbf24 60%, #b8790a 100%);
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.7);
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    animation: coinFly 700ms cubic-bezier(.2, .8, .2, 1) forwards;
+}
+@keyframes coinFly {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    15%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--coin-x, 0px)), calc(-50% + var(--coin-y, -160px))) scale(1) rotate(220deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .streak-coin-burst .coin { animation-duration: 260ms; }
+}
+
+.streak-hub-copy {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary-aa);
+}
+.streak-hub-copy__amount {
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    font-weight: 900;
+    color: var(--gold);
+}
+
+/* Micro-progreso semanal: reuse the existing seven segments below the CTA. */
+.streak-days {
+    display: flex;
+    gap: 5px;
+    width: min(260px, 100%);
+    margin: 10px auto 0;
+}
+.streak-day {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--solid-surface-deep);
+    border: 1px solid var(--border-subtle);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.streak-day.active {
+    background: linear-gradient(90deg, #ffb238, #ff6a1a);
+    border-color: rgba(255, 138, 30, 0.5);
+    box-shadow: 0 0 10px rgba(255, 138, 30, 0.45);
+}
+.streak-day.today {
+    animation: streakPulse 1.5s ease-in-out infinite;
+}
+
+.hud-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px auto 0;
+    padding: 4px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: var(--solid-surface-deep);
+    font-size: 0.72rem;
+    color: var(--text-low);
+}
+.hud-countdown::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+}
+#countdown-display {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-med);
+    letter-spacing: 0.03em;
+}
+
+@media (min-width: 768px) {
+    .streak-flame { width: 132px; height: 176px; }
+    .streak-hub-number__value { font-size: clamp(2.6rem, 6vw, 3.6rem); }
 }
 
 /* ================================================================
@@ -2874,7 +3057,6 @@ details[open] summary::after { transform: rotate(45deg); }
     /* HUD horizontal layout */
     .player-hud { flex-direction: row; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
     .hud-top { flex: 1; min-width: 240px; }
-    .hud-balance-row { flex: 1; min-width: 240px; }
     .hud-streak { width: 100%; }
 
     /* Game cards */
@@ -3985,6 +4167,7 @@ svg { stroke-width: 2; }
     .mockup-layer-art.mockup-bg-offline::before {
         filter: blur(12px) !important;
     }
+
 }
 
 
@@ -4952,7 +5135,6 @@ svg { stroke-width: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .hud-daily-btn:not(:disabled)::after,
     .streak-day.today,
     .streak-milestone-overlay--visible .streak-milestone-box,
     .daily-repair-overlay--visible .daily-repair-box,

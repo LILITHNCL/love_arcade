@@ -2113,8 +2113,8 @@ function updateDailyButton(scope) {
     btn.dataset.mode  = repairMode ? 'repair' : 'claim';
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
-    const labelEl = root.querySelector('#hud-daily-label');
-    if (labelEl) labelEl.textContent = repairMode ? 'REPARAR RACHA' : 'BONO DIARIO';
+    const ctaTextEl = root.querySelector('#hud-daily-cta-text');
+    if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
 
     const msg = root.querySelector('#daily-msg');
     if (msg && repairMode && !info.canAffordRepair) {
@@ -2123,10 +2123,10 @@ function updateDailyButton(scope) {
         msg.style.opacity = '1';
     }
 
-    // HUD button: tiene elementos hijos específicos (#hud-reward-amount)
+    // El único botón diario de la SPA contiene el importe específico del hub.
     const rewardEl = root.querySelector('#hud-reward-amount');
     if (rewardEl) {
-        // Solo actualizar la cifra; la etiqueta "BONO DIARIO" se queda fija
+        // Solo actualizar la cifra; la etiqueta "DÍAS" se queda fija.
         if (repairMode) {
             rewardEl.textContent = `${info.repairCost} 🪙`;
         } else if (!can) {
@@ -2136,19 +2136,7 @@ function updateDailyButton(scope) {
             const total = info.nextReward + (moonStatus.active ? 90 : 0);
             rewardEl.textContent = `+${total}`;
         }
-        return; // HUD manejado: salir para no tocar el span genérico
-    }
-
-    // Botón clásico (por si se usa en otra vista)
-    const span = btn.querySelector('span');
-    if (span) {
-        if (!can) {
-            span.textContent = `Vuelve mañana · Racha: ${info.streak}`;
-        } else {
-            const moonStatus = window.GameCenter.getMoonBlessingStatus();
-            const moonNote   = moonStatus.active ? ' +Luna' : '';
-            span.textContent = `Bono Diario (+${info.nextReward}${moonNote})`;
-        }
+        return;
     }
 }
 
@@ -2501,9 +2489,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Movimiento decorativo del HUD ──────────────────────────────────────
-    // Las dos animaciones son solo decorativas. Pausarlas fuera de la pestaña
-    // visible evita mantener trabajo continuo de compositor sin cambiar la UI
-    // que recibe el usuario al volver.
+    // Las animaciones del fuego, las chispas y el anillo son decorativas.
+    // Pausarlas fuera de la pestaña visible evita trabajo continuo de compositor
+    // sin cambiar la UI que recibe el usuario al volver.
     const syncHudMotionVisibility = () => {
         document.querySelectorAll('.player-hud').forEach(hud => {
             hud.classList.toggle('motion-paused', document.hidden);
@@ -2547,6 +2535,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // (puede habilitarlo si el reclamo falló por error recuperable,
             //  o dejarlo desactivado con el contador si fue exitoso).
             updateDailyButton();
+            window.StreakHub?.playClaimSequence?.(result);
+
+            // Mostrar de inmediato los hitos desbloqueados por este reclamo.
+            // El retraso deja que termine primero el feedback visual del claim.
+            if (result.success) {
+                setTimeout(() => { showStreakMilestoneModal(); }, 600);
+            }
         });
     }
 
