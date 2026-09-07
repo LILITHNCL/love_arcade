@@ -2108,7 +2108,6 @@ function updateDailyButton(scope) {
     const enabled = repairMode ? Boolean(info.canAffordRepair) : can;
 
     btn.disabled      = !enabled;
-    btn.style.opacity = enabled ? '1' : '0.5';
     btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
     btn.dataset.mode  = repairMode ? 'repair' : 'claim';
     btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
@@ -2512,7 +2511,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dailyBtn.addEventListener('click', () => {
             // ── Paso 1: desactivar de inmediato ──
             dailyBtn.disabled      = true;
-            dailyBtn.style.opacity = '0.5';
             dailyBtn.style.cursor  = 'not-allowed';
 
             if (dailyBtn.dataset.mode === 'repair') {
