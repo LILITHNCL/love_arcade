@@ -86,7 +86,7 @@ Esto es una lista de excepciones **hardcodeada por nombre de theme**, no una reg
 
 **Botones**: `.btn-primary` sí consume `--accent` / `--accent-dim` / `--text-on-accent-aa` correctamente — es el consumidor mejor alineado al patrón token-based.
 
-**Consumidores de `--accent*` identificados (grep manual sobre styles.css):** `.btn-primary`, `.coin-badge`, `.avatar` border/glow, `.hud-avatar-ring` (conic-gradient), `.hud-balance::before`, `.streak-day.active`, `.pill.active`, `.theme-btn--active`, `.shop-card:hover`, `.search-input:focus`, `.promo-input:focus`, `.identity-chip--active`, `.identity-input:focus`, `.profile-action-card__icon`, `.pill-nav__indicator`, `.filter-btn-gift.has-unclaimed` (usa dorado fijo, no accent), `.sale-banner` (dorado fijo, no accent), `.moon-blessing-badge`/`.moon-btn` (violeta/rosa fijo, no accent — intencional, es un buff "lunar" con identidad propia).
+**Consumidores de `--accent*` identificados (grep manual sobre styles.css):** `.btn-primary`, `.coin-badge`, `.avatar` border/glow, `.hud-avatar-ring` (conic-gradient), `.hud-balance::before`, `.streak-day.active`, `.pill.active`, `.theme-btn--active`, `.shop-card:hover`, `.search-input:focus`, `.promo-input:focus`, `.identity-chip--active`, `.identity-input:focus`, `.profile-action-card__icon`, `.pill-nav__indicator`, `.sale-banner` (dorado fijo, no accent), `.moon-blessing-badge`/`.moon-btn` (violeta/rosa fijo, no accent — intencional, es un buff "lunar" con identidad propia).
 
 **API pública externa (Hecho comprobado, `docs/love-arcade-minigame-dev-manual.md` §5, §8.3):** `window.THEMES` es un **global reservado y documentado** que los minijuegos externos pueden leer de solo lectura:
 ```js

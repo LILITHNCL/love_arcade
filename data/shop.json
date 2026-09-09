@@ -3,1544 +3,1168 @@
     "id": 1,
     "name": "Rouge the Bat",
     "price": 110,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/rouge_the_bat_a94a3cca",
-    "file": "rouge_the_bat_a94a3cca.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rouge_the_bat_a94a3cca"
   },
   {
     "id": 2,
     "name": "Sonic the Hedgehog",
     "price": 110,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sonic_the_hedgehog_2936a9be",
-    "file": "sonic_the_hedgehog_2936a9be.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic_the_hedgehog_2936a9be"
   },
   {
     "id": 3,
     "name": "Shadow the Hedgehog",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_6ff623c4",
-    "file": "shadow_the_hedgehog_6ff623c4.avif",
-    "tags": [
-      "PC",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_the_hedgehog_6ff623c4"
   },
   {
     "id": 4,
     "name": "Shadow the Hedgehog",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_the_hedgehog_2_18b617f7",
-    "file": "shadow_the_hedgehog_2_18b617f7.avif",
-    "tags": [
-      "PC",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_the_hedgehog_2_18b617f7"
   },
   {
     "id": 5,
     "name": "Goku Ultra Instinto",
     "price": 450,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/goku_ultra_instinto_f089881b",
-    "file": "goku_ultra_instinto_f089881b.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku_ultra_instinto_f089881b"
   },
   {
     "id": 6,
     "name": "Furina",
     "price": 1050,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_d9040eb4",
-    "file": "furina_d9040eb4.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_d9040eb4"
   },
   {
     "id": 7,
     "name": "Chuck",
     "price": 1050,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/chuck_49168af7",
-    "file": "chuck_49168af7.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/chuck_49168af7"
   },
   {
     "id": 8,
     "name": "Blaze the Cat",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/blaze_the_cat_3ca68b7d",
-    "file": "blaze_the_cat_3ca68b7d.avif",
-    "tags": [
-      "PC",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/blaze_the_cat_3ca68b7d"
   },
   {
     "id": 9,
     "name": "Ochaco Uraraka",
     "price": 530,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/ochaco_uraraka_68e2e708",
-    "file": "ochaco_uraraka_68e2e708.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ochaco_uraraka_68e2e708"
   },
   {
     "id": 10,
     "name": "Metal Sonic",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/metal_sonic_f76ecb8c",
-    "file": "metal_sonic_f76ecb8c.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/metal_sonic_f76ecb8c"
   },
   {
     "id": 11,
     "name": "Goku Black",
     "price": 530,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/goku_black_05117d17",
-    "file": "goku_black_05117d17.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku_black_05117d17"
   },
   {
     "id": 12,
     "name": "Vegetto",
     "price": 530,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/vegetto_3d2e6f5d",
-    "file": "vegetto_3d2e6f5d.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto_3d2e6f5d"
   },
   {
     "id": 13,
     "name": "Gogeta",
     "price": 750,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/gogeta_d68cb043",
-    "file": "gogeta_d68cb043.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta_d68cb043"
   },
   {
     "id": 14,
     "name": "Himiko Toga",
     "price": 530,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/himiko_toga_3f42c0d7",
-    "file": "himiko_toga_3f42c0d7.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/himiko_toga_3f42c0d7"
   },
   {
     "id": 15,
     "name": "Kaoruko Waguri",
     "price": 630,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/kaoruko_waguri_96348cb3",
-    "file": "kaoruko_waguri_96348cb3.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kaoruko_waguri_96348cb3"
   },
   {
     "id": 16,
     "name": "Hitori Gotou",
     "price": 630,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hitori_gotou_69e25c56",
-    "file": "hitori_gotou_69e25c56.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hitori_gotou_69e25c56"
   },
   {
     "id": 17,
     "name": "Burnice White",
     "price": 1050,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/burnice_white_86d8d99c",
-    "file": "burnice_white_86d8d99c.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/burnice_white_86d8d99c"
   },
   {
     "id": 18,
     "name": "Ellen Joe",
     "price": 300,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/ellen_joe_25d19b28",
-    "file": "ellen_joe_25d19b28.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen_joe_25d19b28"
   },
   {
     "id": 19,
     "name": "Nicole Demara",
     "price": 1050,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nicole_demara_131cf874",
-    "file": "nicole_demara_131cf874.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nicole_demara_131cf874"
   },
   {
     "id": 20,
     "name": "Lanzaguisantes de Hielo",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/lanzaguisantes_de_hielo_7041b0cf",
-    "file": "lanzaguisantes_de_hielo_7041b0cf.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lanzaguisantes_de_hielo_7041b0cf"
   },
   {
     "id": 21,
     "name": "Astra Yao",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/astra_yao_ec9bcd48",
-    "file": "astra_yao_ec9bcd48.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/astra_yao_ec9bcd48"
   },
   {
     "id": 22,
     "name": "Xilonen",
     "price": 1300,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/xilonen_c4f2a9d1",
-    "file": "xilonen_c4f2a9d1.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen_c4f2a9d1"
   },
   {
     "id": 23,
     "name": "Varesa",
     "price": 530,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/varesa_7b8e3f6a",
-    "file": "varesa_7b8e3f6a.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_7b8e3f6a"
   },
   {
     "id": 24,
     "name": "Mavuika",
     "price": 730,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mavuika_9e41d6b2",
-    "file": "mavuika_9e41d6b2.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mavuika_9e41d6b2"
   },
   {
     "id": 25,
     "name": "Hu Tao Skin",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hutao_f3a7c981",
-    "file": "hutao_f3a7c981.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hutao_f3a7c981"
   },
   {
     "id": 26,
     "name": "Sonic x Shadow",
     "price": 630,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sonicxshadow_4a9c2d7e",
-    "file": "sonicxshadow_4a9c2d7e.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonicxshadow_4a9c2d7e"
   },
   {
     "id": 27,
     "name": "Goku x Vegeta",
     "price": 900,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/gokuxvegeta_8f3b6c1a",
-    "file": "gokuxvegeta_8f3b6c1a.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gokuxvegeta_8f3b6c1a"
   },
   {
     "id": 28,
     "name": "Hatsune Miku",
     "price": 1800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hatsunemiku_b2e7a94f",
-    "file": "hatsunemiku_b2e7a94f.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hatsunemiku_b2e7a94f"
   },
   {
     "id": 29,
     "name": "Jane Doe",
     "price": 800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/jane_doe_5c8a1f2e",
-    "file": "jane_doe_5c8a1f2e.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_5c8a1f2e"
   },
   {
     "id": 30,
     "name": "Jane Doe Chibi",
     "price": 50,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/jane_doe_chibi_1_9d3f7b4a",
-    "file": "jane_doe_chibi_1_9d3f7b4a.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_chibi_1_9d3f7b4a"
   },
   {
     "id": 31,
     "name": "Miku Nakano",
     "price": 700,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/miku_nakano_3e9d2a6c",
-    "file": "miku_nakano_3e9d2a6c.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku_nakano_3e9d2a6c"
   },
   {
     "id": 32,
     "name": "Sacarosa",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sacarosa_8b1f4d9e",
-    "file": "sacarosa_8b1f4d9e.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa_8b1f4d9e"
   },
   {
     "id": 33,
     "name": "Trunks del Futuro",
     "price": 700,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/trunks_del_futuro_6a0c3f8d",
-    "file": "trunks_del_futuro_6a0c3f8d.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/trunks_del_futuro_6a0c3f8d"
   },
   {
     "id": 34,
     "name": "Gogeta vs Broly",
     "price": 200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/gogeta_vs_broly_2d9a7e4c",
-    "file": "gogeta_vs_broly_2d9a7e4c.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta_vs_broly_2d9a7e4c"
   },
   {
     "id": 35,
     "name": "Vegetto vs Zamasu",
     "price": 800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/vegetto_vs_zamasu_b5c8f1a3",
-    "file": "vegetto_vs_zamasu_b5c8f1a3.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto_vs_zamasu_b5c8f1a3"
   },
   {
     "id": 36,
     "name": "Amy Rose",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/amy_rose_7e3d9c2b",
-    "file": "amy_rose_7e3d9c2b.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/amy_rose_7e3d9c2b"
   },
   {
     "id": 37,
     "name": "Akaza",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/akaza_9ffa9051",
-    "file": "akaza_9ffa9051.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/akaza_9ffa9051"
   },
   {
     "id": 38,
     "name": "All Might",
     "price": 1200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/all_might_cd42d6db",
-    "file": "all_might_cd42d6db.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/all_might_cd42d6db"
   },
   {
     "id": 39,
     "name": "Androide Numero 17",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/androide_numero_17_42bbef89",
-    "file": "androide_numero_17_42bbef89.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/androide_numero_17_42bbef89"
   },
   {
     "id": 40,
     "name": "Arlecchino",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/arlecchino_51eddcf7",
-    "file": "arlecchino_51eddcf7.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/arlecchino_51eddcf7"
   },
   {
     "id": 41,
     "name": "Batman",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/batman_522fa884",
-    "file": "batman_522fa884.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/batman_522fa884"
   },
   {
     "id": 42,
     "name": "Citlali",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/citlali_efcd7773",
-    "file": "citlali_efcd7773.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/citlali_efcd7773"
   },
   {
     "id": 43,
     "name": "Columbina",
     "price": 1200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/columbina_80942540",
-    "file": "columbina_80942540.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina_80942540"
   },
   {
     "id": 44,
     "name": "Giyu Tomioka",
     "price": 800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/giyu_tomioka_cda472a0",
-    "file": "giyu_tomioka_cda472a0.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/giyu_tomioka_cda472a0"
   },
   {
     "id": 45,
     "name": "Hoshimi Miyabi",
     "price": 800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hoshimi_miyabi_39d046aa",
-    "file": "hoshimi_miyabi_39d046aa.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hoshimi_miyabi_39d046aa"
   },
   {
     "id": 46,
     "name": "Inosuke Hashibira",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/inosuke_hashibira_21200eb8",
-    "file": "inosuke_hashibira_21200eb8.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/inosuke_hashibira_21200eb8"
   },
   {
     "id": 47,
     "name": "Izuku Midoriya",
     "price": 1100,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/izuku_midoriya_c4d27cd0",
-    "file": "izuku_midoriya_c4d27cd0.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku_midoriya_c4d27cd0"
   },
   {
     "id": 48,
     "name": "Izuku Midoriya Regalo",
     "price": 200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/izuku_midoriya_regalo_0417bd9f",
-    "file": "izuku_midoriya_regalo_0417bd9f.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku_midoriya_regalo_0417bd9f"
   },
   {
     "id": 49,
     "name": "Katsuki Bakugo",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/katsuki_bakugo_96451f25",
-    "file": "katsuki_bakugo_96451f25.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/katsuki_bakugo_96451f25"
   },
   {
     "id": 50,
     "name": "Kessoku Band",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/kessoku_band_725e1272",
-    "file": "kessoku_band_725e1272.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kessoku_band_725e1272"
   },
   {
     "id": 51,
     "name": "Knuckles",
     "price": 1100,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/knuckles_d3efdda0",
-    "file": "knuckles_d3efdda0.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/knuckles_d3efdda0"
   },
   {
     "id": 52,
     "name": "Kyojuro Rengoku",
     "price": 1400,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/kyojuro_rengoku_40c550c3",
-    "file": "kyojuro_rengoku_40c550c3.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kyojuro_rengoku_40c550c3"
   },
   {
     "id": 53,
     "name": "Lazer Bird",
     "price": 900,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/lazer_bird_6eb931d5",
-    "file": "lazer_bird_6eb931d5.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lazer_bird_6eb931d5"
   },
   {
     "id": 54,
     "name": "Miles Tails Prower",
     "price": 300,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/miles_tails_prower_1beadf62",
-    "file": "miles_tails_prower_1beadf62.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miles_tails_prower_1beadf62"
   },
   {
     "id": 55,
     "name": "Neuvillette",
     "price": 900,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/neuvillette_47979e62",
-    "file": "neuvillette_47979e62.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/neuvillette_47979e62"
   },
   {
     "id": 56,
     "name": "Nino Nakano",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nino_nakano_01c51a71",
-    "file": "nino_nakano_01c51a71.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino_nakano_01c51a71"
   },
   {
     "id": 57,
     "name": "Pablo",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/pablo_078dfbcb",
-    "file": "pablo_078dfbcb.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pablo_078dfbcb"
   },
   {
     "id": 58,
     "name": "Robin Damian Wayne",
     "price": 1400,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/robin_damian_wayne_c6cb008d",
-    "file": "robin_damian_wayne_c6cb008d.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/robin_damian_wayne_c6cb008d"
   },
   {
     "id": 59,
     "name": "Shinobu Kocho",
     "price": 1100,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shinobu_kocho_81949198",
-    "file": "shinobu_kocho_81949198.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shinobu_kocho_81949198"
   },
   {
     "id": 60,
     "name": "Tanjiro Kamado",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/tanjiro_kamado_008a7fe9",
-    "file": "tanjiro_kamado_008a7fe9.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tanjiro_kamado_008a7fe9"
   },
   {
     "id": 61,
     "name": "Tengen Uzui",
     "price": 900,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/tengen_uzui_4c2e4345",
-    "file": "tengen_uzui_4c2e4345.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tengen_uzui_4c2e4345"
   },
   {
     "id": 62,
     "name": "Tsukasa Tsukuyomi",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/tsukasa_tsukuyomi_4f3b4357",
-    "file": "tsukasa_tsukuyomi_4f3b4357.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tsukasa_tsukuyomi_4f3b4357"
   },
   {
     "id": 63,
     "name": "Zhu Yuan",
     "price": 800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/zhu_yuan_5458e3ae",
-    "file": "zhu_yuan_5458e3ae.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/zhu_yuan_5458e3ae"
   },
   {
     "id": 64,
     "name": "Jane Doe Chibi",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/jane_doe_chibi_2825e27f",
-    "file": "jane_doe_chibi_2825e27f.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_chibi_2825e27f"
   },
   {
     "id": 65,
     "name": "Mitsuri",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mitsuri_c03d99bc",
-    "file": "mitsuri_c03d99bc.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri_c03d99bc"
   },
   {
     "id": 66,
     "name": "Furina",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_2d5569da",
-    "file": "furina_2d5569da.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_2d5569da"
   },
   {
     "id": 67,
     "name": "Hielaguisantes",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hielaguisantes_dfe630b4",
-    "file": "hielaguisantes_dfe630b4.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hielaguisantes_dfe630b4"
   },
   {
     "id": 68,
     "name": "Hu Tao",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hu_tao_11bb943c",
-    "file": "hu_tao_11bb943c.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu_tao_11bb943c"
   },
   {
     "id": 69,
     "name": "Furina",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_tb9umwhk",
-    "file": "furina_tb9umwhk.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_tb9umwhk"
   },
   {
     "id": 70,
     "name": "Furina y Hu Tao",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_y_hu_tao_otl04rf5",
-    "file": "furina_y_hu_tao_otl04rf5.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_y_hu_tao_otl04rf5"
   },
   {
     "id": 71,
     "name": "Mitsuri",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mitsuri_hm8std1r",
-    "file": "mitsuri_hm8std1r.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri_hm8std1r"
   },
   {
     "id": 72,
     "name": "Mualani",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mualani_3vpnj2bg",
-    "file": "mualani_3vpnj2bg.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mualani_3vpnj2bg"
   },
   {
     "id": 73,
     "name": "Plants vs. Zombies: Garden Warfare 2 (STEAM)",
     "price": 20000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/plants_vs_eo6bp9wt",
-    "file": "plants_vs_eo6bp9wt.avif",
-    "tags": [
-      "PC"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/plants_vs_eo6bp9wt"
   },
   {
     "id": 74,
     "name": "Shadow",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow_39glbr2m",
-    "file": "shadow_39glbr2m.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_39glbr2m"
   },
   {
     "id": 75,
     "name": "Varesa",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/varesa_bjwn7cw5",
-    "file": "varesa_bjwn7cw5.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_bjwn7cw5"
   },
   {
     "id": 76,
     "name": "Ellen Joe",
     "price": 1200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/ellen_joe_67275c11",
-    "file": "ellen_joe_67275c11.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen_joe_67275c11"
   },
   {
     "id": 77,
     "name": "Eula Lawrence",
     "price": 1700,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/eula_lawrence_139a7bc5",
-    "file": "eula_lawrence_139a7bc5.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/eula_lawrence_139a7bc5"
   },
   {
     "id": 78,
     "name": "Furina",
     "price": 1200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/furina_6b757324",
-    "file": "furina_6b757324.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_6b757324"
   },
   {
     "id": 79,
     "name": "Hu Tao",
     "price": 1400,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/hu_tao_0a8b2f8f",
-    "file": "hu_tao_0a8b2f8f.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu_tao_0a8b2f8f"
   },
   {
     "id": 80,
     "name": "Joe Ellen",
     "price": 1200,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/joe_ellen_3308e3ea",
-    "file": "joe_ellen_3308e3ea.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/joe_ellen_3308e3ea"
   },
   {
     "id": 81,
     "name": "Las Quintillizas",
     "price": 1100,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/las_quintillizas_ca630f78",
-    "file": "las_quintillizas_ca630f78.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/las_quintillizas_ca630f78"
   },
   {
     "id": 82,
     "name": "Marin Kitagawa",
     "price": 1700,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/marin_kitagawa_37e443ba",
-    "file": "marin_kitagawa_37e443ba.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/marin_kitagawa_37e443ba"
   },
   {
     "id": 83,
     "name": "Miku Nakano",
     "price": 1400,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/miku_nakano_6d3c7b64",
-    "file": "miku_nakano_6d3c7b64.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku_nakano_6d3c7b64"
   },
   {
     "id": 84,
     "name": "Mona Megistus",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/mona_megistus_cf65001f",
-    "file": "mona_megistus_cf65001f.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mona_megistus_cf65001f"
   },
   {
     "id": 85,
     "name": "Nakano Ichika",
     "price": 1800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nakano_ichika_33c02c40",
-    "file": "nakano_ichika_33c02c40.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_ichika_33c02c40"
   },
   {
     "id": 86,
     "name": "Nakano Miku",
     "price": 3500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nakano_miku_a82b95b7",
-    "file": "nakano_miku_a82b95b7.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_miku_a82b95b7"
   },
   {
     "id": 87,
     "name": "Nakano Nino",
     "price": 3500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nakano_nino_65063b9f",
-    "file": "nakano_nino_65063b9f.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_nino_65063b9f"
   },
   {
     "id": 88,
     "name": "Nino Nakano",
     "price": 2300,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nino_nakano_g5hi3xdr",
-    "file": "nino_nakano_g5hi3xdr.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino_nakano_g5hi3xdr"
   },
   {
     "id": 89,
     "name": "Sacarosa",
     "price": 1700,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sacarosa_2d2b6a68",
-    "file": "sacarosa_2d2b6a68.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa_2d2b6a68"
   },
   {
     "id": 90,
     "name": "Xilonen",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/xilonen_013befea",
-    "file": "xilonen_013befea.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen_013befea"
   },
   {
     "id": 91,
     "name": "Yamada Ryo",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/yamada_ryo_40d0f932",
-    "file": "yamada_ryo_40d0f932.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yamada_ryo_40d0f932"
   },
   {
     "id": 92,
     "name": "Bardock",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/bardock_1fbcba3f",
-    "file": "bardock_1fbcba3f.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bardock_1fbcba3f"
   },
   {
     "id": 93,
     "name": "Invencible Vs Cecil",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/invencible_vs_cecil_46f5a56f",
-    "file": "invencible_vs_cecil_46f5a56f.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible_vs_cecil_46f5a56f"
   },
   {
     "id": 94,
     "name": "Nakano Itsuki",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nakano_itsuki_c30720a9",
-    "file": "nakano_itsuki_c30720a9.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_itsuki_c30720a9"
   },
   {
     "id": 95,
     "name": "Gran Regente Thragg",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/gran_regente_thragg_6717e4af",
-    "file": "gran_regente_thragg_6717e4af.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gran_regente_thragg_6717e4af"
   },
   {
     "id": 96,
     "name": "Itsuki Nakano",
     "price": 3000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/itsuki_nakano_8905039e",
-    "file": "itsuki_nakano_8905039e.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/itsuki_nakano_8905039e"
   },
   {
     "id": 97,
     "name": "Nakano Nino",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/nakano_nino_a2f17957",
-    "file": "nakano_nino_a2f17957.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_nino_a2f17957"
   },
   {
     "id": 98,
     "name": "Invencible",
     "price": 1800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/invencible_7e362442",
-    "file": "invencible_7e362442.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible_7e362442"
   },
   {
     "id": 99,
     "name": "Makima",
     "price": 3000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/makima_95376fff",
-    "file": "makima_95376fff.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/makima_95376fff"
   },
   {
     "id": 100,
     "name": "Rias Gremory",
     "price": 1800,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/rias_gremory_fa7587d2",
-    "file": "rias_gremory_fa7587d2.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rias_gremory_fa7587d2"
   },
   {
     "id": 101,
     "name": "Blaze The Cat",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_blaze_the_cat_e2567d98",
-    "file": "pfp_blaze_the_cat_e2567d98.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_blaze_the_cat_e2567d98"
   },
   {
     "id": 102,
     "name": "Nakano Miku",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_nakano_miku_6593596d",
-    "file": "pfp_nakano_miku_6593596d.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_nakano_miku_6593596d"
   },
   {
     "id": 103,
     "name": "Ellen Joe",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_ellen_joe_7fdb9274",
-    "file": "pfp_ellen_joe_7fdb9274.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_ellen_joe_7fdb9274"
   },
   {
     "id": 104,
     "name": "Nakano Nino",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_nakano_nino_d78efa29",
-    "file": "pfp_nakano_nino_d78efa29.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_nakano_nino_d78efa29"
   },
   {
     "id": 105,
     "name": "Himiko Toga",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_himiko_toga_e52a90df",
-    "file": "pfp_himiko_toga_e52a90df.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_himiko_toga_e52a90df"
   },
   {
     "id": 106,
     "name": "Shadow El Latinas",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_shadow_el_latinas_3587f310",
-    "file": "pfp_shadow_el_latinas_3587f310.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_shadow_el_latinas_3587f310"
   },
   {
     "id": 107,
     "name": "Mitsuri Kanroji",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_mitsuri_kanroji_918226b9",
-    "file": "pfp_mitsuri_kanroji_918226b9.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_mitsuri_kanroji_918226b9"
   },
   {
     "id": 108,
     "name": "Columbina",
     "price": 0,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/columbina_e0740cc9",
-    "file": "columbina_e0740cc9.avif",
-    "tags": [
-      "Mobile",
-      "regalo"
-    ],
-    "category": "gift",
-    "requirements": {
-      "type": "game_played",
-      "value": 1,
-      "description": "Completa 1 partida para desbloquear"
-    }
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina_e0740cc9"
   },
   {
     "id": 109,
     "name": "Columbina",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_columbina_0e69d178",
-    "file": "pfp_columbina_0e69d178.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_columbina_0e69d178"
   },
   {
     "id": 110,
     "name": "Furina",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_furina_280a2068",
-    "file": "pfp_furina_280a2068.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_furina_280a2068"
   },
   {
     "id": 111,
     "name": "Mavuika",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_mavuika_9785a191",
-    "file": "pfp_mavuika_9785a191.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_mavuika_9785a191"
   },
   {
     "id": 112,
     "name": "Uraraka",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/uraraka_8dffd239",
-    "file": "uraraka_8dffd239.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/uraraka_8dffd239"
   },
   {
     "id": 113,
     "name": "Varesa",
     "price": 1500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/varesa_3e364fb5",
-    "file": "varesa_3e364fb5.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_3e364fb5"
   },
   {
     "id": 114,
     "name": "Varesa",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/pfp_varesa_4cac5208",
-    "file": "pfp_varesa_4cac5208.avif",
-    "tags": [
-      "Avatar"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_varesa_4cac5208"
   },
   {
     "id": 115,
     "name": "Hitori Gotoh",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hitori-gotoh-f44d577d",
-    "file": "stk-hitori-gotoh-f44d577d.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-hitori-gotoh-f44d577d"
   },
   {
     "id": 116,
     "name": "Ellen Joe",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-ellen-joe-86f8544b",
-    "file": "stk-ellen-joe-86f8544b.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-ellen-joe-86f8544b"
   },
   {
     "id": 117,
     "name": "Hu Tao",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hu-tao-352611f6",
-    "file": "stk-hu-tao-352611f6.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-hu-tao-352611f6"
   },
   {
     "id": 118,
     "name": "Furina",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-furina-17dd95d4",
-    "file": "stk-furina-17dd95d4.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-furina-17dd95d4"
   },
   {
     "id": 119,
     "name": "Mona",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-mona-a9207eae",
-    "file": "stk-mona-a9207eae.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-mona-a9207eae"
   },
   {
     "id": 120,
     "name": "Furina",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-furina-49ebc023",
-    "file": "stk-furina-49ebc023.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-furina-49ebc023"
   },
   {
     "id": 121,
     "name": "Shadow",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-shadow-8d4b9a82",
-    "file": "stk-shadow-8d4b9a82.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-shadow-8d4b9a82"
   },
   {
     "id": 122,
     "name": "Goku",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-goku-f6efb8be",
-    "file": "stk-goku-f6efb8be.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-goku-f6efb8be"
   },
   {
     "id": 123,
     "name": "Shadow",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-shadow-e0c3cb17",
-    "file": "stk-shadow-e0c3cb17.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-shadow-e0c3cb17"
   },
   {
     "id": 124,
     "name": "Hatsune Miku",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/stk-hatsune-miku-d0173a28",
-    "file": "stk-hatsune-miku-d0173a28.jpg",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/stk-hatsune-miku-d0173a28"
   },
   {
     "id": 125,
     "name": "Bocchi the Cat",
     "price": 2500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/bocchi-the-cat-073d42ad",
-    "file": "bocchi-the-cat-073d42ad.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bocchi-the-cat-073d42ad"
   },
   {
     "id": 126,
     "name": "Yor Forger",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/yor-forger-91c2a701",
-    "file": "yor-forger-91c2a701.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yor-forger-91c2a701"
   },
   {
     "id": 127,
     "name": "Anya Forger",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/anya-forger-e46cc4d7",
-    "file": "anya-forger-e46cc4d7.avif",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/anya-forger-e46cc4d7"
   },
   {
-  "id": 128,
-  "name": "505",
-  "price": 505,
-  "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/505-9f1d201b",
-  "file": "505-9f1d201b.webp",
-  "tags": [
-    "Mobile"
-  ]
-},
-{
+    "id": 128,
+    "name": "505",
+    "price": 505,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/505-9f1d201b"
+  },
+  {
     "id": 129,
     "name": "Amanecer",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/cabaña-b897b405",
-    "file": "cabaña-b897b405.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/cabaña-b897b405"
   },
   {
     "id": 130,
     "name": "Atardecer",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/ciudad-fc1d89b5",
-    "file": "ciudad-fc1d89b5.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ciudad-fc1d89b5"
   },
   {
     "id": 131,
     "name": "exe",
     "price": 3000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/exe-616aa1af",
-    "file": "exe-616aa1af.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/exe-616aa1af"
   },
   {
     "id": 132,
     "name": "PvZ: GW2",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/pvz-gw2-6b43574c",
-    "file": "pvz-gw2-6b43574c",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pvz-gw2-6b43574c"
   },
   {
     "id": 133,
     "name": "Vaquita",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/vaquita-275e1595",
-    "file": "vaquita-275e1595.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vaquita-275e1595"
   },
   {
     "id": 134,
     "name": "Amy Rose",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/amy-rose-e53bfa4c",
-    "file": "amy-rose-e53bfa4c.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/amy-rose-e53bfa4c"
   },
   {
     "id": 135,
     "name": "Blaze the Cat",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/blaze-the-cat-cc42ba2d",
-    "file": "blaze-the-cat-cc42ba2d.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/blaze-the-cat-cc42ba2d"
   },
   {
     "id": 136,
     "name": "Koyuki & Akaza",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/castillo-infinito-284ed990",
-    "file": "castillo-infinito-284ed990.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/castillo-infinito-284ed990"
   },
   {
     "id": 137,
     "name": "Fleetway",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/fleetway-super-sonic-e9981277",
-    "file": "fleetway-super-sonic-e9981277.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/fleetway-super-sonic-e9981277"
   },
   {
     "id": 138,
     "name": "Himiko Toga",
     "price": 2000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/himiko-toga-aae96fd8",
-    "file": "himiko-toga-aae96fd8.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/himiko-toga-aae96fd8"
   },
   {
     "id": 139,
     "name": "Knuckles",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/knuckles-the-echidna-2ca1535a",
-    "file": "knuckles-the-echidna-2ca1535a.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/knuckles-the-echidna-2ca1535a"
   },
   {
     "id": 140,
     "name": "Luna Llena",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/luna-llena-c1b6eb31",
-    "file": "luna-llena-c1b6eb31.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/luna-llena-c1b6eb31"
   },
   {
     "id": 141,
     "name": "Miles Prower",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/miles-prower-5fd400c0",
-    "file": "miles-prower-5fd400c0.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miles-prower-5fd400c0"
   },
   {
     "id": 142,
     "name": "Shadow",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/shadow-the-hedgehog-2784f954",
-    "file": "shadow-the-hedgehog-2784f954.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-the-hedgehog-2784f954"
   },
   {
     "id": 143,
     "name": "Sonic",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sonic-the-hedgehog-c8350e05",
-    "file": "sonic-the-hedgehog-c8350e05.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic-the-hedgehog-c8350e05"
   },
   {
     "id": 144,
     "name": "Sunna x Sonic",
     "price": 1000,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_16:9,c_fill,g_auto,w_640/sunna-x-sonic-aeae1d00",
-    "file": "sunna-x-sonic-aeae1d00.webp",
-    "tags": [
-      "Mobile"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sunna-x-sonic-aeae1d00"
   },
   {
     "id": 145,
     "name": "Shadow Sprite",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/shadow-sprite-98a0ee82",
-    "file": "shadow-sprite-98a0ee82.webp",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-sprite-98a0ee82"
   },
   {
     "id": 146,
     "name": "Sonic Sprite",
     "price": 500,
-    "image": "https://res.cloudinary.com/dyspgn0sw/image/upload/f_avif,q_auto,ar_1:1,c_fill,g_auto,w_640/sonic-sprite-c61e3929",
-    "file": "sonic-sprite-c61e3929.webp",
-    "tags": [
-      "Stickers"
-    ]
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic-sprite-c61e3929"
   }
 ]

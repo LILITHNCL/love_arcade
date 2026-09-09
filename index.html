@@ -130,9 +130,6 @@
         <symbol id="icon-gamepad-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>
         </symbol>
-        <symbol id="icon-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-        </symbol>
         <symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </symbol>
@@ -658,9 +655,6 @@
                         <button class="pill" data-filter="Avatar">
                             <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-user"></use></svg> Avatar
                         </button>
-                        <button class="pill filter-btn-gift" data-filter="Regalos">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-gift"></use></svg> Regalos
-                        </button>
                         <button class="pill" data-filter="PC">
                             <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-monitor"></use></svg> PC
                         </button>
@@ -671,15 +665,6 @@
 
                 <p id="search-results-count" class="search-count hidden"></p>
                 <div id="shop-container" class="shop-grid"></div>
-                <section id="gift-carousel" class="gift-carousel hidden" aria-label="Sección de regalos">
-                    <div id="gift-carousel-track" class="gift-carousel-track"></div>
-                    <div class="gift-collection-wrap">
-                        <button id="gift-collection-toggle" class="btn-ghost gift-collection-toggle" type="button" aria-expanded="false">
-                            Ver mi colección completa (0 totales)
-                        </button>
-                        <div id="gift-collection-grid" class="gift-collection-grid hidden"></div>
-                    </div>
-                </section>
 
                 <!-- Estado de error de red — visible solo si shop.json falla -->
                 <div id="shop-error-state" class="shop-error-state hidden" role="alert">

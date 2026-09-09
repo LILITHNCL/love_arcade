@@ -100,7 +100,7 @@
  *      · Mobile → f_avif,q_auto,ar_9:20,c_fill,w_500
  *      · PC     → f_avif,q_auto,ar_16:9,c_fill,w_1200
  *  - openPreviewModal(): Phase 2 ahora usa _getMockupUrl() en lugar de
- *    CONFIG.wallpapersPath + item.file, garantizando que el mockup siempre
+ *    CONFIG.wallpapersPath + item.imageUrl, garantizando que el mockup siempre
  *    recibe la versión optimizada para el marco del dispositivo.
  *  - getDownloadUrl() en app.js: la URL de descarga/email usa la estructura
  *    limpia https://res.cloudinary.com/dyspgn0sw/image/upload/{public_id}
@@ -164,27 +164,16 @@ let _pendingFilterFrame = null;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
 let _shopLazySentinel = null;
-let _giftAutoplayTimer = null;
-let _giftPauseUntil = 0;
-let _giftCurrentIndex = 0;
-let _giftSnapTimer = null;
 const _shopReducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
 const _shopCoarsePointerMql = window.matchMedia('(pointer: coarse)');
 let _shopPrefersReducedMotion = _shopReducedMotionMql.matches;
 let _shopCoarsePointer = _shopCoarsePointerMql.matches;
-let _giftCardSnapOffsets = [];
 const _bindMqlChange = (mql, handler) => {
     if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
     else if (typeof mql.addListener === 'function') mql.addListener(handler);
 };
 _bindMqlChange(_shopReducedMotionMql, (e) => { _shopPrefersReducedMotion = e.matches; });
 _bindMqlChange(_shopCoarsePointerMql, (e) => { _shopCoarsePointer = e.matches; });
-if (typeof window.__laSessionGameCompleted === 'undefined') {
-    let fromSession = false;
-    try { fromSession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
-    window.__laSessionGameCompleted = fromSession;
-}
-
 /**
  * Estado de renderizado incremental del catálogo.
  * En lugar de pintar todos los ítems de una sola vez (costoso con catálogos
@@ -204,7 +193,6 @@ const _shopRenderState = {
 function _computeCatalogSignature() {
     const inventoryPart = activeFilter === 'NoObtenidos'
         ? allItems
-            .filter(item => !_isGiftItem(item))
             .map(item => `${item.id}:${GameCenter.getBoughtCount(item.id) > 0 ? 1 : 0}`)
             .join(',')
         : '';
@@ -297,7 +285,7 @@ function _closeModal(value) {
 //   Layer 2 (Protection) — pointer-events:none noise overlay
 //   Layer 3 (UI)         — live clock + OS chrome (status bar / taskbar)
 //
-// Frame type is selected from item.tags:
+// The legacy mockup frame falls back to its neutral presentation.
 //   "Mobile" → 9:20 portrait phone with status bar + 4×4 app grid
 //   "PC"     → 16:9 landscape desktop with taskbar
 //   (none)   → neutral 4:3 with watermark badge
@@ -318,13 +306,7 @@ let _preloadObserver     = null;   // IntersectionObserver for hi-res smart prel
  * @returns {number} ratio ancho/alto
  */
 function _resolvePreviewAspectRatio(item, probeImg = null) {
-    const tags = Array.isArray(item?.tags) ? item.tags : [];
-    // Reglas explícitas de negocio: el tag manda sobre cualquier metadato.
-    if (tags.includes('Mobile')) return 9 / 20;
-    if (tags.includes('PC')) return 16 / 9;
-    if (tags.includes('Avatar') || tags.includes('Sticker')) return 1;
-
-    // Solo si no hay tag reconocido, usar dimensión real del archivo.
+    // El catálogo consolidado no conserva etiquetas de dispositivo; usar dimensiones reales.
     const w = Number(probeImg?.naturalWidth || 0);
     const h = Number(probeImg?.naturalHeight || 0);
     if (w > 0 && h > 0) return w / h;
@@ -570,35 +552,24 @@ function _applyArtFallback(artEl) {
  * matches the target device frame:
  *   Mobile → 9:20 portrait, 500 px wide   (phone screen)
  *   PC     → 16:9 landscape, 1200 px wide  (desktop screen)
- *   Sticker → 1:1 square, 800 px wide
- *   Other   → falls back to the PC preset
+ * The consolidated catalog retains the original Cloudinary URL, which is used
+ * directly until the preview redesign replaces this legacy helper.
  *
- * The public ID is derived from item.file by stripping the file extension,
- * keeping the URL independent of the original upload format (.webp/.jpg/.png).
- *
- * @param {object} item — shop item with .file and .tags[]
- * @returns {string}    — Cloudinary URL with the appropriate transformation
+ * @param {object} item — shop item with .imageUrl
+ * @returns {string}    — original Cloudinary URL
  */
 function _getMockupUrl(item) {
-    const CDN_BASE = 'https://res.cloudinary.com/dyspgn0sw/image/upload/';
-    const tags     = Array.isArray(item.tags) ? item.tags : [];
-    const base     = item.file.replace(/\.[^.]+$/, ''); // strip extension → public ID
-
-    if (tags.includes('Mobile')) return `${CDN_BASE}f_avif,q_auto,ar_9:20,c_fill,w_500/${base}`;
-    if (tags.includes('Avatar') || tags.includes('Sticker')) return `${CDN_BASE}f_avif,q_auto,ar_1:1,c_fill,w_800/${base}`;
-    // PC o no etiquetado — 16:9 widescreen
-    return `${CDN_BASE}f_avif,q_auto,ar_16:9,c_fill,w_1200/${base}`;
+    return item.imageUrl;
 }
 
 /**
  * Builds the 3-layer mockup HTML string for a given item.
- * @param {object} item  — shop item with .image and .tags[]
+ * @param {object} item  — shop item with .imageUrl
  * @returns {string}     — innerHTML for #mockup-slot
  */
 function _buildMockupHTML(item) {
-    const tags  = Array.isArray(item.tags) ? item.tags : [];
-    const isMob = tags.includes('Mobile');
-    const isPc  = tags.includes('PC');
+    const isMob = false;
+    const isPc = false;
 
     const now = _getMockupTimeString();
 
@@ -1060,7 +1031,7 @@ function openPreviewModal(itemOrId) {
     // para garantizar el registro incluso si el usuario cierra rápidamente.
     window.GhostAnalytics?.track('view_preview', {
         wallpaper: item.name,
-        categoria: Array.isArray(item.tags) && item.tags.length ? item.tags[0] : 'General'
+        categoria: item.category || 'art'
     });
 
     // Preview simplificado (sin mockups Mobile/PC) para minimizar nodos y trabajo JS.
@@ -1076,10 +1047,10 @@ function openPreviewModal(itemOrId) {
     const artEl         = slot.querySelector('.preview-art-layer');
     const frameEl       = slot.querySelector('.preview-art-frame');
 
-    // Tamaño inicial inmediato usando heurística por tags.
+    // Tamaño inicial inmediato; se ajusta cuando carga la imagen.
     _applyPreviewFrameSize(frameEl, _resolvePreviewAspectRatio(item));
 
-    artEl.style.backgroundImage = `url('${item.image}')`;
+    artEl.style.backgroundImage = `url('${item.imageUrl}')`;
     artEl.classList.add('mockup-bg-loading');
 
     if (_pendingHiResImg) { _pendingHiResImg.onload = _pendingHiResImg.onerror = null; _pendingHiResImg = null; }
@@ -1099,7 +1070,7 @@ function openPreviewModal(itemOrId) {
         }
         _applyArtFallback(artEl);
     };
-    thumbProbe.src = item.image;
+    thumbProbe.src = item.imageUrl;
 
     const hiRes = new Image();
     _pendingHiResImg = hiRes;
@@ -1137,7 +1108,7 @@ function openPreviewModal(itemOrId) {
     const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
 
     if (isOwned) {
-        const url = GameCenter.getDownloadUrl(item.id, item.file);
+        const url = GameCenter.getDownloadUrl(item.id, item.imageUrl);
         actionsEl.innerHTML = url
             ? `<a href="${url}" download class="btn-primary vault-btn" style="flex:1; justify-content:center;">
                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-download"></use></svg> Descargar
@@ -1261,13 +1232,13 @@ window.closePreviewModal = closePreviewModal;
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-    document.querySelectorAll('.shop-tab').forEach(b =>
-        b.classList.toggle('active', b.dataset.tab === tab)
+    document.querySelectorAll('.shop-tab').forEach(button =>
+        button.classList.toggle('active', button.dataset.tab === tab)
     );
     const panel = document.getElementById(`tab-${tab}`);
     if (!panel) return;
     const ownerView = panel.closest('.view-section') || document;
-    ownerView.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    ownerView.querySelectorAll('.tab-panel').forEach(item => item.classList.add('hidden'));
     panel.classList.remove('hidden');
 
     if (tab === 'settings') {
@@ -1275,220 +1246,8 @@ function switchTab(tab) {
         renderMoonBlessingStatus();
         renderStreakCalendar();
     }
-    if (tab !== 'catalog') {
-        _stopGiftAutoplay();
-        _teardownShopLazyRender();
-    } else if (activeFilter !== 'Regalos') {
-        filterItems();
-    }
-}
-
-function _isGiftItem(item) {
-    return item?.category === 'gift' || (Array.isArray(item?.tags) && item.tags.includes('regalo'));
-}
-
-function _isGiftUnlocked(item) {
-    const reqType = item?.requirements?.type;
-    if (reqType === 'game_played') {
-        const byWindow = Boolean(window.__laSessionGameCompleted);
-        let bySession = false;
-        try { bySession = sessionStorage.getItem('la_session_game_completed') === '1'; } catch (_) { /* noop */ }
-        return byWindow || bySession;
-    }
-    return false;
-}
-
-function _getGiftRequirementText(item) {
-    return item?.requirements?.description || 'Completa 1 partida';
-}
-
-function _readGiftClaimOrder() {
-    try {
-        const raw = sessionStorage.getItem('la_gift_claim_order');
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr.filter(v => Number.isFinite(v)) : [];
-    } catch (_) {
-        return [];
-    }
-}
-
-function _writeGiftClaimOrder(order) {
-    try {
-        sessionStorage.setItem('la_gift_claim_order', JSON.stringify(order.slice(-30)));
-    } catch (_) { /* noop */ }
-}
-
-function _rememberGiftClaim(itemId) {
-    const prev = _readGiftClaimOrder().filter(id => id !== itemId);
-    prev.push(itemId);
-    _writeGiftClaimOrder(prev);
-}
-
-function _buildGiftFocus(items) {
-    const owned = items.filter(item => window.GameCenter.getBoughtCount(item.id) > 0);
-    const pending = items.filter(item => window.GameCenter.getBoughtCount(item.id) === 0);
-    const claimedOrder = _readGiftClaimOrder();
-
-    const recentOwned = [];
-    for (let i = claimedOrder.length - 1; i >= 0 && recentOwned.length < 2; i -= 1) {
-        const found = owned.find(item => item.id === claimedOrder[i]);
-        if (found && !recentOwned.some(x => x.id === found.id)) recentOwned.push(found);
-    }
-    if (recentOwned.length < 2) {
-        const byIdDesc = owned.slice().sort((a, b) => b.id - a.id);
-        byIdDesc.forEach(item => {
-            if (recentOwned.length >= 2) return;
-            if (!recentOwned.some(x => x.id === item.id)) recentOwned.push(item);
-        });
-    }
-
-    const focus = [...pending, ...recentOwned].slice(0, 6);
-    const focusSet = new Set(focus.map(item => item.id));
-    const collection = owned.filter(item => !focusSet.has(item.id));
-    return { focus, collection, ownedTotal: owned.length };
-}
-
-function _stopGiftAutoplay() {
-    if (_giftAutoplayTimer) {
-        clearInterval(_giftAutoplayTimer);
-        _giftAutoplayTimer = null;
-    }
-}
-
-function _updateGiftFilterGlow() {
-    const giftBtn = document.querySelector('.filter-btn-gift');
-    if (!giftBtn || !allItems.length) return;
-    const hasUnclaimed = allItems.some(item =>
-        _isGiftItem(item) && _isGiftUnlocked(item) && window.GameCenter.getBoughtCount(item.id) === 0
-    );
-    giftBtn.classList.toggle('has-unclaimed', hasUnclaimed);
-}
-
-function _advanceGiftCarousel(step = 1) {
-    const track = document.getElementById('gift-carousel-track');
-    if (!track) return;
-    const cards = Array.from(track.querySelectorAll('.gift-card'));
-    if (!cards.length) return;
-    const next = _giftCurrentIndex + step;
-    if (next >= cards.length) {
-        _giftCurrentIndex = cards.length - 1;
-        return;
-    }
-    _giftCurrentIndex = Math.max(0, next);
-    cards[_giftCurrentIndex].scrollIntoView({
-        behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
-        block: 'nearest',
-        inline: 'start'
-    });
-}
-
-function _initGiftAutoplay() {
-    _stopGiftAutoplay();
-    _giftAutoplayTimer = setInterval(() => {
-        if (Date.now() < _giftPauseUntil) return;
-        _advanceGiftCarousel(1);
-    }, 3800);
-}
-
-function _renderGiftCarousel(items) {
-    const track = document.getElementById('gift-carousel-track');
-    const collectionToggle = document.getElementById('gift-collection-toggle');
-    const collectionGrid = document.getElementById('gift-collection-grid');
-    if (!track) return;
-    _stopGiftAutoplay();
-    track.innerHTML = '';
-    if (collectionGrid) collectionGrid.innerHTML = '';
-    if (!items.length) return;
-
-    const { focus, collection, ownedTotal } = _buildGiftFocus(items);
-    const focusItems = focus.length ? focus : items.slice(0, 1);
-    const unownedIndex = focusItems.findIndex(item => window.GameCenter.getBoughtCount(item.id) === 0);
-    _giftCurrentIndex = unownedIndex >= 0 ? unownedIndex : 0;
-
-    const html = focusItems.map(item => {
-        const unlocked = _isGiftUnlocked(item);
-        const owned = window.GameCenter.getBoughtCount(item.id) > 0;
-        const ctaText = 'Descargar';
-        const disabled = !owned && !unlocked ? 'disabled' : '';
-        const opacity = !owned && !unlocked ? ' style="opacity:.5"' : '';
-        return `<article class="gift-card" data-gift-id="${item.id}">
-            <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
-                 onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
-            ${owned ? `<span class="gift-owned-badge">${_icon('check', 11)} Obtenido</span>` : ''}
-            <h3 class="gift-card-name">${item.name}</h3>
-            <span class="gift-pill gift-pill--req">${_getGiftRequirementText(item)}</span>
-            <button class="gift-pill gift-pill--cta" data-gift-action="${item.id}" ${disabled}${opacity}>${ctaText}</button>
-        </article>`;
-    }).join('');
-
-    track.innerHTML = html;
-    _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
-    if (collectionToggle) {
-        collectionToggle.textContent = `Ver mi colección completa (${ownedTotal} totales)`;
-        collectionToggle.classList.toggle('hidden', collection.length === 0);
-        collectionToggle.setAttribute('aria-expanded', 'false');
-    }
-    if (collectionGrid) {
-        collectionGrid.classList.add('hidden');
-        collectionGrid.innerHTML = collection.map(item =>
-            `<article class="gift-collection-item" title="${item.name}">
-                <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" crossorigin="anonymous"
-                     onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
-            </article>`
-        ).join('');
-    }
-
-    requestAnimationFrame(() => {
-        const cards = track.querySelectorAll('.gift-card');
-        cards[_giftCurrentIndex]?.scrollIntoView({
-            behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
-            block: 'nearest',
-            inline: 'start'
-        });
-    });
-
-    if (!track.dataset.boundScrollPause) {
-        track.dataset.boundScrollPause = '1';
-        let rafId = null;
-        let lastScrollTs = 0;
-        const SNAP_DEBOUNCE_MS = 160;
-        const SNAP_THRESHOLD_PX = 14;
-        const runSnap = () => {
-            rafId = null;
-            const idleFor = performance.now() - lastScrollTs;
-            if (idleFor < SNAP_DEBOUNCE_MS) {
-                rafId = requestAnimationFrame(runSnap);
-                return;
-            }
-            if (_shopCoarsePointer) return;
-            if (!_giftCardSnapOffsets.length) return;
-            let nearest = 0;
-            let minDist = Number.POSITIVE_INFINITY;
-            _giftCardSnapOffsets.forEach((left, idx) => {
-                const dist = Math.abs(left - track.scrollLeft);
-                if (dist < minDist) { minDist = dist; nearest = idx; }
-            });
-            _giftCurrentIndex = nearest;
-            if (minDist <= SNAP_THRESHOLD_PX) return;
-            const targetCard = track.querySelectorAll('.gift-card')[nearest];
-            targetCard?.scrollIntoView({
-                behavior: (_shopPrefersReducedMotion || _shopCoarsePointer) ? 'auto' : 'smooth',
-                block: 'nearest',
-                inline: 'start'
-            });
-        };
-        track.addEventListener('scroll', () => {
-            _giftPauseUntil = Date.now() + 10000;
-            lastScrollTs = performance.now();
-            if (rafId !== null) return;
-            rafId = requestAnimationFrame(runSnap);
-        }, { passive: true });
-        window.addEventListener('resize', () => {
-            _giftCardSnapOffsets = Array.from(track.querySelectorAll('.gift-card')).map(card => card.offsetLeft);
-        }, { passive: true });
-    }
-
-    _initGiftAutoplay();
+    if (tab !== 'catalog') _teardownShopLazyRender();
+    else filterItems();
 }
 
 // ── Filtros ───────────────────────────────────────────────────────────────────
@@ -1503,78 +1262,52 @@ function _renderGiftCarousel(items) {
  */
 function filterItems() {
     if (!allItems.length) return;
-    const gridEl      = document.getElementById('shop-container');
-    const giftEl      = document.getElementById('gift-carousel');
-    const countEl     = document.getElementById('search-results-count');
-    const emptyEl     = document.getElementById('filter-empty');
+    const gridEl = document.getElementById('shop-container');
+    const countEl = document.getElementById('search-results-count');
+    const emptyEl = document.getElementById('filter-empty');
 
     const filtered = allItems.filter(item => {
-        const isGift = _isGiftItem(item);
-        let matchesFilter;
-        if      (activeFilter === 'Todos')       matchesFilter = !isGift;
-        else if (activeFilter === 'NoObtenidos') matchesFilter = !isGift && GameCenter.getBoughtCount(item.id) === 0;
-        else if (activeFilter === 'Regalos')     matchesFilter = isGift;
-        else                                     matchesFilter = Array.isArray(item.tags) && item.tags.includes(activeFilter);
-
-        const matchesSearch = !searchQuery
-            || item.name.toLowerCase().includes(searchQuery)
-            || (item.desc || '').toLowerCase().includes(searchQuery)
-            || (Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
-
-        return matchesFilter && matchesSearch;
+        if (activeFilter === 'NoObtenidos') return GameCenter.getBoughtCount(item.id) === 0;
+        if (activeFilter === 'Todos') return true;
+        return false;
     });
 
-    if (activeFilter === 'Regalos') {
-        gridEl?.classList.add('hidden');
-        giftEl?.classList.remove('hidden');
-        _renderGiftCarousel(filtered);
-    } else {
-        _stopGiftAutoplay();
-        giftEl?.classList.add('hidden');
-        renderShop(filtered);
-    }
-
-    const sorted  = filtered;
-
-    if (sorted.length === 0 && activeFilter === 'NoObtenidos' && !searchQuery) {
+    renderShop(filtered);
+    if (filtered.length === 0 && activeFilter === 'NoObtenidos') {
         renderShop(allItems);
-        gridEl.classList.remove('hidden');
-        giftEl?.classList.add('hidden');
-        emptyEl.classList.add('hidden');
-        countEl.textContent = 'No hay novedades pendientes';
-        countEl.classList.remove('hidden');
-    } else if (sorted.length === 0) {
-        gridEl.classList.add('hidden');
-        giftEl?.classList.add('hidden');
-        emptyEl.classList.remove('hidden');
-        countEl.classList.add('hidden');
+        gridEl?.classList.remove('hidden');
+        emptyEl?.classList.add('hidden');
+        if (countEl) {
+            countEl.textContent = 'No hay novedades pendientes';
+            countEl.classList.remove('hidden');
+        }
+    } else if (filtered.length === 0) {
+        gridEl?.classList.add('hidden');
+        emptyEl?.classList.remove('hidden');
+        countEl?.classList.add('hidden');
     } else {
-        if (activeFilter !== 'Regalos') gridEl.classList.remove('hidden');
-        emptyEl.classList.add('hidden');
-        const isFiltered = activeFilter !== 'Todos' || searchQuery;
-        countEl.textContent = isFiltered ? `${sorted.length} resultado${sorted.length !== 1 ? 's' : ''}` : '';
-        countEl.classList.toggle('hidden', !isFiltered);
+        gridEl?.classList.remove('hidden');
+        emptyEl?.classList.add('hidden');
+        if (countEl) {
+            const isFiltered = activeFilter !== 'Todos';
+            countEl.textContent = isFiltered ? `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}` : '';
+            countEl.classList.toggle('hidden', !isFiltered);
+        }
     }
-
-    _updateGiftFilterGlow();
-
-    // La firma se actualiza después de resolver el fallback de "NoObtenidos",
-    // de modo que representa exactamente el estado que quedó visible.
-    if (activeFilter !== 'Regalos') _lastCatalogSignature = _computeCatalogSignature();
+    _lastCatalogSignature = _computeCatalogSignature();
 }
 
 function resetFilters() {
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-    document.querySelector('[data-filter="NoObtenidos"]').classList.add('active');
+    document.querySelector('[data-filter="NoObtenidos"]')?.classList.add('active');
     activeFilter = 'NoObtenidos';
-    searchQuery  = '';
+    searchQuery = '';
     const searchInput = document.getElementById('search-input');
-    const clearBtn    = document.getElementById('search-clear');
+    const clearBtn = document.getElementById('search-clear');
     if (searchInput) searchInput.value = '';
-    if (clearBtn)    clearBtn.classList.add('hidden');
+    if (clearBtn) clearBtn.classList.add('hidden');
     scheduleFilterItems();
 }
-// Exponer globalmente (compatible con onclick="resetFilters()" en el HTML)
 window.resetFilters = resetFilters;
 
 // ── Render: Streak Calendar ───────────────────────────────────────────────────
@@ -1619,7 +1352,7 @@ function _buildShopCard(item, loading = 'lazy') {
 
     const actionHTML = isOwned
         ? (() => {
-            const url = GameCenter.getDownloadUrl(item.id, item.file);
+            const url = GameCenter.getDownloadUrl(item.id, item.imageUrl);
             return url
                 ? `<a href="${url}" download class="btn-primary vault-btn"
                        style="width:100%; justify-content:center; font-size:0.78rem; padding:7px;">
@@ -1649,7 +1382,7 @@ function _buildShopCard(item, loading = 'lazy') {
     card.dataset.itemId = item.id;
     card.dataset.owned = String(isOwned);
     card.innerHTML =
-        `        <img src="${item.image}" alt="${item.name}" class="shop-img"
+        `        <img src="${item.imageUrl}" alt="${item.name}" class="shop-img"
              loading="${loading}"
              ${isEager ? 'fetchpriority="high"' : ''}
              decoding="async" crossorigin="anonymous"
@@ -1796,41 +1529,6 @@ function _bindShopContainerDelegation() {
     });
 }
 
-async function _handleGiftAction(itemId) {
-    const item = allItems.find(i => i.id === itemId && _isGiftItem(i));
-    if (!item) return;
-
-    const owned = window.GameCenter.getBoughtCount(item.id) > 0;
-    if (!owned && !_isGiftUnlocked(item)) {
-        showToast('Completa una partida para desbloquear este regalo.', 'warning');
-        return;
-    }
-
-    if (!owned) {
-        const result = window.GameCenter.buyItem(item);
-        if (!result?.success) {
-            showToast('No se pudo reclamar el regalo ahora mismo.', 'error');
-            return;
-        }
-        _inventoryDirty = true;
-        _rememberGiftClaim(item.id);
-        showToast('¡Gracias por jugar hoy! Tu apoyo mantiene este mundo vivo.', 'success');
-        window.GhostAnalytics?.track('gift_claimed', { item: item.name, requirement: item.requirements?.type || 'unknown' });
-    }
-
-    const url = window.GameCenter.getDownloadUrl(item.id, item.file);
-    if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.GhostAnalytics?.track('click_download', { wallpaper: item.name, fuente: 'gift_carousel' });
-    filterItems();
-    renderLibrary(allItems);
-}
-
 // ── Render: Biblioteca ────────────────────────────────────────────────────────
 function renderLibrary(items) {
     const container = document.getElementById('library-container');
@@ -1849,7 +1547,7 @@ function renderLibrary(items) {
 
     container.innerHTML = '';
     owned.forEach(item => {
-        const url  = GameCenter.getDownloadUrl(item.id, item.file);
+        const url  = GameCenter.getDownloadUrl(item.id, item.imageUrl);
         const card = document.createElement('article');
         card.className     = 'glass-panel shop-card';
         // will-change gestionado por CSS (:hover), no en JS (ver renderShop)
@@ -1876,7 +1574,7 @@ function renderLibrary(items) {
                </button>`;
 
         card.innerHTML =
-            `<img src="${item.image}" alt="${item.name}" class="shop-img" loading="lazy"
+            `<img src="${item.imageUrl}" alt="${item.name}" class="shop-img" loading="lazy"
                   onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
             <div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>
             <div style="width:100%;">
@@ -2027,7 +1725,7 @@ async function initiatePurchase(item, btn) {
             wallpaper:  item.name,
             precio:     `${result.finalPrice} ⭐`,
             cashback:   result.cashback > 0 ? `+${result.cashback} ⭐` : 'ninguno',
-            categoría:  Array.isArray(item.tags) && item.tags.length ? item.tags[0] : 'General',
+            categoría:  item.category || 'art',
             saldo_tras: GameCenter.getBalance()
         });
         const cbNote = result.cashback > 0 ? ` <strong>+${result.cashback} cashback</strong> devueltas.` : '';
@@ -2326,7 +2024,7 @@ function openEmailModal(item, absoluteUrl) {
 
     const thumbEl = document.getElementById('email-modal-thumb');
     const nameEl  = document.getElementById('email-modal-item-name');
-    if (thumbEl) { thumbEl.src = item.image; thumbEl.alt = item.name; }
+    if (thumbEl) { thumbEl.src = item.imageUrl; thumbEl.alt = item.name; }
     if (nameEl)  { nameEl.textContent = item.name; }
 
     const inputEl = document.getElementById('email-modal-input');
@@ -2436,21 +2134,18 @@ window.ShopView = {
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
             el.textContent = balance;
         });
-        // Regalos conserva su ciclo de vida propio. Para el grid, evitar destruir
-        // y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
+        // Evitar destruir y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
         const gridEl = document.getElementById('shop-container');
         const signature = _inventoryDirty
             ? _computeCatalogSignature()
             : _lastCatalogSignature;
-        if (allItems.length && activeFilter !== 'Regalos'
-            && signature === _lastCatalogSignature
+        if (allItems.length && signature === _lastCatalogSignature
             && gridEl?.querySelector('.shop-card')) {
             _refreshBoughtBadges();
         } else if (allItems.length) {
             filterItems();
         }
         _inventoryDirty = false;
-        _updateGiftFilterGlow();
 
     },
 
@@ -2520,46 +2215,31 @@ function loadCatalog() {
             'Cargando catálogo…</p>';
     }
 
-    Promise.all([
-        fetch('data/shop.json').then(r => {
+    fetch('data/shop.json')
+        .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
-        }),
-        fetch('data/shop-gifts.json')
-            .then(r => (r.ok ? r.json() : []))
-            .catch(() => [])
-    ])
-        .then(([items, gifts]) => {
-            const baseCatalog = items.filter(item => !_isGiftItem(item));
-            const giftCatalog = gifts.length ? gifts : items.filter(item => _isGiftItem(item));
-            allItems = [...baseCatalog, ...giftCatalog];
+        })
+        .then(items => {
+            allItems = _validateCatalog(items);
             _catalogRevision += 1;
             if (gridEl) gridEl.innerHTML = '';
             filterItems();
             renderLibrary(allItems);
-            _scheduleCatalogHashPersistence(items, _catalogRevision);
-        
-            // Asegurar que el error state está oculto si se cargó correctamente
+            _scheduleCatalogHashPersistence(allItems, _catalogRevision);
             if (errorEl) errorEl.classList.add('hidden');
 
-            // [v9.9.2] user_snapshot — instantánea de estado enviada UNA VEZ por sesión.
-            // sessionStorage se resetea al cerrar la pestaña; persistencia exacta para
-            // una "primera impresión" por visita sin datos redundantes entre navegaciones SPA.
-            // No se envía en retries del catálogo (loadCatalog puede llamarse múltiples veces).
             if (!sessionStorage.getItem('ga_snapshot_sent')) {
                 try {
                     sessionStorage.setItem('ga_snapshot_sent', '1');
-                    const gc          = window.GameCenter;
-                    const inventory   = gc?.getInventory?.() || {};
-                    const comprados   = Object.values(inventory).filter(v => v > 0).length;
+                    const gc = window.GameCenter;
+                    const inventory = gc?.getInventory?.() || {};
+                    const comprados = Object.values(inventory).filter(v => v > 0).length;
                     const disponibles = allItems.length - comprados;
-                    const state       = gc?.getState?.() || {};
-
+                    const state = gc?.getState?.() || {};
                     window.GhostAnalytics?.track('user_snapshot', {
-                        saldo:           state.coins ?? gc?.getBalance?.() ?? 0,
-                        comprados,
-                        disponibles,
-                        racha:           state.streak ?? 0,
+                        saldo: state.coins ?? gc?.getBalance?.() ?? 0,
+                        comprados, disponibles, racha: state.streak ?? 0,
                         códigos_canjeados: gc?.getRedeemedCount?.() ?? 0
                     });
                 } catch (_) { /* nunca interrumpir la carga del catálogo */ }
@@ -2567,23 +2247,35 @@ function loadCatalog() {
         })
         .catch(err => {
             console.error('[ShopLogic] Error cargando shop.json:', err);
-
-            // Ocultar grid y mostrar error state
-            if (gridEl)  gridEl.classList.add('hidden');
+            if (gridEl) gridEl.classList.add('hidden');
             if (emptyEl) emptyEl.classList.add('hidden');
-            if (errorEl) {
-                errorEl.classList.remove('hidden');
-            }
-
-            // Botón de reintento — registrar listener solo una vez usando dataset
+            if (errorEl) errorEl.classList.remove('hidden');
             if (retryBtn && !retryBtn.dataset.bound) {
                 retryBtn.dataset.bound = 'true';
                 retryBtn.addEventListener('click', () => {
-                    delete retryBtn.dataset.bound; // Permitir re-bind tras retry
+                    delete retryBtn.dataset.bound;
                     loadCatalog();
                 });
             }
         });
+}
+
+/** Validates the published Ticket-01 catalog contract before it reaches the UI. */
+function _validateCatalog(items) {
+    if (!Array.isArray(items)) throw new Error('El catálogo debe ser un array.');
+    const ids = new Set();
+    return items.map((item, index) => {
+        const valid = item && Number.isInteger(item.id) && item.id >= 0
+            && !ids.has(item.id)
+            && typeof item.name === 'string' && item.name.trim()
+            && Number.isInteger(item.price) && item.price >= 0
+            && (item.type === 'image' || item.type === 'file')
+            && typeof item.imageUrl === 'string' && item.imageUrl.trim()
+            && (item.type !== 'file' || (typeof item.downloadUrl === 'string' && item.downloadUrl.trim()));
+        if (!valid) throw new Error(`Entrada de catálogo inválida en índice ${index}.`);
+        ids.add(item.id);
+        return item;
+    });
 }
 
 // ── DOMContentLoaded — Registro de event listeners (una sola vez) ─────────────
@@ -2737,26 +2429,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('gift-carousel-track')?.addEventListener('click', e => {
-        const giftBtn = e.target.closest('[data-gift-action]');
-        if (!giftBtn) return;
-        _handleGiftAction(parseInt(giftBtn.dataset.giftAction, 10));
-    });
-    document.getElementById('gift-collection-toggle')?.addEventListener('click', () => {
-        const grid = document.getElementById('gift-collection-grid');
-        const btn = document.getElementById('gift-collection-toggle');
-        if (!grid || !btn) return;
-        const willOpen = grid.classList.contains('hidden');
-        grid.classList.toggle('hidden', !willOpen);
-        btn.setAttribute('aria-expanded', String(willOpen));
-    });
-
-    document.addEventListener('la:levelcomplete', () => {
-        window.__laSessionGameCompleted = true;
-        try { sessionStorage.setItem('la_session_game_completed', '1'); } catch (_) { /* noop */ }
-        _updateGiftFilterGlow();
-        if (activeFilter === 'Regalos') filterItems();
-    });
 
     // Sync
     document.getElementById('btn-export')?.addEventListener('click', handleExport);

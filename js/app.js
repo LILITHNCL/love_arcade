@@ -7,8 +7,6 @@
  *  - addCoins(amount): nuevo método público de GameCenter que permite a
  *    event-logic.js depositar monedas sin pasar por completeLevel().
  *    Usado por la Cacería de Tesoros y el Gachapón Relámpago.
- *  - Evento personalizado 'la:levelcomplete': completeLevel() despacha este
- *    CustomEvent en document tras cada pago exitoso para módulos desacoplados.
  *
  * NOVEDADES v9.9.2 (Hardening & Error Detection):
  *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
@@ -684,7 +682,7 @@ function _showStorageToast(message, type = 'warning') {
 }
 
 function initInteractiveMicroFX() {
-    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .avatar-container';
+    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container';
     const coarsePointerMql = window.matchMedia('(pointer: coarse)');
     const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
     let coarsePointer = coarsePointerMql.matches;
@@ -887,15 +885,6 @@ window.GameCenter = {
         logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
         saveState({ immediateCloudSync: true });
 
-        // Flag de sesión volátil para desbloqueos "Regalos" en tienda.
-        window.__laSessionGameCompleted = true;
-        try { sessionStorage.setItem('la_session_game_completed', '1'); } catch (_) { /* noop */ }
-
-        // [v11.0] Notificar a módulos desacoplados tras el pago exitoso.
-        document.dispatchEvent(new CustomEvent('la:levelcomplete', {
-            detail: { gameId, levelId, reward: rewardAmount }
-        }));
-
         return { paid: true, coins: store.coins };
     },
 
@@ -963,7 +952,6 @@ window.GameCenter = {
     /**
      * Deposita monedas directamente en el saldo sin pasar por completeLevel().
      * Usado por la Cacería de Tesoros y el Gachapón Relámpago (event-logic.js).
-     * No despacha 'la:levelcomplete'.
      * @param {number} amount  Cantidad entera positiva de monedas a añadir.
      * @param {string} [motivo] Descripción para el historial de transacciones.
      * @returns {{ success: boolean, coins: number }}
@@ -985,13 +973,10 @@ window.GameCenter = {
      */
     getRedeemedCount: () => (store.redeemedHashes || []).length,
 
-    getDownloadUrl: (itemId, fileName) => {
-        if (!fileName) return null;
-        if ((store.inventory[itemId] || 0) === 0) return null;
-        // Strip file extension — Cloudinary download URL uses the base public ID
-        // without extension or transformation parameters so the original master
-        // file is served (no crop, no resize, no format override).
-        const base = fileName.replace(/\.[^.]+$/, '');
+    getDownloadUrl: (itemId, sourceUrl) => {
+        if (!sourceUrl || (store.inventory[itemId] || 0) === 0) return null;
+        if (/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(sourceUrl)) return sourceUrl;
+        const base = sourceUrl.replace(/\.[^.]+$/, '');
         return CONFIG.wallpapersPath + base;
     },
 
@@ -1662,18 +1647,13 @@ function getLastMailRecipient() {
  * Construye un URI mailto: con los campos To, Subject y Body codificados.
  * Todos los valores se pasan por encodeURIComponent para evitar inyecciones (FR4).
  *
- * @param {{ name: string, tags?: string[] }} item    Metadatos del wallpaper.
+ * @param {{ name: string, category?: string }} item    Metadatos del wallpaper.
  * @param {string} absoluteUrl  URL absoluta de descarga (construida en la UI).
  * @param {string} email        Correo destino ya validado.
  * @returns {{ uri: string, tooLong: boolean }}
  */
 function buildMailtoLink(item, absoluteUrl, email) {
-    const tags = Array.isArray(item.tags) ? item.tags : [];
-    const tipo = tags.includes('Sticker')
-        ? 'Sticker'
-        : tags.includes('Mobile')
-            ? 'Wallpaper Mobile'
-            : 'Wallpaper PC';
+    const tipo = 'Wallpaper';
 
     const subject = encodeURIComponent(`Tu ${tipo} de Love Arcade: ${item.name}`);
 
