@@ -112,7 +112,6 @@
  *  - handleExport() refactorizado para usar window.MailHelper.copyToClipboard()
  *    en lugar de reimplementar el patrón navigator.clipboard + execCommand.
  *  - _noCtxHandler movido a variable de cierre del módulo (ya no muta el DOM).
- *  - btn-reset-filters escuchado vía JS en DOMContentLoaded (elimina onclick inline).
  *  - [v9.6] lucide.createIcons() eliminado. Iconos servidos como SVG Sprite estático.
  *
  * NOVEDADES v9.1:
@@ -145,22 +144,18 @@
  *  - Todos los event listeners se registran una sola vez en DOMContentLoaded.
  *  - window.ShopView.onEnter() es llamado por spa-router.js al entrar a la vista
  *    de Tienda, permitiendo refrescar estado sin re-inicializar todo.
- *  - resetFilters() es global (window) para compatibilidad con el onclick inline
- *    del botón "Ver todo el catálogo" en el HTML.
  */
 
 // ── Estado del catálogo (módulo privado) ──────────────────────────────────────
 let allItems     = [];
-let activeFilter = 'NoObtenidos';
-let searchQuery  = '';
-// La revisión cambia en cada carga exitosa del catálogo. Evita falsos positivos
-// si un retry devuelve un catálogo diferente con la misma cantidad de ítems.
+let activeShopView = 'shop';
+let _collectionMounted = false;
+let _collectionSearchQuery = '';
+let _collectionSearchFrame = null;
+let _collectionSearchIndex = new Map();
 let _catalogRevision = 0;
-let _lastCatalogSignature = null;
-// Se invalida únicamente después de una compra exitosa. Así, al volver a la
-// Tienda sin cambios de inventario evitamos recomputar la firma completa.
-let _inventoryDirty = true;
-let _pendingFilterFrame = null;
+let _shopScrollFrame = null;
+let _lastShopScrollY = 0;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
 let _shopLazySentinel = null;
@@ -184,37 +179,6 @@ const _shopRenderState = {
     cursor: 0,
     batchSize: 18
 };
-
-/**
- * Identifica el contenido actualmente pintado sin serializar todo el catálogo.
- * Para "NoObtenidos" el inventario sí altera qué cards deben existir, por lo que
- * se incluye únicamente en ese caso; en los demás filtros basta refrescar cards.
- */
-function _computeCatalogSignature() {
-    const inventoryPart = activeFilter === 'NoObtenidos'
-        ? allItems
-            .map(item => `${item.id}:${GameCenter.getBoughtCount(item.id) > 0 ? 1 : 0}`)
-            .join(',')
-        : '';
-    return `${_catalogRevision}|${activeFilter}|${searchQuery}|${inventoryPart}`;
-}
-
-/**
- * Agenda el filtrado de catálogo en el siguiente frame para colapsar ráfagas de input.
- *
- * Precondiciones: `filterItems` disponible y estado de filtros ya actualizado.
- * Efectos secundarios: cancela/crea `requestAnimationFrame` y luego muta DOM vía `filterItems`.
- * Coste esperado: O(1) en scheduling; coste real delegado al render posterior.
- * Diseño (por qué): usar rAF evita ejecutar múltiples renders síncronos durante tecleo,
- * taps rápidos o cambios consecutivos de chip, reduciendo jank perceptible.
- */
-function scheduleFilterItems() {
-    if (_pendingFilterFrame !== null) cancelAnimationFrame(_pendingFilterFrame);
-    _pendingFilterFrame = requestAnimationFrame(() => {
-        _pendingFilterFrame = null;
-        filterItems();
-    });
-}
 
 // ── Handler de contextmenu para el mockup stage ──────────────────────────────
 // Guardado como variable de módulo (no como propiedad del nodo DOM) para evitar
@@ -1230,85 +1194,110 @@ function closePreviewModal(modal, stage) {
 window.openPreviewModal  = openPreviewModal;
 window.closePreviewModal = closePreviewModal;
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-    document.querySelectorAll('.shop-tab').forEach(button =>
-        button.classList.toggle('active', button.dataset.tab === tab)
-    );
-    const panel = document.getElementById(`tab-${tab}`);
-    if (!panel) return;
-    const ownerView = panel.closest('.view-section') || document;
-    ownerView.querySelectorAll('.tab-panel').forEach(item => item.classList.add('hidden'));
-    panel.classList.remove('hidden');
-
-    if (tab === 'settings') {
-        renderHistory();
-        renderMoonBlessingStatus();
-        renderStreakCalendar();
-    }
-    if (tab !== 'catalog') _teardownShopLazyRender();
-    else filterItems();
+// ── Vistas explícitas de Tienda y Colección ──────────────────────────────
+function _ownedItems() {
+    return allItems.filter(item => GameCenter.getBoughtCount(item.id) > 0);
 }
 
-// ── Filtros ───────────────────────────────────────────────────────────────────
-/**
- * Calcula subconjunto visible del catálogo y reinicia render incremental por lotes.
- *
- * Precondiciones: `allItems` cargado (o vacío válido), `activeFilter`/`searchQuery` consistentes.
- * Efectos secundarios: lectura de GameCenter state, escrituras DOM del grid/estados vacíos.
- * Coste esperado: O(n) filtrado sobre items + coste de pintar primer lote.
- * Diseño (por qué): mantener filtrado centralizado facilita evolucionar reglas de negocio
- * sin duplicar lógica entre búsqueda, tabs y reseteos de filtros.
- */
-function filterItems() {
-    if (!allItems.length) return;
+function renderShopView() {
+    const available = allItems.filter(item => GameCenter.getBoughtCount(item.id) === 0);
     const gridEl = document.getElementById('shop-container');
-    const countEl = document.getElementById('search-results-count');
-    const emptyEl = document.getElementById('filter-empty');
+    const emptyEl = document.getElementById('shop-empty-state');
+    renderShop(available);
+    gridEl?.classList.toggle('hidden', available.length === 0);
+    emptyEl?.classList.toggle('hidden', available.length !== 0);
+}
 
-    const filtered = allItems.filter(item => {
-        if (activeFilter === 'NoObtenidos') return GameCenter.getBoughtCount(item.id) === 0;
-        if (activeFilter === 'Todos') return true;
-        return false;
+function renderCollectionView() {
+    if (!_collectionMounted) return;
+    const query = _collectionSearchQuery;
+    const owned = _ownedItems().filter(item => {
+        const normalizedName = _collectionSearchIndex.get(item.id) || '';
+        return !query || normalizedName.includes(query);
     });
+    renderLibrary(owned, Boolean(query));
+}
 
-    renderShop(filtered);
-    if (filtered.length === 0 && activeFilter === 'NoObtenidos') {
-        renderShop(allItems);
-        gridEl?.classList.remove('hidden');
-        emptyEl?.classList.add('hidden');
-        if (countEl) {
-            countEl.textContent = 'No hay novedades pendientes';
-            countEl.classList.remove('hidden');
-        }
-    } else if (filtered.length === 0) {
-        gridEl?.classList.add('hidden');
-        emptyEl?.classList.remove('hidden');
-        countEl?.classList.add('hidden');
-    } else {
-        gridEl?.classList.remove('hidden');
-        emptyEl?.classList.add('hidden');
-        if (countEl) {
-            const isFiltered = activeFilter !== 'Todos';
-            countEl.textContent = isFiltered ? `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}` : '';
-            countEl.classList.toggle('hidden', !isFiltered);
-        }
+function _mountCollection() {
+    if (_collectionMounted) return;
+    const section = document.getElementById('shop-collection');
+    if (!section) return;
+    section.replaceChildren();
+
+    const heading = document.createElement('div');
+    heading.className = 'section-header collection-header';
+    const title = document.createElement('h2');
+    title.className = 'section-title';
+    title.textContent = 'Colección';
+    const subtitle = document.createElement('p');
+    subtitle.className = 'section-subtitle';
+    subtitle.textContent = 'Tus artículos desbloqueados.';
+    heading.append(title, subtitle);
+
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'collection-search-wrap';
+    const label = document.createElement('label');
+    label.className = 'visually-hidden';
+    label.htmlFor = 'collection-search-input';
+    label.textContent = 'Buscar en tu colección';
+    const input = document.createElement('input');
+    input.id = 'collection-search-input';
+    input.className = 'collection-search-input';
+    input.type = 'search';
+    input.placeholder = 'Buscar en tu colección…';
+    input.autocomplete = 'off';
+    input.addEventListener('input', () => {
+        _collectionSearchQuery = input.value.trim().toLocaleLowerCase();
+        if (_collectionSearchFrame !== null) cancelAnimationFrame(_collectionSearchFrame);
+        _collectionSearchFrame = requestAnimationFrame(() => {
+            _collectionSearchFrame = null;
+            renderCollectionView();
+        });
+    });
+    searchWrap.append(label, input);
+
+    const grid = document.createElement('div');
+    grid.id = 'library-container';
+    grid.className = 'shop-grid treasury-grid';
+    section.append(heading, searchWrap, grid);
+    _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
+    _collectionMounted = true;
+}
+
+function switchShopView(view) {
+    activeShopView = view;
+    const shopPanel = document.getElementById('shop-catalog');
+    const collectionPanel = document.getElementById('shop-collection');
+    const toggle = document.getElementById('btn-toggle-collection');
+    const showingCollection = view === 'collection';
+
+    if (showingCollection) _mountCollection();
+    shopPanel?.classList.toggle('hidden', showingCollection);
+    collectionPanel?.classList.toggle('hidden', !showingCollection);
+    collectionPanel?.setAttribute('aria-hidden', String(!showingCollection));
+    if (toggle) {
+        toggle.textContent = showingCollection ? 'Ver Tienda' : 'Ver colección';
+        toggle.setAttribute('aria-expanded', String(showingCollection));
     }
-    _lastCatalogSignature = _computeCatalogSignature();
+    if (showingCollection) renderCollectionView();
+    else renderShopView();
 }
 
-function resetFilters() {
-    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-    document.querySelector('[data-filter="NoObtenidos"]')?.classList.add('active');
-    activeFilter = 'NoObtenidos';
-    searchQuery = '';
-    const searchInput = document.getElementById('search-input');
-    const clearBtn = document.getElementById('search-clear');
-    if (searchInput) searchInput.value = '';
-    if (clearBtn) clearBtn.classList.add('hidden');
-    scheduleFilterItems();
+function _bindShopScrollVisibility() {
+    const toggle = document.getElementById('btn-toggle-collection');
+    if (!toggle) return;
+    _lastShopScrollY = window.scrollY;
+    window.addEventListener('scroll', () => {
+        if (_shopScrollFrame !== null || document.getElementById('view-shop')?.classList.contains('hidden')) return;
+        _shopScrollFrame = requestAnimationFrame(() => {
+            _shopScrollFrame = null;
+            const currentY = window.scrollY;
+            const isScrollingDown = currentY > _lastShopScrollY && currentY > 8;
+            toggle.classList.toggle('shop-view-toggle--scroll-hidden', isScrollingDown);
+            _lastShopScrollY = currentY;
+        });
+    }, { passive: true });
 }
-window.resetFilters = resetFilters;
 
 // ── Render: Streak Calendar ───────────────────────────────────────────────────
 function renderStreakCalendar() {
@@ -1397,33 +1386,6 @@ function _buildShopCard(item, loading = 'lazy') {
             ${actionHTML}
         </div>`;
     return card;
-}
-
-/**
- * Sincroniza únicamente cards cuyo estado de propiedad cambió fuera del flujo
- * normal de compra. No toca el grid ni el estado del render incremental.
- */
-function _refreshBoughtBadges() {
-    const container = document.getElementById('shop-container');
-    if (!container) return;
-
-    container.querySelectorAll('.shop-card[data-item-id]').forEach(card => {
-        const item = allItems.find(candidate => candidate.id === Number(card.dataset.itemId));
-        if (!item) return;
-
-        const isOwned = GameCenter.getBoughtCount(item.id) > 0;
-        if (String(isOwned) === card.dataset.owned) return;
-
-        // Reemplazar solo la card afectada conserva el resto del grid, su cursor
-        // y el sentinel. El observer de precarga ya no observa cards obtenidas.
-        const loading = card.querySelector('.shop-img')?.getAttribute('loading') || 'lazy';
-        const replacement = _buildShopCard(item, loading);
-        _preloadObserver?.unobserve(card);
-        card.replaceWith(replacement);
-        if (_preloadObserver && replacement.querySelector('.shop-preview-btn')) {
-            _preloadObserver.observe(replacement);
-        }
-    });
 }
 
 function _teardownShopLazyRender() {
@@ -1530,17 +1492,16 @@ function _bindShopContainerDelegation() {
 }
 
 // ── Render: Biblioteca ────────────────────────────────────────────────────────
-function renderLibrary(items) {
+function renderLibrary(owned, isSearching = false) {
     const container = document.getElementById('library-container');
-    const inventory = GameCenter.getInventory();
-    const owned     = items.filter(item => inventory[item.id] > 0);
+    if (!container) return;
 
     if (owned.length === 0) {
         container.innerHTML =
             `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-low);">
                 <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-archive"></use></svg>
-                <p style="font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text-med);">Tu biblioteca está vacía</p>
-                <p style="font-size:0.8rem; margin-top:6px;">Canjea wallpapers en el Catálogo.</p>
+                <p style="font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text-med);">${isSearching ? 'No hay coincidencias' : 'Tu colección está vacía'}</p>
+                <p style="font-size:0.8rem; margin-top:6px;">${isSearching ? 'Prueba con otro nombre.' : 'Canjea wallpapers en la Tienda.'}</p>
             </div>`;
         return;
     }
@@ -1708,9 +1669,8 @@ async function initiatePurchase(item, btn) {
 
     const result = GameCenter.buyItem(item);
     if (result.success) {
-        _inventoryDirty = true;
-        filterItems();
-        renderLibrary(allItems);
+        renderShopView();
+        if (_collectionMounted) renderCollectionView();
         // Actualizar displays: navbar con formato abreviado, resto con valor exacto.
         const bal = GameCenter.getBalance();
         document.querySelectorAll('.navbar .coin-display').forEach(el => {
@@ -2134,18 +2094,10 @@ window.ShopView = {
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
             el.textContent = balance;
         });
-        // Evitar destruir y recrear cards cuando catálogo, filtro y búsqueda siguen intactos.
-        const gridEl = document.getElementById('shop-container');
-        const signature = _inventoryDirty
-            ? _computeCatalogSignature()
-            : _lastCatalogSignature;
-        if (allItems.length && signature === _lastCatalogSignature
-            && gridEl?.querySelector('.shop-card')) {
-            _refreshBoughtBadges();
-        } else if (allItems.length) {
-            filterItems();
+        if (allItems.length) {
+            if (activeShopView === 'collection') renderCollectionView();
+            else renderShopView();
         }
-        _inventoryDirty = false;
 
     },
 
@@ -2196,10 +2148,7 @@ function loadCatalog() {
     const gridEl    = document.getElementById('shop-container');
     const errorEl   = document.getElementById('shop-error-state');
     const retryBtn  = document.getElementById('btn-retry-shop');
-    const emptyEl   = document.getElementById('filter-empty');
-
-    // Forzar una renderización real tras cualquier recarga exitosa del catálogo.
-    _lastCatalogSignature = null;
+    const emptyEl   = document.getElementById('shop-empty-state');
 
     // Mostrar estado de carga; ocultar error previo y grid
     if (gridEl)  { gridEl.classList.add('hidden'); gridEl.innerHTML = ''; }
@@ -2224,8 +2173,9 @@ function loadCatalog() {
             allItems = _validateCatalog(items);
             _catalogRevision += 1;
             if (gridEl) gridEl.innerHTML = '';
-            filterItems();
-            renderLibrary(allItems);
+            if (_collectionMounted) _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
+            renderShopView();
+            if (_collectionMounted) renderCollectionView();
             _scheduleCatalogHashPersistence(allItems, _catalogRevision);
             if (errorEl) errorEl.classList.add('hidden');
 
@@ -2347,10 +2297,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') handleRedeem();
     });
 
-    // Tabs
-    document.querySelectorAll('.shop-tab').forEach(btn =>
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab))
-    );
+    document.getElementById('btn-toggle-collection')?.addEventListener('click', () => {
+        switchShopView(activeShopView === 'shop' ? 'collection' : 'shop');
+    });
+    document.getElementById('btn-open-collection')?.addEventListener('click', () => switchShopView('collection'));
+    _bindShopScrollVisibility();
 
 
     // Navegación interna de Perfil: pantallas dedicadas tipo app, sin acordeones.
@@ -2393,41 +2344,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Search con debounce
-    const searchInput  = document.getElementById('search-input');
-    const clearBtn     = document.getElementById('search-clear');
-    const debouncedFilter = window.debounce(() => {
-        searchQuery = searchInput.value.trim().toLowerCase();
-        scheduleFilterItems();
-    }, 300);
-
-    searchInput.addEventListener('input', () => {
-        clearBtn.classList.toggle('hidden', !searchInput.value);
-        debouncedFilter();
-    });
-    clearBtn.addEventListener('click', () => {
-        if (!searchInput.value && !searchQuery) return;
-        searchInput.value = '';
-        searchQuery       = '';
-        clearBtn.classList.add('hidden');
-        scheduleFilterItems();
-        requestAnimationFrame(() => searchInput.focus({ preventScroll: true }));
-    });
-
-    // Botón "Ver todo el catálogo" en el estado vacío de filtros
-    // Reemplaza el onclick inline del HTML para respetar CSP y separación de responsabilidades.
-    document.getElementById('btn-reset-filters')?.addEventListener('click', () => resetFilters());
-
-    // Filter pills
-    document.querySelectorAll('.pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-            if (activeFilter === pill.dataset.filter) return;
-            document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-            activeFilter = pill.dataset.filter;
-            scheduleFilterItems();
-        });
-    });
 
 
     // Sync

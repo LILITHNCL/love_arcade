@@ -303,10 +303,8 @@ button { font-family: var(--font-body); }
     .btn-primary,
     .btn-ghost,
     .btn-mail,
-    .pill,
     .pill-nav-item,
     .identity-chip,
-    .search-clear,
     .btn-edit-identity,
     .streak-milestone-actions .btn-primary,
     .modal-actions .btn-primary,
@@ -1754,130 +1752,47 @@ body::before {
 .anim-shake { animation: shake 0.45s ease-in-out; }
 
 /* ================================================================
-   SHOP TABS
+   SHOP VIEW SWITCHER + COLLECTION
    ================================================================ */
-.shop-tabs {
+.shop-view-switcher { margin-bottom: 16px; }
+.shop-view-toggle {
+    transition: transform 170ms ease-out, opacity 170ms ease-out;
+}
+.shop-view-toggle--scroll-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+}
+.shop-panel { min-height: 280px; }
+.shop-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-low);
     display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-    scrollbar-width: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
-.shop-tabs::-webkit-scrollbar { display: none; }
-
-.shop-tab {
-    background: var(--solid-surface-base);
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    color: var(--text-secondary-aa);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 0.78rem;
-    font-weight: 600;
-    display: flex; align-items: center; gap: 5px;
-    transition: transform 140ms cubic-bezier(.22,1,.36,1), background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
-    white-space: nowrap;
-    contain: paint;
-}
-.shop-tab:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
-.shop-tab.active {
-    background: var(--accent-soft-aa);
-    color: var(--on-accent);
-    font-weight: 800;
-    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-/* ================================================================
-   SHOP TOOLBAR
-   ================================================================ */
-.shop-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.search-wrap { position: relative; width: 100%; }
-.search-icon {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: var(--text-low); pointer-events: none;
-}
-.search-input {
+.collection-header { margin-bottom: 16px; }
+.collection-search-wrap { margin-bottom: 16px; }
+.collection-search-input {
     width: 100%;
+    min-height: 44px;
     background: var(--solid-surface-base);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-high);
     font-family: var(--font-body);
     font-size: 0.88rem;
-    padding: 10px 36px 10px 38px;
+    padding: 10px 12px;
     outline: 2px solid transparent;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 170ms ease-out, box-shadow 170ms ease-out;
 }
-.search-input:focus {
+.collection-search-input:focus {
     border-color: var(--accent-border);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.search-input::placeholder { color: var(--text-low); }
-.search-clear {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: rgba(255,255,255,0.08); border: none; border-radius: 50%;
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-low); transition: 0.18s;
-    line-height: 1;
-}
-.search-clear:hover { background: rgba(255,255,255,0.16); color: white; }
-.search-count { font-size: 0.78rem; color: var(--text-mute); margin-bottom: 4px; font-style: italic; }
-
-/* Filter pills */
-.filter-pills {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 6px;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-}
-.filter-pills::-webkit-scrollbar { display: none; }
-.filter-pills .pill { flex: 0 0 auto; }
-
-.pill {
-    padding: 9px 14px;
-    border-radius: 20px;
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    background: var(--solid-surface-base);
-    color: var(--text-secondary-aa);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 140ms cubic-bezier(.22,1,.36,1), background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
-    display: inline-flex; align-items: center; gap: 4px; justify-content: center;
-    font-family: var(--font-body);
-    white-space: nowrap;
-    contain: paint;
-}
-.pill:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
-.pill.active {
-    background: var(--accent-soft-aa);
-    color: var(--on-accent);
-    font-weight: 800;
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-
-.filter-empty {
-    grid-column: 1/-1;
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-low);
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-}
-
-/* ================================================================
-   TAB PANELS
-   ================================================================ */
-.tab-panel { min-height: 280px; }
+.collection-search-input::placeholder { color: var(--text-low); }
 
 /* ================================================================
    SALE BANNER — Flash Offer Ticket Design
@@ -2895,15 +2810,6 @@ details[open] summary::after { transform: rotate(45deg); }
     .shop-card { contain-intrinsic-size: 340px; }
     .shop-card .card-name { font-size: 0.95rem; }
     .shop-img { height: 160px; }
-
-    /* Tabs */
-    .shop-tab { padding: 10px 16px; font-size: 0.85rem; }
-    .shop-tabs { gap: 8px; margin-bottom: 24px; }
-
-    /* Toolbar */
-    .shop-toolbar { flex-direction: row; align-items: center; gap: 16px; margin-bottom: 20px; }
-    .search-wrap { max-width: 400px; flex-shrink: 0; }
-    .filter-pills { gap: 10px; }
 
     /* Promo */
     .promo-input-group { flex-direction: row; }
