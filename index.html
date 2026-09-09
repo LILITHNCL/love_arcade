@@ -621,49 +621,15 @@
                 </section>
             </div>
 
-            <!-- ── TABS ── -->
-            <div class="shop-tabs">
-                <button class="shop-tab active" data-tab="catalog">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-layout-grid"></use></svg> Catálogo
-                </button>
-                <button class="shop-tab" data-tab="library">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
+            <!-- ── VISTAS DE TIENDA ── -->
+            <div class="shop-view-switcher">
+                <button id="btn-toggle-collection" class="btn-primary shop-view-toggle" type="button"
+                        aria-controls="shop-catalog shop-collection" aria-expanded="false">
+                    Ver colección
                 </button>
             </div>
 
-            <!-- ── TAB: CATÁLOGO ── -->
-            <section id="tab-catalog" class="tab-panel">
-                <div class="shop-toolbar">
-                    <div class="search-wrap">
-                        <svg class="icon search-icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg>
-                        <input type="text" id="search-input" class="search-input"
-                               placeholder="Buscar wallpaper…" autocomplete="off">
-                        <button id="search-clear" class="search-clear hidden" aria-label="Limpiar">
-                            <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-x"></use></svg>
-                        </button>
-                    </div>
-                    <div class="filter-pills" id="filter-pills">
-                        <button class="pill active" data-filter="NoObtenidos">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sparkles"></use></svg> Nuevos
-                        </button>
-                        <button class="pill" data-filter="Stickers">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sticker"></use></svg> Stickers
-                        </button>
-                        <button class="pill" data-filter="Mobile">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-smartphone"></use></svg> Móvil
-                        </button>
-                        <button class="pill" data-filter="Avatar">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-user"></use></svg> Avatar
-                        </button>
-                        <button class="pill" data-filter="PC">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-monitor"></use></svg> PC
-                        </button>
-                        <button class="pill" data-filter="Todos">Todos</button>
-                    </div>
-                </div>
-
-
-                <p id="search-results-count" class="search-count hidden"></p>
+            <section id="shop-catalog" class="shop-panel" aria-label="Tienda">
                 <div id="shop-container" class="shop-grid"></div>
 
                 <!-- Estado de error de red — visible solo si shop.json falla -->
@@ -677,25 +643,15 @@
                     </button>
                 </div>
 
-                <div id="filter-empty" class="filter-empty hidden">
-                    <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-search-x"></use></svg>
-                    <p>Sin resultados para tu búsqueda.</p>
-                    <button class="btn-ghost" id="btn-reset-filters">Ver todo el catálogo</button>
+                <div id="shop-empty-state" class="shop-empty-state hidden">
+                    <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-archive"></use></svg>
+                    <p>Ya tienes todos los artículos de la Tienda.</p>
+                    <button class="btn-ghost" id="btn-open-collection" type="button">Ver colección</button>
                 </div>
             </section>
 
-            <!-- ── TAB: MIS TESOROS ── -->
-            <section id="tab-library" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
-                    <div>
-                        <h2 class="section-title">Mis Tesoros</h2>
-                        <p class="section-subtitle">Todos tus wallpapers desbloqueados</p>
-                    </div>
-                </div>
-                <div id="library-container" class="shop-grid treasury-grid">
-                    <p style="color:var(--text-low); grid-column:1/-1; text-align:center; padding:40px 0;">Cargando tu biblioteca…</p>
-                </div>
-            </section>
+            <!-- La Colección se crea bajo demanda al abrirla por primera vez. -->
+            <section id="shop-collection" class="shop-panel hidden" aria-label="Colección" aria-hidden="true"></section>
 
         </div><!-- /#view-shop -->
 
