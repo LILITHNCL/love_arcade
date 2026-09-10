@@ -83,11 +83,8 @@
  *      · _thumbOk = true  → el CDN funciona pero falta el archivo hi-res;
  *                           degrade a la thumbnail visible (blur→clear).
  *      · _thumbOk = false → CDN totalmente inaccesible; aplica _applyArtFallback.
- *  - renderShop() y renderLibrary(): los <img> de catálogo y biblioteca incluyen
- *    onerror inline que añade .shop-img--offline y limpia el src para suprimir
- *    el icono de imagen rota del navegador.
- *  - styles.css: nuevas clases .mockup-layer-art.mockup-bg-offline y
- *    .shop-img--offline con gradientes CSS puros (sin fetch externo).
+ *  - Las tarjetas visuales gestionan su propio estado de error de imagen sin
+ *    interpolar datos de catálogo en HTML.
  *
  * NOVEDADES v9.5 (Cloudinary CDN Migration):
  *  - assets/product-thumbs/ ELIMINADA. Las thumbnails del catálogo se cargan
@@ -177,7 +174,9 @@ _bindMqlChange(_shopCoarsePointerMql, (e) => { _shopCoarsePointer = e.matches; }
 const _shopRenderState = {
     items: [],
     cursor: 0,
-    batchSize: 18
+    batchSize: 18,
+    rails: [],
+    thumbnailWidth: 640
 };
 
 // ── Handler de contextmenu para el mockup stage ──────────────────────────────
@@ -527,6 +526,27 @@ function _getMockupUrl(item) {
 }
 
 /**
+ * Deriva una miniatura Cloudinary sin modificar la URL fuente guardada en el
+ * catálogo. Las URLs que no siguen el formato esperado siguen funcionando tal
+ * cual, para no convertir un problema de datos en una tarjeta rota.
+ */
+function getThumbnailUrl(sourceUrl, aspectRatio, width) {
+    if (typeof sourceUrl !== 'string') return sourceUrl;
+    const uploadMarker = '/image/upload/';
+    if (!sourceUrl.includes(uploadMarker)) {
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            console.warn('[Shop] La imagen no tiene el formato Cloudinary esperado:', sourceUrl);
+        }
+        return sourceUrl;
+    }
+
+    const ratio = aspectRatio === '9:16' ? '9:16' : '3:4';
+    const safeWidth = Math.max(160, Math.min(1600, Math.round(Number(width) || 640)));
+    const transforms = `f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${safeWidth}`;
+    return sourceUrl.replace(uploadMarker, `${uploadMarker}${transforms}/`);
+}
+
+/**
  * Builds the 3-layer mockup HTML string for a given item.
  * @param {object} item  — shop item with .imageUrl
  * @returns {string}     — innerHTML for #mockup-slot
@@ -756,7 +776,7 @@ function _preloadItemHiRes(cardEl, item) {
     // observer dispara dos veces rápidamente en el mismo frame
     cardEl.dataset.preloaded = 'true';
 
-    const url = _getMockupUrl(item);
+    const url = getThumbnailUrl(item.imageUrl, cardEl.dataset.aspectRatio, cardEl.dataset.thumbnailWidth);
     const img = new Image();
 
     // fetchPriority='low': no compite con recursos críticos del HUD/UI.
@@ -842,9 +862,9 @@ function _createPreloadObserver(items) {
                 return;
             }
 
-            // Resolver item desde el data-id del botón de preview
-            const previewBtn = cardEl.querySelector('.shop-preview-btn');
-            const rawId      = previewBtn?.dataset?.id;
+            // Resolver el item desde el control interactivo de la tarjeta visual.
+            const cardButton = cardEl.querySelector('.shop-visual-card');
+            const rawId      = cardButton?.dataset?.itemId;
             const item       = rawId ? itemMap.get(parseInt(rawId, 10)) : null;
 
             if (item) {
@@ -878,7 +898,7 @@ function _observeNewShopCards(cardEls) {
     if (!_preloadObserver) return;
 
     cardEls.forEach(card => {
-        if (!card.dataset.preloaded && card.querySelector('.shop-preview-btn')) {
+        if (!card.dataset.preloaded && card.querySelector('.shop-visual-card')) {
             _preloadObserver.observe(card);
         }
     });
@@ -1259,6 +1279,11 @@ function _mountCollection() {
     const grid = document.createElement('div');
     grid.id = 'library-container';
     grid.className = 'shop-grid treasury-grid';
+    grid.addEventListener('click', (event) => {
+        const card = event.target.closest('.shop-visual-card');
+        const item = allItems.find(candidate => candidate.id === Number(card?.dataset.itemId));
+        if (item) openPreviewModal(item);
+    });
     section.append(heading, searchWrap, grid);
     _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
     _collectionMounted = true;
@@ -1321,71 +1346,65 @@ function renderStreakCalendar() {
     }).join('');
 }
 
-function _buildShopCard(item, loading = 'lazy') {
-    const bought     = GameCenter.getBoughtCount(item.id);
-    const isOwned    = bought > 0;
-    const eco        = window.ECONOMY;
-    const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
-    const isEager    = loading === 'eager';
+function _getCardAspectRatio(catalogIndex) {
+    return catalogIndex % 2 === 0 ? '9:16' : '3:4';
+}
 
-    const priceHTML = eco.isSaleActive && !isOwned
-        ? `<div class="shop-price">
-               <span class="price-original">${item.price}</span>
-               <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-               <span class="price-sale">${finalPrice}</span>
-           </div>`
-        : `<div class="shop-price">
-               <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-               ${isOwned ? '<span style="color:var(--success);">Obtenido</span>' : item.price}
-           </div>`;
+function _getThumbnailWidth(container) {
+    const gap = 10;
+    const cssWidth = Math.max(160, ((container?.clientWidth || 640) - gap) / 2);
+    return Math.ceil(cssWidth * Math.min(window.devicePixelRatio || 1, 2));
+}
 
-    const actionHTML = isOwned
-        ? (() => {
-            const url = GameCenter.getDownloadUrl(item.id, item.imageUrl);
-            return url
-                ? `<a href="${url}" download class="btn-primary vault-btn"
-                       style="width:100%; justify-content:center; font-size:0.78rem; padding:7px;">
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-download"></use></svg> Descargar
-                   </a>`
-                : `<button class="btn-primary"
-                       style="width:100%; justify-content:center; opacity:0.5; font-size:0.78rem; padding:7px;"
-                       disabled>
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-check"></use></svg> Obtenido
-                   </button>`;
-        })()
-        : `<div style="display:flex; gap:5px; width:100%;">
-                <button class="btn-ghost shop-preview-btn"
-                        style="flex-shrink:0; padding:7px 9px;"
-                        data-id="${item.id}" title="Vista previa">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-eye"></use></svg>
-                </button>
-                <button class="btn-primary shop-buy-btn"
-                        style="flex:1; justify-content:center; font-size:0.78rem; padding:7px;"
-                        data-id="${item.id}">
-                    <svg class="icon" width="11" height="11" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg> ${finalPrice}
-                </button>
-           </div>`;
+function _buildShopCard(item, loading = 'lazy', catalogIndex = 0, thumbnailWidth = 640) {
+    const article = document.createElement('article');
+    const aspectRatio = _getCardAspectRatio(catalogIndex);
+    const isOwned = GameCenter.getBoughtCount(item.id) > 0;
+    article.className = 'shop-card';
+    article.dataset.itemId = String(item.id);
+    article.dataset.aspectRatio = aspectRatio;
+    article.dataset.thumbnailWidth = String(thumbnailWidth);
 
-    const card = document.createElement('article');
-    card.className = 'glass-panel shop-card';
-    card.dataset.itemId = item.id;
-    card.dataset.owned = String(isOwned);
-    card.innerHTML =
-        `        <img src="${item.imageUrl}" alt="${item.name}" class="shop-img"
-             loading="${loading}"
-             ${isEager ? 'fetchpriority="high"' : ''}
-             decoding="async" crossorigin="anonymous"
-             onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
-        ${isOwned ? '<div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>' : ''}
-        ${eco.isSaleActive && !isOwned
-            ? '<div class="sale-card-badge"><svg class="icon" width="9" height="9" style="fill:currentColor;stroke:none" aria-hidden="true"><use href="#icon-zap"></use></svg> OFERTA</div>'
-            : ''}
-        <div style="width:100%;">
-            <h3 class="card-name">${item.name}</h3>
-            ${priceHTML}
-            ${actionHTML}
-        </div>`;
-    return card;
+    const button = document.createElement('button');
+    button.className = 'shop-visual-card';
+    button.type = 'button';
+    button.dataset.itemId = String(item.id);
+    button.setAttribute('aria-label', `Ver ${item.name}`);
+
+    const image = document.createElement('img');
+    image.className = 'shop-img';
+    image.src = getThumbnailUrl(item.imageUrl, aspectRatio, thumbnailWidth);
+    image.alt = item.name;
+    image.loading = loading;
+    image.decoding = 'async';
+    if (loading === 'eager') image.fetchPriority = 'high';
+    image.addEventListener('error', () => {
+        article.classList.add('shop-card--image-error');
+        image.remove();
+    }, { once: true });
+    button.append(image);
+
+    if (window.ECONOMY?.isSaleActive && !isOwned) {
+        const badge = document.createElement('span');
+        badge.className = 'shop-sale-pill';
+        badge.textContent = window.ECONOMY.saleLabel;
+        badge.setAttribute('aria-hidden', 'true');
+        button.append(badge);
+    }
+
+    article.append(button);
+    return article;
+}
+
+function _createShopRails(container) {
+    const rails = [0, 1].map(index => {
+        const rail = document.createElement('div');
+        rail.className = 'shop-rail';
+        rail.dataset.rail = String(index);
+        container.append(rail);
+        return rail;
+    });
+    return rails;
 }
 
 function _teardownShopLazyRender() {
@@ -1404,20 +1423,16 @@ function _appendShopBatch(container) {
     const end   = Math.min(start + _shopRenderState.batchSize, _shopRenderState.items.length);
     if (start >= end) return false;
 
-    const frag = document.createDocumentFragment();
     const newCards = [];
     for (let i = start; i < end; i += 1) {
         // Mark first 6 items of the entire catalog to load eagerly.
         // i is the global index in _shopRenderState.items.
         const loading = i < 6 ? 'eager' : 'lazy';
-        const card = _buildShopCard(_shopRenderState.items[i], loading);
+        const item = _shopRenderState.items[i];
+        const catalogIndex = allItems.indexOf(item);
+        const card = _buildShopCard(item, loading, catalogIndex, _shopRenderState.thumbnailWidth);
         newCards.push(card);
-        frag.appendChild(card);
-    }
-    if (_shopLazySentinel && _shopLazySentinel.parentElement === container) {
-        container.insertBefore(frag, _shopLazySentinel);
-    } else {
-        container.appendChild(frag);
+        _shopRenderState.rails[catalogIndex % 2].append(card);
     }
     _shopRenderState.cursor = end;
 
@@ -1433,11 +1448,13 @@ function renderShop(items) {
 
     _shopRenderState.items  = items;
     _shopRenderState.cursor = 0;
+    _shopRenderState.rails = _createShopRails(container);
+    _shopRenderState.thumbnailWidth = _getThumbnailWidth(container);
 
-    if (!items.length) return;
     // El DOM se acaba de reemplazar: esta es la única ruta que reinicia el
     // observer y su cola. Los lotes siguientes solo observan sus cards nuevas.
     _initPreloadObserver(container, items);
+    if (!items.length) return;
     const hasMore = _appendShopBatch(container);
     if (!hasMore) return;
 
@@ -1469,24 +1486,10 @@ function _bindShopContainerDelegation() {
     _shopDelegationBound = true;
 
     container.addEventListener('click', async (e) => {
-
-        const previewBtn = e.target.closest('.shop-preview-btn');
-        if (previewBtn) {
-            const item = allItems.find(i => i.id === parseInt(previewBtn.dataset.id, 10));
+        const visualCard = e.target.closest('.shop-visual-card');
+        if (visualCard) {
+            const item = allItems.find(i => i.id === parseInt(visualCard.dataset.itemId, 10));
             if (item) openPreviewModal(item);
-            return;
-        }
-
-        const buyBtn = e.target.closest('.shop-buy-btn');
-        if (buyBtn) {
-            const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
-            if (!item) {
-                console.warn('[Shop] Purchase item not found for', buyBtn.dataset.id,
-                    '| allItems loaded:', allItems.length);
-                return;
-            }
-
-            await initiatePurchase(item, buyBtn);
         }
     });
 }
@@ -1495,81 +1498,23 @@ function _bindShopContainerDelegation() {
 function renderLibrary(owned, isSearching = false) {
     const container = document.getElementById('library-container');
     if (!container) return;
+    container.replaceChildren();
 
     if (owned.length === 0) {
-        container.innerHTML =
-            `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-low);">
-                <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-archive"></use></svg>
-                <p style="font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text-med);">${isSearching ? 'No hay coincidencias' : 'Tu colección está vacía'}</p>
-                <p style="font-size:0.8rem; margin-top:6px;">${isSearching ? 'Prueba con otro nombre.' : 'Canjea wallpapers en la Tienda.'}</p>
-            </div>`;
+        const empty = document.createElement('div');
+        empty.className = 'collection-empty-state';
+        empty.textContent = isSearching ? 'No hay coincidencias. Prueba con otro nombre.' : 'Tu colección está vacía.';
+        container.append(empty);
         return;
     }
 
-    container.innerHTML = '';
-    owned.forEach(item => {
-        const url  = GameCenter.getDownloadUrl(item.id, item.imageUrl);
-        const card = document.createElement('article');
-        card.className     = 'glass-panel shop-card';
-        // will-change gestionado por CSS (:hover), no en JS (ver renderShop)
-
-        const actionsHTML = url
-            ? `<div style="display:flex; gap:5px; width:100%; margin-top:8px;">
-                   <a href="${url}" download
-                      class="btn-primary vault-btn"
-                      style="flex:1; justify-content:center; font-size:0.78rem; padding:7px;">
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-download"></use></svg> Descargar
-                   </a>
-                   <button class="btn-mail library-mail-btn"
-                           data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'
-                           data-url="${url}"
-                           aria-label="Enviar enlace de descarga por correo para ${item.name.replace(/"/g, '&quot;')}"
-                           title="Enviar por correo">
-                       <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-send"></use></svg>
-                   </button>
-               </div>`
-            : `<button class="btn-primary"
-                       style="margin-top:8px; width:100%; justify-content:center; opacity:0.5; font-size:0.78rem; padding:7px;"
-                       disabled>
-                   <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-check"></use></svg> Sin archivo
-               </button>`;
-
-        card.innerHTML =
-            `<img src="${item.imageUrl}" alt="${item.name}" class="shop-img" loading="lazy"
-                  onerror="this.onerror=null; this.classList.add('shop-img--offline'); this.removeAttribute('src');">
-            <div class="owned-badge"><svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-check-circle-2"></use></svg> Tuyo</div>
-            <div style="width:100%;">
-                <h3 class="card-name">${item.name}</h3>
-                ${actionsHTML}
-            </div>`;
-
-        container.appendChild(card);
+    const rails = _createShopRails(container);
+    const thumbnailWidth = _getThumbnailWidth(container);
+    owned.forEach((item) => {
+        const catalogIndex = allItems.indexOf(item);
+        const card = _buildShopCard(item, 'lazy', catalogIndex, thumbnailWidth);
+        rails[catalogIndex % 2].append(card);
     });
-
-    container.querySelectorAll('.library-mail-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            try {
-                const item        = JSON.parse(btn.dataset.item.replace(/&#39;/g, "'"));
-                const relativeUrl = btn.dataset.url;
-                const absoluteUrl = new URL(relativeUrl, window.location.href).href;
-                openEmailModal(item, absoluteUrl);
-            } catch (e) { console.error('MailBtn error', e); }
-        });
-    });
-
-    // Analítica — click_download (fuente: biblioteca / Mis Tesoros)
-    container.querySelectorAll('a.vault-btn[download]').forEach(link => {
-        link.addEventListener('click', () => {
-            // Extraer nombre del wallpaper desde el alt de la imagen hermana más cercana
-            const card = link.closest('.shop-card');
-            const name = card?.querySelector('.card-name')?.textContent?.trim() || 'desconocido';
-            window.GhostAnalytics?.track('click_download', {
-                wallpaper: name,
-                fuente: 'biblioteca'
-            });
-        });
-    });
-
 }
 
 // ── Render: Historial ─────────────────────────────────────────────────────────
