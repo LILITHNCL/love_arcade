@@ -6,6 +6,7 @@
 ## Tabla de Contenidos
 
 1. [Visión General](#1-visión-general)
+1a. [Arquitectura vigente de Tienda](#1a-arquitectura-vigente-de-tienda)
 2. [Novedades en v8.0](#2-novedades-en-v80)
 2b. [Novedades en v8.1](#2b-novedades-en-v81--daily-claim-security--ux-hardening)
 2c. [Novedades en v9.0 — SPA Migration](#2c-novedades-en-v90--spa-migration--performance)
@@ -58,6 +59,22 @@
 22. [Glosario](#22-glosario)
 
 ---
+
+> **Nota de vigencia documental:** las secciones de "Novedades" son un **archivo histórico**. Pueden describir filtros, regalos, banners, mockups o una Biblioteca que ya no forman parte de la arquitectura vigente. Para la Tienda actual, prevalece la sección **1a** y las secciones 7, 9 y 12 actualizadas en este documento.
+
+## 1a. Arquitectura vigente de Tienda
+
+La Tienda usa una única fuente publicada: `data/shop.json`. Cada entrada conserva un `id` numérico estable, `name`, `price`, `category: "art"`, `type`, e `imageUrl`; los elementos `type: "file"` añaden `downloadUrl`. El contrato no admite `tags`, `file`, `requirements` ni `category: "gift"`.
+
+`imageUrl` guarda la URL Cloudinary original, sin transformaciones. `shop-logic.js` deriva thumbnails al vuelo con `f_auto,q_auto,c_fill,g_auto`, relación de aspecto y ancho apropiados; ante una URL no reconocida conserva la fuente como fallback. Para descargar un elemento `image` poseído, deriva `fl_attachment`; para `file`, usa su `downloadUrl` directo.
+
+La interfaz tiene dos vistas explícitas. **Tienda** muestra únicamente ítems no poseídos y un grid visual de dos railes. **Colección** muestra únicamente ítems poseídos, se monta al abrirse por primera vez y contiene la única búsqueda local por nombre; no hace fetch adicional. La apertura de una tarjeta usa delegación de Pointer Events para distinguir un tap de un scroll.
+
+El preview es un diálogo ligero. La confirmación muestra el precio original, el descuento cuando hay oferta, el cashback cuando aplica y el **Total** tras descuento. `GameCenter.buyItem()` sigue siendo la autoridad para saldo, cashback, inventario, historial y sincronización. Tras una compra, el ítem desaparece de Tienda y Colección se actualiza solo si ya está montada.
+
+Las promociones se canjean exclusivamente desde **Perfil → Códigos promocionales**, mediante `GameCenter.redeemPromoCode()`. La Tienda no contiene filtros, búsqueda global, tabs, regalos, carruseles, autoplay ni banner global de oferta.
+
+Las verificaciones de contrato y de arquitectura viven en `tests/shop-catalog-static-qa.mjs`; deben ejecutarse antes de publicar cambios de catálogo o de la Tienda.
 
 ## 1. Visión General
 
@@ -2048,11 +2065,30 @@ El archivo declaraba `v7.5` en su cabecera JSDoc desde su creación. Actualizado
 
 ## 7. shop.json — El Catálogo
 
-**Sin cambios estructurales en v8.0.** Cada ítem mantiene su estructura con el campo `tags` que contiene etiquetas como `"PC"`, `"Mobile"`, `"Anime"`, etc. Sin embargo, **solo se renderizan los tags `PC` y `Mobile`** en las cards del catálogo (v8.0: simplificación de UI).
+`data/shop.json` es el único catálogo publicado. Es un array de ítems con este contrato:
 
-Los filtros del catálogo también se reducen a `Todos`, `PC` y `Mobile`. Las etiquetas adicionales (`Anime`, `Gaming`, `Sonic`, etc.) se mantienen en el JSON para uso futuro, pero no se muestran como pills ni se usan en los filtros.
+```json
+{
+  "id": 1,
+  "name": "Nombre visible",
+  "price": 110,
+  "category": "art",
+  "type": "image",
+  "imageUrl": "https://res.cloudinary.com/<cloud>/image/upload/<public_id>"
+}
+```
 
----
+- `id`: entero no negativo, único y estable; también es la clave de `store.inventory[id]`.
+- `name`: texto visible no vacío.
+- `price`: entero no negativo.
+- `category`: `"art"` por ahora.
+- `type`: `"image"` o `"file"`.
+- `imageUrl`: URL Cloudinary original (`/image/upload/<public_id>`), sin un segmento de transformación.
+- `downloadUrl`: obligatorio y no vacío solo para `type: "file"`.
+
+No se publican `shop-gifts.json`, `tags`, `file`, `requirements` ni `category: "gift"`. Los IDs históricos retirados y sus colisiones documentadas se conservan en `data/retired-shop-gift-ids.json`; nunca se deben reasignar IDs que puedan existir en inventarios persistidos.
+
+Para añadir un ítem, usa una URL Cloudinary fuente en `imageUrl`, no una miniatura transformada. Las transformaciones visuales y la descarga de imágenes se derivan en cliente, de modo que el dato fuente permanece estable.
 
 ## 8. index.html — SPA Unificada
 
@@ -2074,7 +2110,7 @@ El `<body>` arranca con la clase del tema por defecto. Esto evita un FOUC (Flash
 
 #### `#shop-error-state` — UI de error de red
 
-Añadido dentro de `#tab-catalog`, inicialmente oculto. Se hace visible cuando `loadCatalog()` detecta un fallo de red:
+Añadido dentro de `#shop-catalog`, inicialmente oculto. Se hace visible cuando `loadCatalog()` detecta un fallo de red:
 
 ```html
 <div id="shop-error-state" class="shop-error-state hidden" role="alert">
@@ -2105,9 +2141,9 @@ El botón `#btn-retry-shop` es enlazado por `loadCatalog()` en `shop-logic.js`.
     </div>
 
     <div id="view-shop" class="view-section hidden">  ← Vista Tienda (oculta al inicio)
-      #sale-banner
-      #shop-catalog
-      #shop-collection
+      #btn-toggle-collection
+      #shop-catalog                 ← ítems no poseídos
+      #shop-collection              ← montaje lazy de ítems poseídos
     </div>
 
     <div id="view-profile" class="view-section hidden">  ← Vista Perfil
@@ -2180,106 +2216,34 @@ window.HomeView = {
 
 ## 9. js/shop-logic.js — Módulo de Tienda
 
-Contiene toda la lógica que anteriormente vivía como script inline en `shop.html`. Se carga después de `app.js` y antes de `spa-router.js`.
+`shop-logic.js` carga y valida `data/shop.json`, controla las vistas Tienda/Colección, previews, compra, descargas, correo y la navegación interna de Perfil. Depende de `window.GameCenter`, `window.ECONOMY`, `window.MailHelper`, `window.ModalA11y` y `window.GhostAnalytics`.
 
-### Dependencias
+### Carga y vistas
 
-| Dependencia | Fuente |
-|---|---|
-| `window.GameCenter` | `js/app.js` |
-| `window.ECONOMY` | `js/app.js` |
-| `window.debounce` | `js/app.js` |
-| `window.MailHelper` | `js/app.js` |
-| SVG Sprite (iconos) | `index.html` — sprite estático inline, sin CDN (v9.6) |
-| `window.confetti` | CDN `cdn.jsdelivr.net/canvas-confetti` |
+El catálogo se descarga una vez durante la inicialización y se valida antes de alcanzar el DOM. La Tienda filtra por `GameCenter.getBoughtCount(item.id) === 0`. La Colección se crea solo al abrirse por primera vez; entonces construye su índice normalizado de nombres y filtra en memoria por coincidencia parcial. No existe búsqueda global ni filtros por tags.
 
-### API pública expuesta
+El grid es visual, usa dos railes deterministas y tarjetas `button` con `dataset.itemId`, `loading="lazy"` y `decoding="async"`. El único listener delegado de Pointer Events abre un diálogo solo para taps intencionales, sin activar previews al hacer scroll.
+
+### Imágenes y descargas
+
+`getThumbnailUrl(sourceUrl, aspectRatio, width)` inserta transformaciones Cloudinary inmediatamente después de `/image/upload/`. Si la URL no tiene el formato esperado, devuelve la original y advierte solo en desarrollo. `getImageDownloadUrl(sourceUrl)` añade `fl_attachment` para imágenes poseídas. Los archivos usan `downloadUrl`; ambas descargas se inician con un enlace temporal y mantienen el evento `click_download` con fuente `"colección"`.
+
+### Compra y promoción
+
+El preview utiliza una imagen optimizada y la confirmación mantiene la autoridad económica en `GameCenter.buyItem(item)`: el **Total** es el precio tras descuento y el cashback es una devolución separada. Los eventos `view_preview` y `buy_item` usan `item.category` como categoría estable.
+
+El formulario de promociones pertenece al panel `Perfil → Códigos promocionales`; este módulo solo conecta sus controles con `GameCenter.redeemPromoCode()` y gestiona foco al entrar y volver del panel.
+
+### API pública
 
 ```javascript
 window.ShopView = {
-    onEnter()  // Llamado por spa-router.js al entrar a la vista de Tienda
-};
-
-window.resetFilters = resetFilters; // Compatible con onclick="resetFilters()" en HTML
-```
-
-### Cambios en v9.1
-
-#### `loadCatalog()` — carga con manejo de errores y reintento
-
-En v9.0 el fetch era inline en DOMContentLoaded y no tenía gestión de errores. En v9.1 se extrae a la función `loadCatalog()`:
-
-```javascript
-function loadCatalog() {
-    // 1. Mostrar loading, ocultar error state y grid anterior
-    // 2. fetch('data/shop.json') con verificación HTTP
-    // 3a. Éxito: renderizar catálogo, ocultar error state
-    // 3b. Error: mostrar #shop-error-state con botón #btn-retry-shop
-    //     El retry llama de nuevo a loadCatalog() (retry pattern)
-}
-```
-
-El botón de reintento usa `dataset.bound` para no registrar el listener múltiples veces:
-
-```javascript
-if (retryBtn && !retryBtn.dataset.bound) {
-    retryBtn.dataset.bound = 'true';
-    retryBtn.addEventListener('click', () => {
-        delete retryBtn.dataset.bound;
-        loadCatalog();
-    });
-}
-```
-
-#### Listener `.theme-btn` — única fuente de verdad
-
-El listener de `.theme-btn` fue eliminado de `app.js` y vive exclusivamente en el `DOMContentLoaded` de este módulo. Delega a `window.GameCenter.setTheme()`.
-
-### Inicialización única (v9.0+)
-
-El `DOMContentLoaded` de este módulo se ejecuta **una sola vez** cuando la SPA carga. Registra todos los event listeners de la tienda y llama a `loadCatalog()` que guarda el resultado en `allItems`. Las navegaciones posteriores a la vista de Tienda no vuelven a hacer fetch.
-
-```javascript
-// v9.1: loadCatalog() encapsula fetch + error handling + retry
-loadCatalog();
-// → si OK: allItems = items, filterItems(), renderLibrary()
-// → si KO: mostrar #shop-error-state con botón de reintento
-```
-
-### `window.ShopView.onEnter()`
-
-Llamado por el router al cambiar a la vista de Tienda. Refresca los indicadores de economía y luna sin re-renderizar el catálogo completo (que ya está en memoria):
-
-```javascript
-window.ShopView.onEnter = function() {
-    initEconomyInfo();
-    renderMoonBlessingStatus();
-    document.querySelectorAll('.coin-display').forEach(/* update */);
+  onEnter(),
+  onLeave()
 };
 ```
 
-### `window.ShopView.onLeave()` — v9.6
-
-Llamado por `spa-router.js` al abandonar la vista de Tienda. Desconecta el `IntersectionObserver` de precarga para liberar referencias a nodos DOM que pueden ser destruidos por el siguiente `renderShop()`:
-
-```javascript
-window.ShopView.onLeave = function() {
-    if (_preloadObserver) {
-        _preloadObserver.disconnect();
-        _preloadObserver = null;
-    }
-};
-```
-
-### Optimizaciones de rendimiento
-
-- **`loading="lazy"`** en todos los `<img>` del catálogo y la biblioteca.
-- **`will-change: transform, opacity`** en cada `.shop-card` generado dinámicamente.
-- **`fireConfetti()`** verifica `document.hidden` y la vista activa antes de disparar.
-- **Toasts:** `.remove()` tras la animación de salida — limpieza real del DOM, no solo ocultado.
-- **Debounce global:** la búsqueda usa `window.debounce(fn, 300)` de `app.js`.
-
----
+`SpaRouter` llama `onEnter()` al navegar a Tienda. La carga del catálogo, Colección y sus listeners no se reinicializan en cada visita.
 
 ## 10. js/spa-router.js — Router SPA
 
@@ -2778,14 +2742,12 @@ importSave(code)
 
 ## 19. Guía de Mantenimiento
 
-### Agregar un wallpaper nuevo
+### Agregar un ítem de Tienda
 
-1. Subir el archivo a Cloudinary. El public ID debe seguir el patrón `{nombre}_{hash8}` (sin extensión).
-2. Añadir entrada en `data/shop.json`:
-   - `"image"`: URL Cloudinary con transformación thumbnail → `f_auto,q_auto,ar_16:9,c_fill,g_auto,w_640/{public_id}`
-   - `"file"`: nombre del archivo original con extensión (ej: `rouge_the_bat_a94a3cca.webp`)
-   - `"tags"`: debe incluir `"Mobile"` o `"PC"` para que `_getMockupUrl()` seleccione la transformación correcta.
-3. No es necesario generar thumbnails locales, crear carpetas, ni tocar JS o HTML.
+1. Sube la imagen fuente a Cloudinary y conserva su URL original con la forma `https://res.cloudinary.com/<cloud>/image/upload/<public_id>`.
+2. Añade una entrada a `data/shop.json` con `id` único y estable, `name`, `price`, `category: "art"`, `type` e `imageUrl`. Para `type: "file"`, añade además `downloadUrl` directo.
+3. No añadas transformaciones Cloudinary, `tags`, `file`, requisitos ni categorías de regalos al JSON: las miniaturas y las descargas de imágenes se resuelven en cliente.
+4. Ejecuta `node tests/shop-catalog-static-qa.mjs` antes de publicar.
 
 ### Activar una oferta especial
 
@@ -2796,31 +2758,13 @@ Editar el objeto `ECONOMY` en `app.js`. Ver `ECONOMIA.md` para referencia comple
 1. Calcular hash: `python3 -c "import hashlib; print(hashlib.sha256(b'MICODIGO').hexdigest())"`.
 2. Añadir `'<hash>': <monedas>` en `PROMO_CODES_HASHED` dentro de `app.js`.
 
-### Volver a los filtros completos (Anime, Gaming, etc.)
+### Mantener la Tienda
 
-Si se decide restaurar los filtros eliminados en v8.0, agregar las pills en `shop.html`:
-
-```html
-<button class="pill" data-filter="Anime"><svg class="icon" width="11" height="11"><use href="#icon-sparkles"></use></svg> Anime</button>
-<button class="pill" data-filter="Gaming"><svg class="icon" width="11" height="11"><use href="#icon-gamepad-2"></use></svg> Gaming</button>
-<!-- etc. -->
-```
-
-Y actualizar `filterItems()` para aceptar los nuevos filtros (el código base ya los soporta, solo se eliminaron del HTML).
-
-### Restaurar tags en cards de producto
-
-En `renderShop()`, cambiar el filtro de tags:
-
-```javascript
-// v8.0 (actual): solo PC y Mobile
-const filteredTags = item.tags.filter(t => t === 'PC' || t === 'Mobile');
-
-// Para mostrar todos los tags:
-const filteredTags = item.tags;
-```
-
----
+1. Añade o modifica entradas de `data/shop.json` respetando el contrato de la sección 7.
+2. Conserva los IDs publicados y revisa `data/retired-shop-gift-ids.json` antes de reutilizar un identificador histórico.
+3. Ejecuta `node tests/shop-catalog-static-qa.mjs` para validar tanto los datos como las garantías estáticas de interfaz.
+4. Configura descuentos y cashback desde `ECONOMY` en `js/app.js`; la señal visual de oferta es el pill de cada tarjeta y el desglose de compra.
+5. Añade promociones mediante los hashes descritos en la sección 12; su acceso visible está en Perfil.
 
 ## 20. Seguridad y Limitaciones
 
@@ -3051,9 +2995,8 @@ Módulo autónomo de analíticas. Debe cargarse **antes** de `app.js` y `shop-lo
 
 | Nombre del evento | Dónde se dispara | Metadatos enviados |
 |---|---|---|
-| `view_preview` | `openPreviewModal()` en `shop-logic.js` — fase síncrona, antes del `rAF` | `{ wallpaper, categoria }` |
-| `click_download` | `renderLibrary()` — botón Descargar de la Biblioteca | `{ wallpaper, fuente: 'biblioteca' }` |
-| `click_download` | `openPreviewModal()` — botón Descargar del modal de preview | `{ wallpaper, fuente: 'preview' }` |
+| `view_preview` | Apertura del preview desde una tarjeta de Tienda | `{ wallpaper, categoria }` |
+| `click_download` | Modal de un ítem poseído en Colección | `{ wallpaper, fuente: 'colección' }` |
 | `redeem_code` | `handleRedeem()` en `shop-logic.js` y `redeemPromoCode()` en `app.js` (éxito) | `{ recompensa, código: 'XXX***' }` |
 | `open_game` | Delegación global en `DOMContentLoaded` de `app.js` sobre `<a href*="games/">` | `{ juego }` |
 | `detected_error` | `window.addEventListener('error')` y `'unhandledrejection'` en `analytics.js` | `{ mensaje, archivo?, línea?, tipo? }` |
