@@ -1026,27 +1026,11 @@
         </div>
     </div>
 
-    <!-- ── WALLPAPER PREVIEW MODAL (Preview 2.0 — Dynamic Mockup) ── -->
-    <div id="preview-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Vista previa de wallpaper">
+    <!-- ── SHOP PREVIEW / PURCHASE MODAL ── -->
+    <div id="preview-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="preview-title" aria-describedby="preview-status">
         <div class="modal-box preview-modal-box">
-            <!--
-                #preview-mockup-stage: contenedor del mockup dinámico.
-                JS inyecta aquí el frame correcto (Mobile 9:20 / PC 16:9)
-                basándose en los tags del item desde shop.json.
-                El botón de cierre vive fuera del slot para sobrevivir al innerHTML.
-            -->
-            <div id="preview-mockup-stage" class="preview-mockup-stage">
-                <div id="mockup-slot"></div>
-                <button id="preview-close" class="preview-close-btn" aria-label="Cerrar">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                        <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="preview-info-row">
-                <h3 id="preview-name" class="preview-name"></h3>
-                <div id="preview-actions" class="preview-actions"></div>
-            </div>
+            <div id="preview-content" class="preview-content"></div>
+            <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
         </div>
     </div>
 

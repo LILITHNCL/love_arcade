@@ -20,7 +20,7 @@
  *    Permite medir cuántos usuarios usan la sincronización entre dispositivos.
  *
  * NOVEDADES v9.9.1 (Ghost Analytics — producción):
- *  - buy_item: GhostAnalytics.track() en initiatePurchase() tras compra exitosa.
+ *  - buy_item: GhostAnalytics.track() tras una compra exitosa.
  *    Registra nombre del wallpaper, precio final, cashback y categoría.
  *  - Los hooks anteriores (view_preview, click_download, redeem_code) se mantienen.
  *  - view_preview: GhostAnalytics.track() en openPreviewModal() inmediatamente
@@ -32,20 +32,6 @@
  *    El código original se ofusca con *** antes de enviarlo.
  *  - Todas las llamadas usan optional chaining (?.) para que el módulo sea
  *    no-operativo si analytics.js no está cargado.
- *
- * NOVEDADES v9.8 (Mobile Performance Pass — Scroll & Modal Lag):
- *  - openPreviewModal(): REFACTOR de dos fases para eliminar freeze en gama baja.
- *    Antes: _buildMockupHTML() (~16 SVG inline) se ejecutaba de forma síncrona
- *    antes de que el modal fuera visible, bloqueando el hilo principal 50–150 ms
- *    y causando que la animación modalPopIn nunca renderizara su frame inicial.
- *    Ahora: modal.classList.remove('hidden') se llama de forma síncrona (<1 ms),
- *    dando respuesta visual inmediata. _buildMockupHTML() y toda la lógica de
- *    carga de imágenes se difieren a requestAnimationFrame, donde el overlay ya
- *    está pintado y el trabajo pesado no bloquea la percepción del usuario.
- *    Los botones de acción (DOM mínimo) se construyen de forma síncrona para
- *    mantener el foco accesible en el primer frame.
- *  - Nota: los cambios CSS relacionados (backdrop-filter, laserScan, etc.)
- *    se documentan en styles.css v9.8.
  *
  * NOVEDADES v9.7 (Smart Preload — Fase 2 hardening):
  *  - _preloadItemHiRes(): añadido img.decoding = 'async'. La decodificación de
@@ -72,33 +58,12 @@
  *    para disparar en cuanto cualquier píxel del card entra en la zona extendida,
  *    maximizando el tiempo de anticipación sin esperar el 10 % de visibilidad.
  *
- *  - Nueva función privada _applyArtFallback(artEl): aplica un degradado CSS
- *    puro (sin recursos externos) cuando Cloudinary es inalcanzable. Idempotente:
- *    segura de llamar desde Phase 1 y Phase 2 simultáneamente.
- *  - openPreviewModal() — Phase 1: se añade una Image() de prueba en paralelo
- *    (thumbProbe) para detectar fallos CDN en la thumbnail. Si thumbProbe.onerror
- *    dispara, cancela el load de Phase 2 y aplica _applyArtFallback inmediatamente.
- *  - openPreviewModal() — Phase 2: hiRes.onerror ya no se limita a quitar la
- *    clase de carga; ahora evalúa si la thumbnail cargó correctamente (_thumbOk):
- *      · _thumbOk = true  → el CDN funciona pero falta el archivo hi-res;
- *                           degrade a la thumbnail visible (blur→clear).
- *      · _thumbOk = false → CDN totalmente inaccesible; aplica _applyArtFallback.
- *  - Las tarjetas visuales gestionan su propio estado de error de imagen sin
- *    interpolar datos de catálogo en HTML.
- *
  * NOVEDADES v9.5 (Cloudinary CDN Migration):
  *  - assets/product-thumbs/ ELIMINADA. Las thumbnails del catálogo se cargan
  *    desde Cloudinary con la transformación ar_16:9,c_fill,g_auto,w_640.
  *    El campo `image` de shop.json ahora apunta directamente a la URL CDN.
  *  - assets/cover/ ELIMINADA. Las carátulas de los juegos en index.html
  *    usan Cloudinary con la transformación ar_16:9,c_fill,g_auto,w_1080.
- *  - _getMockupUrl(item): nueva función privada que construye la URL Cloudinary
- *    con la transformación correcta según el tag del producto:
- *      · Mobile → f_avif,q_auto,ar_9:20,c_fill,w_500
- *      · PC     → f_avif,q_auto,ar_16:9,c_fill,w_1200
- *  - openPreviewModal(): Phase 2 ahora usa _getMockupUrl() en lugar de
- *    CONFIG.wallpapersPath + item.imageUrl, garantizando que el mockup siempre
- *    recibe la versión optimizada para el marco del dispositivo.
  *  - getDownloadUrl() en app.js: la URL de descarga/email usa la estructura
  *    limpia https://res.cloudinary.com/dyspgn0sw/image/upload/{public_id}
  *    sin extensión ni parámetros de transformación, sirviendo el master original.
@@ -179,12 +144,6 @@ const _shopRenderState = {
     thumbnailWidth: 640
 };
 
-// ── Handler de contextmenu para el mockup stage ──────────────────────────────
-// Guardado como variable de módulo (no como propiedad del nodo DOM) para evitar
-// la mutación de propiedades no-estándar en elementos del DOM y para poder
-// hacer removeEventListener correctamente al cerrar el modal.
-let _stageCtxHandler = null;
-
 // ── Último elemento con foco antes de abrir un modal ─────────────────────────
 // Se guarda en openXxxModal() y se restaura en _closeXxxModal() para que los
 // usuarios de teclado no pierdan su posición en el flujo de la interfaz (WCAG 2.4.3).
@@ -241,290 +200,7 @@ function _closeModal(value) {
     _lastFocusedElement = null;
 }
 
-// ── Wallpaper Preview Modal — Preview 2.0 (Dynamic Mockup) ───────────────────
-//
-// Replaces the static <img> preview with a 3-layer mockup frame:
-//   Layer 1 (Art)        — CSS background-image (blocks "Save image as…")
-//   Layer 2 (Protection) — pointer-events:none noise overlay
-//   Layer 3 (UI)         — live clock + OS chrome (status bar / taskbar)
-//
-// The legacy mockup frame falls back to its neutral presentation.
-//   "Mobile" → 9:20 portrait phone with status bar + 4×4 app grid
-//   "PC"     → 16:9 landscape desktop with taskbar
-//   (none)   → neutral 4:3 with watermark badge
-
-let _mockupClockInterval = null;   // Cleared on modal close to prevent leaks
-let _pendingHiResImg     = null;   // Tracks in-flight Image() load; cancelled on close
-let _preloadObserver     = null;   // IntersectionObserver for hi-res smart preloading (v9.6)
-
-/**
- * Resuelve el aspect ratio objetivo del preview.
- * Prioridad:
- *  1) Tag del item (Mobile=9:20, PC=16:9, Avatar/Sticker=1:1).
- *  2) Dimensiones reales de la imagen (naturalWidth/naturalHeight) si existen.
- *  3) Fallback neutro 1:1.
- *
- * @param {object} item
- * @param {HTMLImageElement|null} [probeImg]
- * @returns {number} ratio ancho/alto
- */
-function _resolvePreviewAspectRatio(item, probeImg = null) {
-    // El catálogo consolidado no conserva etiquetas de dispositivo; usar dimensiones reales.
-    const w = Number(probeImg?.naturalWidth || 0);
-    const h = Number(probeImg?.naturalHeight || 0);
-    if (w > 0 && h > 0) return w / h;
-    return 1;
-}
-
-/**
- * Ajusta tamaño de la caja de preview para respetar el aspect ratio indicado
- * sin exceder ni el ancho del stage ni el alto máximo visual (62vh).
- *
- * @param {HTMLElement} frameEl
- * @param {number} ratio  ancho/alto
- */
-function _applyPreviewFrameSize(frameEl, ratio) {
-    if (!frameEl) return;
-    const safeRatio = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
-    const stage     = document.getElementById('preview-mockup-stage');
-    const maxW      = Math.max(220, (stage?.clientWidth || 520) - 40);
-    const maxH      = Math.max(180, Math.floor(window.innerHeight * 0.62));
-
-    // Fit "contain": primero por ancho, luego corregir por alto si excede.
-    let width  = maxW;
-    let height = width / safeRatio;
-    if (height > maxH) {
-        height = maxH;
-        width  = height * safeRatio;
-    }
-
-    frameEl.style.width  = `${Math.round(width)}px`;
-    frameEl.style.height = `${Math.round(height)}px`;
-}
-
-/**
- * Returns the current time as "HH:MM" using the device locale.
- * @returns {string}
- */
-function _getMockupTimeString() {
-    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-/**
- * Updates every .mockup-clock-text / .mockup-pc-clock element in the active mockup.
- * Called once on open, then every 30 s via interval.
- */
-function updateMockupTime() {
-    const t = _getMockupTimeString();
-    document.querySelectorAll('.mockup-clock-text, .mockup-pc-clock').forEach(el => {
-        el.textContent = t;
-    });
-}
-
-/**
- * Inline SVG icons for the mockup status bar, taskbar, and app grid.
- * All paths are pure geometry — no external requests, no Lucide dependency.
- */
-const MOCKUP_SVG = {
-    // ── Status bar / taskbar ──────────────────────────────────────────────────
-    signal: `<svg width="12" height="11" viewBox="0 0 12 11" fill="currentColor" aria-hidden="true">
-        <rect x="0" y="7" width="2.2" height="4" rx="0.6"/>
-        <rect x="3.3" y="5" width="2.2" height="6" rx="0.6"/>
-        <rect x="6.6" y="2.5" width="2.2" height="8.5" rx="0.6"/>
-        <rect x="9.8" y="0" width="2.2" height="11" rx="0.6" opacity="0.32"/>
-    </svg>`,
-
-    wifi: `<svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor" aria-hidden="true">
-        <circle cx="6" cy="9" r="1.15"/>
-        <path d="M3.2 6.4a3.95 3.95 0 0 1 5.6 0l-.95.95a2.6 2.6 0 0 0-3.7 0z"/>
-        <path d="M1 4.2a6.4 6.4 0 0 1 10 0l-.95.95a5.05 5.05 0 0 0-8.1 0z"/>
-    </svg>`,
-
-    battery: `<svg width="20" height="10" viewBox="0 0 20 10" fill="none" aria-hidden="true">
-        <rect x="0.5" y="0.5" width="16" height="9" rx="2.2" stroke="currentColor" stroke-width="1"/>
-        <rect x="17" y="3" width="2.5" height="4" rx="1" fill="currentColor"/>
-        <rect x="2" y="2" width="11" height="6" rx="1.2" fill="currentColor"/>
-    </svg>`,
-
-    arcadeLogo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="2" y="6" width="20" height="14" rx="3"/>
-        <path d="M7 12h4M9 10v4"/>
-        <circle cx="16" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-        <circle cx="13" cy="14" r="1.2" fill="currentColor" stroke="none" opacity="0.6"/>
-        <path d="M8 3l1.5 3M16 3l-1.5 3"/>
-    </svg>`,
-
-    // Windows 11 Start button — four coloured squares arranged in a 2×2 grid
-    winStart: `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <rect x="1"  y="1"  width="6.5" height="6.5" rx="1.2" fill="rgba(255,255,255,0.92)"/>
-        <rect x="8.5" y="1"  width="6.5" height="6.5" rx="1.2" fill="rgba(255,255,255,0.92)"/>
-        <rect x="1"  y="8.5" width="6.5" height="6.5" rx="1.2" fill="rgba(255,255,255,0.92)"/>
-        <rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1.2" fill="rgba(255,255,255,0.92)"/>
-    </svg>`,
-
-    // ── App grid / desktop icons ──────────────────────────────────────────────
-    // bg      → solid colour (reference only, no longer used in HTML)
-    // bgAlpha → semi-transparent version: accent colour at 35% opacity +
-    //           a white tint layer so the wallpaper always shows through.
-    //           Value: rgba(R,G,B, 0.38) keeps the hue readable without
-    //           blocking the image behind it.
-    appIcons: [
-        // 0 — Music
-        { bg: '#1c0608', bgAlpha: 'rgba(252,60,68,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 15V5l8-2v10"/>
-            <circle cx="4.5" cy="15" r="1.5" fill="white" stroke="none"/>
-            <circle cx="12.5" cy="13" r="1.5" fill="white" stroke="none"/>
-          </svg>` },
-        // 1 — Camera
-        { bg: '#1c1c1e', bgAlpha: 'rgba(80,80,90,0.40)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <path d="M2 6.5C2 5.7 2.7 5 3.5 5H5l1-2h6l1 2h1.5C15.3 5 16 5.7 16 6.5v7c0 .8-.7 1.5-1.5 1.5h-11C2.7 15 2 14.3 2 13.5z"/>
-            <circle cx="9" cy="10" r="2.5"/>
-          </svg>` },
-        // 2 — Messages
-        { bg: '#0a1f0e', bgAlpha: 'rgba(48,209,88,0.30)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 11.5c0 .8-.7 1.5-1.5 1.5H5.5L2 16V4.5C2 3.7 2.7 3 3.5 3h10C14.3 3 15 3.7 15 4.5z"/>
-          </svg>` },
-        // 3 — Phone
-        { bg: '#0a1f0e', bgAlpha: 'rgba(48,209,88,0.30)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 3h3l1.5 3-1.8 1.1A9 9 0 0 0 10.9 11.3L12 9.5l3 1.5v3c0 .8-.7 1-1 1C6.8 15 3 10.2 3 4c0-.3.2-1 1-1z"/>
-          </svg>` },
-        // 4 — Mail
-        { bg: '#02101f', bgAlpha: 'rgba(10,132,255,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="4" width="14" height="10" rx="1.5"/>
-            <path d="M2 6l7 5 7-5"/>
-          </svg>` },
-        // 5 — Maps
-        { bg: '#1f1200', bgAlpha: 'rgba(255,159,10,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 2C6.8 2 5 3.8 5 6c0 3.5 4 8 4 8s4-4.5 4-8c0-2.2-1.8-4-4-4z"/>
-            <circle cx="9" cy="6" r="1.3" fill="white" stroke="none"/>
-          </svg>` },
-        // 6 — Photos
-        { bg: '#1f0008', bgAlpha: 'rgba(255,55,95,0.32)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <rect x="2" y="3" width="14" height="12" rx="2"/>
-            <circle cx="6.5" cy="7.5" r="1.5"/>
-            <path d="M2 12l4-3.5 3 3 2.5-2 4.5 4"/>
-          </svg>` },
-        // 7 — Settings
-        { bg: '#111113', bgAlpha: 'rgba(99,99,102,0.42)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="9" r="2.3"/>
-            <path d="M9 2v1.5M9 14.5V16M2 9h1.5M14.5 9H16M4 4l1 1M13 13l1 1M4 14l1-1M13 5l1-1"/>
-          </svg>` },
-        // 8 — Calendar
-        { bg: '#1f0200', bgAlpha: 'rgba(255,59,48,0.32)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <rect x="2.5" y="3.5" width="13" height="12" rx="2"/>
-            <path d="M2.5 7.5h13"/>
-            <path d="M6 2v3M12 2v3"/>
-            <rect x="6" y="10" width="2" height="2" rx="0.4" fill="white" stroke="none"/>
-          </svg>` },
-        // 9 — Clock
-        { bg: '#1c1c1e', bgAlpha: 'rgba(80,80,90,0.40)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <circle cx="9" cy="9" r="6.5"/>
-            <path d="M9 5.5v4l2.5 2.5"/>
-          </svg>` },
-        // 10 — Calculator
-        { bg: '#0d0d0e', bgAlpha: 'rgba(44,44,46,0.50)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <rect x="3" y="2.5" width="12" height="13" rx="2"/>
-            <rect x="5" y="4.5" width="8" height="3" rx="0.8" fill="white" fill-opacity="0.3" stroke="none"/>
-            <circle cx="6" cy="11" r="0.8" fill="white" stroke="none"/>
-            <circle cx="9" cy="11" r="0.8" fill="white" stroke="none"/>
-            <circle cx="12" cy="11" r="0.8" fill="white" stroke="none"/>
-            <circle cx="6" cy="13.5" r="0.8" fill="white" stroke="none"/>
-            <circle cx="9" cy="13.5" r="0.8" fill="white" stroke="none"/>
-            <circle cx="12" cy="13.5" r="0.8" fill="white" stroke="none"/>
-          </svg>` },
-        // 11 — Notes
-        { bg: '#1f1800', bgAlpha: 'rgba(255,214,10,0.30)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <rect x="3" y="2" width="12" height="14" rx="2"/>
-            <path d="M6 6h6M6 9h6M6 12h4"/>
-          </svg>` },
-        // 12 — Podcast
-        { bg: '#0e0519', bgAlpha: 'rgba(181,107,255,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <circle cx="9" cy="7" r="3"/>
-            <path d="M5 11a5.4 5.4 0 0 0 8 0"/>
-            <path d="M3 13.5a8 8 0 0 0 12 0"/>
-            <line x1="9" y1="10" x2="9" y2="16"/>
-          </svg>` },
-        // 13 — Game
-        { bg: '#041208', bgAlpha: 'rgba(48,209,88,0.28)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5.5" width="14" height="9" rx="3"/>
-            <path d="M6 8.5v3M4.5 10h3"/>
-            <circle cx="11.5" cy="9.5" r="0.8" fill="white" stroke="none"/>
-            <circle cx="13.5" cy="11.5" r="0.8" fill="white" stroke="none"/>
-          </svg>` },
-        // 14 — Wallet
-        { bg: '#1f1200', bgAlpha: 'rgba(255,159,10,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round">
-            <rect x="2" y="5" width="14" height="10" rx="2"/>
-            <path d="M2 8h14"/>
-            <circle cx="13" cy="12" r="1.2" fill="white" stroke="none"/>
-          </svg>` },
-        // 15 — Store
-        { bg: '#001830', bgAlpha: 'rgba(10,132,255,0.35)',
-          svg: `<svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 7h12l-1 7H4z"/>
-            <path d="M1 4h16"/>
-            <path d="M7 14v-4h4v4"/>
-          </svg>` },
-    ],
-
-    // Labels shown under each desktop icon in the PC mockup
-    appLabels: [
-        'Music', 'Camera', 'Messages', 'Phone', 'Mail',
-        'Maps', 'Photos', 'Settings', 'Calendar', 'Clock',
-        'Calculator', 'Notes', 'Podcasts', 'Games', 'Wallet', 'Store',
-    ],
-};
-
-/**
- * Applies a self-contained CSS fallback to the art layer when Cloudinary
- * is unreachable (network error, blocked CDN, CORS failure, etc.).
- *
- * The fallback uses a pure CSS gradient defined in styles.css
- * (.mockup-bg-offline) — zero external requests are made.
- *
- * Idempotent: safe to call from both Phase 1 (thumbProbe.onerror) and
- * Phase 2 (hiRes.onerror) without producing duplicate side-effects.
- *
- * @param {HTMLElement} artEl — .mockup-layer-art element inside #mockup-slot
- */
-function _applyArtFallback(artEl) {
-    if (!artEl || artEl.classList.contains('mockup-bg-offline')) return;
-    artEl.style.backgroundImage = 'none';
-    artEl.classList.remove('mockup-bg-loading', 'mockup-bg-ready');
-    artEl.classList.add('mockup-bg-offline');
-}
-
-/**
- * Returns the Cloudinary URL for the mockup preview of an item.
- *
- * The transformation is chosen based on the item's tag so the crop
- * matches the target device frame:
- *   Mobile → 9:20 portrait, 500 px wide   (phone screen)
- *   PC     → 16:9 landscape, 1200 px wide  (desktop screen)
- * The consolidated catalog retains the original Cloudinary URL, which is used
- * directly until the preview redesign replaces this legacy helper.
- *
- * @param {object} item — shop item with .imageUrl
- * @returns {string}    — original Cloudinary URL
- */
-function _getMockupUrl(item) {
-    return item.imageUrl;
-}
-
+// ── Preview image helpers ────────────────────────────────────────────────────
 /**
  * Deriva una miniatura Cloudinary sin modificar la URL fuente guardada en el
  * catálogo. Las URLs que no siguen el formato esperado siguen funcionando tal
@@ -544,103 +220,6 @@ function getThumbnailUrl(sourceUrl, aspectRatio, width) {
     const safeWidth = Math.max(160, Math.min(1600, Math.round(Number(width) || 640)));
     const transforms = `f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${safeWidth}`;
     return sourceUrl.replace(uploadMarker, `${uploadMarker}${transforms}/`);
-}
-
-/**
- * Builds the 3-layer mockup HTML string for a given item.
- * @param {object} item  — shop item with .imageUrl
- * @returns {string}     — innerHTML for #mockup-slot
- */
-function _buildMockupHTML(item) {
-    const isMob = false;
-    const isPc = false;
-
-    const now = _getMockupTimeString();
-
-    // ── Frame class ───────────────────────────────────────────────────────────
-    const frameClass = isMob ? 'mockup-mobile' : isPc ? 'mockup-pc' : 'mockup-fallback';
-
-    // ── Layer 3 UI ────────────────────────────────────────────────────────────
-    let uiHTML = '';
-
-    if (isMob) {
-        // 4×4 grid — all 16 named app icons.
-        // Backgrounds are semi-transparent so the wallpaper bleeds through.
-        const iconCells = MOCKUP_SVG.appIcons.map(app => `
-            <div class="mockup-app-icon" style="background:${app.bgAlpha};">
-                ${app.svg}
-            </div>`).join('');
-
-        uiHTML = `
-            <div class="mockup-statusbar">
-                <span class="mockup-clock-text">${now}</span>
-                <div class="mockup-statusbar-icons">
-                    ${MOCKUP_SVG.signal}
-                    ${MOCKUP_SVG.wifi}
-                    ${MOCKUP_SVG.battery}
-                </div>
-            </div>
-            <div class="mockup-app-area">
-                <div class="mockup-app-grid">${iconCells}</div>
-            </div>
-            <div class="mockup-home-indicator"></div>`;
-
-    } else if (isPc) {
-        // Left column: 6 small desktop shortcuts, Windows-style.
-        // Only 6 icons in a single column hugging the left edge.
-        // The wallpaper dominates the frame; OS feel from chrome, not coverage.
-        const desktopIcons = MOCKUP_SVG.appIcons.slice(0, 6).map((app, i) => `
-            <div class="mockup-desktop-icon">
-                <div class="mockup-desktop-icon-img" style="background:${app.bgAlpha};">
-                    ${app.svg}
-                </div>
-                <span class="mockup-desktop-label">${MOCKUP_SVG.appLabels[i]}</span>
-            </div>`).join('');
-
-        // Taskbar centre: 6 pinned app icons (icons 6-11)
-        const pinnedApps = MOCKUP_SVG.appIcons.slice(6, 12).map(app => `
-            <div class="mockup-taskbar-pinned" style="background:${app.bgAlpha};">
-                ${app.svg}
-            </div>`).join('');
-
-        uiHTML = `
-            <div class="mockup-desktop-area">
-                <div class="mockup-desktop-shortcuts">${desktopIcons}</div>
-            </div>
-            <div class="mockup-taskbar">
-                <div class="mockup-taskbar-left">
-                    <div class="mockup-taskbar-start">
-                        ${MOCKUP_SVG.winStart}
-                    </div>
-                    <div class="mockup-taskbar-search">
-                        <svg viewBox="0 0 12 12" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.3" stroke-linecap="round"><circle cx="5" cy="5" r="3"/><line x1="7.5" y1="7.5" x2="10" y2="10"/></svg>
-                    </div>
-                </div>
-                <div class="mockup-taskbar-centre">
-                    ${pinnedApps}
-                </div>
-                <div class="mockup-taskbar-right">
-                    ${MOCKUP_SVG.wifi}
-                    ${MOCKUP_SVG.battery}
-                    <span class="mockup-pc-clock">${now}</span>
-                </div>
-            </div>`;
-
-    } else {
-        uiHTML = `
-            <div class="mockup-fallback-watermark">
-                ${MOCKUP_SVG.arcadeLogo}
-            </div>`;
-    }
-
-    return `
-        <div class="mockup-container ${frameClass}">
-            <div class="mockup-layer-art" aria-hidden="true"></div>
-            <div class="mockup-layer-protection" aria-hidden="true"></div>
-            <div class="mockup-layer-ui">
-                ${uiHTML}
-            </div>
-        </div>`;
 }
 
 // ── Smart Preload — Intersection Observer (v9.7) ──────────────────────────────
@@ -937,274 +516,159 @@ function _initPreloadObserver(container, items) {
     });
 }
 
-/**
- * Opens the preview modal with the dynamic mockup for the given item.
- * Handles clock updates, context-menu blocking, and action buttons.
- *
- * Accepts either the full item object (from renderShop event listeners)
- * or a numeric item ID (from dynamically generated onclick="" strings).
- * When an ID is passed, the item is resolved from allItems[].
- *
- * CAMBIO v9.8 — Apertura en dos fases para eliminar freeze en gama baja:
- *   Fase síncrona  (<1 ms):  mostrar modal + renderizar botones de acción.
- *   Fase diferida  (rAF):    _buildMockupHTML() + carga de imágenes.
- * Esto garantiza que la animación modalPopIn arranca en el primer frame
- * (<16 ms) antes de que el trabajo pesado comience.
- *
- * @param {object|number|string} itemOrId  Full item object OR item ID (any type).
- */
-function openPreviewModal(itemOrId) {
-    // ── Resolve item ──────────────────────────────────────────────────────────
-    // Number() safely converts strings like "5" → 5; leaves NaN for non-numeric.
-    // We treat non-object input as an ID regardless of JS type, so there is no
-    // silent failure from strict === comparison between String("5") and Number(5).
-    let item;
-    if (itemOrId !== null && typeof itemOrId === 'object') {
-        item = itemOrId;                                   // Already a full object
-    } else {
-        const numId = Number(itemOrId);                    // "5" → 5, 5 → 5
-        item = allItems.find(i => i.id === numId);
-    }
-
-    if (!item) {
-        console.warn('[Preview 2.0] openPreviewModal: item not found for', itemOrId,
-            '| allItems loaded:', allItems.length);
-        return;
-    }
-
-    const modal     = document.getElementById('preview-modal');
-    const slot      = document.getElementById('mockup-slot');
-    const nameEl    = document.getElementById('preview-name');
-    const actionsEl = document.getElementById('preview-actions');
-    const eco       = window.ECONOMY;
-
-    // Null-guard: modal must exist in the DOM (index.html #preview-mockup-stage)
-    if (!modal || !slot) {
-        console.error('[Preview 2.0] Required DOM elements not found: #preview-modal or #mockup-slot');
-        return;
-    }
-
-    // ── v9.8: Apertura instantánea — mostrar el modal ANTES de construir el mockup
-    //
-    // Problema original: _buildMockupHTML() genera ~16 SVG inline + los 3 layers del
-    // mockup de forma síncrona. En gama baja esto bloquea el hilo principal 50–150 ms
-    // ANTES de que el modal sea visible, por lo que la animación de entrada (modalPopIn)
-    // nunca llega a renderizar su frame inicial — el usuario percibe un "freeze" y
-    // luego el modal aparece ya en su posición final.
-    //
-    // Solución: separar la apertura visual (instant, <1 ms) del trabajo pesado de DOM.
-    //   1. Mostrar el modal inmediatamente → el browser pinta el overlay + modalPopIn
-    //      en el siguiente frame, dando respuesta visual <16 ms.
-    //   2. Diferir todo el trabajo pesado (buildMockupHTML + image loading) al siguiente
-    //      requestAnimationFrame. En ese punto el overlay ya está en pantalla y el
-    //      usuario ve movimiento, eliminando la sensación de freeze.
-    //
-    // El name se actualiza de forma síncrona porque es texto puro (<1 ms).
-    nameEl.textContent = item.name;
-
-    // Limpiar slot antes de abrir para evitar que se vea contenido del modal anterior
-    // durante el primer frame. innerHTML = '' es más barato que _buildMockupHTML.
-    slot.innerHTML = '';
-
-    // Registrar foco y abrir modal ANTES del trabajo pesado (v9.8).
-    _lastFocusedElement = document.activeElement;
-    modal.classList.remove('hidden');
-    window.ModalA11y?.open?.(modal, _lastFocusedElement);
-
-    // Analítica — view_preview: se dispara en fase síncrona, antes del rAF,
-    // para garantizar el registro incluso si el usuario cierra rápidamente.
-    window.GhostAnalytics?.track('view_preview', {
-        wallpaper: item.name,
-        categoria: item.category || 'art'
-    });
-
-    // Preview simplificado (sin mockups Mobile/PC) para minimizar nodos y trabajo JS.
-    // Mantiene una capa visual de protección y bloqueo contextual para dificultar
-    // extracción directa, pero elimina UI superpuesta no esencial.
-    slot.innerHTML = `
-        <div class="preview-art-frame">
-            <div class="preview-art-layer mockup-layer-art" aria-hidden="true"></div>
-            <div class="preview-art-protection" aria-hidden="true"></div>
-        </div>`;
-
-    const wallpaperPath = _getMockupUrl(item);
-    const artEl         = slot.querySelector('.preview-art-layer');
-    const frameEl       = slot.querySelector('.preview-art-frame');
-
-    // Tamaño inicial inmediato; se ajusta cuando carga la imagen.
-    _applyPreviewFrameSize(frameEl, _resolvePreviewAspectRatio(item));
-
-    artEl.style.backgroundImage = `url('${item.imageUrl}')`;
-    artEl.classList.add('mockup-bg-loading');
-
-    if (_pendingHiResImg) { _pendingHiResImg.onload = _pendingHiResImg.onerror = null; _pendingHiResImg = null; }
-
-    let _thumbOk = false;
-    const thumbProbe = new Image();
-    thumbProbe.decoding = 'async';
-    thumbProbe.onload = () => {
-        _thumbOk = true;
-        // Refinar el tamaño con el aspect ratio REAL de la imagen.
-        _applyPreviewFrameSize(frameEl, _resolvePreviewAspectRatio(item, thumbProbe));
-    };
-    thumbProbe.onerror = () => {
-        if (_pendingHiResImg) {
-            _pendingHiResImg.onload = _pendingHiResImg.onerror = null;
-            _pendingHiResImg = null;
-        }
-        _applyArtFallback(artEl);
-    };
-    thumbProbe.src = item.imageUrl;
-
-    const hiRes = new Image();
-    _pendingHiResImg = hiRes;
-    hiRes.decoding = 'async';
-    hiRes.onload = () => {
-        if (_pendingHiResImg !== hiRes) return;
-        artEl.style.backgroundImage = `url('${wallpaperPath}')`;
-        artEl.classList.remove('mockup-bg-loading');
-        artEl.classList.add('mockup-bg-ready');
-        _pendingHiResImg = null;
-    };
-    hiRes.onerror = () => {
-        if (_pendingHiResImg !== hiRes) return;
-        _pendingHiResImg = null;
-        if (_thumbOk) {
-            artEl.classList.remove('mockup-bg-loading');
-            artEl.classList.add('mockup-bg-ready');
-        } else {
-            _applyArtFallback(artEl);
-        }
-    };
-    hiRes.src = wallpaperPath;
-
-    // ── Anti-extraction: contextmenu hardening ────────────────────────────────
-    const stage = document.getElementById('preview-mockup-stage');
-    if (!_stageCtxHandler) _stageCtxHandler = (e) => { e.preventDefault(); };
-    stage.removeEventListener('contextmenu', _stageCtxHandler);
-    stage.addEventListener('contextmenu', _stageCtxHandler);
-    slot.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); return false; };
-
-    // ── Action buttons ────────────────────────────────────────────────────────
-    // Se construyen de forma síncrona porque son DOM mínimo (2 botones) y
-    // necesitan estar listos para el foco inmediatamente al abrir el modal.
-    const isOwned    = GameCenter.getBoughtCount(item.id) > 0;
-    const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
-
-    if (isOwned) {
-        const url = GameCenter.getDownloadUrl(item.id, item.imageUrl);
-        actionsEl.innerHTML = url
-            ? `<a href="${url}" download class="btn-primary vault-btn" style="flex:1; justify-content:center;">
-                   <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-download"></use></svg> Descargar
-               </a>`
-            : `<button class="btn-primary" style="flex:1; justify-content:center; opacity:0.5;" disabled>
-                   <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-check"></use></svg> Obtenido
-               </button>`;
-        actionsEl.innerHTML +=
-            `<button class="btn-ghost" style="flex:1; justify-content:center;" id="preview-close-btn">Volver</button>`;
-
-        // Analítica — click_download (fuente: vista previa)
-        actionsEl.querySelector('a[download]')?.addEventListener('click', () => {
-            window.GhostAnalytics?.track('click_download', {
-                wallpaper: item.name,
-                fuente: 'preview'
-            });
-        });
-    } else {
-        actionsEl.innerHTML =
-            `<button class="btn-ghost" style="flex:1; justify-content:center;" id="preview-close-btn">Volver</button>
-             <button class="btn-primary preview-buy-btn" style="flex:2; justify-content:center;"
-                     data-id="${item.id}">
-                 <svg class="icon" width="13" height="13" style="fill:#fbbf24;stroke:none" aria-hidden="true"><use href="#icon-star"></use></svg>
-                 Canjear · ${finalPrice}
-             </button>`;
-    }
-
-    // Mover foco al botón de cierre para accesibilidad (WCAG 2.4.3).
-    // Segundo rAF: esperar al frame posterior al que ya muestra el modal para
-    // que el botón sea interactivo antes de hacer focus().
-    requestAnimationFrame(() => {
-        document.getElementById('preview-close-btn')?.focus()
-            ?? document.getElementById('preview-close')?.focus();
-    });
-    actionsEl.querySelector('.preview-buy-btn')?.addEventListener('click', async (event) => {
-        const buyBtn = event.currentTarget;
-        const item = allItems.find(i => i.id === parseInt(buyBtn.dataset.id, 10));
-        if (!item) {
-            console.warn('[Preview 2.0] Purchase item not found for', buyBtn.dataset.id,
-                '| allItems loaded:', allItems.length);
-            return;
-        }
-
-        closePreviewModal();
-        await initiatePurchase(item, null);
-    });
-
-    document.getElementById('preview-close-btn')?.addEventListener('click', () => {
-        closePreviewModal();
-    });
+function _resolvePreviewItem(itemOrId) {
+    if (itemOrId && typeof itemOrId === 'object') return itemOrId;
+    return allItems.find(item => item.id === Number(itemOrId));
 }
 
-/**
- * Closes the preview modal and performs full resource cleanup:
- *  - Cancels any in-flight high-res image load (prevents stale onload callbacks)
- *  - Clears background-image on the art layer → frees GPU texture buffer
- *  - Clears the clock interval
- *  - Removes the contextmenu blocker from the stage
- *
- * [v9.6 Phase 3] will-change ya no se gestiona aquí. Está declarado en CSS
- * sobre .modal-box y se libera automáticamente cuando el overlay recibe
- * display:none via .hidden (el navegador descarta la capa compuesta).
- *
- * Public — no arguments needed (resolves DOM refs internally).
- * Also accepts optional explicit refs for internal callers (unchanged API).
- *
- * @param {HTMLElement} [modal]  Defaults to #preview-modal.
- * @param {HTMLElement} [stage]  Defaults to #preview-mockup-stage.
- */
-function closePreviewModal(modal, stage) {
-    const m    = modal || document.getElementById('preview-modal');
-    const s    = stage || document.getElementById('preview-mockup-stage');
-    const slot = document.getElementById('mockup-slot');
+function _makePreviewButton(className, label) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = label;
+    return button;
+}
 
-    // ── Cancel in-flight HiRes load ───────────────────────────────────────────
-    if (_pendingHiResImg) {
-        _pendingHiResImg.onload = _pendingHiResImg.onerror = null;
-        _pendingHiResImg = null;
+function _renderPreview(item) {
+    const content = document.getElementById('preview-content');
+    const status = document.getElementById('preview-status');
+    if (!content || !status) return;
+    content.replaceChildren();
+    status.textContent = '';
+
+    const image = document.createElement('img');
+    image.className = 'preview-image';
+    image.src = getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+    image.alt = item.name;
+    image.decoding = 'async';
+    content.append(image);
+
+    const title = document.createElement('h3');
+    title.id = 'preview-title';
+    title.className = 'preview-name';
+    title.textContent = item.name;
+    content.append(title);
+
+    const actions = document.createElement('div');
+    actions.className = 'preview-actions';
+    const back = _makePreviewButton('btn-ghost', 'Volver');
+    back.addEventListener('click', closePreviewModal);
+    actions.append(back);
+
+    const acquire = _makePreviewButton('btn-primary', 'Adquirir');
+    acquire.addEventListener('click', () => _renderPurchaseConfirmation(item));
+    actions.append(acquire);
+    content.append(actions);
+    requestAnimationFrame(() => back.focus());
+}
+
+function _renderPurchaseConfirmation(item) {
+    const content = document.getElementById('preview-content');
+    const status = document.getElementById('preview-status');
+    if (!content || !status) return;
+    const eco = window.ECONOMY;
+    const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
+    const cashback = Math.floor(finalPrice * eco.cashbackRate);
+    content.replaceChildren();
+    status.textContent = '';
+
+    const title = document.createElement('h3');
+    title.id = 'preview-title';
+    title.className = 'modal-title preview-confirmation-title';
+    title.textContent = '¿Adquirir regalo?';
+    content.append(title);
+
+    const details = document.createElement('dl');
+    details.className = 'purchase-breakdown';
+    const addRow = (label, value, className = '') => {
+        const term = document.createElement('dt');
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.textContent = value;
+        if (className) description.className = className;
+        details.append(term, description);
+    };
+    addRow('Precio original', `${item.price} ⭐`);
+    if (eco.isSaleActive) addRow('Descuento', `-${item.price - finalPrice} ⭐`, 'modal-value--sale');
+    if (cashback > 0) addRow('Cashback', `+${cashback} ⭐`, 'modal-value--cashback');
+    addRow('Total', `${finalPrice} ⭐`, 'purchase-breakdown-total');
+    content.append(details);
+
+    const actions = document.createElement('div');
+    actions.className = 'preview-actions';
+    const back = _makePreviewButton('btn-ghost', 'Volver');
+    back.addEventListener('click', () => _renderPreview(item));
+    const confirm = _makePreviewButton('btn-primary', `Adquirir · ${finalPrice} ⭐`);
+    confirm.addEventListener('click', () => _completePreviewPurchase(item, confirm, back));
+    actions.append(back, confirm);
+    content.append(actions);
+    requestAnimationFrame(() => confirm.focus());
+}
+
+async function _completePreviewPurchase(item, confirm, back) {
+    const modal = document.getElementById('preview-modal');
+    const status = document.getElementById('preview-status');
+    confirm.disabled = true;
+    back.disabled = true;
+    modal?.setAttribute('aria-busy', 'true');
+    confirm.textContent = 'Adquiriendo…';
+    status.textContent = '';
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const result = GameCenter.buyItem(item);
+    modal?.removeAttribute('aria-busy');
+    if (!result.success) {
+        confirm.disabled = false;
+        back.disabled = false;
+        confirm.textContent = `Adquirir · ${window.ECONOMY.isSaleActive ? Math.floor(item.price * window.ECONOMY.saleMultiplier) : item.price} ⭐`;
+        status.textContent = result.reason === 'coins' ? 'No tienes suficientes monedas.' : 'No fue posible completar la adquisición.';
+        confirm.focus();
+        return;
     }
 
-    // ── GPU memory flush: clear art layer background-image ────────────────────
-    // Setting to 'none' immediately releases the decoded texture from the GPU
-    // buffer, which is critical on <2GB RAM devices where large images stay
-    // resident as long as they are referenced in the DOM.
-    const artEl = slot?.querySelector('.mockup-layer-art');
-    if (artEl) {
-        artEl.style.backgroundImage = 'none';
-        artEl.classList.remove('mockup-bg-loading', 'mockup-bg-ready');
-    }
+    const scrollY = window.scrollY;
+    renderShopView();
+    if (_collectionMounted) renderCollectionView();
+    const balance = GameCenter.getBalance();
+    document.querySelectorAll('.navbar .coin-display').forEach(el => {
+        el.textContent = window.formatCoinsNavbar?.(balance) ?? balance;
+        el.closest('.coin-badge')?.setAttribute('title', `${balance} monedas`);
+    });
+    document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => { el.textContent = balance; });
+    _scheduleConfetti('purchase');
+    window.GhostAnalytics?.track('buy_item', {
+        wallpaper: item.name,
+        precio: `${result.finalPrice} ⭐`,
+        cashback: result.cashback > 0 ? `+${result.cashback} ⭐` : 'ninguno',
+        categoría: item.category,
+        saldo_tras: balance
+    });
+    status.textContent = `${item.name} desbloqueado.`;
+    showToast(`"${item.name}" desbloqueado.`, 'success');
+    closePreviewModal();
+    requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'auto' }));
+}
 
-    // ── Remove slot contextmenu blocker ───────────────────────────────────────
-    if (slot) slot.oncontextmenu = null;
+function openPreviewModal(itemOrId) {
+    const item = _resolvePreviewItem(itemOrId);
+    const modal = document.getElementById('preview-modal');
+    if (!item || !modal) return;
+    _lastFocusedElement = document.activeElement;
+    modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement, { onEscape: closePreviewModal });
+    window.GhostAnalytics?.track('view_preview', { wallpaper: item.name, categoría: item.category });
+    _renderPreview(item);
+}
 
-    // ── Ocultar modal — la capa compuesta se libera automáticamente ───────────
-    // .hidden aplica display:none, lo que destruye la capa GPU creada por
-    // will-change:opacity,transform declarado en .modal-box (CSS). No es
-    // necesario m.style.willChange = 'auto'.
-    if (m) { m.classList.add('hidden'); window.ModalA11y?.close?.(m); }
-
-    // ── Clock interval ────────────────────────────────────────────────────────
-    if (_mockupClockInterval) { clearInterval(_mockupClockInterval); _mockupClockInterval = null; }
-
-    // ── Stage contextmenu listener ────────────────────────────────────────────
-    if (s && _stageCtxHandler) {
-        s.removeEventListener('contextmenu', _stageCtxHandler);
-    }
-
-    // ── Restaurar foco al elemento que abrió la vista previa (WCAG 2.4.3) ────
+function closePreviewModal() {
+    const modal = document.getElementById('preview-modal');
+    if (modal?.classList.contains('hidden') || modal?.getAttribute('aria-busy') === 'true') return;
+    modal.classList.add('hidden');
+    modal.removeAttribute('aria-busy');
+    window.ModalA11y?.close?.(modal);
     _lastFocusedElement?.focus();
     _lastFocusedElement = null;
 }
-
 
 // ── Global exposure ───────────────────────────────────────────────────────────
 // Required for:
@@ -1485,13 +949,34 @@ function _bindShopContainerDelegation() {
     if (!container) return;
     _shopDelegationBound = true;
 
-    container.addEventListener('click', async (e) => {
-        const visualCard = e.target.closest('.shop-visual-card');
-        if (visualCard) {
-            const item = allItems.find(i => i.id === parseInt(visualCard.dataset.itemId, 10));
-            if (item) openPreviewModal(item);
-        }
+    let pointerStart = null;
+    const cancelPointer = () => { pointerStart = null; };
+    container.addEventListener('pointerdown', (event) => {
+        const visualCard = event.target.closest('.shop-visual-card');
+        if (!visualCard) return;
+        pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, time: event.timeStamp, card: visualCard };
     });
+    container.addEventListener('pointermove', (event) => {
+        if (!pointerStart || event.pointerId !== pointerStart.id) return;
+        if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) cancelPointer();
+    });
+    container.addEventListener('pointercancel', cancelPointer);
+    container.addEventListener('selectstart', cancelPointer);
+    container.addEventListener('click', (event) => {
+        if (event.detail !== 0) return; // Native keyboard activation.
+        const visualCard = event.target.closest('.shop-visual-card');
+        const item = allItems.find(candidate => candidate.id === Number(visualCard?.dataset.itemId));
+        if (item) openPreviewModal(item);
+    });
+    container.addEventListener('pointerup', (event) => {
+        if (!pointerStart || event.pointerId !== pointerStart.id) return;
+        const activation = pointerStart;
+        cancelPointer();
+        if (event.timeStamp - activation.time > 500 || Math.hypot(event.clientX - activation.x, event.clientY - activation.y) > 8) return;
+        const item = allItems.find(candidate => candidate.id === Number(activation.card.dataset.itemId));
+        if (item) openPreviewModal(item);
+    });
+    window.addEventListener('scroll', cancelPointer, { passive: true });
 }
 
 // ── Render: Biblioteca ────────────────────────────────────────────────────────
@@ -1567,80 +1052,6 @@ function renderHistory() {
             </div>`;
         }
     }).join('');
-}
-
-// ── Compra ────────────────────────────────────────────────────────────────────
-async function initiatePurchase(item, btn) {
-    const eco        = window.ECONOMY;
-    const finalPrice = eco.isSaleActive ? Math.floor(item.price * eco.saleMultiplier) : item.price;
-    const cashback   = Math.floor(finalPrice * eco.cashbackRate);
-    const netCost    = finalPrice - cashback;
-
-    const bodyHTML =
-        `<div class="modal-product-row">
-            <span class="modal-label">Wallpaper</span>
-            <span class="modal-value" style="color:var(--text-high); font-size:0.85rem;">${item.name}</span>
-        </div>
-        ${eco.isSaleActive
-            ? `<div class="modal-product-row">
-                   <span class="modal-label">Precio original</span>
-                   <span class="modal-strikethrough">${item.price} ⭐</span>
-               </div>
-               <div class="modal-product-row">
-                   <span class="modal-label">Con oferta</span>
-                   <span class="modal-value--sale">${finalPrice} ⭐</span>
-               </div>`
-            : `<div class="modal-product-row">
-                   <span class="modal-label">Precio</span>
-                   <span class="modal-value">${item.price} ⭐</span>
-               </div>`}
-        ${cashback > 0
-            ? `<div class="modal-product-row">
-                   <span class="modal-label">Cashback</span>
-                   <span class="modal-value--cashback">+${cashback} ⭐</span>
-               </div>`
-            : ''}
-        <div class="modal-product-row modal-product-row--total">
-            <span class="modal-label" style="font-weight:700;">Costo neto</span>
-            <span class="modal-value--total">${netCost} ⭐</span>
-        </div>`;
-
-    const confirmed = await openConfirmModal({
-        title:       '¿Canjear wallpaper?',
-        bodyHTML,
-        confirmText: `Canjear · ${finalPrice} ⭐`
-    });
-    if (!confirmed) return;
-
-    const result = GameCenter.buyItem(item);
-    if (result.success) {
-        renderShopView();
-        if (_collectionMounted) renderCollectionView();
-        // Actualizar displays: navbar con formato abreviado, resto con valor exacto.
-        const bal = GameCenter.getBalance();
-        document.querySelectorAll('.navbar .coin-display').forEach(el => {
-            el.textContent = window.formatCoinsNavbar?.(bal) ?? bal;
-            el.closest('.coin-badge')?.setAttribute('title', `${bal} monedas`);
-        });
-        document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => el.textContent = bal);
-        // Deja que el navegador pinte primero el saldo y las cards actualizadas.
-        _scheduleConfetti('purchase');
-        // Analítica — buy_item: registra qué wallpaper se compró con todos sus detalles
-        window.GhostAnalytics?.track('buy_item', {
-            wallpaper:  item.name,
-            precio:     `${result.finalPrice} ⭐`,
-            cashback:   result.cashback > 0 ? `+${result.cashback} ⭐` : 'ninguno',
-            categoría:  item.category || 'art',
-            saldo_tras: GameCenter.getBalance()
-        });
-        const cbNote = result.cashback > 0 ? ` <strong>+${result.cashback} cashback</strong> devueltas.` : '';
-        showToast(`"${item.name}" desbloqueado.${cbNote} Ve a <strong>Mis Tesoros</strong>.`, 'success');
-        } else {
-        if (result.reason === 'coins') {
-            if (btn) shakeElement(btn);
-            showToast('No tienes suficientes monedas.', 'error');
-        }
-    }
 }
 
 /**
@@ -2189,10 +1600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === e.currentTarget) _closeModal(false);
     });
 
-    // Preview modal (Preview 2.0)
-    // The static #preview-close button (X in corner) and backdrop click both
-    // call the public closePreviewModal() so DOM refs are resolved inside the function.
-    document.getElementById('preview-close').addEventListener('click', () => closePreviewModal());
+    // Preview modal: backdrop preserves the active dialog's focus contract.
     document.getElementById('preview-modal').addEventListener('click', e => {
         if (e.target === e.currentTarget) closePreviewModal();
     });
