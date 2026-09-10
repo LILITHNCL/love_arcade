@@ -25,7 +25,7 @@
  *  - Los hooks anteriores (view_preview, click_download, redeem_code) se mantienen.
  *  - view_preview: GhostAnalytics.track() en openPreviewModal() inmediatamente
  *    tras modal.classList.remove('hidden') — fase síncrona, sin depender del rAF.
- *  - click_download: listeners añadidos en renderLibrary() (fuente:"biblioteca")
+ *  - click_download: se emite desde el modal de Colección (fuente:"colección")
  *    y en el bloque isOwned de openPreviewModal() (fuente:"preview") sobre los
  *    <a download> generados dinámicamente.
  *  - redeem_code: GhostAnalytics.track() en handleRedeem() cuando result.success.
@@ -69,7 +69,7 @@
  *    sin extensión ni parámetros de transformación, sirviendo el master original.
  *
  * NOVEDADES v9.4 (sincronización de versión con app.js):
- *  - Eliminado will-change estático en tarjetas del catálogo y biblioteca.
+ *  - Eliminado will-change estático en tarjetas del catálogo y Colección.
  *    El GPU-layer management ahora vive exclusivamente en CSS (hover :hover).
  *  - handleExport() refactorizado para usar window.MailHelper.copyToClipboard()
  *    en lugar de reimplementar el patrón navigator.clipboard + execCommand.
@@ -220,6 +220,39 @@ function getThumbnailUrl(sourceUrl, aspectRatio, width) {
     const safeWidth = Math.max(160, Math.min(1600, Math.round(Number(width) || 640)));
     const transforms = `f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${safeWidth}`;
     return sourceUrl.replace(uploadMarker, `${uploadMarker}${transforms}/`);
+}
+
+/** Deriva una descarga de Cloudinary sin exponer el recurso maestro inline. */
+function getImageDownloadUrl(sourceUrl) {
+    if (typeof sourceUrl !== 'string') return null;
+    const uploadMarker = '/image/upload/';
+    if (!sourceUrl.includes(uploadMarker)) {
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            console.warn('[Shop] La descarga no tiene el formato Cloudinary esperado:', sourceUrl);
+        }
+        return sourceUrl;
+    }
+    return sourceUrl.replace(uploadMarker, `${uploadMarker}fl_attachment/`);
+}
+
+/** Resuelve una descarga solo para artículos que siguen en el inventario. */
+function resolveOwnedDownloadUrl(item) {
+    if (!item || GameCenter.getBoughtCount(item.id) <= 0) return null;
+    const sourceUrl = item.type === 'file' ? item.downloadUrl : getImageDownloadUrl(item.imageUrl);
+    return GameCenter.getDownloadUrl(item.id, sourceUrl);
+}
+
+function triggerDownload(url) {
+    if (!url) return;
+    const link = document.createElement('a');
+    link.href = url;
+    // Cloudinary usa fl_attachment y los archivos usan su URL de descarga
+    // directa; download conserva la intención también en orígenes compatibles.
+    link.download = '';
+    link.style.display = 'none';
+    document.body.append(link);
+    link.click();
+    link.remove();
 }
 
 // ── Smart Preload — Intersection Observer (v9.7) ──────────────────────────────
@@ -562,6 +595,61 @@ function _renderPreview(item) {
     requestAnimationFrame(() => back.focus());
 }
 
+function _renderCollectionItemModal(item) {
+    const content = document.getElementById('preview-content');
+    const status = document.getElementById('preview-status');
+    const downloadUrl = resolveOwnedDownloadUrl(item);
+    if (!content || !status || !downloadUrl) {
+        closePreviewModal();
+        return;
+    }
+    content.replaceChildren();
+    status.textContent = '';
+
+    const image = document.createElement('img');
+    image.className = 'preview-image';
+    image.src = getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+    image.alt = item.name;
+    image.decoding = 'async';
+
+    const title = document.createElement('h3');
+    title.id = 'preview-title';
+    title.className = 'preview-name';
+    title.textContent = item.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'preview-actions';
+    const close = _makePreviewButton('btn-ghost', 'Volver');
+    close.addEventListener('click', closePreviewModal);
+    const email = _makePreviewButton('btn-ghost', 'Enviar por correo');
+    email.addEventListener('click', () => {
+        closePreviewModal();
+        openEmailModal(item, downloadUrl);
+    });
+    const download = _makePreviewButton('btn-primary', 'Descargar');
+    download.addEventListener('click', () => {
+        triggerDownload(downloadUrl);
+        window.GhostAnalytics?.track('click_download', {
+            wallpaper: item.name,
+            categoría: item.category,
+            fuente: 'colección'
+        });
+    });
+    actions.append(close, email, download);
+    content.append(image, title, actions);
+    requestAnimationFrame(() => download.focus());
+}
+
+function openCollectionItemModal(itemOrId) {
+    const item = _resolvePreviewItem(itemOrId);
+    const modal = document.getElementById('preview-modal');
+    if (!item || !modal || GameCenter.getBoughtCount(item.id) <= 0) return;
+    _lastFocusedElement = document.activeElement;
+    modal.classList.remove('hidden');
+    window.ModalA11y?.open?.(modal, _lastFocusedElement, { onEscape: closePreviewModal });
+    _renderCollectionItemModal(item);
+}
+
 function _renderPurchaseConfirmation(item) {
     const content = document.getElementById('preview-content');
     const status = document.getElementById('preview-status');
@@ -699,7 +787,7 @@ function renderCollectionView() {
         const normalizedName = _collectionSearchIndex.get(item.id) || '';
         return !query || normalizedName.includes(query);
     });
-    renderLibrary(owned, Boolean(query));
+    renderCollection(owned, Boolean(query));
 }
 
 function _mountCollection() {
@@ -741,12 +829,12 @@ function _mountCollection() {
     searchWrap.append(label, input);
 
     const grid = document.createElement('div');
-    grid.id = 'library-container';
-    grid.className = 'shop-grid treasury-grid';
+    grid.id = 'collection-container';
+    grid.className = 'shop-grid';
     grid.addEventListener('click', (event) => {
         const card = event.target.closest('.shop-visual-card');
         const item = allItems.find(candidate => candidate.id === Number(card?.dataset.itemId));
-        if (item) openPreviewModal(item);
+        if (item) openCollectionItemModal(item);
     });
     section.append(heading, searchWrap, grid);
     _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
@@ -979,9 +1067,10 @@ function _bindShopContainerDelegation() {
     window.addEventListener('scroll', cancelPointer, { passive: true });
 }
 
-// ── Render: Biblioteca ────────────────────────────────────────────────────────
-function renderLibrary(owned, isSearching = false) {
-    const container = document.getElementById('library-container');
+// ── Render: Colección (solo tras su primer montaje) ──────────────────────────
+function renderCollection(owned, isSearching = false) {
+    if (!_collectionMounted) return;
+    const container = document.getElementById('collection-container');
     if (!container) return;
     container.replaceChildren();
 
@@ -1471,7 +1560,7 @@ window.ShopView = {
 /**
  * Persiste el hash del catálogo fuera del camino crítico de renderizado.
  * El hash solo informa el estado de notificaciones push, por lo que el grid y
- * la biblioteca deben estar disponibles antes de calcularlo. La revisión evita
+ * la Colección deben estar disponibles antes de calcularlo. La revisión evita
  * que una carga anterior sobrescriba el hash de un reintento más reciente.
  */
 function _scheduleCatalogHashPersistence(items, revision) {

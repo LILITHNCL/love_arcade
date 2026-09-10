@@ -301,7 +301,6 @@ button { font-family: var(--font-body); }
     .icon-btn,
     .btn-primary,
     .btn-ghost,
-    .btn-mail,
     .pill-nav-item,
     .identity-chip,
     .btn-edit-identity,
@@ -3029,31 +3028,6 @@ svg { stroke-width: 2; }
 }
 .email-tip svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
 
-/* "Send email" button in library cards — secondary accent style */
-.btn-mail {
-    background: color-mix(in srgb, var(--solid-surface-float) 82%, var(--accent) 18%);
-    color: var(--text-primary-aa);
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    padding: 7px;
-    border-radius: var(--radius-sm);
-    font-size: 0.78rem;
-    font-family: var(--font-body);
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    transition: transform 150ms cubic-bezier(.22,1,.36,1), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
-    flex-shrink: 0;
-}
-.btn-mail:hover {
-    background: var(--accent-soft);
-    box-shadow: var(--control-shadow-hover);
-    transform: translateY(-1px);
-}
-
 /* ================================================================
    SHOP ERROR STATE — v9.1 (Network failure fallback)
    ================================================================ */
@@ -3081,27 +3055,6 @@ svg { stroke-width: 2; }
     color: var(--text-low);
     margin: 0;
     max-width: 280px;
-}
-
-/* ================================================================
-   TREASURY GRID — v9.2 (Mis Tesoros — overflow fix on < 380px)
-   ================================================================ */
-/*
- * #library-container usa .shop-grid .treasury-grid.
- * Sobreescribimos el grid-template-columns con auto-fit + minmax para que
- * la cuadrícula se adapte a cualquier ancho sin desbordarse en móvil pequeño.
- * box-sizing: border-box ya está global desde el reset.
- */
-.treasury-grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    justify-content: center;
-}
-
-/* En pantallas muy pequeñas (< 380px) forzamos a 1 columna si 140px no cabe */
-@media (max-width: 320px) {
-    .treasury-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* ── Shop preview / purchase dialog ─────────────────────────────────────── */

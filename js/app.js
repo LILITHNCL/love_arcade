@@ -975,9 +975,12 @@ window.GameCenter = {
 
     getDownloadUrl: (itemId, sourceUrl) => {
         if (!sourceUrl || (store.inventory[itemId] || 0) === 0) return null;
-        if (/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(sourceUrl)) return sourceUrl;
-        const base = sourceUrl.replace(/\.[^.]+$/, '');
-        return CONFIG.wallpapersPath + base;
+        const uploadMarker = '/image/upload/';
+        if (sourceUrl.includes(uploadMarker)) {
+            if (sourceUrl.includes(`${uploadMarker}fl_attachment/`)) return sourceUrl;
+            return sourceUrl.replace(uploadMarker, `${uploadMarker}fl_attachment/`);
+        }
+        return sourceUrl;
     },
 
 
