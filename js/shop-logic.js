@@ -1399,22 +1399,6 @@ function renderMoonBlessingStatus() {
     }
 }
 
-// ── Sale Banner ───────────────────────────────────────────────────────────────
-function initSaleBanner() {
-    const eco    = window.ECONOMY;
-    const banner = document.getElementById('sale-banner');
-    if (!banner) return;
-    if (eco.isSaleActive) {
-        banner.classList.remove('hidden');
-        const pct     = Math.round((1 - eco.saleMultiplier) * 100);
-        const badgeEl = document.getElementById('sale-badge-pct');
-        document.getElementById('sale-label-text').textContent = `¡${eco.saleLabel}!`;
-        document.getElementById('sale-desc-text').textContent  =
-            `${pct}% de descuento + ${Math.round(eco.cashbackRate * 100)}% de cashback en toda la tienda.`;
-        if (badgeEl) badgeEl.textContent = `${pct}%`;
-    }
-}
-
 // ── Util ──────────────────────────────────────────────────────────────────────
 function showMsg(el, text, color) {
     if (!el) return;
@@ -1681,8 +1665,7 @@ function _validateCatalog(items) {
 document.addEventListener('DOMContentLoaded', () => {
     _bindShopContainerDelegation();
 
-    // Inicializar banner y estado visible de la Tienda al cargar
-    initSaleBanner();
+    // Inicializar el estado visible de la Tienda al cargar.
     renderMoonBlessingStatus();
     renderStreakCalendar();
 

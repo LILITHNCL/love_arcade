@@ -34,13 +34,12 @@ Cuando una usuaria compra un wallpaper, la función `buyItem` de `app.js` consul
 ```
 Precio final = precio_original × saleMultiplier   (si isSaleActive = true)
 Cashback     = precio_final × cashbackRate
-Costo neto   = precio_final − cashback
 ```
 
 > **Ejemplo:** Wallpaper de 1000 monedas · oferta del 20% · cashback del 10%
 > - Precio con oferta: 1000 × 0.8 = **800 monedas**
 > - Cashback: 800 × 0.1 = **80 monedas devueltas**
-> - Costo neto real: 800 − 80 = **720 monedas**
+> - Total de la compra: **800 monedas**; el cashback se devuelve por separado.
 
 ---
 
@@ -55,7 +54,7 @@ Se encuentra en las primeras líneas de `app.js`, después de `CONFIG`:
 const ECONOMY = {
     isSaleActive:   false,    // ¿Hay oferta activa ahora mismo?
     saleMultiplier: 0.8,      // Factor de precio (0.8 = 20% de descuento)
-    saleLabel:      '20% OFF', // Texto del badge y banner de oferta
+    saleLabel:      '20% OFF', // Texto del pill de oferta en la tarjeta
     cashbackRate:   0.1        // Porcentaje de devolución (0.1 = 10%)
 };
 ```
@@ -83,8 +82,8 @@ Con este cambio en producción:
 
 | Elemento UI | Comportamiento |
 |---|---|
-| Banner superior de la tienda | Aparece con animación de shimmer rojo |
-| Cards del catálogo | Muestran precio tachado + precio en verde + badge "OFERTA" |
+| Tarjetas disponibles de Tienda | Muestran un pill temático con `saleLabel` en la esquina superior izquierda |
+| Confirmación de compra | Desglosa el descuento y el cashback cuando corresponden |
 | Pestaña Ajustes | Panel de economía refleja el descuento activo |
 | Función `buyItem` | Descuenta el precio final (no el original) del saldo |
 | Toast de compra | Incluye el monto de cashback recibido |
@@ -126,7 +125,7 @@ const ECONOMY = {
 
 ### Personalizar el mensaje de oferta
 
-`saleLabel` es el texto que aparece en el badge de las cards y en el banner superior. Puede ser cualquier string corto:
+`saleLabel` es el texto que aparece en el pill de descuento de las tarjetas disponibles de Tienda. Puede ser cualquier string corto:
 
 ```javascript
 // Ejemplos de saleLabel
@@ -137,15 +136,7 @@ saleLabel: 'OFERTA ESPECIAL'  // Genérico en español
 saleLabel: '2×1'              // Aunque no sea literalmente 2×1, queda bien visualmente
 ```
 
-El banner también construye su descripción automáticamente combinando el porcentaje calculado desde `saleMultiplier` con el `cashbackRate`:
-
-```javascript
-// shop-logic.js — función initSaleBanner()
-const discount = Math.round((1 - eco.saleMultiplier) * 100);
-// "20% de descuento en toda la tienda + 10% de cashback."
-```
-
-Si quieres cambiar ese texto de descripción del banner, edita directamente `initSaleBanner()` en `shop-logic.js`.
+La señal de descuento se limita a este pill y al desglose de la confirmación de compra; no hay banner ni animación global de oferta.
 
 ---
 
@@ -161,7 +152,7 @@ const ECONOMY = {
 };
 ```
 
-El banner desaparece, los precios vuelven a su valor original y los badges de oferta dejan de renderizarse. **El cashback sigue activo** porque es independiente de la oferta.
+Los precios vuelven a su valor original y los pills de oferta dejan de renderizarse. **El cashback sigue activo** porque es independiente de la oferta.
 
 ---
 
@@ -351,9 +342,4 @@ const ECONOMY = {
 
 ---
 
-*Última actualización: Phase 3 — Love Arcade v9.4*
-
-> **Nota de migración:** Antes de v9.0, `initSaleBanner()` y toda la lógica de la
-> tienda vivían en `shop.html`. Desde la migración SPA (v9.0), estas funciones
-> residen en `shop-logic.js`. Cualquier referencia a `shop.html` en el contexto
-> de la economía es obsoleta.
+*Última actualización: Rediseño de Tienda — TICKET-07*
