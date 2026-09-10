@@ -1935,38 +1935,39 @@ body::before {
 .sale-banner.hidden { display: none !important; }
 
 /* ================================================================
-   PROMO CODE SECTION
+   PROMO CODE FORM — Perfil
    ================================================================ */
-.promo-toggle-wrap { margin-bottom: 18px; }
-.promo-toggle-btn {
-    width: 100%; justify-content: flex-start; gap: 8px;
-    padding: 9px 14px; font-size: 0.82rem; border-radius: var(--radius-sm);
-    contain: paint;
-}
-.promo-chevron { margin-left: auto; transition: transform 0.22s; flex-shrink: 0; }
-.promo-toggle-btn[aria-expanded="true"] .promo-chevron { transform: rotate(180deg); }
-.promo-section--collapsed { display: none; }
-.promo-section--open {
-    display: block; margin-top: 8px;
-    animation: promoFadeIn 0.16s ease;
-}
-@keyframes promoFadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.promo-section { padding: 16px; border-radius: var(--radius-lg); margin-bottom: 18px; }
 .promo-icon-wrap {
     width: 40px; height: 40px; border-radius: 10px;
     background: linear-gradient(135deg, var(--accent), var(--accent-dim));
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     box-shadow: 0 4px 12px var(--accent-glow);
 }
-#promo-section .promo-icon-wrap,
+.promo-redemption-card .promo-icon-wrap,
 .settings-card .promo-icon-wrap {
     color: var(--on-accent);
 }
 .promo-input-group { display: flex; flex-direction: column; gap: 8px; }
+.promo-redemption-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.promo-redemption-card__header h3,
+.promo-redemption-card__header p { margin: 0; }
+.promo-redemption-card__header h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-high);
+}
+.promo-redemption-card__header p {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--text-low);
+    line-height: 1.45;
+}
 .promo-input {
     width: 100%;
     background: var(--solid-surface-base);
@@ -2803,7 +2804,6 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Promo */
     .promo-input-group { flex-direction: row; }
     #btn-redeem { width: auto; }
-    .promo-section { padding: 22px; }
 
     /* Settings */
     .settings-card { padding: 1.5rem; }
