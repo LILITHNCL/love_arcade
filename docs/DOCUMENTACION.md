@@ -2106,12 +2106,15 @@ El botón `#btn-retry-shop` es enlazado por `loadCatalog()` en `shop-logic.js`.
 
     <div id="view-shop" class="view-section hidden">  ← Vista Tienda (oculta al inicio)
       #sale-banner
-      .promo-toggle-wrap
-      .shop-tabs
-      #tab-catalog
-      #tab-library
-      #tab-sync
-      #tab-settings
+      #shop-catalog
+      #shop-collection
+    </div>
+
+    <div id="view-profile" class="view-section hidden">  ← Vista Perfil
+      [data-profile-panel="home"]
+      [data-profile-panel="promotions"]
+        #promo-input
+        #btn-redeem
     </div>
   </main>
 
@@ -2502,6 +2505,10 @@ Ambas tienen `will-change: transform` para promoverse a capas GPU antes del prim
 ---
 
 ## 12. Códigos Promocionales (SHA-256)
+
+### Dónde canjearlos
+
+El canje se realiza desde **Perfil → Códigos promocionales**. La Tienda no contiene controles de promociones. El panel dedicado mantiene el mismo formulario, feedback accesible y la lógica centralizada en `GameCenter.redeemPromoCode()`.
 
 ### Cómo funcionan
 

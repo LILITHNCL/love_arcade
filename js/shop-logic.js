@@ -1260,6 +1260,7 @@ async function handleRedeem() {
     const input  = document.getElementById('promo-input');
     const msg    = document.getElementById('promo-msg');
     const btn    = document.getElementById('btn-redeem');
+    if (!input || !msg || !btn) return;
     const code   = input.value.trim();
     if (!code) return;
 
@@ -1272,6 +1273,7 @@ async function handleRedeem() {
             showMsg(msg, result.message, 'var(--success)');
             input.value = '';
             input.style.borderColor = '';
+            input.removeAttribute('aria-invalid');
             // Actualizar displays: navbar con formato abreviado, resto con valor exacto.
             const bal = GameCenter.getBalance();
             document.querySelectorAll('.navbar .coin-display').forEach(el => {
@@ -1292,6 +1294,7 @@ async function handleRedeem() {
         } else {
             showMsg(msg, result.message, 'var(--error)');
             input.style.borderColor = 'var(--error)';
+            input.setAttribute('aria-invalid', 'true');
             shakeElement(btn);
 
             // [v9.9.2] Fricción de usuario: código que no existe en absoluto.
@@ -1308,6 +1311,7 @@ async function handleRedeem() {
     } catch (error) {
         showMsg(msg, 'Ocurrió un error al canjear el código. Inténtalo de nuevo.', 'var(--error)');
         input.style.borderColor = 'var(--error)';
+        input.setAttribute('aria-invalid', 'true');
         shakeElement(btn);
         window.GhostAnalytics?.track('bug', {
             módulo: 'shop-logic',
@@ -1718,24 +1722,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Toggle código promo
-    document.getElementById('btn-promo-toggle').addEventListener('click', () => {
-        const toggleBtn = document.getElementById('btn-promo-toggle');
-        const section   = document.getElementById('promo-section');
-        const expanded  = toggleBtn.getAttribute('aria-expanded') === 'true';
-        toggleBtn.setAttribute('aria-expanded', String(!expanded));
-        section.setAttribute('aria-hidden',    String(expanded));
-        section.classList.toggle('promo-section--collapsed', expanded);
-        section.classList.toggle('promo-section--open', !expanded);
-        if (!expanded) setTimeout(() => document.getElementById('promo-input').focus(), 50);
-    });
-
     // ── Cargar catálogo UNA SOLA VEZ (con manejo de errores y reintento) ────────
     loadCatalog();
 
-    // Promo code
-    document.getElementById('btn-redeem').addEventListener('click', handleRedeem);
-    document.getElementById('promo-input').addEventListener('keydown', e => {
+    // Código promocional: el formulario vive en el panel dedicado de Perfil.
+    document.getElementById('btn-redeem')?.addEventListener('click', handleRedeem);
+    document.getElementById('promo-input')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') handleRedeem();
     });
 
@@ -1766,6 +1758,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (panelName === 'history') {
             renderHistory();
+        }
+
+        if (panelName === 'promotions') {
+            const promoInput = profileView.querySelector('#promo-input');
+            requestAnimationFrame(() => promoInput?.focus?.({ preventScroll: true }));
+            return;
         }
 
         const activePanel = profileView.querySelector(`[data-profile-panel="${panelName}"]`);
