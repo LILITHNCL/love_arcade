@@ -6,7 +6,6 @@
    v3.1: Corner accents removed. View transitions anti-golpe added.
          GPU-only animations: opacity + transform exclusively.
    v9.8: Mobile performance pass — eliminated backdrop-filter on all overlays
-         for pointer:coarse devices, disabled laserScan GPU layer during scroll,
          added overscroll-behavior + touch-action hints and reduced costly filters.
    ================================================================ */
 
@@ -1741,6 +1740,7 @@ body::before {
     border-radius: 999px;
     color: var(--on-accent);
     background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
     font-size: 0.68rem;
     font-weight: 800;
     line-height: 1;
@@ -1812,127 +1812,6 @@ body::before {
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .collection-search-input::placeholder { color: var(--text-low); }
-
-/* ================================================================
-   SALE BANNER — Flash Offer Ticket Design
-   ================================================================ */
-.sale-banner {
-    margin-bottom: 16px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    position: relative;
-}
-
-.sale-banner__ticket {
-    background: linear-gradient(135deg, #1a0a00, #2a1000);
-    border: 1px solid rgba(251,191,36,0.5);
-    border-radius: var(--radius-md);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-}
-
-/* ── Sale Banner Ticket — Laser Scan Effect (Arcade Solid 3.0)
-   The golden shimmer sweep is replaced by a precise laser scan:
-   a narrow oblique line of intense light that travels left-to-right
-   every 3.5 s. Uses transform: translate3d() on ::after — GPU only,
-   zero repaints. The ticket itself is fully solid with a dot texture.
-   ── */
-
-/* Dot-pattern texture overlay — replaces repeating diagonal gradient */
-.sale-banner__ticket::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(circle, rgba(251,191,36,0.08) 1px, transparent 1px);
-    background-size: 14px 14px;
-    pointer-events: none;
-    border-radius: inherit;
-}
-
-/* Laser scan line */
-.sale-banner__ticket::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -30%;
-    width: 15%;
-    height: 120%;
-    background: linear-gradient(
-        105deg,
-        transparent 0%,
-        rgba(251,191,36,0.06) 30%,
-        rgba(251,191,36,0.35) 50%,
-        rgba(251,191,36,0.06) 70%,
-        transparent 100%
-    );
-    animation: laserScan 3.5s ease-in-out infinite;
-    /* GPU compositor — no repaints */
-    will-change: transform;
-}
-@keyframes laserScan {
-    0%   { transform: translate3d(0, 0, 0);     opacity: 0; }
-    10%  { opacity: 1; }
-    90%  { opacity: 1; }
-    100% { transform: translate3d(800%, 0, 0);  opacity: 0; }
-}
-
-/* Zigzag border notches */
-.sale-banner__notch-left,
-.sale-banner__notch-right {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--bg-main);
-    z-index: 2;
-}
-.sale-banner__notch-left { left: -7px; }
-.sale-banner__notch-right { right: -7px; }
-
-.sale-banner__icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    color: #120900;
-    box-shadow: 0 4px 14px rgba(251,191,36,0.4);
-}
-
-.sale-banner__content { flex: 1; min-width: 0; }
-.sale-banner__title {
-    font-family: var(--font-display);
-    font-size: 0.82rem;
-    font-weight: 900;
-    color: var(--gold);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 2px;
-    text-shadow: 0 0 10px var(--gold-glow);
-}
-.sale-banner__desc {
-    font-size: 0.75rem;
-    color: rgba(251,191,36,0.7);
-}
-
-.sale-banner__badge {
-    background: var(--gold);
-    color: #120900;
-    font-family: var(--font-display);
-    font-size: 0.9rem;
-    font-weight: 900;
-    padding: 6px 10px;
-    border-radius: var(--radius-xs);
-    flex-shrink: 0;
-    text-shadow: none;
-}
-
-/* Legacy compatibility */
-.sale-banner.hidden { display: none !important; }
 
 /* ================================================================
    PROMO CODE FORM — Perfil
@@ -2817,8 +2696,6 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Toast */
     .toast { bottom: 28px; font-size: 0.86rem; padding: 14px 20px; }
 
-    /* Sale banner */
-    .sale-banner__ticket { padding: 16px 24px; }
 }
 
 @media (min-width: 1024px) {
@@ -3155,16 +3032,6 @@ svg { stroke-width: 2; }
     .toast {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-    }
-
-    /* ── v9.8: Deshabilitar animación laser scan en el banner de oferta ──────
-       .sale-banner__ticket::after tiene will-change: transform permanente, lo
-       que crea una capa GPU que debe ser recompositada en cada frame de scroll.
-       En móvil el efecto de scan es inapreciable a 60fps con pantallas OLED.
-       ─────────────────────────────────────────────────────────────────────── */
-    .sale-banner__ticket::after {
-        animation: none;
-        opacity: 0;
     }
 
     /* ── v9.8: Simplificar hover/tap en tarjetas de catálogo ─────────────────
