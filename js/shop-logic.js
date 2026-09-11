@@ -861,7 +861,20 @@ function _appendPurchasedCollectionCard(item) {
         container.querySelector('.collection-empty-state')?.remove();
         rails = _createShopRails(container);
     }
-    rails[descriptor.rail].append(_buildShopCard(descriptor, 'lazy', thumbnailWidth));
+
+    // No usar descriptor.rail aquí: ese valor viene de _describeVisibleItems()
+    // y refleja una posición recalculada sobre el catálogo completo de
+    // poseídos en este instante, no dónde están físicamente las tarjetas ya
+    // insertadas en el DOM (que nunca se mueven, para evitar reflow). Usar
+    // esa posición global para decidir el rail de una inserción incremental
+    // puede coincidir con un rail que ya tiene más tarjetas, desbalanceando
+    // la colección cuando las compras no llegan en orden ascendente de ID.
+    //
+    // En su lugar, el rail de una inserción incremental se decide por el
+    // estado físico actual de los dos contenedores: el rail con menos hijos.
+    // En empate, siempre rail 0, para que el resultado sea determinista.
+    const targetRail = rails[0].children.length <= rails[1].children.length ? 0 : 1;
+    rails[targetRail].append(_buildShopCard(descriptor, 'lazy', thumbnailWidth));
 }
 
 function _mountCollection() {
