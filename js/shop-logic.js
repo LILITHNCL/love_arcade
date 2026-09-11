@@ -121,6 +121,7 @@ let _lastShopScrollY = 0;
 let _shopDelegationBound = false;
 let _shopLazyObserver = null;
 let _shopLazySentinel = null;
+let _preloadObserver = null;
 const _shopReducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
 const _shopCoarsePointerMql = window.matchMedia('(pointer: coarse)');
 let _shopPrefersReducedMotion = _shopReducedMotionMql.matches;

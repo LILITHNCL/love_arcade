@@ -65,6 +65,7 @@ assert.match(indexHtml, /id="shop-collection"[^>]*aria-hidden="true"/, 'the coll
 assert.match(indexHtml, /data-profile-target="promotions"/, 'promotions must be reachable from Perfil');
 assert.match(indexHtml, /id="profile-promotions"[^>]*data-profile-panel="promotions"/, 'the dedicated promotions panel must exist');
 assert.match(shopLogic, /let _collectionMounted = false/, 'Colección must have an explicit lazy-mount flag');
+assert.match(shopLogic, /let _preloadObserver = null;/, 'shop preload must retain an explicit observer lifecycle handle');
 assert.match(shopLogic, /function _mountCollection\(\)/, 'Colección must be mounted on demand');
 assert.match(shopLogic, /toLocaleLowerCase\(\)/, 'Colección search must normalize names locally');
 assert.match(shopLogic, /getThumbnailUrl\(/, 'Cloudinary thumbnails must be derived centrally');
