@@ -59,6 +59,10 @@ for (const legacyMarkup of ['id="search-input"', 'id="search-clear"', 'id="filte
 for (const legacyLogic of ['activeFilter', 'filterItems', 'resetFilters', '_isGiftItem', '_renderGiftCarousel']) {
     assert.equal(shopLogic.includes(legacyLogic), false, `shop-logic.js must not contain legacy ${legacyLogic}`);
 }
+assert.doesNotMatch(shopLogic, /allItems\.indexOf\(item\)/,
+    'shop-logic.js must not resolve catalog position via indexOf; it must use the precomputed per-id descriptor');
+assert.match(shopLogic, /children\.length/,
+    'incremental collection inserts must balance by actual physical rail child count, not by a recomputed global position');
 
 assert.match(indexHtml, /id="btn-toggle-collection"/, 'the Tienda/Colección switch must exist');
 assert.match(indexHtml, /id="shop-collection"[^>]*aria-hidden="true"/, 'the collection host must start hidden');
@@ -112,6 +116,40 @@ assert.match(shopLogic, /image\.src = _getPreviewImageUrl\(item\);/,
     'both preview renderers must use the selected high-resolution URL');
 assert.match(shopLogic, /image\.decoding = 'async';/,
     'preview images must keep asynchronous decoding');
+
+// ── Regresión: independencia real entre ratio (por ID) y rail (por posición) ──
+// shop-logic.js corre en el navegador, pero _aspectRatioForId() es una función
+// pura sin DOM. La extraemos del código fuente y la ejecutamos aquí para probar
+// el algoritmo de verdad, no solo su presencia textual.
+const aspectRatioFnMatch = shopLogic.match(/function _aspectRatioForId\([^)]*\)\s*{[\s\S]*?\n}/);
+assert.ok(aspectRatioFnMatch, '_aspectRatioForId must exist as a standalone, extractable function');
+
+assert.doesNotMatch(aspectRatioFnMatch[0], /id\s*%\s*2/,
+    '_aspectRatioForId must not derive the ratio from a direct modulo of id: for contiguous/dense id ' +
+    'ranges (the common case — the full catalog, or a collection bought roughly in order) this correlates ' +
+    'perfectly with any position-based alternating rail, reproducing the original single-ratio-per-column bug.');
+
+const _aspectRatioForId = new Function(`${aspectRatioFnMatch[0]}\nreturn _aspectRatioForId;`)();
+
+// Distribución razonable sobre un rango grande — no debe degenerar a casi-todo-un-ratio.
+const sampleIds = Array.from({ length: 500 }, (_, i) => i + 1);
+const nineBySixteenCount = sampleIds.filter(id => _aspectRatioForId(id) === '9:16').length;
+assert.ok(nineBySixteenCount > 150 && nineBySixteenCount < 350,
+    '_aspectRatioForId must distribute roughly evenly across a large contiguous id range');
+
+// Regresión directa del bug real: emparejar el ratio con un rail que alterna
+// estrictamente cada ítem (el comportamiento real de _describeVisibleItems sobre
+// un rango de ids sin huecos) y comprobar que ninguna columna resulta monocromática.
+for (const windowSize of [20, 41, 96]) {
+    const windowIds = Array.from({ length: windowSize }, (_, i) => i + 1);
+    const rails = [[], []];
+    windowIds.forEach((id, index) => rails[index % 2].push(_aspectRatioForId(id)));
+    for (const [railIndex, rail] of rails.entries()) {
+        assert.ok(new Set(rail).size > 1,
+            `a contiguous run of ${windowSize} ids must not produce a single-ratio rail ${railIndex} ` +
+            `(regression for the id-parity / position-parity correlation bug)`);
+    }
+}
 
 console.log(`Documented legacy aliases: ${retired.publishedAliases.join(', ')}.`);
 console.log(`Catalog and shop architecture QA passed: ${catalog.length} published items, ${retired.retiredGiftIds.length} retired gift IDs.`);
