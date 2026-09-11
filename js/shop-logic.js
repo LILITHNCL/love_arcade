@@ -38,9 +38,9 @@
  *    píxeles ya no bloquea el hilo principal cuando múltiples precargas resuelven
  *    simultáneamente durante scroll rápido. Soporte universal: Chrome 65+,
  *    Firefox 63+, Safari 11.1+.
- *  - openPreviewModal(): thumbProbe e hiRes también reciben decoding = 'async'.
- *    La imagen hi-res (hasta 1200 px) se decodifica en el thread del compositor;
- *    el swap de backgroundImage ya no provoca jank en la animación del modal.
+ *  - El preview usa directamente <img.preview-image> con decoding = 'async'.
+ *    La variante de 1200 px se precarga solo para tarjetas de Tienda cercanas al
+ *    viewport y el modal se muestra sin esperar a que esa descarga termine.
  *  - Nuevo helper _isDataSaverActive(): omite la precarga si el usuario tiene
  *    Data Saver activo (navigator.connection.saveData) o la conexión es slow-2g.
  *    Respeta la preferencia explícita del usuario sin degradar la funcionalidad
@@ -389,7 +389,7 @@ function _preloadItemHiRes(cardEl, item) {
     // observer dispara dos veces rápidamente en el mismo frame
     cardEl.dataset.preloaded = 'true';
 
-    const url = getThumbnailUrl(item.imageUrl, cardEl.dataset.aspectRatio, cardEl.dataset.thumbnailWidth);
+    const url = _getPreviewImageUrl(item);
     const img = new Image();
 
     // fetchPriority='low': no compite con recursos críticos del HUD/UI.
@@ -563,6 +563,19 @@ function _makePreviewButton(className, label) {
     return button;
 }
 
+/**
+ * Devuelve la variante de alta resolución exclusiva del preview. Las tarjetas
+ * usan una variante adaptada a su ancho; el preview usa 1200 px y la precarga
+ * de Tienda solicita exactamente esta misma URL para reutilizar la caché.
+ */
+function _getPreviewImageUrl(item) {
+    return getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+}
+
+function _setPreviewImageGeometry(image, item) {
+    image.style.aspectRatio = _getCardAspectRatio(allItems.indexOf(item)).replace(':', ' / ');
+}
+
 function _renderPreview(item) {
     const content = document.getElementById('preview-content');
     const status = document.getElementById('preview-status');
@@ -572,9 +585,10 @@ function _renderPreview(item) {
 
     const image = document.createElement('img');
     image.className = 'preview-image';
-    image.src = getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+    image.src = _getPreviewImageUrl(item);
     image.alt = item.name;
     image.decoding = 'async';
+    _setPreviewImageGeometry(image, item);
     content.append(image);
 
     const title = document.createElement('h3');
@@ -609,9 +623,10 @@ function _renderCollectionItemModal(item) {
 
     const image = document.createElement('img');
     image.className = 'preview-image';
-    image.src = getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+    image.src = _getPreviewImageUrl(item);
     image.alt = item.name;
     image.decoding = 'async';
+    _setPreviewImageGeometry(image, item);
 
     const title = document.createElement('h3');
     title.id = 'preview-title';
@@ -832,11 +847,7 @@ function _mountCollection() {
     const grid = document.createElement('div');
     grid.id = 'collection-container';
     grid.className = 'shop-grid';
-    grid.addEventListener('click', (event) => {
-        const card = event.target.closest('.shop-visual-card');
-        const item = allItems.find(candidate => candidate.id === Number(card?.dataset.itemId));
-        if (item) openCollectionItemModal(item);
-    });
+    _bindCardPreviewActivation(grid, openCollectionItemModal);
     section.append(heading, searchWrap, grid);
     _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
     _collectionMounted = true;
@@ -1036,17 +1047,35 @@ function _bindShopContainerDelegation() {
     if (_shopDelegationBound) return;
     const container = document.getElementById('shop-container');
     if (!container) return;
+    _bindCardPreviewActivation(container, openPreviewModal);
     _shopDelegationBound = true;
+}
 
-    // Contrato de activación: click abre el preview para puntero y teclado.
-    // Pointer Events solo suprimen gestos de arrastre; no son otra ruta de
-    // activación, así que el teclado conserva exactamente el mismo handler.
+/**
+ * Delega la activación de previews para tarjetas actuales y futuras de un grid.
+ * El click nativo de <button> cubre puntero, Enter y Espacio; Pointer Events
+ * solo marcan arrastres verticales/horizontales de más de 10 px para no abrir
+ * un modal después de scroll. No cancela el scroll ni mide/sincroniza layout.
+ *
+ * @param {HTMLElement} container Grid que contiene .shop-visual-card.
+ * @param {(item: object) => void} openItem Apertura del modal correspondiente.
+ */
+function _bindCardPreviewActivation(container, openItem) {
+    if (!container || typeof openItem !== 'function') return;
+
     const pointerGestures = new Map();
     let mostRecentPointerId = null;
     const dragThreshold = 10;
 
+    const getCardFromEvent = (event) => {
+        const visualCard = event.target instanceof Element
+            ? event.target.closest('.shop-visual-card')
+            : null;
+        return visualCard && container.contains(visualCard) ? visualCard : null;
+    };
+
     container.addEventListener('pointerdown', (event) => {
-        const visualCard = event.target.closest('.shop-visual-card');
+        const visualCard = getCardFromEvent(event);
         if (!visualCard) return;
         pointerGestures.set(event.pointerId, {
             x: event.clientX,
@@ -1069,7 +1098,8 @@ function _bindShopContainerDelegation() {
         if (mostRecentPointerId === event.pointerId) mostRecentPointerId = null;
     });
     container.addEventListener('click', (event) => {
-        const visualCard = event.target.closest('.shop-visual-card');
+        const visualCard = getCardFromEvent(event);
+        if (!visualCard) return;
         const pointerId = Number.isInteger(event.pointerId) ? event.pointerId : mostRecentPointerId;
         const gesture = pointerId === null ? null : pointerGestures.get(pointerId);
 
@@ -1082,8 +1112,8 @@ function _bindShopContainerDelegation() {
         }
         if (gesture?.dragged) return;
 
-        const item = allItems.find(candidate => candidate.id === Number(visualCard?.dataset.itemId));
-        if (item) openPreviewModal(item);
+        const item = allItems.find(candidate => candidate.id === Number(visualCard.dataset.itemId));
+        if (item) openItem(item);
     });
 }
 
