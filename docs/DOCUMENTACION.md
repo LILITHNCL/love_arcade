@@ -804,26 +804,28 @@ La Fase 2 (v9.6) del Smart Preload resolvió el problema de latencia al abrir el
 
 ### Cambios
 
-#### `img.decoding = 'async'` en `_preloadItemHiRes()` y `openPreviewModal()`
+#### `img.decoding = 'async'` en la precarga y en `<img.preview-image>`
 
 ```javascript
-// _preloadItemHiRes()
+// _preloadItemHiRes(): misma URL de 1200 px que usa el preview
 img.fetchPriority = 'low';
-img.decoding      = 'async';   // ← NUEVO v9.7
+img.decoding      = 'async';
+img.src           = _getPreviewImageUrl(item);
 
-// openPreviewModal() — thumbProbe
-thumbProbe.decoding = 'async'; // ← NUEVO v9.7
-
-// openPreviewModal() — hiRes
-hiRes.decoding = 'async';      // ← NUEVO v9.7
+// _renderPreview() y _renderCollectionItemModal()
+image.className = 'preview-image';
+image.src = _getPreviewImageUrl(item);
+image.decoding = 'async';
 ```
 
-El atributo `decoding` con valor `async` indica al navegador que puede diferir la decodificación de la imagen al hilo de decodificación (fuera del hilo principal). El hilo principal solo recibe el control cuando la imagen ya está lista en el buffer de la GPU, sin haber sido bloqueado.
+Ya no existen `thumbProbe` ni `hiRes`, ni hay un swap de `backgroundImage`. La tarjeta usa una transformación adaptada a su ancho, mientras que el preview solicita deliberadamente la variante de 1200 px. La precarga de Tienda solicita esa URL exacta para reutilizar la caché; Colección no se precarga en bloque. El modal se muestra de inmediato y la imagen termina de forma progresiva con una relación de aspecto fija, sin esperar la descarga.
 
 | Contexto | Sin `decoding='async'` | Con `decoding='async'` |
 |---|---|---|
-| 8 precargas resuelven simultáneamente | Decodificación síncrona ~10-40 ms × 8 = posible congelación | Decodificación paralela en compositor; hilo principal libre |
-| openPreviewModal — imagen hi-res 1200 px | Swap de backgroundImage puede bloquear 20-80 ms | Swap sin jank; compositor decodifica en background |
+| 8 precargas resuelven simultáneamente | Decodificación síncrona ~10-40 ms × 8 = posible congelación | Decodificación diferida; hilo principal disponible |
+| Preview de 1200 px | Puede competir con la respuesta visual del modal | El overlay aparece primero y la imagen completa de forma progresiva |
+
+El contrato completo de interacción delegada, la estrategia de URL y las métricas recomendadas están en [`preview-interaction-performance.md`](preview-interaction-performance.md).
 
 Soporte: Chrome 65+, Firefox 63+, Safari 11.1+. Cobertura prácticamente universal.
 
@@ -926,7 +928,7 @@ El nuevo `rootMargin` asimétrico tiene tres efectivos:
 
 | Archivo | Cambio |
 |---|---|
-| `js/shop-logic.js` | `_preloadItemHiRes()`: +`decoding='async'`. `openPreviewModal()`: +`decoding='async'` en thumbProbe y hiRes. Nuevas funciones `_isDataSaverActive()`, `_isLowBandwidth()`, `_schedulePreloadItem()`, `_schedulePreloadFlush()`, `_flushPreloadQueue()`. Nuevas vars de módulo `_preloadQueue`, `_preloadFlushId`. `_initPreloadObserver()`: guard de conexión, cancelación de cola, rootMargin asimétrico, threshold 0, usa `_schedulePreloadItem` en vez de llamada directa. |
+| `js/shop-logic.js` | `_preloadItemHiRes()` y `<img.preview-image>` usan `decoding='async'`; `_getPreviewImageUrl()` mantiene la URL de preview de 1200 px igual a la precargada. Nuevas funciones `_isDataSaverActive()`, `_isLowBandwidth()`, `_schedulePreloadItem()`, `_schedulePreloadFlush()`, `_flushPreloadQueue()`. Nuevas vars de módulo `_preloadQueue`, `_preloadFlushId`. `_initPreloadObserver()`: guard de conexión, cancelación de cola, rootMargin asimétrico, threshold 0, usa `_schedulePreloadItem` en vez de llamada directa. |
 
 ---
 

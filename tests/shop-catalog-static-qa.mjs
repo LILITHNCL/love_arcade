@@ -74,5 +74,44 @@ assert.match(shopLogic, /fl_attachment/, 'image downloads must force attachment 
 assert.match(shopLogic, /pointerdown/, 'shop cards must use delegated Pointer Events');
 assert.match(styles, /\.collection-search-input/, 'Collection search styles must be present');
 
+// Card previews share one delegated activation contract. Native button clicks
+// cover mouse/tap plus Enter/Space; Pointer Events only discard real drags.
+assert.match(shopLogic, /function _bindCardPreviewActivation\(container, openItem\)/,
+    'Tienda and Colección must share an explicit card preview activation helper');
+assert.match(shopLogic, /_bindCardPreviewActivation\(container, openPreviewModal\)/,
+    'shop container must bind the shared helper');
+assert.match(shopLogic, /_bindCardPreviewActivation\(grid, openCollectionItemModal\)/,
+    'collection container must bind the shared helper');
+assert.doesNotMatch(shopLogic, /grid\.addEventListener\('click'/,
+    'collection must not retain a per-container click implementation');
+assert.match(shopLogic, /const dragThreshold = 10;/,
+    'the shared activation helper must keep a documented 10 px drag threshold');
+assert.match(shopLogic, /if \(gesture\?\.dragged\) return;/,
+    'a vertical/horizontal drag must not open a preview');
+assert.match(shopLogic, /container\.contains\(visualCard\)/,
+    'delegated activation must reject cards outside its bound container');
+assert.match(shopLogic, /allItems\.find\(candidate => candidate\.id === Number\(visualCard\.dataset\.itemId\)\)/,
+    'activation must resolve a still-existing item from data-item-id');
+assert.doesNotMatch(shopLogic, /event\.detail\s*!==\s*0/,
+    'keyboard activation must not be filtered out by click detail');
+const activationHelper = shopLogic.slice(
+    shopLogic.indexOf('function _bindCardPreviewActivation'),
+    shopLogic.indexOf('// ── Render: Colección', shopLogic.indexOf('function _bindCardPreviewActivation'))
+);
+assert.doesNotMatch(activationHelper, /preventDefault|addEventListener\('scroll'/,
+    'preview activation must neither cancel scrolling nor use global scroll cancellation');
+assert.equal((activationHelper.match(/addEventListener\('click'/g) || []).length, 1,
+    'each container must have exactly one click route, so a tap opens one preview');
+assert.match(shopLogic, /El click nativo de <button> cubre puntero, Enter y Espacio/,
+    'the helper must preserve native Enter/Space button activation');
+assert.match(shopLogic, /function _getPreviewImageUrl\(item\)/,
+    'preview URL selection must be centralized');
+assert.match(shopLogic, /const url = _getPreviewImageUrl\(item\);/,
+    'shop preloading must request the same high-resolution URL used by the preview');
+assert.match(shopLogic, /image\.src = _getPreviewImageUrl\(item\);/,
+    'both preview renderers must use the selected high-resolution URL');
+assert.match(shopLogic, /image\.decoding = 'async';/,
+    'preview images must keep asynchronous decoding');
+
 console.log(`Documented legacy aliases: ${retired.publishedAliases.join(', ')}.`);
 console.log(`Catalog and shop architecture QA passed: ${catalog.length} published items, ${retired.retiredGiftIds.length} retired gift IDs.`);
