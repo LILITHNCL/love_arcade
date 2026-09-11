@@ -1038,34 +1038,53 @@ function _bindShopContainerDelegation() {
     if (!container) return;
     _shopDelegationBound = true;
 
-    let pointerStart = null;
-    const cancelPointer = () => { pointerStart = null; };
+    // Contrato de activación: click abre el preview para puntero y teclado.
+    // Pointer Events solo suprimen gestos de arrastre; no son otra ruta de
+    // activación, así que el teclado conserva exactamente el mismo handler.
+    const pointerGestures = new Map();
+    let mostRecentPointerId = null;
+    const dragThreshold = 10;
+
     container.addEventListener('pointerdown', (event) => {
         const visualCard = event.target.closest('.shop-visual-card');
         if (!visualCard) return;
-        pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, time: event.timeStamp, card: visualCard };
+        pointerGestures.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+            dragged: false
+        });
     });
     container.addEventListener('pointermove', (event) => {
-        if (!pointerStart || event.pointerId !== pointerStart.id) return;
-        if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) cancelPointer();
+        const gesture = pointerGestures.get(event.pointerId);
+        if (!gesture || gesture.dragged) return;
+        if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > dragThreshold) {
+            gesture.dragged = true;
+        }
     });
-    container.addEventListener('pointercancel', cancelPointer);
-    container.addEventListener('selectstart', cancelPointer);
+    container.addEventListener('pointerup', (event) => {
+        if (pointerGestures.has(event.pointerId)) mostRecentPointerId = event.pointerId;
+    });
+    container.addEventListener('pointercancel', (event) => {
+        pointerGestures.delete(event.pointerId);
+        if (mostRecentPointerId === event.pointerId) mostRecentPointerId = null;
+    });
     container.addEventListener('click', (event) => {
-        if (event.detail !== 0) return; // Native keyboard activation.
         const visualCard = event.target.closest('.shop-visual-card');
+        const pointerId = Number.isInteger(event.pointerId) ? event.pointerId : mostRecentPointerId;
+        const gesture = pointerId === null ? null : pointerGestures.get(pointerId);
+
+        // Chromium expone pointerId en click; otros navegadores usan el último
+        // gesto finalizado. En ambos casos, consumirlo impide que un arrastre
+        // pendiente suprima una activación posterior.
+        if (gesture) {
+            pointerGestures.delete(pointerId);
+            if (mostRecentPointerId === pointerId) mostRecentPointerId = null;
+        }
+        if (gesture?.dragged) return;
+
         const item = allItems.find(candidate => candidate.id === Number(visualCard?.dataset.itemId));
         if (item) openPreviewModal(item);
     });
-    container.addEventListener('pointerup', (event) => {
-        if (!pointerStart || event.pointerId !== pointerStart.id) return;
-        const activation = pointerStart;
-        cancelPointer();
-        if (event.timeStamp - activation.time > 500 || Math.hypot(event.clientX - activation.x, event.clientY - activation.y) > 8) return;
-        const item = allItems.find(candidate => candidate.id === Number(activation.card.dataset.itemId));
-        if (item) openPreviewModal(item);
-    });
-    window.addEventListener('scroll', cancelPointer, { passive: true });
 }
 
 // ── Render: Colección (solo tras su primer montaje) ──────────────────────────
