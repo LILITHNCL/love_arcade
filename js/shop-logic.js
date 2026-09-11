@@ -112,7 +112,33 @@
 let allItems     = [];
 // Se calcula una vez por catálogo: el ratio depende exclusivamente del ID.
 let _itemAspectRatios = new Map();
-const _aspectRatioForId = (id) => (id % 2 === 0 ? '9:16' : '3:4');
+/**
+ * Deriva el aspect ratio de un ítem a partir de su ID.
+ *
+ * IMPORTANTE: no debe existir una relación aritmética simple (módulo directo,
+ * paridad, etc.) entre `id` y el ratio resultante. `_describeVisibleItems()`
+ * asigna `rail = visibleIndex % 2` sobre la lista visible ordenada por ID.
+ * Cuando el conjunto visible es un rango de IDs consecutivo sin huecos (el
+ * catálogo completo en Tienda antes de comprar nada; una Colección comprada
+ * aproximadamente en orden), `visibleIndex` también avanza de uno en uno. Si
+ * el ratio se derivara con `id % 2`, ambas secuencias alternarían en fase (o
+ * en fase opuesta) de forma determinista sobre todo el recorrido, y el ratio
+ * terminaría prediciendo el rail — una columna quedaría monocromática en
+ * ratio sin importar cómo se calcule ese rail.
+ *
+ * Por eso se usa una función de mezcla de bits (hash entero determinista,
+ * variante del hash de Thomas Wang de 32 bits) en vez de módulo directo sobre
+ * el ID. Sigue siendo pura y determinista por `id` (mismo ID → mismo ratio
+ * siempre) y con distribución aproximadamente 50/50, pero sin ningún período
+ * corto y predecible al recorrer IDs consecutivos.
+ */
+function _aspectRatioForId(id) {
+    let h = id | 0;
+    h = ((h >>> 16) ^ h) * 0x45d9f3b;
+    h = ((h >>> 16) ^ h) * 0x45d9f3b;
+    h = (h >>> 16) ^ h;
+    return (h & 1) === 0 ? '9:16' : '3:4';
+}
 let activeShopView = 'shop';
 let _collectionMounted = false;
 let _collectionSearchQuery = '';
