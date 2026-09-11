@@ -105,11 +105,40 @@
  * NOTAS SPA:
  *  - Todos los event listeners se registran una sola vez en DOMContentLoaded.
  *  - window.ShopView.onEnter() es llamado por spa-router.js al entrar a la vista
- *    de Tienda, permitiendo refrescar estado sin re-inicializar todo.
+ *    de Tienda y permite rebalancear el grid cuando se vuelve a esa vista.
  */
 
 // ── Estado del catálogo (módulo privado) ──────────────────────────────────────
 let allItems     = [];
+// Se calcula una vez por catálogo: el ratio depende exclusivamente del ID.
+let _itemAspectRatios = new Map();
+/**
+ * Deriva el aspect ratio de un ítem a partir de su ID.
+ *
+ * IMPORTANTE: no debe existir una relación aritmética simple (módulo directo,
+ * paridad, etc.) entre `id` y el ratio resultante. `_describeVisibleItems()`
+ * asigna `rail = visibleIndex % 2` sobre la lista visible ordenada por ID.
+ * Cuando el conjunto visible es un rango de IDs consecutivo sin huecos (el
+ * catálogo completo en Tienda antes de comprar nada; una Colección comprada
+ * aproximadamente en orden), `visibleIndex` también avanza de uno en uno. Si
+ * el ratio se derivara con `id % 2`, ambas secuencias alternarían en fase (o
+ * en fase opuesta) de forma determinista sobre todo el recorrido, y el ratio
+ * terminaría prediciendo el rail — una columna quedaría monocromática en
+ * ratio sin importar cómo se calcule ese rail.
+ *
+ * Por eso se usa una función de mezcla de bits (hash entero determinista,
+ * variante del hash de Thomas Wang de 32 bits) en vez de módulo directo sobre
+ * el ID. Sigue siendo pura y determinista por `id` (mismo ID → mismo ratio
+ * siempre) y con distribución aproximadamente 50/50, pero sin ningún período
+ * corto y predecible al recorrer IDs consecutivos.
+ */
+function _aspectRatioForId(id) {
+    let h = id | 0;
+    h = ((h >>> 16) ^ h) * 0x45d9f3b;
+    h = ((h >>> 16) ^ h) * 0x45d9f3b;
+    h = (h >>> 16) ^ h;
+    return (h & 1) === 0 ? '9:16' : '3:4';
+}
 let activeShopView = 'shop';
 let _collectionMounted = false;
 let _collectionSearchQuery = '';
@@ -446,7 +475,8 @@ function _preloadItemHiRes(cardEl, item) {
  * resolver tanto las tarjetas iniciales como los lotes que se añaden al hacer
  * scroll. La observación de esos lotes se delega a _observeNewShopCards().
  *
- * @param {object[]} items — Arreglo completo de items del render actual.
+ * @param {Array<{id: number, item: object, aspectRatio: string, rail: number}>} items
+ *   — Descriptores visibles completos del render actual.
  * @returns {IntersectionObserver|null}
  */
 function _createPreloadObserver(items) {
@@ -461,7 +491,7 @@ function _createPreloadObserver(items) {
     // Construir mapa id → item para O(1) lookup en el callback. Debe incluir
     // el catálogo completo, no solo el primer lote, porque el observer persiste
     // durante los append incrementales.
-    const itemMap = new Map(items.map(it => [it.id, it]));
+    const itemMap = new Map(items.map(descriptor => [descriptor.id, descriptor.item]));
 
     return new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -525,7 +555,8 @@ function _observeNewShopCards(cardEls) {
  * el grid; los lotes incrementales conservan este observer.
  *
  * @param {HTMLElement} container — #shop-container con las tarjetas ya en el DOM.
- * @param {object[]}    items     — Arreglo completo de items del render actual.
+ * @param {Array<{id: number, item: object, aspectRatio: string, rail: number}>} items
+ *   — Descriptores visibles completos del render actual.
  */
 function _initPreloadObserver(container, items) {
     // Desconectar observer anterior y vaciar la cola si el catálogo se re-renderizó.
@@ -568,12 +599,16 @@ function _makePreviewButton(className, label) {
  * usan una variante adaptada a su ancho; el preview usa 1200 px y la precarga
  * de Tienda solicita exactamente esta misma URL para reutilizar la caché.
  */
+function _getItemAspectRatio(item) {
+    return _itemAspectRatios.get(item.id);
+}
+
 function _getPreviewImageUrl(item) {
-    return getThumbnailUrl(item.imageUrl, _getCardAspectRatio(allItems.indexOf(item)), 1200);
+    return getThumbnailUrl(item.imageUrl, _getItemAspectRatio(item), 1200);
 }
 
 function _setPreviewImageGeometry(image, item) {
-    image.style.aspectRatio = _getCardAspectRatio(allItems.indexOf(item)).replace(':', ' / ');
+    image.style.aspectRatio = _getItemAspectRatio(item).replace(':', ' / ');
 }
 
 function _renderPreview(item) {
@@ -731,8 +766,10 @@ async function _completePreviewPurchase(item, confirm, back) {
     }
 
     const scrollY = window.scrollY;
-    renderShopView();
-    if (_collectionMounted) renderCollectionView();
+    _removePurchasedShopCard(item);
+    _appendPurchasedCollectionCard(item);
+    // Normalmente no cambia; restaurarlo ahora evita incluso un salto por scroll anchoring.
+    if (window.scrollY !== scrollY) window.scrollTo({ top: scrollY, behavior: 'auto' });
     const balance = GameCenter.getBalance();
     document.querySelectorAll('.navbar .coin-display').forEach(el => {
         el.textContent = window.formatCoinsNavbar?.(balance) ?? balance;
@@ -787,23 +824,83 @@ function _ownedItems() {
     return allItems.filter(item => GameCenter.getBoughtCount(item.id) > 0);
 }
 
+function _describeVisibleItems(items) {
+    return [...items]
+        .sort((a, b) => a.id - b.id)
+        .map((item, visibleIndex) => ({
+            item,
+            id: item.id,
+            aspectRatio: _itemAspectRatios.get(item.id),
+            rail: visibleIndex % 2
+        }));
+}
+
+function _toggleShopEmptyState(isEmpty) {
+    document.getElementById('shop-container')?.classList.toggle('hidden', isEmpty);
+    document.getElementById('shop-empty-state')?.classList.toggle('hidden', !isEmpty);
+}
+
 function renderShopView() {
-    const available = allItems.filter(item => GameCenter.getBoughtCount(item.id) === 0);
-    const gridEl = document.getElementById('shop-container');
-    const emptyEl = document.getElementById('shop-empty-state');
+    const available = _describeVisibleItems(allItems.filter(item => GameCenter.getBoughtCount(item.id) === 0));
     renderShop(available);
-    gridEl?.classList.toggle('hidden', available.length === 0);
-    emptyEl?.classList.toggle('hidden', available.length !== 0);
+    _toggleShopEmptyState(available.length === 0);
+}
+
+function _collectionVisibleItems() {
+    const query = _collectionSearchQuery;
+    return _describeVisibleItems(_ownedItems().filter(item => {
+        const normalizedName = _collectionSearchIndex.get(item.id) || '';
+        return !query || normalizedName.includes(query);
+    }));
 }
 
 function renderCollectionView() {
     if (!_collectionMounted) return;
-    const query = _collectionSearchQuery;
-    const owned = _ownedItems().filter(item => {
-        const normalizedName = _collectionSearchIndex.get(item.id) || '';
-        return !query || normalizedName.includes(query);
-    });
-    renderCollection(owned, Boolean(query));
+    // La búsqueda es uno de los momentos esperados para reconstruir y rebalancear.
+    renderCollection(_collectionVisibleItems(), Boolean(_collectionSearchQuery));
+}
+
+function _removePurchasedShopCard(item) {
+    const container = document.getElementById('shop-container');
+    const itemIndex = _shopRenderState.items.findIndex(descriptor => descriptor.id === item.id);
+    if (itemIndex !== -1) {
+        _shopRenderState.items.splice(itemIndex, 1);
+        if (itemIndex < _shopRenderState.cursor) _shopRenderState.cursor -= 1;
+    }
+    container?.querySelector(`.shop-card[data-item-id="${item.id}"]`)?.remove();
+
+    // No redistribuir los nodos restantes: conservar sus railes evita un reflow
+    // destructivo durante la compra, aunque deje el grid algo desbalanceado.
+    _toggleShopEmptyState(_shopRenderState.items.length === 0);
+}
+
+function _appendPurchasedCollectionCard(item) {
+    if (!_collectionMounted) return;
+    const descriptor = _collectionVisibleItems().find(candidate => candidate.id === item.id);
+    if (!descriptor) return;
+
+    const container = document.getElementById('collection-container');
+    if (!container || container.querySelector(`.shop-card[data-item-id="${item.id}"]`)) return;
+    const thumbnailWidth = _getThumbnailWidth(container);
+    let rails = [...container.querySelectorAll('.shop-rail')];
+    if (!rails.length) {
+        container.querySelector('.collection-empty-state')?.remove();
+        rails = _createShopRails(container);
+    }
+
+    // No usar descriptor.rail aquí: ese valor viene de _describeVisibleItems()
+    // y refleja una posición recalculada sobre el catálogo completo de
+    // poseídos en este instante, no dónde están físicamente las tarjetas ya
+    // insertadas en el DOM (que nunca se mueven, para evitar reflow). Usar
+    // esa posición global para decidir el rail de una inserción incremental
+    // puede coincidir con un rail que ya tiene más tarjetas, desbalanceando
+    // la colección cuando las compras no llegan en orden ascendente de ID.
+    //
+    // En su lugar, el rail de una inserción incremental se decide por el
+    // estado físico actual de los dos contenedores: el rail con menos hijos.
+    // En empate, siempre rail 0, para que el resultado sea determinista.
+    const targetRail = rails[0].children.length <= rails[1].children.length ? 0 : 1;
+    rails[targetRail].append(_buildShopCard(descriptor, 'lazy', thumbnailWidth));
 }
 
 function _mountCollection() {
@@ -860,6 +957,7 @@ function switchShopView(view) {
     const toggle = document.getElementById('btn-toggle-collection');
     const showingCollection = view === 'collection';
 
+    const collectionWasMounted = _collectionMounted;
     if (showingCollection) _mountCollection();
     shopPanel?.classList.toggle('hidden', showingCollection);
     collectionPanel?.classList.toggle('hidden', !showingCollection);
@@ -868,8 +966,8 @@ function switchShopView(view) {
         toggle.textContent = showingCollection ? 'Ver Tienda' : 'Ver colección';
         toggle.setAttribute('aria-expanded', String(showingCollection));
     }
-    if (showingCollection) renderCollectionView();
-    else renderShopView();
+    if (showingCollection && !collectionWasMounted) renderCollectionView();
+    else if (!showingCollection) renderShopView();
 }
 
 function _bindShopScrollVisibility() {
@@ -910,19 +1008,15 @@ function renderStreakCalendar() {
     }).join('');
 }
 
-function _getCardAspectRatio(catalogIndex) {
-    return catalogIndex % 2 === 0 ? '9:16' : '3:4';
-}
-
 function _getThumbnailWidth(container) {
     const gap = 10;
     const cssWidth = Math.max(160, ((container?.clientWidth || 640) - gap) / 2);
     return Math.ceil(cssWidth * Math.min(window.devicePixelRatio || 1, 2));
 }
 
-function _buildShopCard(item, loading = 'lazy', catalogIndex = 0, thumbnailWidth = 640) {
+function _buildShopCard(descriptor, loading = 'lazy', thumbnailWidth = 640) {
+    const { item, aspectRatio } = descriptor;
     const article = document.createElement('article');
-    const aspectRatio = _getCardAspectRatio(catalogIndex);
     const isOwned = GameCenter.getBoughtCount(item.id) > 0;
     article.className = 'shop-card';
     article.dataset.itemId = String(item.id);
@@ -992,11 +1086,10 @@ function _appendShopBatch(container) {
         // Mark first 6 items of the entire catalog to load eagerly.
         // i is the global index in _shopRenderState.items.
         const loading = i < 6 ? 'eager' : 'lazy';
-        const item = _shopRenderState.items[i];
-        const catalogIndex = allItems.indexOf(item);
-        const card = _buildShopCard(item, loading, catalogIndex, _shopRenderState.thumbnailWidth);
+        const descriptor = _shopRenderState.items[i];
+        const card = _buildShopCard(descriptor, loading, _shopRenderState.thumbnailWidth);
         newCards.push(card);
-        _shopRenderState.rails[catalogIndex % 2].append(card);
+        _shopRenderState.rails[descriptor.rail].append(card);
     }
     _shopRenderState.cursor = end;
 
@@ -1005,6 +1098,10 @@ function _appendShopBatch(container) {
 }
 
 // ── Render: Catálogo (lazy incremental mounting) ─────────────────────────────
+/**
+ * Reconstrucción completa permitida al montar/volver a entrar en Tienda o tras
+ * recargar el catálogo. Las compras usan _removePurchasedShopCard() en su lugar.
+ */
 function renderShop(items) {
     const container = document.getElementById('shop-container');
     _teardownShopLazyRender();
@@ -1118,6 +1215,7 @@ function _bindCardPreviewActivation(container, openItem) {
 }
 
 // ── Render: Colección (solo tras su primer montaje) ──────────────────────────
+/** Reconstruye Colección solo en su montaje, al buscar o al recargar catálogo. */
 function renderCollection(owned, isSearching = false) {
     if (!_collectionMounted) return;
     const container = document.getElementById('collection-container');
@@ -1134,10 +1232,9 @@ function renderCollection(owned, isSearching = false) {
 
     const rails = _createShopRails(container);
     const thumbnailWidth = _getThumbnailWidth(container);
-    owned.forEach((item) => {
-        const catalogIndex = allItems.indexOf(item);
-        const card = _buildShopCard(item, 'lazy', catalogIndex, thumbnailWidth);
-        rails[catalogIndex % 2].append(card);
+    owned.forEach((descriptor) => {
+        const card = _buildShopCard(descriptor, 'lazy', thumbnailWidth);
+        rails[descriptor.rail].append(card);
     });
 }
 
@@ -1577,17 +1674,15 @@ window.ShopView = {
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
             el.textContent = balance;
         });
-        if (allItems.length) {
-            if (activeShopView === 'collection') renderCollectionView();
-            else renderShopView();
-        }
+        // Reentrar a Tienda permite un rebalanceo esperado; Colección conserva
+        // sus nodos hasta una búsqueda o una recarga explícita del catálogo.
+        if (allItems.length && activeShopView !== 'collection') renderShopView();
 
     },
 
     /**
      * Llamado por spa-router.js al salir de Tienda.
-     * El observer de precarga se conserva mientras el grid no cambie: así una
-     * reentrada con la misma firma no desconecta ni vuelve a observar las cards.
+     * El observer de precarga se conserva durante interacciones incrementales.
      * renderShop() sigue siendo el único punto que lo reinicializa al cambiar DOM.
      */
     onLeave() {}
@@ -1654,6 +1749,10 @@ function loadCatalog() {
         })
         .then(items => {
             allItems = _validateCatalog(items);
+            _itemAspectRatios = new Map(allItems.map(item => [
+                item.id,
+                _aspectRatioForId(item.id)
+            ]));
             _catalogRevision += 1;
             if (gridEl) gridEl.innerHTML = '';
             if (_collectionMounted) _collectionSearchIndex = new Map(allItems.map(item => [item.id, item.name.toLocaleLowerCase()]));
