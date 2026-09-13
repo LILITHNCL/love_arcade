@@ -77,6 +77,33 @@ assert.match(shopLogic, /getImageDownloadUrl\(/, 'Cloudinary image downloads mus
 assert.match(shopLogic, /fl_attachment/, 'image downloads must force attachment delivery');
 assert.match(shopLogic, /pointerdown/, 'shop cards must use delegated Pointer Events');
 assert.match(styles, /\.collection-search-input/, 'Collection search styles must be present');
+const shopVisualCardRule = styles.match(/\.shop-visual-card\s*\{([^}]*)}/)?.[1] || '';
+assert.match(styles, /--radius-card-product:\s*24px;/,
+    'product cards must use the dedicated 24 px radius token');
+assert.match(shopVisualCardRule, /border-radius:\s*var\(--radius-card-product\);/,
+    'shop product cards must retain a tokenized border-radius fallback');
+assert.match(styles, /@supports \(corner-shape:\s*squircle\)[\s\S]*?\.shop-visual-card,[\s\S]*?corner-shape:\s*squircle;/,
+    'product cards must progressively enhance to native squircle corners');
+assert.match(styles, /\.game-card\s*\{[\s\S]*?border-radius:\s*var\(--radius-card-product\);/,
+    'game cards must share the product-card radius');
+assert.match(styles, /\.card-cover\s*\{[\s\S]*?border-radius:\s*var\(--radius-card-product\) var\(--radius-card-product\) 0 0;/,
+    'game covers must align their upper corners with the product-card radius');
+assert.match(shopVisualCardRule, /(?:^|\n)\s*border:\s*none;/,
+    'shop product cards must remove the permanent accent border');
+assert.doesNotMatch(shopVisualCardRule, /background:\s*var\(--accent-soft\);/,
+    'shop product cards must not keep the permanent accent background');
+assert.match(styles, /\.shop-visual-card--loading\s*\{\s*background:\s*var\(--solid-surface-deep\);\s*\}/,
+    'shop product cards must use a neutral loading placeholder');
+assert.match(styles, /data-aspect-ratio="9:16"[^\n]*aspect-ratio:\s*9\s*\/\s*16;/,
+    'narrow collection thumbnails must retain their 9:16 geometry');
+assert.match(styles, /data-aspect-ratio="3:4"[^\n]*aspect-ratio:\s*3\s*\/\s*4;/,
+    'standard shop thumbnails must retain their 3:4 geometry');
+assert.match(styles, /\.shop-sale-pill\s*\{[\s\S]*?top:\s*8px;[\s\S]*?left:\s*8px;/,
+    'the sale pill must keep its 8 px inset inside the larger product corner');
+assert.match(shopLogic, /shop-visual-card shop-visual-card--loading/,
+    'shop product cards must begin with the neutral loading placeholder');
+assert.match(shopLogic, /button\.classList\.remove\('shop-visual-card--loading'\)/,
+    'shop product cards must clear the loading placeholder after load or error');
 
 // Card previews share one delegated activation contract. Native button clicks
 // cover mouse/tap plus Enter/Space; Pointer Events only discard real drags.

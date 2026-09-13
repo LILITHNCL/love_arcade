@@ -1024,7 +1024,9 @@ function _buildShopCard(descriptor, loading = 'lazy', thumbnailWidth = 640) {
     article.dataset.thumbnailWidth = String(thumbnailWidth);
 
     const button = document.createElement('button');
-    button.className = 'shop-visual-card';
+    // A neutral loading surface prevents the old theme-tinted frame from
+    // appearing while the asynchronous product image is still decoding.
+    button.className = 'shop-visual-card shop-visual-card--loading';
     button.type = 'button';
     button.dataset.itemId = String(item.id);
     button.setAttribute('aria-label', `Ver ${item.name}`);
@@ -1036,8 +1038,12 @@ function _buildShopCard(descriptor, loading = 'lazy', thumbnailWidth = 640) {
     image.loading = loading;
     image.decoding = 'async';
     if (loading === 'eager') image.fetchPriority = 'high';
+    image.addEventListener('load', () => {
+        button.classList.remove('shop-visual-card--loading');
+    }, { once: true });
     image.addEventListener('error', () => {
         article.classList.add('shop-card--image-error');
+        button.classList.remove('shop-visual-card--loading');
         image.remove();
     }, { once: true });
     button.append(image);

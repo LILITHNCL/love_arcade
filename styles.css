@@ -227,6 +227,7 @@ span + .icon,
     --radius-md:  14px;
     --radius-lg:  20px;
     --radius-xl:  28px;
+    --radius-card-product: 24px;
     --nav-height: 68px;
     --pill-nav-height: 56px;
     --pill-nav-offset: 16px;
@@ -1529,11 +1530,14 @@ body::before {
 
 .game-card {
     background: #141620;
-    border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
-    border-radius: var(--radius-lg);
+    /* The cover art now reaches its edge; outline supplies hover feedback
+       without reserving the old permanent theme-coloured frame. */
+    border: none;
+    outline: 1px solid transparent;
+    border-radius: var(--radius-card-product);
     overflow: hidden;
     box-shadow: var(--surface-shadow-soft);
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    transition: transform 180ms ease, box-shadow 180ms ease;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1541,7 +1545,7 @@ body::before {
 }
 
 .game-card:hover {
-    border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+    outline-color: color-mix(in srgb, var(--accent) 24%, transparent);
     transform: translateY(-4px) scale(1.01);
     box-shadow: 0 16px 34px rgba(0,0,0,0.52), 0 0 24px color-mix(in srgb, var(--accent) 16%, transparent);
     z-index: 2;
@@ -1551,10 +1555,11 @@ body::before {
     aspect-ratio: 16 / 11;
     width: 100%;
     flex: 0 0 auto;
+    /* Neutral fallback is only visible before the image has painted. */
     background: var(--solid-surface-deep);
     position: relative;
     overflow: hidden;
-    border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) var(--radius-md) var(--radius-md);
+    border-radius: var(--radius-card-product) var(--radius-card-product) 0 0;
 }
 
 .card-cover-img {
@@ -1689,13 +1694,26 @@ body::before {
     width: 100%;
     padding: 0;
     overflow: hidden;
-    border: 1px solid var(--accent-border);
-    border-radius: var(--radius-md);
-    background: var(--accent-soft);
+    /* Product art should reach the edge; the old accent border/background
+       read as a permanent theme-coloured margin around every image. */
+    border: none;
+    outline: 1px solid transparent;
+    border-radius: var(--radius-card-product);
+    background: transparent;
     box-shadow: var(--surface-shadow-soft);
     cursor: pointer;
     aspect-ratio: var(--shop-card-ratio, 3 / 4);
-    transition: transform 170ms ease-out, box-shadow 170ms ease-out, border-color 170ms ease-out;
+    transition: transform 170ms ease-out, box-shadow 170ms ease-out;
+}
+
+/* Chromium 139+ can render continuous superellipse corners; border-radius
+   remains the no-cost fallback for browsers that do not support corner-shape. */
+@supports (corner-shape: squircle) {
+    .shop-visual-card,
+    .game-card,
+    .card-cover {
+        corner-shape: squircle;
+    }
 }
 
 .shop-card[data-aspect-ratio="9:16"] .shop-visual-card { aspect-ratio: 9 / 16; }
@@ -1703,7 +1721,7 @@ body::before {
 
 .shop-visual-card:hover,
 .shop-visual-card:focus-visible {
-    border-color: var(--accent);
+    outline-color: var(--accent);
     box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .shop-visual-card:hover { transform: translateY(-2px); }
@@ -1716,6 +1734,9 @@ body::before {
     object-fit: cover;
 }
 
+/* Loading reserves the card geometry with a neutral surface, never a themed frame. */
+.shop-visual-card--loading { background: var(--solid-surface-deep); }
+
 .shop-card--image-error .shop-visual-card::after {
     content: 'Imagen no disponible';
     position: absolute;
@@ -1726,7 +1747,8 @@ body::before {
     color: var(--on-accent);
     font-size: 0.8rem;
     text-align: center;
-    background: var(--accent-soft);
+    /* Error feedback remains distinct without restoring the removed accent frame. */
+    background: var(--solid-surface-deep);
 }
 
 .shop-sale-pill {
