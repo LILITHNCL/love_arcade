@@ -1170,10 +1170,46 @@
   {
     "id": 147,
     "name": "Angry Birds Epic: All Stars",
-    "price": 10,
+    "price": 2500,
     "category": "art",
     "type": "file",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-epic-all-stars",
-    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-epic-all-stars.apk"
+    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-epic-all-stars-mod.apk"
+},
+{
+    "id": 148,
+    "name": "Angry Birds Epic: Dinero Infinito",
+    "price": 2500,
+    "category": "art",
+    "type": "file",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-epic-dinero-infinito",
+    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-epic-dinero-infinito-mod.apk"
+},
+{
+    "id": 149,
+    "name": "Angry Birds Space",
+    "price": 2500,
+    "category": "art",
+    "type": "file",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-space",
+    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-space-hd-v2.2.14.apk"
+},
+{
+    "id": 150,
+    "name": "Angry Birds Star Wars",
+    "price": 2500,
+    "category": "art",
+    "type": "file",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-star-wars",
+    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-star-wars-hd-v1.5.13-.apk"
+},
+{
+    "id": 151,
+    "name": "Angry Birds Star Wars II: Final Update",
+    "price": 2500,
+    "category": "art",
+    "type": "file",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-star-wars-ii",
+    "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-star-wars-ii-final-update-mod-v2.0.apk"
 }
 ]
