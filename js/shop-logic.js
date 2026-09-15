@@ -248,7 +248,7 @@ function getThumbnailUrl(sourceUrl, aspectRatio, width) {
 
     const ratio = aspectRatio === '9:16' ? '9:16' : '3:4';
     const safeWidth = Math.max(160, Math.min(1600, Math.round(Number(width) || 640)));
-    const transforms = `f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${safeWidth}`;
+    const transforms = `f_avif,q_auto,c_fill,g_auto,ar_${ratio},w_${safeWidth}`;
     return sourceUrl.replace(uploadMarker, `${uploadMarker}${transforms}/`);
 }
 

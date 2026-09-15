@@ -66,7 +66,7 @@
 
 La Tienda usa una única fuente publicada: `data/shop.json`. Cada entrada conserva un `id` numérico estable, `name`, `price`, `category: "art"`, `type`, e `imageUrl`; los elementos `type: "file"` añaden `downloadUrl`. El contrato no admite `tags`, `file`, `requirements` ni `category: "gift"`.
 
-`imageUrl` guarda la URL Cloudinary original, sin transformaciones. `shop-logic.js` deriva thumbnails al vuelo con `f_auto,q_auto,c_fill,g_auto`, relación de aspecto y ancho apropiados; ante una URL no reconocida conserva la fuente como fallback. Para descargar un elemento `image` poseído, deriva `fl_attachment`; para `file`, usa su `downloadUrl` directo.
+`imageUrl` guarda la URL Cloudinary original, sin transformaciones. `shop-logic.js` deriva al vuelo las miniaturas de Tienda, Colección y el preview con `f_avif,q_auto,c_fill,g_auto`, relación de aspecto y ancho apropiados; por tanto, estas vistas solicitan AVIF explícitamente y no usan la negociación automática de formato de `f_auto`. Ante una URL no reconocida conserva la fuente como fallback. Para descargar un elemento `image` poseído, deriva `fl_attachment`; para `file`, usa su `downloadUrl` directo.
 
 La interfaz tiene dos vistas explícitas. **Tienda** muestra únicamente ítems no poseídos y un grid visual de dos railes. **Colección** muestra únicamente ítems poseídos, se monta al abrirse por primera vez y contiene la única búsqueda local por nombre; no hace fetch adicional. La apertura de una tarjeta usa delegación de Pointer Events para distinguir un tap de un scroll.
 
@@ -445,7 +445,7 @@ Se eliminan las carpetas locales `assets/product-thumbs/` y `assets/cover/` del 
 | **Mockup PC** | `f_auto,q_auto,ar_16:9,c_fill,w_1200` | `…/f_auto,q_auto,ar_16:9,c_fill,w_1200/shadow_the_hedgehog_6ff623c4` |
 | **Descarga / Email** | *(ninguna — master original)* | `…/rouge_the_bat_a94a3cca` |
 
-> **Nota:** todas las URLs usan el **public ID sin extensión**. Cloudinary resuelve el formato de entrega automáticamente con `f_auto` (WebP en navegadores compatibles, JPEG/PNG como fallback).
+> **Nota histórica:** esta tabla describe la migración v9.5. En la arquitectura vigente, las tarjetas de Tienda y Colección y su preview usan `f_avif` explícito; por ello no reciben la negociación automática ni el fallback de formato de `f_auto`. Todas las URLs conservan el **public ID sin extensión**.
 
 ---
 
@@ -2228,7 +2228,7 @@ El grid es visual, usa dos railes deterministas y tarjetas `button` con `dataset
 
 ### Imágenes y descargas
 
-`getThumbnailUrl(sourceUrl, aspectRatio, width)` inserta transformaciones Cloudinary inmediatamente después de `/image/upload/`. Si la URL no tiene el formato esperado, devuelve la original y advierte solo en desarrollo. `getImageDownloadUrl(sourceUrl)` añade `fl_attachment` para imágenes poseídas. Los archivos usan `downloadUrl`; ambas descargas se inician con un enlace temporal y mantienen el evento `click_download` con fuente `"colección"`.
+`getThumbnailUrl(sourceUrl, aspectRatio, width)` inserta `f_avif,q_auto,c_fill,g_auto`, la relación de aspecto y el ancho inmediatamente después de `/image/upload/`. Lo comparten las tarjetas de Tienda y Colección, además del preview de 1200 px. Al fijar `f_avif`, esas vistas requieren un navegador con decodificador AVIF: no reciben el fallback automático asociado a `f_auto`. Si la URL no tiene el formato esperado, la función devuelve la original y advierte solo en desarrollo. `getImageDownloadUrl(sourceUrl)` añade `fl_attachment` para imágenes poseídas. Los archivos usan `downloadUrl`; ambas descargas se inician con un enlace temporal y mantienen el evento `click_download` con fuente `"colección"`.
 
 ### Compra y promoción
 
