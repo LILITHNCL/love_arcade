@@ -924,12 +924,12 @@ function _mountCollection() {
     const label = document.createElement('label');
     label.className = 'visually-hidden';
     label.htmlFor = 'collection-search-input';
-    label.textContent = 'Buscar en tu colección';
+    label.textContent = 'Angry Birds, Furina, Chuck';
     const input = document.createElement('input');
     input.id = 'collection-search-input';
     input.className = 'collection-search-input';
     input.type = 'search';
-    input.placeholder = 'Buscar en tu colección…';
+    input.placeholder = 'Angry Birds, Furina, Chuck…';
     input.autocomplete = 'off';
     input.addEventListener('input', () => {
         _collectionSearchQuery = input.value.trim().toLocaleLowerCase();
