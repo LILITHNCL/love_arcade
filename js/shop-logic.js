@@ -926,7 +926,7 @@ function _mountCollection() {
     input.id = 'collection-search-input';
     input.className = 'collection-search-input';
     input.type = 'search';
-    input.placeholder = 'Buscar en tu colección…';
+    input.placeholder = 'Angry Birds, Furina, Chuck...';
     input.autocomplete = 'off';
     input.addEventListener('input', () => {
         _collectionSearchQuery = input.value.trim().toLocaleLowerCase();
