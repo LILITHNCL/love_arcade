@@ -914,22 +914,19 @@ function _mountCollection() {
     const title = document.createElement('h2');
     title.className = 'section-title';
     title.textContent = 'Colección';
-    const subtitle = document.createElement('p');
-    subtitle.className = 'section-subtitle';
-    subtitle.textContent = 'Tus artículos desbloqueados.';
-    heading.append(title, subtitle);
+    heading.append(title);
 
     const searchWrap = document.createElement('div');
     searchWrap.className = 'collection-search-wrap';
     const label = document.createElement('label');
     label.className = 'visually-hidden';
     label.htmlFor = 'collection-search-input';
-    label.textContent = 'Angry Birds, Furina, Chuck';
+    label.textContent = 'Buscar en tu colección';
     const input = document.createElement('input');
     input.id = 'collection-search-input';
     input.className = 'collection-search-input';
     input.type = 'search';
-    input.placeholder = 'Angry Birds, Furina, Chuck…';
+    input.placeholder = 'Buscar en tu colección…';
     input.autocomplete = 'off';
     input.addEventListener('input', () => {
         _collectionSearchQuery = input.value.trim().toLocaleLowerCase();
