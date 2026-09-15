@@ -6,9 +6,7 @@
    v3.1: Corner accents removed. View transitions anti-golpe added.
          GPU-only animations: opacity + transform exclusively.
    v9.8: Mobile performance pass — eliminated backdrop-filter on all overlays
-         for pointer:coarse devices, disabled laserScan GPU layer during scroll,
-         added overscroll-behavior + touch-action hints, reduced filter blur
-         costs on mockup loading state and offline fallback.
+         added overscroll-behavior + touch-action hints and reduced costly filters.
    ================================================================ */
 
 /* ── Tipografía local: sin Google Fonts para evitar preloads inyectados/duplicados ── */
@@ -229,6 +227,7 @@ span + .icon,
     --radius-md:  14px;
     --radius-lg:  20px;
     --radius-xl:  28px;
+    --radius-card-product: 24px;
     --nav-height: 68px;
     --pill-nav-height: 56px;
     --pill-nav-offset: 16px;
@@ -302,14 +301,9 @@ button { font-family: var(--font-body); }
     .icon-btn,
     .btn-primary,
     .btn-ghost,
-    .btn-mail,
-    .pill,
     .pill-nav-item,
     .identity-chip,
-    .gift-pill--cta,
-    .search-clear,
     .btn-edit-identity,
-    .gift-collection-toggle,
     .streak-milestone-actions .btn-primary,
     .modal-actions .btn-primary,
     .modal-actions .btn-ghost
@@ -344,7 +338,6 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
     .avatar-container
 ) {
     -webkit-tap-highlight-color: transparent;
@@ -358,7 +351,6 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card
 ).interactive-ripple {
     position: relative;
     overflow: hidden;
@@ -374,7 +366,6 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card
 ).interactive-ripple::after {
     content: '';
     position: absolute;
@@ -398,7 +389,6 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card
 ).interactive-ripple.is-rippling::after {
     animation: tapRipple 420ms cubic-bezier(.2,.8,.2,1);
 }
@@ -409,13 +399,13 @@ button { font-family: var(--font-body); }
     100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
 }
 
-:where(button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .avatar-container):active,
-:where(button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .avatar-container).is-pressing {
+:where(button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container):active,
+:where(button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container).is-pressing {
     transform: scale(0.97) translateY(1px);
 }
 
-:where(.game-card, .shop-card, .gift-card):active,
-:where(.game-card, .shop-card, .gift-card).is-pressing {
+:where(.game-card, .shop-card):active,
+:where(.game-card, .shop-card).is-pressing {
     transform: scale(0.985);
 }
 
@@ -429,7 +419,6 @@ button { font-family: var(--font-body); }
     summary,
     .game-card,
     .shop-card,
-    .gift-card,
     .avatar-container
 ):focus-visible {
     outline: 2px solid transparent;
@@ -962,11 +951,6 @@ body::before {
     animation-play-state: paused;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .filter-btn-gift.has-unclaimed {
-        animation: none;
-    }
-}
 
 .hud-top {
     display: flex;
@@ -1189,8 +1173,7 @@ body::before {
    GPU-only: transform + opacity en bucle. filter:blur() estático
    (nunca se recalcula por frame, solo se anima opacity/scale del
    elemento que lo contiene). Sigue el mismo patrón que
-   .hud-avatar-ring (powerRingRotate) y .mockup-bg-offline::before
-   (neonFlowDrift) ya existentes en este archivo.
+   .hud-avatar-ring (powerRingRotate) ya existente en este archivo.
    ================================================================ */
 
 .hub-identity-row {
@@ -1547,11 +1530,14 @@ body::before {
 
 .game-card {
     background: #141620;
-    border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
-    border-radius: var(--radius-lg);
+    /* The cover art now reaches its edge; outline supplies hover feedback
+       without reserving the old permanent theme-coloured frame. */
+    border: none;
+    outline: 1px solid transparent;
+    border-radius: var(--radius-card-product);
     overflow: hidden;
     box-shadow: var(--surface-shadow-soft);
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    transition: transform 180ms ease, box-shadow 180ms ease;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1559,7 +1545,7 @@ body::before {
 }
 
 .game-card:hover {
-    border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+    outline-color: color-mix(in srgb, var(--accent) 24%, transparent);
     transform: translateY(-4px) scale(1.01);
     box-shadow: 0 16px 34px rgba(0,0,0,0.52), 0 0 24px color-mix(in srgb, var(--accent) 16%, transparent);
     z-index: 2;
@@ -1569,10 +1555,11 @@ body::before {
     aspect-ratio: 16 / 11;
     width: 100%;
     flex: 0 0 auto;
+    /* Neutral fallback is only visible before the image has painted. */
     background: var(--solid-surface-deep);
     position: relative;
     overflow: hidden;
-    border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) var(--radius-md) var(--radius-md);
+    border-radius: var(--radius-card-product) var(--radius-card-product) 0 0;
 }
 
 .card-cover-img {
@@ -1676,11 +1663,18 @@ body::before {
    ================================================================ */
 .shop-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.shop-rail {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    min-width: 0;
 }
 
 /* Sentinel invisible para lazy rendering incremental del catálogo. */
@@ -1691,65 +1685,98 @@ body::before {
 }
 
 .shop-card {
-    background: #141620;
-    border: 1px solid transparent;
-    box-shadow: var(--surface-shadow-soft);
-    border-radius: var(--radius-md);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    transition: transform 170ms cubic-bezier(.22,1,.36,1), box-shadow 170ms ease, background-color 170ms ease;
-    position: relative;
-    width: 100%;
-    contain: content;
-    content-visibility: auto;
-    contain-intrinsic-size: 300px;
-    /* will-change is NOT set here — it is activated only on hover via CSS
-       to avoid promoting dozens of compositor layers while the grid is idle.
-       See :hover rule below. On pointer:coarse devices (mobile) the :hover
-       rule is also effectively never triggered, so no GPU memory is wasted. */
-}
-.shop-grid .shop-card:nth-child(-n+6) {
-    content-visibility: visible;
+    min-width: 0;
 }
 
-/* Evita salto horizontal de cards en móvil por tamaño intrínseco estimado. */
-@media (max-width: 767px) {
-    .shop-card {
-        content-visibility: visible;
-        contain-intrinsic-size: none;
+.shop-visual-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    /* Product art should reach the edge; the old accent border/background
+       read as a permanent theme-coloured margin around every image. */
+    border: none;
+    outline: 1px solid transparent;
+    border-radius: var(--radius-card-product);
+    background: transparent;
+    box-shadow: var(--surface-shadow-soft);
+    cursor: pointer;
+    aspect-ratio: var(--shop-card-ratio, 3 / 4);
+    transition: transform 170ms ease-out, box-shadow 170ms ease-out;
+}
+
+/* Chromium 139+ can render continuous superellipse corners; border-radius
+   remains the no-cost fallback for browsers that do not support corner-shape. */
+@supports (corner-shape: squircle) {
+    .shop-visual-card,
+    .game-card,
+    .card-cover {
+        corner-shape: squircle;
     }
 }
 
-/* Solid 3.0: border illumination on hover, no bg change */
-.shop-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.48), 0 0 20px color-mix(in srgb, var(--accent) 18%, transparent);
-    /* Activate compositor layer only for the duration of the hover interaction */
-    will-change: transform;
-}
+.shop-card[data-aspect-ratio="9:16"] .shop-visual-card { aspect-ratio: 9 / 16; }
+.shop-card[data-aspect-ratio="3:4"] .shop-visual-card { aspect-ratio: 3 / 4; }
 
-.shop-card .card-name {
-    font-family: var(--font-display);
-    font-size: 0.82rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    line-height: 1.2;
-    letter-spacing: -0.1px;
+.shop-visual-card:hover,
+.shop-visual-card:focus-visible {
+    outline-color: var(--accent);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
+.shop-visual-card:hover { transform: translateY(-2px); }
+.shop-visual-card:active { transform: scale(0.985); }
 
 .shop-img {
+    display: block;
     width: 100%;
-    height: 110px;
+    height: 100%;
     object-fit: cover;
-    border-radius: var(--radius-sm);
-    margin-bottom: 8px;
-    transition: transform 0.2s;
-    contain: paint;
 }
-.shop-card:hover .shop-img { transform: scale(1.02); }
+
+/* Loading reserves the card geometry with a neutral surface, never a themed frame. */
+.shop-visual-card--loading { background: var(--solid-surface-deep); }
+
+.shop-card--image-error .shop-visual-card::after {
+    content: 'Imagen no disponible';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    color: var(--on-accent);
+    font-size: 0.8rem;
+    text-align: center;
+    /* Error feedback remains distinct without restoring the removed accent frame. */
+    background: var(--solid-surface-deep);
+}
+
+.shop-sale-pill {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+    padding: 4px 7px;
+    overflow: hidden;
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    color: var(--on-accent);
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.collection-empty-state {
+    grid-column: 1 / -1;
+    padding: 60px 20px;
+    color: var(--text-low);
+    text-align: center;
+}
 
 /* ================================================================
    SHAKE ANIMATION
@@ -1766,449 +1793,82 @@ body::before {
 .anim-shake { animation: shake 0.45s ease-in-out; }
 
 /* ================================================================
-   SHOP TABS
+   SHOP VIEW SWITCHER + COLLECTION
    ================================================================ */
-.shop-tabs {
+.shop-view-switcher { margin-bottom: 16px; }
+.shop-view-toggle {
+    transition: transform 170ms ease-out, opacity 170ms ease-out;
+}
+.shop-view-toggle--scroll-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+}
+.shop-panel { min-height: 280px; }
+.shop-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-low);
     display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-    scrollbar-width: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
-.shop-tabs::-webkit-scrollbar { display: none; }
-
-.shop-tab {
-    background: var(--solid-surface-base);
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    color: var(--text-secondary-aa);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 0.78rem;
-    font-weight: 600;
-    display: flex; align-items: center; gap: 5px;
-    transition: transform 140ms cubic-bezier(.22,1,.36,1), background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
-    white-space: nowrap;
-    contain: paint;
-}
-.shop-tab:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
-.shop-tab.active {
-    background: var(--accent-soft-aa);
-    color: var(--on-accent);
-    font-weight: 800;
-    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-/* ================================================================
-   SHOP TOOLBAR
-   ================================================================ */
-.shop-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.search-wrap { position: relative; width: 100%; }
-.search-icon {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: var(--text-low); pointer-events: none;
-}
-.search-input {
+.collection-header { margin-bottom: 16px; }
+.collection-search-wrap { margin-bottom: 16px; }
+.collection-search-input {
     width: 100%;
+    min-height: 44px;
     background: var(--solid-surface-base);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-high);
     font-family: var(--font-body);
     font-size: 0.88rem;
-    padding: 10px 36px 10px 38px;
+    padding: 10px 12px;
     outline: 2px solid transparent;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 170ms ease-out, box-shadow 170ms ease-out;
 }
-.search-input:focus {
+.collection-search-input:focus {
     border-color: var(--accent-border);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.search-input::placeholder { color: var(--text-low); }
-.search-clear {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: rgba(255,255,255,0.08); border: none; border-radius: 50%;
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-low); transition: 0.18s;
-    line-height: 1;
-}
-.search-clear:hover { background: rgba(255,255,255,0.16); color: white; }
-.search-count { font-size: 0.78rem; color: var(--text-mute); margin-bottom: 4px; font-style: italic; }
-
-/* Filter pills */
-.filter-pills {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 6px;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-}
-.filter-pills::-webkit-scrollbar { display: none; }
-.filter-pills .pill { flex: 0 0 auto; }
-
-.pill {
-    padding: 9px 14px;
-    border-radius: 20px;
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    background: var(--solid-surface-base);
-    color: var(--text-secondary-aa);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 140ms cubic-bezier(.22,1,.36,1), background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
-    display: inline-flex; align-items: center; gap: 4px; justify-content: center;
-    font-family: var(--font-body);
-    white-space: nowrap;
-    contain: paint;
-}
-.pill:hover { color: var(--text-primary-aa); box-shadow: var(--control-shadow-hover); }
-.pill.active {
-    background: var(--accent-soft-aa);
-    color: var(--on-accent);
-    font-weight: 800;
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-@keyframes pulse-gift {
-    0%, 100% { transform: translateZ(0) scale(1); opacity: 1; }
-    50% { transform: translateZ(0) scale(1.03); opacity: 0.94; }
-}
-
-.filter-btn-gift.has-unclaimed {
-    animation: pulse-gift 2s infinite;
-    background: #ffd700;
-    box-shadow: 0 10px 22px rgba(251, 191, 36, 0.28), inset 0 1px 0 rgba(255,255,255,0.28);
-    color: #121212;
-}
-
-.gift-carousel {
-    position: relative;
-    overflow: hidden;
-    border-radius: 18px;
-    min-height: 280px;
-    border: 1px solid var(--border-subtle);
-    background: linear-gradient(160deg, #181b29, #10121a);
-}
-
-.gift-carousel-track {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scroll-behavior: auto;
-    overscroll-behavior-x: contain;
-}
-
-.gift-card {
-    position: relative;
-    min-width: 100%;
-    aspect-ratio: 1 / 1;
-    border: 0;
-    overflow: hidden;
-    scroll-snap-align: start;
-    scroll-snap-stop: normal;
-    contain: content;
-    content-visibility: auto;
-    contain-intrinsic-size: 280px;
-}
-.gift-carousel-track .gift-card:nth-child(-n+2) {
-    content-visibility: visible;
-}
-
-@media (min-width: 640px) {
-    .gift-card {
-        aspect-ratio: 4 / 3;
-        contain-intrinsic-size: 260px;
-    }
-}
-
-.gift-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.gift-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,0.75) 100%);
-    pointer-events: none;
-}
-
-.gift-card-name {
-    position: absolute;
-    left: 14px;
-    bottom: 54px;
-    right: 14px;
-    z-index: 2;
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.65);
-}
-
-.gift-owned-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border-radius: 999px;
-    padding: 5px 8px;
-    background: rgba(16, 185, 129, 0.88);
-    color: #051b12;
-    font-size: 0.64rem;
-    font-weight: 800;
-}
-
-.gift-pill {
-    position: absolute;
-    z-index: 2;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    font-size: 0.68rem;
-    padding: 6px 10px;
-    line-height: 1;
-}
-
-.gift-pill--req {
-    left: 12px;
-    bottom: 12px;
-    color: #edf2ff;
-    background: rgba(36, 39, 52, 0.75);
-}
-
-.gift-pill--cta {
-    right: 12px;
-    bottom: 12px;
-    box-shadow: 0 10px 22px rgba(251, 191, 36, 0.28), inset 0 1px 0 rgba(255,255,255,0.28);
-    color: #18120a;
-    background: #ffd700;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 12px;
-    line-height: 1.15;
-}
-
-.gift-pill--cta[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.gift-collection-wrap {
-    border-top: 1px solid var(--border-subtle);
-    padding: 10px;
-}
-
-.gift-collection-toggle {
-    width: 100%;
-    justify-content: center;
-    font-size: 0.76rem;
-}
-
-.gift-collection-grid {
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 8px;
-}
-
-.gift-collection-item {
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border-subtle);
-    background: var(--solid-surface-base);
-}
-
-.gift-collection-item img {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    display: block;
-}
-
-.filter-empty {
-    grid-column: 1/-1;
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-low);
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-}
+.collection-search-input::placeholder { color: var(--text-low); }
 
 /* ================================================================
-   TAB PANELS
+   PROMO CODE FORM — Perfil
    ================================================================ */
-.tab-panel { min-height: 280px; }
-
-/* ================================================================
-   SALE BANNER — Flash Offer Ticket Design
-   ================================================================ */
-.sale-banner {
-    margin-bottom: 16px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    position: relative;
-}
-
-.sale-banner__ticket {
-    background: linear-gradient(135deg, #1a0a00, #2a1000);
-    border: 1px solid rgba(251,191,36,0.5);
-    border-radius: var(--radius-md);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-}
-
-/* ── Sale Banner Ticket — Laser Scan Effect (Arcade Solid 3.0)
-   The golden shimmer sweep is replaced by a precise laser scan:
-   a narrow oblique line of intense light that travels left-to-right
-   every 3.5 s. Uses transform: translate3d() on ::after — GPU only,
-   zero repaints. The ticket itself is fully solid with a dot texture.
-   ── */
-
-/* Dot-pattern texture overlay — replaces repeating diagonal gradient */
-.sale-banner__ticket::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(circle, rgba(251,191,36,0.08) 1px, transparent 1px);
-    background-size: 14px 14px;
-    pointer-events: none;
-    border-radius: inherit;
-}
-
-/* Laser scan line */
-.sale-banner__ticket::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -30%;
-    width: 15%;
-    height: 120%;
-    background: linear-gradient(
-        105deg,
-        transparent 0%,
-        rgba(251,191,36,0.06) 30%,
-        rgba(251,191,36,0.35) 50%,
-        rgba(251,191,36,0.06) 70%,
-        transparent 100%
-    );
-    animation: laserScan 3.5s ease-in-out infinite;
-    /* GPU compositor — no repaints */
-    will-change: transform;
-}
-@keyframes laserScan {
-    0%   { transform: translate3d(0, 0, 0);     opacity: 0; }
-    10%  { opacity: 1; }
-    90%  { opacity: 1; }
-    100% { transform: translate3d(800%, 0, 0);  opacity: 0; }
-}
-
-/* Zigzag border notches */
-.sale-banner__notch-left,
-.sale-banner__notch-right {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--bg-main);
-    z-index: 2;
-}
-.sale-banner__notch-left { left: -7px; }
-.sale-banner__notch-right { right: -7px; }
-
-.sale-banner__icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    color: #120900;
-    box-shadow: 0 4px 14px rgba(251,191,36,0.4);
-}
-
-.sale-banner__content { flex: 1; min-width: 0; }
-.sale-banner__title {
-    font-family: var(--font-display);
-    font-size: 0.82rem;
-    font-weight: 900;
-    color: var(--gold);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 2px;
-    text-shadow: 0 0 10px var(--gold-glow);
-}
-.sale-banner__desc {
-    font-size: 0.75rem;
-    color: rgba(251,191,36,0.7);
-}
-
-.sale-banner__badge {
-    background: var(--gold);
-    color: #120900;
-    font-family: var(--font-display);
-    font-size: 0.9rem;
-    font-weight: 900;
-    padding: 6px 10px;
-    border-radius: var(--radius-xs);
-    flex-shrink: 0;
-    text-shadow: none;
-}
-
-/* Legacy compatibility */
-.sale-banner.hidden { display: none !important; }
-
-/* ================================================================
-   PROMO CODE SECTION
-   ================================================================ */
-.promo-toggle-wrap { margin-bottom: 18px; }
-.promo-toggle-btn {
-    width: 100%; justify-content: flex-start; gap: 8px;
-    padding: 9px 14px; font-size: 0.82rem; border-radius: var(--radius-sm);
-    contain: paint;
-}
-.promo-chevron { margin-left: auto; transition: transform 0.22s; flex-shrink: 0; }
-.promo-toggle-btn[aria-expanded="true"] .promo-chevron { transform: rotate(180deg); }
-.promo-section--collapsed { display: none; }
-.promo-section--open {
-    display: block; margin-top: 8px;
-    animation: promoFadeIn 0.16s ease;
-}
-@keyframes promoFadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.promo-section { padding: 16px; border-radius: var(--radius-lg); margin-bottom: 18px; }
 .promo-icon-wrap {
     width: 40px; height: 40px; border-radius: 10px;
     background: linear-gradient(135deg, var(--accent), var(--accent-dim));
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     box-shadow: 0 4px 12px var(--accent-glow);
 }
-#promo-section .promo-icon-wrap,
+.promo-redemption-card .promo-icon-wrap,
 .settings-card .promo-icon-wrap {
     color: var(--on-accent);
 }
 .promo-input-group { display: flex; flex-direction: column; gap: 8px; }
+.promo-redemption-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.promo-redemption-card__header h3,
+.promo-redemption-card__header p { margin: 0; }
+.promo-redemption-card__header h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-high);
+}
+.promo-redemption-card__header p {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--text-low);
+    line-height: 1.45;
+}
 .promo-input {
     width: 100%;
     background: var(--solid-surface-base);
@@ -2230,34 +1890,8 @@ body::before {
 #btn-redeem { width: 100%; justify-content: center; }
 
 /* ================================================================
-   SHOP CARD BADGES & PRICES
+   PREVIEW DOWNLOAD ACTION
    ================================================================ */
-.owned-badge {
-    position: absolute; top: 8px; left: 8px;
-    background: rgba(34,208,122,0.2);
-    border: 1px solid rgba(34,208,122,0.35);
-    color: var(--success);
-    font-size: 0.6rem; font-weight: 700;
-    padding: 2px 6px; border-radius: 20px;
-    display: flex; align-items: center; gap: 3px;
-    /* Solid 3.0: no backdrop-filter */
-}
-.sale-card-badge {
-    position: absolute; top: 8px; right: 8px;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #120900; font-family: var(--font-display);
-    font-size: 0.58rem; font-weight: 900;
-    padding: 2px 6px; border-radius: 20px;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    display: flex; align-items: center; gap: 2px;
-}
-.shop-price {
-    display: flex; align-items: center; justify-content: center;
-    gap: 4px; font-family: var(--font-display); font-size: 0.9rem;
-    font-weight: 800; color: var(--price-current-aa); margin: 5px 0;
-}
-.price-original { text-decoration: line-through; color: var(--price-original-aa); font-size: 0.72rem; font-weight: 400; }
-.price-sale { color: var(--price-sale-aa); font-size: 1rem; font-weight: 900; }
 .vault-btn {
     background: linear-gradient(135deg, #22d07a, #16a85e) !important;
     color: #041a0a !important; font-weight: 800 !important;
@@ -3066,25 +2700,11 @@ details[open] summary::after { transform: rotate(45deg); }
     .card-info { min-height: 76px; padding: 12px 12px 14px; flex: 0 0 auto; }
 
     /* Shop */
-    .shop-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-    .shop-card { padding: 16px; }
-    .shop-card { contain-intrinsic-size: 340px; }
-    .shop-card .card-name { font-size: 0.95rem; }
-    .shop-img { height: 160px; }
-
-    /* Tabs */
-    .shop-tab { padding: 10px 16px; font-size: 0.85rem; }
-    .shop-tabs { gap: 8px; margin-bottom: 24px; }
-
-    /* Toolbar */
-    .shop-toolbar { flex-direction: row; align-items: center; gap: 16px; margin-bottom: 20px; }
-    .search-wrap { max-width: 400px; flex-shrink: 0; }
-    .filter-pills { gap: 10px; }
+    .shop-grid, .shop-rail { gap: 16px; }
 
     /* Promo */
     .promo-input-group { flex-direction: row; }
     #btn-redeem { width: auto; }
-    .promo-section { padding: 22px; }
 
     /* Settings */
     .settings-card { padding: 1.5rem; }
@@ -3098,12 +2718,9 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Toast */
     .toast { bottom: 28px; font-size: 0.86rem; padding: 14px 20px; }
 
-    /* Sale banner */
-    .sale-banner__ticket { padding: 16px 24px; }
 }
 
 @media (min-width: 1024px) {
-    .shop-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
     .nav-user { gap: 18px; }
     .games-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 }
@@ -3310,31 +2927,6 @@ svg { stroke-width: 2; }
 }
 .email-tip svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
 
-/* "Send email" button in library cards — secondary accent style */
-.btn-mail {
-    background: color-mix(in srgb, var(--solid-surface-float) 82%, var(--accent) 18%);
-    color: var(--text-primary-aa);
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    padding: 7px;
-    border-radius: var(--radius-sm);
-    font-size: 0.78rem;
-    font-family: var(--font-body);
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    transition: transform 150ms cubic-bezier(.22,1,.36,1), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
-    flex-shrink: 0;
-}
-.btn-mail:hover {
-    background: var(--accent-soft);
-    box-shadow: var(--control-shadow-hover);
-    transform: translateY(-1px);
-}
-
 /* ================================================================
    SHOP ERROR STATE — v9.1 (Network failure fallback)
    ================================================================ */
@@ -3364,731 +2956,84 @@ svg { stroke-width: 2; }
     max-width: 280px;
 }
 
-/* ================================================================
-   TREASURY GRID — v9.2 (Mis Tesoros — overflow fix on < 380px)
-   ================================================================ */
-/*
- * #library-container usa .shop-grid .treasury-grid.
- * Sobreescribimos el grid-template-columns con auto-fit + minmax para que
- * la cuadrícula se adapte a cualquier ancho sin desbordarse en móvil pequeño.
- * box-sizing: border-box ya está global desde el reset.
- */
-.treasury-grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    justify-content: center;
-}
-
-/* En pantallas muy pequeñas (< 380px) forzamos a 1 columna si 140px no cabe */
-@media (max-width: 320px) {
-    .treasury-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ================================================================
-   PREVIEW 2.0 — Dynamic Mockup System
-   Architecture: 3-layer sandwich (Art → Protection → UI)
-   GPU-only animations · contain: paint · translateZ(0) acceleration
-   v10.0: Mobile (9:20) + PC (16:9) frames with live clock & app grid.
-   ================================================================ */
-
-/* ── Modal box overrides for Preview 2.0 ── */
+/* ── Shop preview / purchase dialog ─────────────────────────────────────── */
 .preview-modal-box {
     max-width: 520px;
-    padding: 0;
-    overflow: hidden;
-    background: #07070d;
-    border-radius: var(--radius-xl);
+    padding: 20px;
 }
 
-/* Stage: dark surround that holds the mockup slot + close btn */
-.preview-mockup-stage {
-    position: relative;
-    width: 100%;
-    background: #030308;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 140px;
-    padding: 20px 20px 12px;
-}
-
-/* Preview liviano: frame único sin mockups superpuestos (Mobile/PC). */
-.preview-art-frame {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.08),
-        0 12px 40px rgba(0, 0, 0, 0.65);
-}
-
-.preview-art-layer {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-}
-
-.preview-art-protection {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    background-image: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.06),
-        rgba(0, 0, 0, 0.2)
-    );
-    z-index: 2;
-}
-
-/* Close button — floats above everything */
-.preview-close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 20;
-    background: rgba(7, 7, 13, 0.82);
-    border: 1px solid transparent;
-    box-shadow: var(--control-shadow-rest);
-    color: #fff;
-    border-radius: 50%;
-    /* Excepción explícita: el botón flotante de cierre vive encima del arte
-       y no puede crecer a 44px sin ocultar contenido clave.
-       Alternativa táctil equivalente: botón "Volver" en el footer del modal. */
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    transition: transform 150ms cubic-bezier(.22,1,.36,1), background-color 150ms ease, box-shadow 150ms ease;
-    contain: paint;
-}
-.preview-close-btn:hover {
-    background: rgba(155, 89, 255, 0.35);
-    box-shadow: var(--control-shadow-hover);
-}
-
-/* ── Mockup container (base for both Mobile & PC) ── */
-.mockup-container {
-    position: relative;
-    overflow: hidden;
-    /* translate3d forces a dedicated GPU compositing layer for this element only.
-     * will-change is intentionally absent here — it is applied dynamically by
-     * openPreviewModal() to the modal itself and removed by closePreviewModal()
-     * to avoid wasting GPU memory on idle composited layers. */
-    transform: translate3d(0, 0, 0);
-    contain: paint;
-    flex-shrink: 0;
-}
-
-/* ── Mobile mockup: 9:20 ratio (tall portrait phone) ── */
-.mockup-mobile {
-    aspect-ratio: 9 / 20;
-    /*
-     * EXPLICIT height required — aspect-ratio only computes a missing dimension
-     * when the other dimension is explicitly set (CSS spec §10.4).
-     * max-height is a constraint, not a sizing value: it cannot seed the
-     * calculation when all children are position:absolute (zero intrinsic size).
-     * With height set, the browser derives: width = height × (9/20).
-     * min() keeps it inside the viewport on small screens.
-     */
-    height: min(58vh, 480px);
-    width: auto;
-    border-radius: 24px;
-    box-shadow:
-        0 0 0 2px rgba(255, 255, 255, 0.10),
-        0 0 0 4px rgba(0, 0, 0, 0.6),
-        0 24px 60px rgba(0, 0, 0, 0.7);
-}
-
-/* ── PC mockup: 16:9 ratio (landscape desktop) ── */
-.mockup-pc {
-    aspect-ratio: 16 / 9;
-    width: 100%;
-    border-radius: 8px;
-    box-shadow:
-        0 0 0 2px rgba(255, 255, 255, 0.08),
-        0 0 0 4px rgba(0, 0, 0, 0.5),
-        0 12px 40px rgba(0, 0, 0, 0.65);
-}
-
-/* ── Fallback (no tag): 4:3 neutral ── */
-.mockup-fallback {
-    aspect-ratio: 4 / 3;
-    width: 100%;  /* height derives from width × (3/4) */
-    border-radius: 10px;
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.08), 0 12px 40px rgba(0,0,0,0.65);
-}
-
-/* ── Layer 1: Art ── */
-.mockup-layer-art {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    /* Opacity transition for the thumbnail→HiRes swap (Phase 1→2) */
-    transition: filter 0.4s ease, transform 0.4s ease;
-    /* Prevents right-click "Save image as..." — image is a CSS bg, not <img> */
-}
-
-/*
- * Thumbnail "ghost" — shown immediately while the full wallpaper loads.
- * The blur + slight scale-up hides the low-res artifacts of the thumbnail.
- * transform: scale(1.1) compensates for the blur edge softening.
- */
-.mockup-bg-loading {
-    filter: blur(10px);
-    transform: scale(1.1);
-}
-
-/*
- * High-res wallpaper ready — transition from blurred thumbnail to sharp image.
- * 0.4s matches the CSS transition on .mockup-layer-art above.
- */
-.mockup-bg-ready {
-    filter: blur(0);
-    transform: scale(1);
-}
-
-/* ================================================================
-   CDN OFFLINE FALLBACK — v9.6 Phase 4 (GPU Neon Flow)
-   ================================================================
-   Aplicado por _applyArtFallback() cuando Cloudinary es inalcanzable.
-
-   Estrategia de animación por capas (compositor puro):
-   · La capa base (.mockup-bg-offline) es un fondo oscuro ESTÁTICO.
-     No se anima, no genera repints. Solo define el color de superficie.
-   · El efecto de movimiento vive íntegramente en ::before: un pseudo-
-     elemento 200% × 200% con conic-gradient neón que se desplaza y rota
-     con transform. Transform es propiedad de compositor — la GPU la
-     ejecuta sin tocar el hilo principal ni recalcular layout.
-   · filter: blur(40px) en ::before suaviza el banding entre color-stops
-     y permite un gradiente más simple (menos stops, menos rasterización).
-   · overflow: hidden en el padre contiene el ::before sobredimensionado
-     sin alterar el layout de la tarjeta o frame.
-   ================================================================ */
-
-.mockup-layer-art.mockup-bg-offline {
-    background-image: none !important;
-    background: #07060f;           /* superficie base oscura — sin gradiente propio */
-    filter: none !important;
-    transform: scale(1) !important;
-    transition: none;
-    overflow: hidden;              /* contiene el ::before sobredimensionado */
-    will-change: transform;
-}
-
-/*
- * Orb neón animado — pseudo-elemento 200 × 200 % del contenedor.
- * Se mueve vía translate + rotate (compositor puro, zero repints).
- * filter: blur(40px) convierte bordes duros del gradiente en difusión
- * orgánica, eliminando banding visible sin cost adicional de rasterizado.
- * Paleta: violeta Cyber-Vibrant (#c084fc) + verde neón Arcade Solid (#4ade80)
- * + índigo mid-tone (#818cf8) — contrasta sobre el fondo #07060f y mantiene
- * ratio 4.5:1 con texto blanco (#fff) superpuesto.
- */
-.mockup-layer-art.mockup-bg-offline::before {
-    content: '';
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    top: -50%;
-    left: -50%;
-    background: conic-gradient(
-        from 0deg at 40% 50%,
-        #c084fc 0deg,
-        #4ade80 90deg,
-        #818cf8 180deg,
-        #c084fc 270deg,
-        #4ade80 360deg
-    );
-    filter: blur(40px);
-    opacity: 0.18;
-    pointer-events: none;
-    z-index: 0;
-    animation: neonFlowDrift 8s linear infinite;
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-/* ── neonFlowDrift — desplazamiento + rotación diagonal ──────────────────────
-   Translate + rotate: ambas propiedades son compositor-only.
-   8s asegura suavidad en gama baja sin aceleración de fotogramas perceptible.
-   linear evita aceleración / desaceleración que delate el bucle de 8s. */
-@keyframes neonFlowDrift {
-    0%   { transform: translate(0%,   0%)   rotate(0deg);   }
-    25%  { transform: translate(-8%,  5%)   rotate(90deg);  }
-    50%  { transform: translate(-12%, -4%)  rotate(180deg); }
-    75%  { transform: translate(-4%,  8%)   rotate(270deg); }
-    100% { transform: translate(0%,   0%)   rotate(360deg); }
-}
-
-/*
- * Catalog / Library image offline placeholder.
- * Applied via onerror on <img> when the Cloudinary thumbnail fails.
- * Uses the same GPU-animated ::before pattern at reduced opacity
- * to maintain visual consistency between card and modal fallbacks.
- * overflow:hidden es necesario para contener el ::before.
- */
-.shop-img--offline {
-    position: relative;
-    overflow: hidden;
-    background: #07060f;
-    color: transparent;            /* Previene el ícono de imagen rota del navegador */
-}
-
-.shop-img--offline::before {
-    content: '';
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    top: -50%;
-    left: -50%;
-    background: conic-gradient(
-        from 0deg at 40% 50%,
-        #c084fc 0deg,
-        #4ade80 90deg,
-        #818cf8 180deg,
-        #c084fc 270deg,
-        #4ade80 360deg
-    );
-    filter: blur(30px);
-    opacity: 0.14;                 /* más sutil en cards pequeñas */
-    pointer-events: none;
-    animation: neonFlowDrift 8s linear infinite;
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-/* ── prefers-reduced-motion: detener animaciones, preservar estética ─────────
-   Usuarios con vestibular disorders o epilepsia fotosensible pueden tener
-   activada esta preferencia. Pausamos la animación sin eliminar el diseño. */
-@media (prefers-reduced-motion: reduce) {
-    .mockup-layer-art.mockup-bg-offline::before,
-    .shop-img--offline::before {
-        animation-play-state: paused;
-    }
-}
-
-/*
- * ::after noise layer — secondary anti-extraction measure on top of the art.
- * Renders a semi-transparent SVG turbulence pattern that:
- *  (a) breaks automated pixel-perfect image capture tools
- *  (b) does not affect perceived visual quality at 3% opacity
- * pointer-events:none ensures it never intercepts UI interactions.
- */
-.mockup-layer-art::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23a)' opacity='0.03'/%3E%3C/svg%3E");
-    background-size: 300px 300px;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    z-index: 1;
-}
-
-/* ── Layer 2: Protection (interference overlay) ── */
-.mockup-layer-protection {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    /* Subtle grain noise via SVG data URI — no HTTP request */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
-    z-index: 2;
-}
-
-/* ── Layer 3: UI overlay ── */
-.mockup-layer-ui {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ── MOBILE UI ELEMENTS ── */
-
-.mockup-statusbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5% 7% 0;
-    color: #fff;
-    /* mix-blend-mode difference adapts to bright/dark wallpapers */
-    mix-blend-mode: difference;
-}
-
-.mockup-clock-text {
-    font-family: var(--font-display);
-    font-size: clamp(8px, 3.8cqw, 15px);
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    line-height: 1;
-}
-
-.mockup-statusbar-icons {
-    display: flex;
-    align-items: center;
-    gap: 3%;
-}
-
-.mockup-statusbar-icons svg {
-    width: clamp(7px, 3cqw, 13px);
-    height: auto;
-    display: block;
-}
-
-/* App grid area: sits in the lower ~55% of the phone screen */
-.mockup-app-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 0 7% 12%;
-}
-
-.mockup-app-grid {
+.preview-content {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: clamp(3px, 2.5cqw, 10px);
+    gap: 16px;
 }
 
-.mockup-app-icon {
-    aspect-ratio: 1;
-    border-radius: clamp(4px, 2cqw, 9px);
-    /*
-     * No background here — each icon's `bgAlpha` (rgba at ~35% opacity) is set
-     * inline by JS so the wallpaper bleeds through visibly while the accent hue
-     * still identifies the app. The border reinforces the shape without opacity.
-     */
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.mockup-app-icon svg {
-    width: 55%;
-    height: 55%;
+.preview-image {
     display: block;
-    flex-shrink: 0;
-    /* Drop-shadow keeps glyphs readable over any wallpaper colour */
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
-}
-
-/* Glassmorphism opt-in: desktop only (pointer:fine) — adds blur to the
-   semi-transparent bg so underlying wallpaper detail softens nicely. */
-@supports (backdrop-filter: blur(6px)) {
-    @media (pointer: fine) {
-        .mockup-app-icon {
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-        }
-    }
-}
-
-/* Home indicator bar at the bottom */
-.mockup-home-indicator {
-    position: absolute;
-    bottom: 3%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 28%;
-    height: clamp(2px, 1cqw, 5px);
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.55);
-    mix-blend-mode: difference;
-}
-
-/* ── PC UI ELEMENTS ── */
-
-/*
- * Desktop area: the wallpaper is the star.
- * A single narrow column of 6 small shortcut icons sits on the LEFT edge,
- * exactly like a Windows 11 default desktop. 80%+ of the frame is clean
- * wallpaper — the OS chrome signals "this is a live desktop" without hiding
- * the art.
- */
-.mockup-desktop-area {
-    flex: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 3% 0 1% 3%;
-    overflow: hidden;
-    /* pointer-events:none inherited from .mockup-layer-ui */
-}
-
-/* Single column — fixed narrow width so icons never crowd the wallpaper */
-.mockup-desktop-shortcuts {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(3px, 1.5cqw, 8px);
-    width: clamp(20px, 12cqw, 52px);
-}
-
-/* Individual shortcut: small square icon + tiny label */
-.mockup-desktop-icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(1px, 0.6cqw, 3px);
-}
-
-.mockup-desktop-icon-img {
     width: 100%;
-    aspect-ratio: 1;
-    border-radius: clamp(3px, 1.2cqw, 6px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    max-height: min(62vh, 680px);
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
 }
 
-.mockup-desktop-icon-img svg {
-    width: 55%;
-    height: 55%;
-    display: block;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7));
-}
-
-.mockup-desktop-label {
-    font-size: clamp(3px, 1.4cqw, 6px);
-    color: rgba(255, 255, 255, 0.9);
-    text-align: center;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    line-height: 1;
-    font-family: var(--font-body, sans-serif);
-    letter-spacing: -0.01em;
-}
-
-
-
-.mockup-taskbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2.5%;
-    height: clamp(22px, 7%, 38px);
-    background: rgba(8, 8, 18, 0.78);
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    position: relative;
-}
-
-@supports (backdrop-filter: blur(4px)) {
-    .mockup-taskbar {
-        background: rgba(8, 8, 18, 0.55);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-    }
-}
-
-/* Left side: Start button + Search pill */
-.mockup-taskbar-left {
-    display: flex;
-    align-items: center;
-    gap: clamp(3px, 1.5cqw, 7px);
-    z-index: 1;
-}
-
-/* Windows 11 Start button */
-.mockup-taskbar-start {
-    width: clamp(10px, 3.8cqw, 20px);
-    height: clamp(10px, 3.8cqw, 20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.mockup-taskbar-start svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-/* Search pill */
-.mockup-taskbar-search {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0 clamp(3px, 1cqw, 6px);
-    width: clamp(28px, 12cqw, 60px);
-    height: clamp(9px, 3.2cqw, 17px);
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
-.mockup-taskbar-search svg {
-    width: clamp(5px, 2cqw, 9px);
-    height: auto;
-    flex-shrink: 0;
-}
-
-/* Centre: pinned app icons — absolutely centred so left/right never push them */
-.mockup-taskbar-centre {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: clamp(2px, 1cqw, 5px);
-}
-
-.mockup-taskbar-pinned {
-    width: clamp(10px, 3.5cqw, 18px);
-    height: clamp(10px, 3.5cqw, 18px);
-    border-radius: clamp(2px, 0.8cqw, 4px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.mockup-taskbar-pinned svg {
-    width: 60%;
-    height: 60%;
-    display: block;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
-}
-
-/* Right side: system tray */
-.mockup-taskbar-right {
-    display: flex;
-    align-items: center;
-    gap: clamp(4px, 1.5cqw, 8px);
-    color: rgba(255, 255, 255, 0.8);
-    z-index: 1;
-}
-
-.mockup-pc-clock {
-    font-family: var(--font-display);
-    font-size: clamp(5px, 2.2cqw, 11px);
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    white-space: nowrap;
-}
-
-.mockup-taskbar-right svg {
-    width: clamp(6px, 2.2cqw, 11px);
-    height: auto;
-    display: block;
-}
-
-/* Legacy unused classes — removed (were display:none dead code) */
-
-
-
-/* ── FALLBACK UI ── */
-.mockup-fallback-watermark {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    user-select: none;
-    z-index: 3;
-}
-
-.mockup-fallback-watermark svg {
-    opacity: 0.25;
-    width: 18%;
-    height: auto;
-}
-
-/* ── Preview info row ── */
-.preview-info-row {
-    padding: 18px 20px;
+.preview-name,
+.preview-confirmation-title {
+    margin: 0;
+    color: var(--text-high);
 }
 
 .preview-name {
     font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 900;
-    margin-bottom: 6px;
-    color: var(--text-high);
 }
 
 .preview-actions {
     display: flex;
     gap: 8px;
-    margin-top: 14px;
 }
 
-/* ── Container query support for fluid icon sizing ── */
-#mockup-slot {
-    container-type: inline-size;
-    display: flex;
-    align-items: center;
+.preview-actions > button {
+    flex: 1;
     justify-content: center;
-    /*
-     * width: 100% is REQUIRED.
-     * #mockup-slot is a flex child of .preview-mockup-stage (align-items: center).
-     * Without an explicit width it auto-sizes to its content. But all mockup
-     * children use position:absolute → zero intrinsic content → slot collapses to 0.
-     * Setting width:100% makes .mockup-pc's "width:100%" resolve correctly and
-     * gives .mockup-mobile a bounded inline-size for the container query.
-     */
-    width: 100%;
 }
 
-/*
- * 90/10 Rule — Mobile backdrop-filter restriction
- *
- * backdrop-filter: blur() is GPU-intensive. On mobile touch devices (detected
- * via pointer: coarse — the most reliable signal for mobile hardware) it drops
- * frames at 60fps on low-end CPUs/GPUs. The rule is:
- *   Desktop: glassmorphism allowed (pointer: fine = mouse/trackpad)
- *   Mobile:  solid color fallback, zero blur
- *
- * This overrides the @supports opt-in blocks for .mockup-app-icon and
- * .mockup-taskbar to enforce solid rendering on touch hardware.
- */
-@media (pointer: coarse) {
-    /* ── Mockup internal elements (existing) ── */
-    .mockup-app-icon,
-    .mockup-desktop-icon-img,
-    .mockup-taskbar-pinned {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-    }
-    .mockup-taskbar {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        background: rgba(8, 8, 18, 0.92) !important;
-    }
+.preview-status {
+    min-height: 1.25rem;
+    margin: 12px 0 0;
+    color: var(--danger, #d75a5a);
+}
 
+.purchase-breakdown {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 16px;
+    margin: 0;
+}
+
+.purchase-breakdown dt,
+.purchase-breakdown dd {
+    margin: 0;
+}
+
+.purchase-breakdown dd {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.purchase-breakdown-total {
+    color: var(--text-high);
+    font-weight: 800;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .preview-modal-box {
+        transition: transform 160ms ease-out, opacity 160ms ease-out;
+    }
+}
+
+/* ── Mobile overlay performance safeguards ───────────────────────────────── */
+@media (pointer: coarse) {
     /* ── v9.8: Eliminar backdrop-filter de todos los overlays ────────────────
        En dispositivos táctiles (gama baja y media), backdrop-filter requiere
        capturar y desdibujar toda la escena detrás del overlay en cada frame.
@@ -4105,28 +3050,10 @@ svg { stroke-width: 2; }
         /* Compensar la pérdida de blur con mayor opacidad del fondo */
         background: rgba(0, 0, 0, 0.93) !important;
     }
-    /* El botón X del modal de preview usaba blur(8px) — omitido en el bloque
-       original pero igual de costoso: crea una capa de compositor separada
-       que debe recompostar el contenido del modal bajo el botón. */
-    .preview-close-btn {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        background: rgba(7, 7, 13, 0.97) !important;
-    }
     /* Toast: blur(12px) sobre una UI ya renderizada — innecesario en móvil */
     .toast {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-    }
-
-    /* ── v9.8: Deshabilitar animación laser scan en el banner de oferta ──────
-       .sale-banner__ticket::after tiene will-change: transform permanente, lo
-       que crea una capa GPU que debe ser recompositada en cada frame de scroll.
-       En móvil el efecto de scan es inapreciable a 60fps con pantallas OLED.
-       ─────────────────────────────────────────────────────────────────────── */
-    .sale-banner__ticket::after {
-        animation: none;
-        opacity: 0;
     }
 
     /* ── v9.8: Simplificar hover/tap en tarjetas de catálogo ─────────────────
@@ -4134,68 +3061,15 @@ svg { stroke-width: 2; }
        de lift + box-shadow + image-scale no aporta valor UX y fuerza trabajo
        de composición innecesario durante el tap-release.
        ─────────────────────────────────────────────────────────────────────── */
-    .shop-card:hover {
+    .shop-visual-card:hover {
         transform: none !important;
-        box-shadow: none !important;
-        will-change: auto !important;
-    }
-    .shop-card:hover .shop-img {
-        transform: none !important;
-    }
-    /* Eliminar transición de imagen — nunca se activa en táctil y consume
-       una slot de transición CSS que el engine evalúa en cada layout */
-    .shop-img {
-        transition: none !important;
+        box-shadow: var(--surface-shadow-soft) !important;
     }
 
-    /* ── v9.8: Reducir blur del mockup en estado de carga ────────────────────
-       filter: blur(10px) en .mockup-bg-loading fuerza un pase de rasterizado
-       por píxel sobre toda la capa de arte. En gama baja este filtro puede
-       tardar 30-60 ms. Reducir a 3px mantiene el efecto de placeholder sin
-       el coste de rasterizado completo. El scale se ajusta proporcionalmente.
-       ─────────────────────────────────────────────────────────────────────── */
-    .mockup-bg-loading {
-        filter: blur(3px) !important;
-        transform: scale(1.03) !important;
-    }
-
-    /* ── v9.8: Reducir blur del fallback offline ─────────────────────────────
-       filter: blur(40px) en ::before del fallback offline es el filtro más
-       costoso del sistema. Reducir a 12px produce el mismo efecto difuso
-       sobre el gradiente cónico con 1/11 del coste de rasterizado.
-       ─────────────────────────────────────────────────────────────────────── */
-    .mockup-layer-art.mockup-bg-offline::before {
-        filter: blur(12px) !important;
-    }
 
 }
 
 
-/* ================================================================
-   TOUCH TARGETS — WCAG 2.5.5
-   Los botones de acción de tarjeta (.shop-buy-btn, .shop-preview-btn)
-   tienen padding visual de 7px, resultando en ~30–32px de alto.
-   En dispositivos táctiles se extiende a 44px mínimo usando min-height,
-   sin alterar el diseño visual en pantallas con cursor (pointer:fine).
-   ================================================================ */
-@media (pointer: coarse) {
-    :where(
-        button,
-        [role="button"],
-        a[href],
-        summary,
-        .game-card,
-        .shop-card,
-        .gift-card
-    ).interactive-ripple::after {
-        animation: none !important;
-        opacity: 0 !important;
-    }
-    .shop-buy-btn,
-    .shop-preview-btn {
-        min-height: 44px;
-    }
-}
 
 /* ================================================================
    PREFERS-REDUCED-MOTION

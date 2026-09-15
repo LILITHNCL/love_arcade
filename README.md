@@ -20,6 +20,19 @@ Cliente (SPA) ──► API Vercel (serverless) ──► Supabase
 
 ---
 
+## Tienda y Colección
+
+La Tienda usa una sola fuente de datos: `data/shop.json`. Sus ítems tienen IDs estables y el contrato `id`, `name`, `price`, `category: "art"`, `type`, `imageUrl` y, para archivos, `downloadUrl`. `imageUrl` conserva la fuente Cloudinary original; las miniaturas se derivan en cliente y las imágenes compradas se descargan con `fl_attachment`.
+
+- **Tienda:** muestra únicamente ítems no poseídos en un grid visual.
+- **Colección:** se monta al abrirse, muestra ítems poseídos y contiene la única búsqueda local por nombre.
+- **Compra:** `GameCenter.buyItem()` conserva la autoridad económica; el total es el precio tras descuento y el cashback se acredita aparte.
+- **Promociones:** se canjean desde **Perfil → Códigos promocionales**.
+
+Antes de publicar cambios del catálogo o flujo de Tienda, ejecuta `node tests/shop-catalog-static-qa.mjs`.
+
+---
+
 ## Stack
 
 | Capa | Tecnología |

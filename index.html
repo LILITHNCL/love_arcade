@@ -130,9 +130,6 @@
         <symbol id="icon-gamepad-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>
         </symbol>
-        <symbol id="icon-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-        </symbol>
         <symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </symbol>
@@ -580,106 +577,16 @@
              ═══════════════════════════════════════════ -->
         <div id="view-shop" class="view-section hidden">
 
-            <!-- ── SALE BANNER ── -->
-            <div id="sale-banner" class="sale-banner hidden">
-                <div class="sale-banner__ticket">
-                    <div class="sale-banner__notch-left"></div>
-                    <div class="sale-banner__notch-right"></div>
-                    <div class="sale-banner__icon">
-                        <svg class="icon" width="20" height="20" style="fill:currentColor;stroke:none" aria-hidden="true"><use href="#icon-zap"></use></svg>
-                    </div>
-                    <div class="sale-banner__content">
-                        <p class="sale-banner__title" id="sale-label-text">¡OFERTA ESPECIAL!</p>
-                        <p class="sale-banner__desc" id="sale-desc-text">Descuento activo en toda la tienda.</p>
-                    </div>
-                    <div class="sale-banner__badge" id="sale-badge-pct">20%</div>
-                </div>
-            </div>
-
-            <!-- ── CÓDIGO PROMO ── -->
-            <div class="promo-toggle-wrap">
-                <button id="btn-promo-toggle" class="btn-ghost promo-toggle-btn" aria-expanded="false" aria-controls="promo-section">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
-                    <span>¿Tienes un código promocional?</span>
-                    <svg class="icon promo-chevron" width="13" height="13" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
-                </button>
-                <section id="promo-section" class="glass-panel promo-section promo-section--collapsed" aria-hidden="true">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-                        <div class="promo-icon-wrap">
-                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; font-family:var(--font-display); font-size:0.95rem; font-weight:800; letter-spacing:-0.2px;">Canjear código</h3>
-                            <p style="margin:0; font-size:0.75rem; color:var(--text-low);">Introduce tu cupón para recibir monedas instantáneas</p>
-                        </div>
-                    </div>
-                    <div class="promo-input-group">
-                        <input type="text" id="promo-input" placeholder="Ej: AMOR2024" class="promo-input">
-                        <button id="btn-redeem" class="btn-primary">
-                            <span>Canjear</span>
-                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-                        </button>
-                    </div>
-                    <p id="promo-msg" class="feedback-msg"></p>
-                </section>
-            </div>
-
-            <!-- ── TABS ── -->
-            <div class="shop-tabs">
-                <button class="shop-tab active" data-tab="catalog">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-layout-grid"></use></svg> Catálogo
-                </button>
-                <button class="shop-tab" data-tab="library">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-archive"></use></svg> Mis Tesoros
+            <!-- ── VISTAS DE TIENDA ── -->
+            <div class="shop-view-switcher">
+                <button id="btn-toggle-collection" class="btn-primary shop-view-toggle" type="button"
+                        aria-controls="shop-catalog shop-collection" aria-expanded="false">
+                    Ver colección
                 </button>
             </div>
 
-            <!-- ── TAB: CATÁLOGO ── -->
-            <section id="tab-catalog" class="tab-panel">
-                <div class="shop-toolbar">
-                    <div class="search-wrap">
-                        <svg class="icon search-icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"></use></svg>
-                        <input type="text" id="search-input" class="search-input"
-                               placeholder="Buscar wallpaper…" autocomplete="off">
-                        <button id="search-clear" class="search-clear hidden" aria-label="Limpiar">
-                            <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-x"></use></svg>
-                        </button>
-                    </div>
-                    <div class="filter-pills" id="filter-pills">
-                        <button class="pill active" data-filter="NoObtenidos">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sparkles"></use></svg> Nuevos
-                        </button>
-                        <button class="pill" data-filter="Stickers">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-sticker"></use></svg> Stickers
-                        </button>
-                        <button class="pill" data-filter="Mobile">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-smartphone"></use></svg> Móvil
-                        </button>
-                        <button class="pill" data-filter="Avatar">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-user"></use></svg> Avatar
-                        </button>
-                        <button class="pill filter-btn-gift" data-filter="Regalos">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-gift"></use></svg> Regalos
-                        </button>
-                        <button class="pill" data-filter="PC">
-                            <svg class="icon" width="10" height="10" aria-hidden="true"><use href="#icon-monitor"></use></svg> PC
-                        </button>
-                        <button class="pill" data-filter="Todos">Todos</button>
-                    </div>
-                </div>
-
-
-                <p id="search-results-count" class="search-count hidden"></p>
+            <section id="shop-catalog" class="shop-panel" aria-label="Tienda">
                 <div id="shop-container" class="shop-grid"></div>
-                <section id="gift-carousel" class="gift-carousel hidden" aria-label="Sección de regalos">
-                    <div id="gift-carousel-track" class="gift-carousel-track"></div>
-                    <div class="gift-collection-wrap">
-                        <button id="gift-collection-toggle" class="btn-ghost gift-collection-toggle" type="button" aria-expanded="false">
-                            Ver mi colección completa (0 totales)
-                        </button>
-                        <div id="gift-collection-grid" class="gift-collection-grid hidden"></div>
-                    </div>
-                </section>
 
                 <!-- Estado de error de red — visible solo si shop.json falla -->
                 <div id="shop-error-state" class="shop-error-state hidden" role="alert">
@@ -692,25 +599,15 @@
                     </button>
                 </div>
 
-                <div id="filter-empty" class="filter-empty hidden">
-                    <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-search-x"></use></svg>
-                    <p>Sin resultados para tu búsqueda.</p>
-                    <button class="btn-ghost" id="btn-reset-filters">Ver todo el catálogo</button>
+                <div id="shop-empty-state" class="shop-empty-state hidden">
+                    <svg class="icon" width="40" height="40" aria-hidden="true"><use href="#icon-archive"></use></svg>
+                    <p>Ya tienes todos los artículos de la Tienda.</p>
+                    <button class="btn-ghost" id="btn-open-collection" type="button">Ver colección</button>
                 </div>
             </section>
 
-            <!-- ── TAB: MIS TESOROS ── -->
-            <section id="tab-library" class="tab-panel hidden">
-                <div class="section-header" style="margin-bottom:16px;">
-                    <div>
-                        <h2 class="section-title">Mis Tesoros</h2>
-                        <p class="section-subtitle">Todos tus wallpapers desbloqueados</p>
-                    </div>
-                </div>
-                <div id="library-container" class="shop-grid treasury-grid">
-                    <p style="color:var(--text-low); grid-column:1/-1; text-align:center; padding:40px 0;">Cargando tu biblioteca…</p>
-                </div>
-            </section>
+            <!-- La Colección se crea bajo demanda al abrirla por primera vez. -->
+            <section id="shop-collection" class="shop-panel hidden" aria-label="Colección" aria-hidden="true"></section>
 
         </div><!-- /#view-shop -->
 
@@ -755,6 +652,45 @@
                         <span class="profile-action-card__body"><span class="profile-action-card__title">Notificaciones</span><span class="profile-action-card__desc">Novedades y avisos importantes.</span></span>
                         <span class="profile-action-card__chevron" aria-hidden="true">›</span>
                     </button>
+                    <button class="profile-action-card" type="button" data-profile-target="promotions">
+                        <span class="profile-action-card__icon"><svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg></span>
+                        <span class="profile-action-card__body"><span class="profile-action-card__title">Códigos promocionales</span><span class="profile-action-card__desc">Canjea códigos para recibir monedas.</span></span>
+                        <span class="profile-action-card__chevron" aria-hidden="true">›</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Pantalla: Códigos promocionales -->
+            <section id="profile-promotions" class="profile-screen hidden" data-profile-panel="promotions">
+                <div class="profile-screen-header">
+                    <button class="profile-back-btn" type="button" data-profile-back aria-label="Volver al perfil">
+                        <span aria-hidden="true">←</span> Volver
+                    </button>
+                    <div>
+                        <h2 class="section-title">Códigos promocionales</h2>
+                        <p class="section-subtitle">Canjea un código para recibir monedas instantáneamente.</p>
+                    </div>
+                </div>
+
+                <div class="profile-screen-card promo-redemption-card">
+                    <div class="promo-redemption-card__header">
+                        <div class="promo-icon-wrap">
+                            <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-ticket-percent"></use></svg>
+                        </div>
+                        <div>
+                            <h3>Canjear código</h3>
+                            <p>Introduce tu cupón para añadir monedas a tu saldo.</p>
+                        </div>
+                    </div>
+                    <div class="promo-input-group">
+                        <label class="visually-hidden" for="promo-input">Código promocional</label>
+                        <input type="text" id="promo-input" placeholder="Ej.: AMOR2024" class="promo-input" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="promo-msg">
+                        <button id="btn-redeem" class="btn-primary" type="button">
+                            <span>Canjear</span>
+                            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
+                        </button>
+                    </div>
+                    <p id="promo-msg" class="feedback-msg" role="status" aria-live="polite"></p>
                 </div>
             </section>
 
@@ -1085,27 +1021,11 @@
         </div>
     </div>
 
-    <!-- ── WALLPAPER PREVIEW MODAL (Preview 2.0 — Dynamic Mockup) ── -->
-    <div id="preview-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Vista previa de wallpaper">
+    <!-- ── SHOP PREVIEW / PURCHASE MODAL ── -->
+    <div id="preview-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="preview-title" aria-describedby="preview-status">
         <div class="modal-box preview-modal-box">
-            <!--
-                #preview-mockup-stage: contenedor del mockup dinámico.
-                JS inyecta aquí el frame correcto (Mobile 9:20 / PC 16:9)
-                basándose en los tags del item desde shop.json.
-                El botón de cierre vive fuera del slot para sobrevivir al innerHTML.
-            -->
-            <div id="preview-mockup-stage" class="preview-mockup-stage">
-                <div id="mockup-slot"></div>
-                <button id="preview-close" class="preview-close-btn" aria-label="Cerrar">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                        <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="preview-info-row">
-                <h3 id="preview-name" class="preview-name"></h3>
-                <div id="preview-actions" class="preview-actions"></div>
-            </div>
+            <div id="preview-content" class="preview-content"></div>
+            <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
         </div>
     </div>
 

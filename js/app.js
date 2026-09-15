@@ -7,8 +7,6 @@
  *  - addCoins(amount): nuevo método público de GameCenter que permite a
  *    event-logic.js depositar monedas sin pasar por completeLevel().
  *    Usado por la Cacería de Tesoros y el Gachapón Relámpago.
- *  - Evento personalizado 'la:levelcomplete': completeLevel() despacha este
- *    CustomEvent en document tras cada pago exitoso para módulos desacoplados.
  *
  * NOVEDADES v9.9.2 (Hardening & Error Detection):
  *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
@@ -183,7 +181,10 @@ const PROMO_CODES_HASHED = {
 'ec029eed55db3414455e78c607816941e092595f65d3cdb9dbe63a81cdcd1b2c': 1000,   // LUNITA
 'f28aab1b9b359e780d112664e9ff6dfd8cff51087b5f192d62635cc7f5b5342c': 6000,   // HACO260526
 '2bf4c2eb61f4e85707f9e605286940f92a89d689dd9a17b777bfd674ecb46caf': 2000,   // HLSEPENM
-'85b7e539867d4e35ff3ce361ffa570fb48e09eb49abdfe1b83887a96c8384260': 2800    // MIKU9X0L
+'85b7e539867d4e35ff3ce361ffa570fb48e09eb49abdfe1b83887a96c8384260': 2800,   // MIKU9X0L
+'6e64009694ee0e0393b0f1f4cfc53243b8ebc124bee98cea44ceb3eeabf8693a': 1500,   // YORHA2B
+'90054feb0a9c729328ff46d4db30f3ea6c7d21345640baacf5e9a1467b216b0d': 2600,   // LOVEARCADE140
+'fadb13b212d99b0004d638aab80538248b9aec7574aa3405a719adcc0a7385fa': 3000    // RACHA150
 };
 
 // =====================================================
@@ -684,7 +685,7 @@ function _showStorageToast(message, type = 'warning') {
 }
 
 function initInteractiveMicroFX() {
-    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .gift-card, .avatar-container';
+    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container';
     const coarsePointerMql = window.matchMedia('(pointer: coarse)');
     const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
     let coarsePointer = coarsePointerMql.matches;
@@ -887,15 +888,6 @@ window.GameCenter = {
         logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
         saveState({ immediateCloudSync: true });
 
-        // Flag de sesión volátil para desbloqueos "Regalos" en tienda.
-        window.__laSessionGameCompleted = true;
-        try { sessionStorage.setItem('la_session_game_completed', '1'); } catch (_) { /* noop */ }
-
-        // [v11.0] Notificar a módulos desacoplados tras el pago exitoso.
-        document.dispatchEvent(new CustomEvent('la:levelcomplete', {
-            detail: { gameId, levelId, reward: rewardAmount }
-        }));
-
         return { paid: true, coins: store.coins };
     },
 
@@ -963,7 +955,6 @@ window.GameCenter = {
     /**
      * Deposita monedas directamente en el saldo sin pasar por completeLevel().
      * Usado por la Cacería de Tesoros y el Gachapón Relámpago (event-logic.js).
-     * No despacha 'la:levelcomplete'.
      * @param {number} amount  Cantidad entera positiva de monedas a añadir.
      * @param {string} [motivo] Descripción para el historial de transacciones.
      * @returns {{ success: boolean, coins: number }}
@@ -985,14 +976,14 @@ window.GameCenter = {
      */
     getRedeemedCount: () => (store.redeemedHashes || []).length,
 
-    getDownloadUrl: (itemId, fileName) => {
-        if (!fileName) return null;
-        if ((store.inventory[itemId] || 0) === 0) return null;
-        // Strip file extension — Cloudinary download URL uses the base public ID
-        // without extension or transformation parameters so the original master
-        // file is served (no crop, no resize, no format override).
-        const base = fileName.replace(/\.[^.]+$/, '');
-        return CONFIG.wallpapersPath + base;
+    getDownloadUrl: (itemId, sourceUrl) => {
+        if (!sourceUrl || (store.inventory[itemId] || 0) === 0) return null;
+        const uploadMarker = '/image/upload/';
+        if (sourceUrl.includes(uploadMarker)) {
+            if (sourceUrl.includes(`${uploadMarker}fl_attachment/`)) return sourceUrl;
+            return sourceUrl.replace(uploadMarker, `${uploadMarker}fl_attachment/`);
+        }
+        return sourceUrl;
     },
 
 
@@ -1662,18 +1653,13 @@ function getLastMailRecipient() {
  * Construye un URI mailto: con los campos To, Subject y Body codificados.
  * Todos los valores se pasan por encodeURIComponent para evitar inyecciones (FR4).
  *
- * @param {{ name: string, tags?: string[] }} item    Metadatos del wallpaper.
+ * @param {{ name: string, category?: string }} item    Metadatos del wallpaper.
  * @param {string} absoluteUrl  URL absoluta de descarga (construida en la UI).
  * @param {string} email        Correo destino ya validado.
  * @returns {{ uri: string, tooLong: boolean }}
  */
 function buildMailtoLink(item, absoluteUrl, email) {
-    const tags = Array.isArray(item.tags) ? item.tags : [];
-    const tipo = tags.includes('Sticker')
-        ? 'Sticker'
-        : tags.includes('Mobile')
-            ? 'Wallpaper Mobile'
-            : 'Wallpaper PC';
+    const tipo = 'Wallpaper';
 
     const subject = encodeURIComponent(`Tu ${tipo} de Love Arcade: ${item.name}`);
 
