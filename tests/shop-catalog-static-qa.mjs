@@ -73,8 +73,8 @@ assert.match(shopLogic, /let _preloadObserver = null;/, 'shop preload must retai
 assert.match(shopLogic, /function _mountCollection\(\)/, 'Colección must be mounted on demand');
 assert.match(shopLogic, /toLocaleLowerCase\(\)/, 'Colección search must normalize names locally');
 assert.match(shopLogic, /getThumbnailUrl\(/, 'Cloudinary thumbnails must be derived centrally');
-assert.match(shopLogic, /const transforms = `f_avif,q_auto,c_fill,g_auto,ar_\$\{ratio\},w_\$\{safeWidth\}`;/,
-    'shop and collection thumbnails must explicitly request AVIF');
+assert.match(shopLogic, /const transforms = `f_webp,q_auto,c_fill,g_auto,ar_\$\{ratio\},w_\$\{safeWidth\}`;/,
+    'shop and collection thumbnails must explicitly request WebP');
 assert.match(shopLogic, /getImageDownloadUrl\(/, 'Cloudinary image downloads must be derived centrally');
 assert.match(shopLogic, /fl_attachment/, 'image downloads must force attachment delivery');
 assert.match(shopLogic, /pointerdown/, 'shop cards must use delegated Pointer Events');
