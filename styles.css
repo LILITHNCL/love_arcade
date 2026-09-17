@@ -89,24 +89,6 @@ html {
     height: 1em;
 }
 
-/* Icono estrella rellena (coin-badge y precio en cards) */
-.icon--star-filled {
-    fill: #fbbf24;
-    stroke: none;
-}
-
-/* Icono de rayo relleno (sale badge, sale banner) */
-.icon--zap-filled {
-    fill: currentColor;
-    stroke: none;
-}
-
-/* Icono de corazón relleno */
-.icon--heart-filled {
-    fill: currentColor;
-    stroke: none;
-}
-
 /* Ajuste de posición vertical para iconos dentro de texto inline */
 .icon + span,
 span + .icon,
@@ -121,7 +103,6 @@ span + .icon,
     --surface-0: #050508;
     --surface-1: #0d0e15;
     --surface-2: #10121a;
-    --surface-3: #181b29;
 
     /* =========================================================
        TEXT TOKENS — WCAG AA: texto normal >= 4.5:1
@@ -139,8 +120,6 @@ span + .icon,
     --text-on-danger-aa:  #ffffff;
 
     --price-current-aa:  #f6c453;
-    --price-sale-aa:     #7ee2a8;
-    --price-original-aa: #b6c1d6;
 
     /* Non-text contrast / focus */
     --border-subtle-aa: #2a3040;
@@ -148,21 +127,16 @@ span + .icon,
     /* Default theme: violet (#7C3AED). Keep this in sync with THEMES. */
     --accent-500: #7C3AED;
     --accent-400: color-mix(in srgb, var(--accent-500) 82%, #ffffff 18%);
-    --accent-300: #c4b5fd;
     --accent-soft-aa:   color-mix(in srgb, var(--accent) 28%, #0b0d14 72%);
     --accent-soft-strong: color-mix(in srgb, var(--accent) 44%, #0b0d14 56%);
     --accent-border-aa: color-mix(in srgb, var(--accent) 62%, #20263a 38%);
     --accent-glow-aa:   color-mix(in srgb, var(--accent) 34%, #0a0d18 66%);
     --success-500: #22d07a;
-    --warning-500: #f6b93b;
     --danger-500:  #ff5c7a;
-    --info-500:    #63b3ed;
     --focus-ring-aa: #c4b5fd;
-    --focus-ring-offset-aa: #0d0e15;
 
     /* ── Backgrounds ── */
     --bg-main:       var(--surface-0);
-    --bg-surface:    var(--surface-2);
     --bg-elevated:   var(--surface-2);
     --bg-overlay:    rgba(7, 7, 13, 0.95);
 
@@ -178,7 +152,6 @@ span + .icon,
     /* Premium edges — no white/grey outlines; depth comes from tone + shadow. */
     --border-subtle:   transparent;
     --border-mid:      color-mix(in srgb, var(--accent) 14%, transparent);
-    --border-bright:   color-mix(in srgb, var(--accent) 22%, transparent);
     --surface-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.34);
     --surface-shadow-premium: 0 14px 36px rgba(0, 0, 0, 0.42), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
     --control-shadow-rest: inset 0 1px 0 rgba(255,255,255,0.045), 0 8px 18px rgba(0,0,0,0.22);
@@ -219,7 +192,6 @@ span + .icon,
     --gold-glow:      rgba(246, 196, 83, 0.38);
     --gold-soft:      color-mix(in srgb, var(--gold) 26%, #181209 74%);
     --moon:           #c084fc;
-    --moon-soft:      rgba(192, 132, 252, 0.12);
 
     /* ── Layout ── */
     --radius-xs:  6px;
@@ -246,10 +218,8 @@ span + .icon,
     --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
     /* ── Shadows ── */
-    --shadow-sm:  0 2px 12px rgba(0,0,0,0.4);
     --shadow-md:  0 8px 30px rgba(0,0,0,0.5);
     --shadow-lg:  0 16px 50px rgba(0,0,0,0.65);
-    --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
 /* ================================================================
@@ -298,7 +268,6 @@ button { font-family: var(--font-body); }
    chips/filtros y CTA de carrusel. */
 :where(
     button,
-    .icon-btn,
     .btn-primary,
     .btn-ghost,
     .pill-nav-item,
@@ -323,7 +292,6 @@ button { font-family: var(--font-body); }
 :root {
     --motion-micro: 120ms cubic-bezier(.2,.8,.2,1);
     --motion-small: 170ms cubic-bezier(.2,.9,.2,1);
-    --motion-medium: 220ms cubic-bezier(.22,1,.36,1);
     --motion-overlay: 280ms cubic-bezier(.16,1,.3,1);
     --focus-ring: color-mix(in srgb, var(--accent) 72%, #fff);
 }
@@ -528,22 +496,6 @@ body::before {
     background: var(--solid-surface-base);
     border: 1px solid transparent;
     box-shadow: var(--surface-shadow-soft);
-    position: relative;
-    z-index: 1;
-}
-
-.glass-float {
-    background: var(--solid-surface-float);
-    border: 1px solid transparent;
-    box-shadow: var(--surface-shadow-premium);
-    position: relative;
-    z-index: 1;
-}
-
-.glass-highlight {
-    background: var(--solid-surface-hi);
-    border: 1px solid transparent;
-    box-shadow: var(--surface-shadow-premium);
     position: relative;
     z-index: 1;
 }
@@ -1579,36 +1531,6 @@ body::before {
     pointer-events: none;
 }
 
-.card-badge {
-    position: absolute;
-    top: 10px; left: 10px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-family: var(--font-display);
-    font-size: 0.62rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: white;
-    z-index: 2;
-}
-.card-reward {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    background: rgba(0,0,0,0.8);
-    border: 1px solid rgba(251,191,36,0.4);
-    border-radius: var(--radius-sm);
-    padding: 3px 8px;
-    font-family: var(--font-display);
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: var(--gold);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    z-index: 2;
-}
-
 .card-info {
     min-height: 68px;
     padding: 10px 10px 12px;
@@ -1627,8 +1549,6 @@ body::before {
     color: var(--text-high);
     text-wrap: balance;
 }
-.card-desc { display: none; }
-
 .card-play-action {
     width: 44px;
     height: 44px;
@@ -1652,11 +1572,6 @@ body::before {
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), var(--control-shadow-rest);
 }
 .card-play-action:active { transform: scale(0.96); }
-
-/* ================================================================
-   SHOP HERO
-   ================================================================ */
-.shop-hero { display: none; }
 
 /* ================================================================
    SHOP GRID
@@ -1890,23 +1805,8 @@ body::before {
 #btn-redeem { width: 100%; justify-content: center; }
 
 /* ================================================================
-   PREVIEW DOWNLOAD ACTION
-   ================================================================ */
-.vault-btn {
-    background: linear-gradient(135deg, #22d07a, #16a85e) !important;
-    color: #041a0a !important; font-weight: 800 !important;
-    letter-spacing: 0.01em;
-}
-.vault-btn:hover {
-    background: linear-gradient(135deg, #40e090, #22d07a) !important;
-    box-shadow: 0 0 16px var(--success-glow) !important;
-}
-
-/* ================================================================
    SYNC — Memory Card Design
    ================================================================ */
-.sync-card { padding: 1.25rem; border-radius: var(--radius-lg); }
-
 .memory-card {
     background: linear-gradient(135deg, var(--bg-elevated), #1a1d2e);
     border: 1px solid var(--glass-float-border);
@@ -2069,9 +1969,6 @@ body::before {
     border: 1px solid var(--glass-base-border);
     color: var(--text-low);
 }
-.eco-badge--green { background: var(--success-soft); border-color: rgba(34,208,122,0.3); color: var(--success); }
-.eco-badge--sale { background: var(--error-soft); border-color: rgba(255,66,102,0.3); color: var(--error); }
-
 /* ================================================================
    HISTORIAL
    ================================================================ */
@@ -2248,23 +2145,6 @@ body:has(.modal-overlay:not(.hidden)) {
     margin-bottom: 16px; color: var(--text-high);
     letter-spacing: -0.2px;
 }
-.modal-body { margin-bottom: 20px; }
-.modal-product-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 0; border-bottom: 1px solid var(--glass-base-border);
-    font-size: 0.85rem;
-}
-.modal-product-row:last-child { border-bottom: none; }
-.modal-product-row--total {
-    border-top: 1px solid var(--glass-float-border) !important;
-    margin-top: 4px; padding-top: 12px !important; border-bottom: none !important;
-}
-.modal-label { color: var(--text-low); }
-.modal-value { font-family: var(--font-display); font-weight: 800; color: var(--gold); }
-.modal-strikethrough { text-decoration: line-through; color: var(--text-mute); font-weight: 400; font-size: 0.8rem; }
-.modal-value--sale { color: var(--success); font-size: 1rem; font-family: var(--font-display); font-weight: 800; }
-.modal-value--cashback { color: var(--success); font-family: var(--font-display); font-weight: 800; }
-.modal-value--total { color: var(--text-high); font-size: 1rem; font-family: var(--font-display); font-weight: 900; }
 .modal-warning {
     background: rgba(255,66,102,0.06);
     border: 1px solid rgba(255,66,102,0.2);
@@ -2561,107 +2441,6 @@ body:has(.modal-overlay:not(.hidden)) {
 }
 
 /* ================================================================
-   DAILY BUTTON (legacy — used when not in HUD)
-   ================================================================ */
-.daily-btn {
-    background: linear-gradient(135deg, var(--gold), #f59e0b);
-    color: #120900; font-weight: 800; font-size: 0.86rem;
-    padding: 10px 18px; border-radius: var(--radius-sm);
-    box-shadow: 0 0 16px var(--gold-glow);
-}
-.daily-btn:hover:not(:disabled) {
-    box-shadow: 0 0 24px var(--gold-glow);
-    transform: translateY(-1px);
-}
-.daily-btn:disabled { cursor: not-allowed; opacity: 0.5; }
-.daily-msg { font-size: 0.76rem; font-weight: 600; text-align: right; min-height: 1rem; transition: opacity 0.4s; opacity: 0; }
-.daily-countdown { font-size: 0.72rem; color: var(--text-low); text-align: right; }
-.daily-countdown #countdown-display { font-family: var(--font-mono); font-weight: 600; color: var(--text-med); }
-
-/* ================================================================
-   STREAK CALENDAR (Weekly view)
-   ================================================================ */
-.streak-calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    margin-top: 8px;
-}
-.streak-cal-day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-.streak-cal-label {
-    font-size: 0.58rem;
-    font-weight: 700;
-    color: var(--text-mute);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-.streak-cal-dot {
-    width: 100%;
-    aspect-ratio: 1;
-    border-radius: var(--radius-xs);
-    background: var(--solid-surface-deep);
-    border: 1px solid var(--border-subtle);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display);
-    font-size: 0.62rem;
-    font-weight: 800;
-    color: var(--text-mute);
-    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-}
-.streak-cal-dot.claimed {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
-}
-.streak-cal-dot.today {
-    background: var(--gold-soft);
-    border-color: rgba(251,191,36,0.5);
-    color: var(--gold);
-    box-shadow: 0 0 10px var(--gold-glow);
-    animation: calPulse 1.8s ease-in-out infinite;
-}
-@keyframes calPulse {
-    0%, 100% { box-shadow: 0 0 8px var(--gold-glow); }
-    50% { box-shadow: 0 0 18px var(--gold-glow); }
-}
-
-/* ================================================================
-   FAQ
-   ================================================================ */
-.faq-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-}
-details.glass-panel {
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
-    transition: box-shadow 160ms ease, background-color 160ms ease;
-    background: var(--solid-surface-base);
-    border: 1px solid transparent;
-}
-details.glass-panel[open] { box-shadow: var(--surface-shadow-premium); }
-details summary {
-    cursor: pointer; font-weight: 700; font-size: 0.9rem;
-    font-family: var(--font-display);
-    list-style: none; display: flex; justify-content: space-between; align-items: center;
-    gap: 10px;
-}
-details summary::after {
-    content: '+'; font-size: 1.2rem;
-    color: var(--accent); transition: transform 0.2s;
-    flex-shrink: 0;
-}
-details[open] summary::after { transform: rotate(45deg); }
-.faq-content { margin-top: 10px; font-size: 0.84rem; color: var(--text-low); line-height: 1.65; }
-
-/* ================================================================
    DESKTOP @media (min-width: 768px)
    ================================================================ */
 /* The floating pill is the only primary navigation on every platform.
@@ -2709,11 +2488,7 @@ details[open] summary::after { transform: rotate(45deg); }
     /* Settings */
     .settings-card { padding: 1.5rem; }
     .theme-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-    .sync-card { padding: 1.5rem; }
     .memory-card { padding: 1.5rem; }
-
-    /* FAQ */
-    .faq-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 
     /* Toast */
     .toast { bottom: 28px; font-size: 0.86rem; padding: 14px 20px; }
@@ -2736,11 +2511,6 @@ details[open] summary::after { transform: rotate(45deg); }
         display: none;
     }
 }
-
-/* ================================================================
-   UTILITY
-   ================================================================ */
-.w-full { width: 100%; }
 
 /* Lucide icon consistent stroke */
 svg { stroke-width: 2; }
@@ -3352,13 +3122,6 @@ svg { stroke-width: 2; }
     line-height: 1.05;
     text-align: center;
     text-wrap: balance;
-}
-
-.profile-kicker {
-    margin: 0;
-    color: var(--text-low);
-    font-size: 0.86rem;
-    text-wrap: pretty;
 }
 
 .profile-action-grid {
