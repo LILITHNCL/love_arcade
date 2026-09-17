@@ -1211,5 +1211,13 @@
     "type": "file",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-star-wars-ii",
     "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/angry-birds-star-wars-ii-final-update-mod-v2.0.apk"
+},
+{
+    "id": 152,
+    "name": "Shadow The Hedgehog",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-46591ec5"
 }
 ]

@@ -116,9 +116,9 @@ const SYNC_SALT = 'love_arcade_v75_integrity_2026';
 // ECONOMÍA — Editar aquí para eventos especiales
 // =====================================================
 const ECONOMY = {
-    isSaleActive:   false,
-    saleMultiplier: 0.90,
-    saleLabel:      '10% OFF',
+    isSaleActive:   true,
+    saleMultiplier: 0.80,
+    saleLabel:      '-20%',
     cashbackRate:   0.1
 };
 window.ECONOMY = ECONOMY;
