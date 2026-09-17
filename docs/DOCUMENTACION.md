@@ -2522,6 +2522,7 @@ const PROMO_CODES_HASHED = {
 | `6e64009694ee0e03` | 1500 | YORHA2B |
 | `90054feb0a9c7293` | 2600 | LOVEARCADE140 |
 | `fadb13b212d99b00` | 3000 | RACHA150 |
+| `4e5940a77ef06b18` | 3900 | TEAMO505 |
 
 > Los hashes completos (64 caracteres) se encuentran en `PROMO_CODES_HASHED` dentro de `app.js`.
 
