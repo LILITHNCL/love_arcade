@@ -30,9 +30,6 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `index.html` | Estructura del HUD diario, barra de racha, panel de racha en configuración y modal de hito. |
 | `styles.css` | Estilos visuales, estados, animaciones y modal de hitos. |
 | `js/milestones-config.js` | Catálogo de hitos de racha y recompensas. |
-| `js/push-notifications.js` | Lee el estado local de daily para sincronizar recordatorios con Supabase. |
-| `supabase/functions/push-dispatch/index.ts` | Decide cuándo enviar notificaciones push de bono diario disponible. |
-| `sw.js` | Normaliza tags y comportamiento de notificaciones locales diarias. |
 | `docs/DOCUMENTACION.md` | Documentación histórica y analítica existente sobre el sistema. |
 | `docs/love-arcade-minigame-dev-manual.md` | Expone `window.GameCenter.getStreakInfo()` como API disponible para minijuegos. |
 | `data/events.json` | Configura eventos LTE, incluyendo `streak_boost_v1`. |
@@ -356,39 +353,7 @@ const newStreak = diffDays === 1 ? streak + streakBoost : 1;
 
 Importante: el cap de recompensa sigue siendo `dailyStreakCap = 60`; el evento acelera el contador de racha, no elimina el límite económico del bono base.
 
-## 14. Notificaciones push/locales
-
-### 14.1 Sincronización del estado local
-
-`js/push-notifications.js` lee:
-
-- `GameCenter.canClaimDaily()`;
-- `GameCenter.getState().daily.lastClaim` si está disponible en el estado interno/lectura usada por ese módulo;
-- `GameCenter.getMoonBlessingStatus()`;
-- offset horario local (`new Date().getTimezoneOffset()`).
-
-Luego sube a Supabase campos como:
-
-- `daily_enabled`;
-- `next_daily_claim_at`;
-- `daily_can_claim` / `can_claim_daily` según payload;
-- `daily_last_claim_at`;
-- `daily_timezone_offset_minutes`.
-
-### 14.2 Dispatch en Supabase
-
-`supabase/functions/push-dispatch/index.ts` calcula un slot local (`morning`, `day`, `night`) y envía notificación si:
-
-- las notificaciones diarias están habilitadas;
-- el estado dice que el bono se puede reclamar;
-- existe slot válido;
-- no se notificó ya ese slot en la fecha local.
-
-### 14.3 Service Worker
-
-`sw.js` normaliza el tag de notificaciones `local_daily` como `local-daily-{slot}` o `local-daily`, y usa `renotify: true` para notificaciones diarias.
-
-## 15. Analítica y observabilidad
+## 14. Analítica y observabilidad
 
 ### 15.1 `daily_bonus`
 
@@ -476,7 +441,6 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 3. **UI y validación usan fuentes distintas.** `canClaimDaily()` usa `Date.now()` local; `claimDaily()` usa caché de red si existe. Puede haber un caso donde la UI habilite el botón pero el reclamo lo bloquee por `desynced`.
 4. **Accesibilidad de anuncios.** Los mensajes dinámicos no están garantizados para screen readers.
 5. **Focus management del modal.** El modal declara semántica, pero no se observa focus trap/restauración explícita.
-6. **Notificaciones calculan `nextDailyTs` como `now + 24h`.** La lógica core es medianoche local; el recordatorio podría no coincidir exactamente con el próximo reset calendario, aunque el dispatch también usa slots y `daily_can_claim`.
 7. **Resuelto — el modal de hito no se abría tras el reclamo diario.** El listener de `#btn-daily` programa `showStreakMilestoneModal()` 600 ms después de un `claimDaily()` exitoso. Así el hito recién alcanzado se celebra en la misma sesión, después del feedback visual del reclamo y respetando el bloqueo de reentradas existente.
 
 ## 22. Recomendaciones
