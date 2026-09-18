@@ -1,99 +1,3 @@
-/**
- * Game Center Core v11.0 — Meta-Gameplay & Event Engine
- * Compatible con gamecenter_v6_promos — migración silenciosa incluida.
- * Compatible con Ghost Analytics v11.0 — Doble Candado (Anti-Bot + Human Gate).
- *
- * NOVEDADES v11.0 (Meta-Gameplay & Event Engine):
- *  - addCoins(amount): nuevo método público de GameCenter que permite a
- *    event-logic.js depositar monedas sin pasar por completeLevel().
- *    Usado por la Cacería de Tesoros y el Gachapón Relámpago.
- *
- * NOVEDADES v9.9.2 (Hardening & Error Detection):
- *  - Eliminado track('redeem_code') de redeemPromoCode(): la fuente única de
- *    disparo es handleRedeem() en shop-logic.js, al final de la cadena de éxito
- *    de UI. Elimina el doble reporte que saturaba el canal de Discord.
- *  - buyItem(): nueva rama de tracking insufficient_funds cuando reason === 'coins'.
- *    Registra wallpaper, precio final y saldo actual para detectar si los precios
- *    son demasiado elevados o el HUD de saldo no es claro para el usuario.
- *  - buyMoonBlessing(): ídem para insufficient_funds; registra el costo del buff
- *    y el saldo disponible.
- *  - claimDaily(): nuevo track('daily_bonus') en la rama de éxito. Registra
- *    recompensa total, racha y si la Bendición Lunar contribuyó. Solo disparado
- *    en éxito para no saturar el canal con intentos fallidos del botón.
- *  - GameCenter.getRedeemedCount(): nuevo método expuesto que devuelve el número
- *    de códigos ya canjeados, usado por el user_snapshot de shop-logic.js.
- *
- * NOVEDADES v9.9 (Ghost Analytics):
- *  - Integración con el módulo analytics.js (debe cargarse ANTES en el HTML).
- *  - Evento open_game: delegación global en DOMContentLoaded sobre cualquier
- *    <a href*="games/"> para registrar qué minijuego fue abierto.
- *  - Evento redeem_code: llamada a GhostAnalytics.track() dentro de
- *    redeemPromoCode() cuando el canje es exitoso. El código original nunca
- *    se envía; se trunca con *** para proteger el texto plano.
- *  - Los eventos detected_error se capturan automáticamente en analytics.js
- *    mediante window.addEventListener('error') y 'unhandledrejection'.
- *  - Todas las llamadas usan optional chaining (?.) para ser no-operativas
- *    si analytics.js no está cargado (degradación elegante).
- *
- * COMPATIBILIDAD CON analytics.js v11.0 (Doble Candado):
- *  - Todas las llamadas a GhostAnalytics.track() en este módulo son seguras
- *    con el nuevo sistema de "Doble Candado":
- *    · Son disparadas por acciones de usuario reales (click en btn-daily,
- *      btn-moon-blessing, links de juegos, compras). Ninguna se dispara en
- *      onload o DOMContentLoaded de forma automática.
- *    · El campo 'usuario' (nickname) NO debe incluirse en las llamadas de
- *      este módulo — analytics.js v11.0 lo inyecta automáticamente en track()
- *      tras leerlo de localStorage['gamecenter_v6_promos'].
- *    · Si el Human Gate está cerrado o el nickname no está disponible en el
- *      momento del disparo, analytics.js encola el evento y lo envía cuando
- *      las condiciones se cumplan. Ningún evento se pierde.
- *  - No se requieren cambios funcionales en app.js para la compatibilidad
- *    con analytics.js v11.0; la integración es transparente gracias al
- *    optional chaining (?.) y a la inyección automática del nickname.
- *
- * NOVEDADES v9.4 (Identity Update):
- *  - store.nickname (string, max 15 chars): nombre personalizado del usuario.
- *  - store.gender ('o'|'a'|'@'): sufijo del saludo ("Bienvenid@").
- *  - migrateState(): incluye validación silenciosa de ambos campos nuevos.
- *  - applyIdentity(): escribe nickname y sufijo en el DOM de forma síncrona
- *    antes de revealUI(), manteniendo la Zero-Flicker Initiative.
- *  - GameCenter.setIdentity(nickname, gender): guarda y aplica identidad.
- *  - GameCenter.getIdentity(): lectura segura de nickname y gender.
- *  - GameCenter.hasIdentity(): comprueba si el nickname está configurado.
- *  - Flujo de bienvenida: si nickname está vacío al cargar, el inline script
- *    de index.html muestra el Identity Modal y llama a revealUI() al confirmar.
- *    El .player-hud permanece en opacity:0 durante ese tiempo.
- *
- * NOVEDADES v9.3 (Zero-Flicker Initiative):
- *  - Script crítico inline en <head> de index.html: lee el tema del
- *    localStorage y sobreescribe los CSS custom properties en :root ANTES
- *    del primer paint, eliminando el "salto violeta" al 100%.
- *  - INIT síncrono: applyTheme(), init de saldo, updateDailyButton(),
- *    updateMoonBlessingUI() y applyAvatar() se ejecutan síncronamente al
- *    final de <body> (fuera de DOMContentLoaded). Dado que app.js está al
- *    final del body, el DOM ya existe pero el navegador aún no ha pintado,
- *    por lo que todos los valores correctos se escriben antes del primer frame.
- *  - revealUI(): añade .is-ready y .coin-badge--visible en el siguiente RAF,
- *    garantizando que los contenedores de datos críticos sólo se revelan
- *    después de que sus valores reales han sido escritos.
- *  - styles.css: .player-hud y .hud-avatar-wrap comienzan con opacity:0 y
- *    transicionan a 1 cuando reciben .is-ready.
- *
- * NOVEDADES v9.2 (Font FOIT/FOUT, Coin Init & Treasury Grid):
- *  - Init silencioso del saldo: escribe el valor formateado síncronamente.
- *  - .coin-badge--visible: fade-in de 150ms tras la sincronización inicial.
- *
- * NOVEDADES v9.1 (History API, Retry UI & Theme Fix):
- *  - applyTheme(): clase theme-{key} en <body> + data-theme en <html>.
- *
- * NOVEDADES v9.0 (SPA Migration):
- *  - Arquitectura SPA unificada. shop.html eliminado.
- *  - getState(), syncUI() expuestos para módulos externos.
- *
- * NOVEDADES v8.1 (Daily Claim Security):
- *  - _syncTimeBackground() / _readTimeCache(): verificación de tiempo desacoplada del reclamo (v9.6).
- */
-
 // =====================================================
 // CONFIGURACIÓN GLOBAL
 // =====================================================
@@ -167,7 +71,7 @@ window.THEMES = THEMES;
 // =====================================================
 // CÓDIGOS PROMOCIONALES — SHA-256 (no texto plano)
 // Generados con: echo -n "CODIGO" | sha256sum
-// Para agregar nuevos códigos ver DOCUMENTACION.md §10
+// Para agregar nuevos códigos ver DOCUMENTACION.md §12
 // =====================================================
 const PROMO_CODES_HASHED = {
 '4564f1daae1dd157925088fce37fefc9869dabbbd7f860069dcf593d4d620a4b': 2500,   // PVZGW2500
