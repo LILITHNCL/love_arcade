@@ -136,6 +136,16 @@ function debounce(fn, delay = 300) {
         timer = setTimeout(() => fn(...args), delay);
     };
 }
+
+function _canUseVibration() {
+    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+        return false;
+    }
+
+    const userActivation = navigator.userActivation;
+    if (!userActivation) return true;
+    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
+}
 window.debounce = debounce; // Disponible globalmente para shop-logic.js
 
 // =====================================================
