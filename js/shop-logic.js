@@ -64,15 +64,13 @@
  *    El campo `image` de shop.json ahora apunta directamente a la URL CDN.
  *  - assets/cover/ ELIMINADA. Las carátulas de los juegos en index.html
  *    usan Cloudinary con la transformación ar_16:9,c_fill,g_auto,w_1080.
- *  - getDownloadUrl() en app.js: la URL de descarga/email usa la estructura
+ *  - getDownloadUrl() en app.js: construye la URL de descarga con la estructura
  *    limpia https://res.cloudinary.com/dyspgn0sw/image/upload/{public_id}
  *    sin extensión ni parámetros de transformación, sirviendo el master original.
  *
  * NOVEDADES v9.4 (sincronización de versión con app.js):
  *  - Eliminado will-change estático en tarjetas del catálogo y Colección.
  *    El GPU-layer management ahora vive exclusivamente en CSS (hover :hover).
- *  - handleExport() refactorizado para usar window.MailHelper.copyToClipboard()
- *    en lugar de reimplementar el patrón navigator.clipboard + execCommand.
  *  - _noCtxHandler movido a variable de cierre del módulo (ya no muta el DOM).
  *  - [v9.6] lucide.createIcons() eliminado. Iconos servidos como SVG Sprite estático.
  *
@@ -87,7 +85,7 @@
  *    en app.js fue eliminado (corrección SPA) para evitar el cobro doble.
  *
  * DEPENDENCIAS (deben estar cargadas ANTES en el DOM):
- *  - js/app.js          → window.GameCenter, window.ECONOMY, window.debounce, window.MailHelper
+ *  - js/app.js          → window.GameCenter, window.ECONOMY, window.debounce
  *  - [v9.6] lucide eliminado. _icon() helper genera referencias al SVG Sprite.
  *  - canvas-confetti    → lazy-load on demand (no bloquea ruta crítica)
  *
@@ -672,11 +670,6 @@ function _renderCollectionItemModal(item) {
     actions.className = 'preview-actions';
     const close = _makePreviewButton('btn-ghost', 'Volver');
     close.addEventListener('click', closePreviewModal);
-    const email = _makePreviewButton('btn-ghost', 'Enviar por correo');
-    email.addEventListener('click', () => {
-        closePreviewModal();
-        openEmailModal(item, downloadUrl);
-    });
     const download = _makePreviewButton('btn-primary', 'Descargar');
     download.addEventListener('click', () => {
         triggerDownload(downloadUrl);
@@ -686,7 +679,7 @@ function _renderCollectionItemModal(item) {
             fuente: 'colección'
         });
     });
-    actions.append(close, email, download);
+    actions.append(close, download);
     content.append(image, title, actions);
     requestAnimationFrame(() => download.focus());
 }
@@ -1557,107 +1550,6 @@ function showMsg(el, text, color) {
     el.style.opacity = '1';
 }
 
-// ── Email Modal ───────────────────────────────────────────────────────────────
-let _emailItem        = null;
-let _emailAbsoluteUrl = '';
-
-function openEmailModal(item, absoluteUrl) {
-    _emailItem        = item;
-    _emailAbsoluteUrl = absoluteUrl;
-
-    const thumbEl = document.getElementById('email-modal-thumb');
-    const nameEl  = document.getElementById('email-modal-item-name');
-    if (thumbEl) { thumbEl.src = item.imageUrl; thumbEl.alt = item.name; }
-    if (nameEl)  { nameEl.textContent = item.name; }
-
-    const inputEl = document.getElementById('email-modal-input');
-    if (inputEl) {
-        inputEl.value = window.MailHelper.getLastMailRecipient();
-        _setEmailError(false);
-    }
-
-    const fallbackEl = document.getElementById('email-fallback');
-    if (fallbackEl) fallbackEl.classList.remove('visible');
-
-    const modal = document.getElementById('email-modal');
-    // Guardar foco activo para restaurarlo al cerrar el modal (WCAG 2.4.3).
-    _lastFocusedElement = document.activeElement;
-    modal.classList.remove('hidden');
-    window.ModalA11y?.open?.(modal, _lastFocusedElement);
-    requestAnimationFrame(() => { if (inputEl) inputEl.focus(); });
-}
-
-function _closeEmailModal() {
-    const emailModal = document.getElementById('email-modal');
-    emailModal.classList.add('hidden');
-    window.ModalA11y?.close?.(emailModal);
-    _emailItem        = null;
-    _emailAbsoluteUrl = '';
-    // Restaurar foco al botón de envío que abrió el modal (WCAG 2.4.3).
-    _lastFocusedElement?.focus();
-    _lastFocusedElement = null;
-}
-
-function _setEmailError(show, msg = 'Introduce un correo electrónico válido.') {
-    const errorEl   = document.getElementById('email-modal-error');
-    const errorText = document.getElementById('email-modal-error-text');
-    const inputEl   = document.getElementById('email-modal-input');
-    if (!errorEl || !inputEl) return;
-    if (show) {
-        if (errorText) errorText.textContent = msg;
-        errorEl.classList.add('visible');
-        inputEl.classList.add('email-input--error');
-        inputEl.setAttribute('aria-invalid', 'true');
-    } else {
-        errorEl.classList.remove('visible');
-        inputEl.classList.remove('email-input--error');
-        inputEl.setAttribute('aria-invalid', 'false');
-    }
-}
-
-async function _handleEmailConfirm() {
-    if (!_emailItem || !_emailAbsoluteUrl) return;
-
-    const inputEl    = document.getElementById('email-modal-input');
-    const saveCb     = document.getElementById('email-save-checkbox');
-    const fallbackEl = document.getElementById('email-fallback');
-    const fallUrlEl  = document.getElementById('email-fallback-url');
-
-    const email = (inputEl?.value || '').trim();
-
-    if (!window.MailHelper.isValidEmail(email)) {
-        _setEmailError(true);
-        inputEl?.focus();
-        return;
-    }
-    _setEmailError(false);
-
-    const { uri, tooLong } = window.MailHelper.buildMailtoLink(_emailItem, _emailAbsoluteUrl, email);
-
-    if (tooLong) {
-        if (fallbackEl) fallbackEl.classList.add('visible');
-        if (fallUrlEl)  fallUrlEl.textContent = _emailAbsoluteUrl;
-
-        const copyBtn = document.getElementById('email-copy-btn');
-        if (copyBtn) {
-            const freshBtn = copyBtn.cloneNode(true);
-            copyBtn.parentNode.replaceChild(freshBtn, copyBtn);
-            document.getElementById('email-copy-btn').addEventListener('click', async () => {
-                const ok  = await window.MailHelper.copyToClipboard(_emailAbsoluteUrl);
-                const lbl = document.getElementById('email-copy-label');
-                if (lbl) lbl.textContent = ok ? '✓ Enlace copiado' : 'No se pudo copiar';
-                setTimeout(() => { if (lbl) lbl.textContent = 'Copiar enlace de descarga'; }, 2500);
-            });
-        }
-        if (saveCb?.checked) window.MailHelper.saveLastMailRecipient(email);
-        return;
-    }
-
-    if (saveCb?.checked) window.MailHelper.saveLastMailRecipient(email);
-    window.location.href = uri;
-    setTimeout(_closeEmailModal, 300);
-}
-
 // ── ShopView API pública (usada por spa-router.js) ────────────────────────────
 window.ShopView = {
     /**
@@ -1833,19 +1725,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === e.currentTarget) closePreviewModal();
     });
 
-    // Email modal
-    document.getElementById('email-modal-cancel').addEventListener('click', _closeEmailModal);
-    document.getElementById('email-modal').addEventListener('click', e => {
-        if (e.target === e.currentTarget) _closeEmailModal();
-    });
-    document.getElementById('email-modal-confirm').addEventListener('click', _handleEmailConfirm);
-    document.getElementById('email-modal-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') _handleEmailConfirm();
-    });
-    document.getElementById('email-modal-input').addEventListener('input', () => {
-        _setEmailError(false);
-    });
-
     // Escape global cierra todos los modales
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -1853,7 +1732,6 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmModal.classList.add('hidden');
             window.ModalA11y?.close?.(confirmModal);
             closePreviewModal();
-            _closeEmailModal();
         }
     });
 

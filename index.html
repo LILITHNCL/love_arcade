@@ -151,9 +151,6 @@
         <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </symbol>
-        <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-        </symbol>
         <symbol id="icon-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
         </symbol>
@@ -183,9 +180,6 @@
         </symbol>
         <symbol id="icon-search-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m13.5 8.5-5 5"/><path d="m8.5 8.5 5 5"/><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </symbol>
-        <symbol id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </symbol>
         <symbol id="icon-sticker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15.5 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8.5z"/>
@@ -1132,86 +1126,6 @@
         </div>
     </div>
 
-    <!-- ── EMAIL MODAL ── -->
-    <div id="email-modal"
-         class="modal-overlay hidden"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="email-modal-title">
-        <div class="modal-box" style="max-width:420px;">
-
-            <div class="email-modal-header" id="email-modal-header" aria-hidden="true">
-                <img id="email-modal-thumb" src="" alt="" class="email-modal-thumb">
-                <div>
-                    <p class="email-modal-item-name" id="email-modal-item-name"></p>
-                    <p class="email-modal-item-sub">Enviar enlace de descarga</p>
-                </div>
-            </div>
-
-            <h3 id="email-modal-title" class="modal-title" style="margin-bottom:14px;">
-                Enviar por correo
-            </h3>
-
-            <div class="email-input-wrap">
-                <svg class="icon email-input-icon" width="15" height="15" aria-hidden="true"><use href="#icon-mail"></use></svg>
-                <input
-                    id="email-modal-input"
-                    type="email"
-                    class="email-input"
-                    placeholder="tu@correo.com"
-                    autocomplete="email"
-                    inputmode="email"
-                    aria-label="Correo electrónico destino"
-                    aria-describedby="email-modal-error"
-                >
-            </div>
-
-            <p id="email-modal-error" class="email-error-msg" role="alert" aria-live="polite">
-                <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-alert-circle"></use></svg>
-                <span id="email-modal-error-text">Introduce un correo válido.</span>
-            </p>
-
-            <div class="email-save-row">
-                <input type="checkbox" id="email-save-checkbox" checked>
-                <label for="email-save-checkbox">Recordar este correo para la próxima vez</label>
-            </div>
-
-            <div id="email-fallback" class="email-fallback" role="region" aria-label="Alternativa de copia">
-                <p class="email-fallback-title">
-                    <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-alert-triangle"></use></svg>
-                    Enlace demasiado largo para correo
-                </p>
-                <p class="email-fallback-desc">
-                    Algunos clientes de correo no admiten URLs muy largas en el asunto/cuerpo.
-                    Copia el enlace directamente y pégalo en tu mensaje:
-                </p>
-                <code id="email-fallback-url" class="email-fallback-url"></code>
-                <button id="email-copy-btn" class="btn-primary" style="width:100%; justify-content:center; font-size:0.82rem;">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-copy"></use></svg>
-                    <span id="email-copy-label">Copiar enlace de descarga</span>
-                </button>
-            </div>
-
-            <div class="email-tip" role="note">
-                <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-info"></use></svg>
-                <span>
-                    Se abrirá tu cliente de correo con el mensaje pre-rellenado.
-                    El archivo no se adjunta; solo se incluye el enlace de descarga.
-                </span>
-            </div>
-
-            <div class="modal-actions" style="margin-top:18px;">
-                <button id="email-modal-cancel" class="btn-ghost" style="flex:1; justify-content:center;">
-                    Cancelar
-                </button>
-                <button id="email-modal-confirm" class="btn-primary" style="flex:2; justify-content:center;">
-                    <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-send"></use></svg>
-                    Abrir correo
-                </button>
-            </div>
-
-        </div>
-    </div>
     <div id="daily-repair-modal"
          class="modal-overlay daily-repair-overlay hidden"
          role="dialog"
