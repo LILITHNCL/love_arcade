@@ -1,6 +1,6 @@
 # Sistema de racha diaria — informe técnico y UX
 
-Este documento describe el funcionamiento completo del sistema de **racha diaria** de Love Arcade: persistencia, reglas de negocio, flujo de reclamo, seguridad horaria, economía, UI, hitos, notificaciones, analítica, accesibilidad y riesgos actuales.
+Este documento describe el funcionamiento completo del sistema de **racha diaria** de Love Arcade: persistencia, reglas de negocio, flujo de reclamo, seguridad horaria, economía, UI, analítica, accesibilidad y riesgos actuales.
 
 ## 1. Resumen ejecutivo
 
@@ -19,17 +19,15 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 - cuenta regresiva hasta medianoche cuando ya se reclamó;
 - barra visual de 7 segmentos;
 - mensaje temporal de éxito/error;
-- modal de hito de racha cuando se alcanza un umbral configurado.
 
 ## 2. Archivos relacionados
 
 | Archivo | Rol dentro del sistema |
 |---|---|
-| `js/app.js` | Fuente principal de lógica: configuración económica, estado, migración, reclamo, cálculo de racha, Bendición Lunar, hitos, UI y listener del botón diario. |
+| `js/app.js` | Fuente principal de lógica: configuración económica, estado, migración, reclamo, cálculo de racha, Bendición Lunar, UI y listener del botón diario. |
 | `js/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
-| `index.html` | Estructura del HUD diario, barra de racha, panel de racha en configuración y modal de hito. |
-| `styles.css` | Estilos visuales, estados, animaciones y modal de hitos. |
-| `js/milestones-config.js` | Catálogo de hitos de racha y recompensas. |
+| `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
+| `styles.css` | Estilos visuales, estados y animaciones del HUD diario. |
 | `docs/DOCUMENTACION.md` | Documentación histórica y analítica existente sobre el sistema. |
 | `docs/love-arcade-minigame-dev-manual.md` | Expone `window.GameCenter.getStreakInfo()` como API disponible para minijuegos. |
 | `data/events.json` | Configura eventos LTE, incluyendo `streak_boost_v1`. |
@@ -50,16 +48,15 @@ El estado se guarda bajo la clave `gamecenter_v6_promos` en `localStorage`. Dent
   buffs: {
     moonBlessingExpiry: number // timestamp ms de expiración de Bendición Lunar
   },
-  claimed_milestones: string[],
   history: Array<{ tipo, cantidad, motivo, fecha }>
 }
 ```
 
-`daily.lastClaim` es la referencia para saber si el usuario ya reclamó hoy y si la racha continúa. `daily.streak` es el valor mostrado en la UI y usado para calcular la recompensa del siguiente reclamo. `claimed_milestones` evita reclamar dos veces un hito de racha.
+`daily.lastClaim` es la referencia para saber si el usuario ya reclamó hoy y si la racha continúa. `daily.streak` es el valor mostrado en la UI y usado para calcular la recompensa del siguiente reclamo.
 
 ### 3.2 Defaults y migración
 
-`migrateState()` inicializa `daily` con `{ lastClaim: 0, streak: 0 }`, `buffs` con `moonBlessingExpiry: 0` y `claimed_milestones` como arreglo vacío. También migra el campo legado `lastDaily` a `daily.lastClaim` y crea una racha inicial de `1` si el valor legado es válido.
+`migrateState()` inicializa `daily` con `{ lastClaim: 0, streak: 0 }` y `buffs` con `moonBlessingExpiry: 0`. También migra el campo legado `lastDaily` a `daily.lastClaim` y crea una racha inicial de `1` si el valor legado es válido.
 
 ### 3.3 Estado público
 
@@ -244,10 +241,6 @@ Devuelve:
 
 Expone `streak` como lectura pública para módulos externos.
 
-### `GameCenter.getClaimedMilestones()` y `GameCenter.claimStreakMilestone()`
-
-Gestionan hitos de racha reclamados una sola vez.
-
 ## 9. UX en la pantalla de inicio
 
 ### 9.1 Estructura del Daily Streak Hub
@@ -286,50 +279,7 @@ En `index.html` hay una tarjeta “Racha Diaria” dentro del área de configura
 
 El render exacto de ese calendario no está en el fragmento principal de racha, pero el estado público (`getState().streak`) está preparado para que otros módulos lo consuman.
 
-## 11. Hitos de racha
-
-### 11.1 Catálogo
-
-`js/milestones-config.js` define `window.STREAK_MILESTONES` como fuente de verdad. Actualmente existe un hito de 30 días:
-
-- `id: streak_30d_lunar_01`;
-- `threshold: 30`;
-- recompensa de `3250` monedas;
-- `21` días de Bendición Lunar.
-
-### 11.2 Detección
-
-`_getPendingStreakMilestone()`:
-
-1. lee `window.STREAK_MILESTONES`;
-2. toma `store.daily.streak`;
-3. toma `store.claimed_milestones`;
-4. ordena por `threshold` ascendente;
-5. devuelve el primer hito cuyo umbral ya se alcanzó y no fue reclamado.
-
-### 11.3 Modal de hito
-
-`showStreakMilestoneModal()` muestra `#streak-milestone-modal` con:
-
-- título;
-- mensaje;
-- lista de recompensas;
-- botón `Obtener recompensa`.
-
-Al reclamar:
-
-1. vibra de forma ligera si el navegador lo permite;
-2. deshabilita el botón;
-3. llama `GameCenter.claimStreakMilestone(pending)`;
-4. suma monedas con `GameCenter.addCoins()`;
-5. extiende Bendición Lunar si aplica;
-6. registra el hito en `claimed_milestones`;
-7. persiste con sync inmediato;
-8. trackea `streak_milestone_claimed`;
-9. cierra el modal;
-10. intenta mostrar otro hito pendiente en el siguiente frame.
-
-## 12. Bendición Lunar y su relación con la racha
+## 11. Bendición Lunar y su relación con la racha
 
 La Bendición Lunar no cambia la racha; cambia el valor económico del reclamo diario. Al estar activa:
 
@@ -338,9 +288,9 @@ La Bendición Lunar no cambia la racha; cambia el valor económico del reclamo d
 - el historial registra “Bono diario · racha N + Bendición Lunar”;
 - la analítica marca `luna: '+90'`.
 
-La Bendición Lunar puede comprarse por 100 monedas durante 7 días o extenderse mediante hitos.
+La Bendición Lunar puede comprarse por 100 monedas durante 7 días y extenderse mediante sus operaciones de economía existentes.
 
-## 13. Eventos LTE relacionados
+## 12. Eventos LTE relacionados
 
 El sistema de eventos puede modificar el incremento de racha mediante `streak_boost_v1`:
 
@@ -353,9 +303,9 @@ const newStreak = diffDays === 1 ? streak + streakBoost : 1;
 
 Importante: el cap de recompensa sigue siendo `dailyStreakCap = 60`; el evento acelera el contador de racha, no elimina el límite económico del bono base.
 
-## 14. Analítica y observabilidad
+## 13. Analítica y observabilidad
 
-### 15.1 `daily_bonus`
+### 13.1 `daily_bonus`
 
 `claimDaily()` dispara `window.GhostAnalytics?.track('daily_bonus', ...)` solo en éxito. Metadatos:
 
@@ -368,16 +318,7 @@ Importante: el cap de recompensa sigue siendo `dailyStreakCap = 60`; el evento a
 
 Esto permite medir engagement diario, uso de Bendición Lunar y distribución de rachas.
 
-### 15.2 `streak_milestone_claimed`
-
-Al reclamar un hito se trackea:
-
-- `milestone_id`;
-- `threshold`;
-- monedas entregadas;
-- días de Bendición Lunar entregados.
-
-## 16. Historial económico
+## 14. Historial económico
 
 Cada reclamo exitoso registra una transacción:
 
@@ -391,9 +332,7 @@ logTransaction(
 
 El historial se limita a las últimas 50 entradas para no inflar `localStorage`.
 
-Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBlessingDays()`.
-
-## 17. Accesibilidad
+## 15. Accesibilidad
 
 - `#btn-daily` es un `<button type="button">` nativo, por lo que conserva Tab, Enter y Espacio. `updateDailyButton()` alterna su nombre accesible entre «Reclamar bono diario» y «Reparar racha diaria».
 - El botón enlaza `#daily-msg`, `#daily-countdown` y `#streak-hub-copy` mediante `aria-describedby`. `.streak-hub-cta:focus-visible` usa un anillo de foco basado en `--focus-ring-aa`.
@@ -401,13 +340,13 @@ Los hitos también registran movimientos mediante `addCoins()` y `extendMoonBles
 - `#daily-msg` es el único canal de anuncio del resultado: `role="status"` y `aria-live="polite"`. No deben añadirse anuncios duplicados para el burst, chispas o audio.
 - El modal de reparación enfoca el botón de confirmación al abrirse y devuelve el foco a `#btn-daily` al cerrarse. El contraste de los números en gradiente debe verificarse visualmente frente al fondo al cambiar tokens de tema.
 
-## 18. Motion y rendimiento UX
+## 16. Motion y rendimiento UX
 
 El fuego se compone de capas SVG, halo y chispas CSS. Las animaciones repetidas usan `transform` y `opacity`; el halo no anima su `filter: blur()`. `claiming` ejecuta un burst de 480 ms y el reclamo exitoso genera ocho monedas efímeras que se eliminan en `animationend`; el número recibe un bump único. El audio se sintetiza con Web Audio API y la vibración solo se solicita cuando el navegador la permite dentro de la activación de usuario.
 
 Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce` desactiva las animaciones de fuego, halo, chispas y burst, y acorta la duración de las monedas a 260 ms; `pointer: coarse` reduce el blur del halo a 10 px. Al ocultar la pestaña, el listener existente añade `.motion-paused` a `.player-hud`, con lo que `styles.css` pausa las capas del fuego, el halo y las chispas. `StreakHub.refresh()` no crea timers y reutiliza los puntos de refresco del HUD; el countdown sigue bajo `AppScheduler` y evita escrituras redundantes dentro del mismo segundo.
 
-## 19. Estados de UX cubiertos
+## 17. Estados de UX cubiertos
 
 | Estado | Cobertura actual |
 |---|---|
@@ -419,9 +358,8 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 | Reloj inconsistente | Mensaje amarillo, no cambia racha. |
 | Racha rota | Próximo reclamo reinicia a `1`. |
 | Bendición Lunar activa | Suma +90 y cambia textos/estado relacionados. |
-| Hito pendiente | Modal celebratorio con recompensas. |
 
-## 20. Casos límite importantes
+## 18. Casos límite importantes
 
 | Caso | Comportamiento |
 |---|---|
@@ -432,24 +370,19 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 | Caché horario vencido | Reclamo usa reloj local y `verified: false`. |
 | Caché horario desincronizado | Reclamo bloqueado. |
 | Usuario reclama y clickea varias veces | Botón se deshabilita antes de la mutación. |
-| Hito ya reclamado | `claimStreakMilestone()` devuelve `already_claimed`. |
-
-## 21. Riesgos técnicos detectados
+## 19. Riesgos técnicos detectados
 
 1. **Dependencia de reloj local cuando no hay caché válido.** Es un trade-off UX/seguridad: permite uso offline o primera visita, pero reduce robustez anti-manipulación.
 2. **Comparación por `Math.round`.** Para días normalizados a medianoche normalmente funciona, pero cambios de horario de verano podrían producir diferencias de 23/25 horas. `Math.round` mitiga algunos casos, aunque conviene testear zonas con DST.
 3. **UI y validación usan fuentes distintas.** `canClaimDaily()` usa `Date.now()` local; `claimDaily()` usa caché de red si existe. Puede haber un caso donde la UI habilite el botón pero el reclamo lo bloquee por `desynced`.
 4. **Accesibilidad de anuncios.** Los mensajes dinámicos no están garantizados para screen readers.
 5. **Focus management del modal.** El modal declara semántica, pero no se observa focus trap/restauración explícita.
-7. **Resuelto — el modal de hito no se abría tras el reclamo diario.** El listener de `#btn-daily` programa `showStreakMilestoneModal()` 600 ms después de un `claimDaily()` exitoso. Así el hito recién alcanzado se celebra en la misma sesión, después del feedback visual del reclamo y respetando el bloqueo de reentradas existente.
-
-## 22. Recomendaciones
+## 20. Recomendaciones
 
 ### Alta prioridad
 
 - Mantener `role="status"` y `aria-live="polite"` en `#daily-msg` cuando se modifique el HUD.
 - Añadir texto accesible para racha actual y próximo bono.
-- Enfocar el botón del modal de hito al abrir y restaurar foco al cerrar.
 - Mantener la regla global `prefers-reduced-motion` para nuevas animaciones de racha o reparación.
 
 ### Media prioridad
@@ -484,14 +417,12 @@ flowchart TD
   N --> O[Persistir store + historial]
   O --> P[Track daily_bonus]
   P --> Q[Actualizar botón, countdown, racha y mensajes]
-  Q --> R{Hito pendiente?}
-  R -- Sí --> S[Mostrar modal de hito]
-  R -- No --> T[Fin]
+  Q --> R[Fin]
 ```
 
 ## 24. Conclusión
 
-El sistema de racha diaria está bien integrado con la economía, la UI del HUD, Bendición Lunar, eventos LTE, analítica, hitos y notificaciones. Su decisión UX más importante es usar **días calendario** y no ventanas rígidas de 24 horas, lo cual reduce frustración y hace que el hábito diario sea más natural. La arquitectura prioriza respuesta instantánea con validación horaria en background; esto favorece la experiencia, aunque deja un riesgo residual cuando no hay caché de tiempo válido.
+El sistema de racha diaria está bien integrado con la economía, la UI del HUD, Bendición Lunar, eventos LTE, analítica y notificaciones. Su decisión UX más importante es usar **días calendario** y no ventanas rígidas de 24 horas, lo cual reduce frustración y hace que el hábito diario sea más natural. La arquitectura prioriza respuesta instantánea con validación horaria en background; esto favorece la experiencia, aunque deja un riesgo residual cuando no hay caché de tiempo válido.
 
 Las mejoras más valiosas no requieren reescritura: reforzar accesibilidad de mensajes dinámicos y modal, añadir pruebas de fechas, alinear notificaciones con medianoche local y hacer visible el boost de evento cuando esté activo.
 

@@ -20,7 +20,7 @@ const SYNC_SALT = 'love_arcade_v75_integrity_2026';
 // ECONOMÍA — Editar aquí para eventos especiales
 // =====================================================
 const ECONOMY = {
-    isSaleActive:   true,
+    isSaleActive:   false,
     saleMultiplier: 0.80,
     saleLabel:      '-20%',
     cashbackRate:   0.1
@@ -135,6 +135,16 @@ function debounce(fn, delay = 300) {
         clearTimeout(timer);
         timer = setTimeout(() => fn(...args), delay);
     };
+}
+
+function _canUseVibration() {
+    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+        return false;
+    }
+
+    const userActivation = navigator.userActivation;
+    if (!userActivation) return true;
+    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
 }
 window.debounce = debounce; // Disponible globalmente para shop-logic.js
 
@@ -385,7 +395,6 @@ function migrateState(loadedStore) {
         theme:          'violet',
         daily:          { lastClaim: 0, streak: 0 },
         buffs:          { moonBlessingExpiry: 0 },
-        claimed_milestones: [],
         // v9.4 — Identity
         nickname:       '',    // Máx. 15 chars. Vacío = primer acceso → flujo de bienvenida.
         gender:         '@',   // 'o' | 'a' | '@' — controla el sufijo del saludo.
@@ -411,7 +420,6 @@ function migrateState(loadedStore) {
     // Asegurar sub-objetos faltantes
     if (!merged.daily   || typeof merged.daily !== 'object')  merged.daily = defaults.daily;
     if (!merged.buffs   || typeof merged.buffs !== 'object')  merged.buffs = defaults.buffs;
-    if (!Array.isArray(merged.claimed_milestones))            merged.claimed_milestones = [];
     if (!Array.isArray(merged.redeemedHashes))  merged.redeemedHashes = [];
     if (!Array.isArray(merged.history))         merged.history = [];
 
@@ -426,6 +434,9 @@ function migrateState(loadedStore) {
     // v14.6 — Limpieza de legado: Misiones del Día ya no forma parte del store.
     if (Object.prototype.hasOwnProperty.call(merged, 'missions')) {
         delete merged.missions;
+    }
+    if (Object.prototype.hasOwnProperty.call(merged, 'claimed_milestones')) {
+        delete merged.claimed_milestones;
     }
 
     return merged;
@@ -1201,61 +1212,6 @@ window.GameCenter = {
         };
     },
 
-    /**
-     * Devuelve los IDs de hitos de racha ya reclamados.
-     * @returns {string[]}
-     */
-    getClaimedMilestones: () => [...(store.claimed_milestones || [])],
-
-    /**
-     * Reclama un hito de racha una sola vez por ID.
-     * Aplica las recompensas de forma síncrona en memoria antes de cerrar modal.
-     * @param {{ id: string, rewards: Array<{type:string, amount:number}> }} milestone
-     * @returns {{ success: boolean, reason?: string }}
-     */
-    claimStreakMilestone: (milestone) => {
-        if (!milestone?.id || !Array.isArray(milestone.rewards)) {
-            return { success: false, reason: 'invalid_milestone' };
-        }
-
-        if (!Array.isArray(store.claimed_milestones)) {
-            store.claimed_milestones = [];
-        }
-        if (store.claimed_milestones.includes(milestone.id)) {
-            return { success: false, reason: 'already_claimed' };
-        }
-
-        let coinReward = 0;
-        let moonDays = 0;
-        milestone.rewards.forEach((reward) => {
-            const amount = Math.floor(reward?.amount || 0);
-            if (amount <= 0) return;
-            if (reward.type === 'coins') {
-                coinReward += amount;
-            } else if (reward.type === 'moon_blessing_days') {
-                moonDays += amount;
-            }
-        });
-
-        if (coinReward > 0) {
-            window.GameCenter.addCoins(coinReward, `Hito de racha: ${milestone.id}`);
-        }
-        if (moonDays > 0) {
-            window.GameCenter.extendMoonBlessingDays(moonDays, `Hito de racha: ${milestone.id}`);
-        }
-
-        store.claimed_milestones.push(milestone.id);
-        saveState({ immediateCloudSync: true });
-
-        window.GhostAnalytics?.track('streak_milestone_claimed', {
-            milestone_id: milestone.id,
-            threshold: milestone.threshold || 0,
-            coins: coinReward,
-            moon_days: moonDays
-        });
-        return { success: true };
-    },
-
     getMoonBlessingStatus: () => {
         const now    = Date.now();
         const expiry = store.buffs.moonBlessingExpiry;
@@ -1964,63 +1920,6 @@ function updateMoonBlessingUI(scope) {
     }
 }
 
-let _streakMilestoneModalLocked = false;
-
-function _canUseVibration() {
-    if (!navigator?.vibrate) return false;
-    const userActivation = navigator.userActivation;
-    if (!userActivation) return true;
-    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
-}
-
-function _vibrateLight() {
-    if (_canUseVibration()) navigator.vibrate(12);
-}
-
-function _getPendingStreakMilestone() {
-    const milestones = Array.isArray(window.STREAK_MILESTONES)
-        ? window.STREAK_MILESTONES
-        : [];
-    if (!milestones.length) return null;
-
-    const streak = Number(store?.daily?.streak || 0);
-    const claimedSet = new Set(store.claimed_milestones || []);
-
-    return milestones
-        .slice()
-        .sort((a, b) => Number(a.threshold || 0) - Number(b.threshold || 0))
-        .find((milestone) =>
-            streak >= Number(milestone.threshold || 0) && !claimedSet.has(milestone.id)
-        ) || null;
-}
-
-function _renderStreakMilestoneRewards(rewards = []) {
-    return rewards.map((reward) => {
-        const amount = Math.floor(reward.amount || 0);
-        if (reward.type === 'moon_blessing_days') {
-            return `
-                <li class="streak-milestone-reward streak-milestone-reward--moon">
-                    <span class="streak-milestone-reward-icon" aria-hidden="true">
-                        <svg class="icon" width="18" height="18"><use href="#icon-moon"></use></svg>
-                    </span>
-                    <span class="streak-milestone-reward-label">+${amount} días · Bendición Lunar</span>
-                    <span class="streak-milestone-reward-fx" aria-hidden="true"></span>
-                </li>
-            `;
-        }
-        return `
-            <li class="streak-milestone-reward">
-                <span class="streak-milestone-reward-icon" aria-hidden="true">
-                    <svg class="icon" width="18" height="18"><use href="#icon-star"></use></svg>
-                </span>
-                <span class="streak-milestone-reward-label">+${amount} monedas</span>
-                <span class="streak-milestone-reward-fx" aria-hidden="true"></span>
-            </li>
-        `;
-    }).join('');
-}
-
-
 function _setDailyMessage(message, success = false) {
     const msg = document.getElementById('daily-msg');
     if (!msg) return;
@@ -2058,47 +1957,6 @@ function showDailyRepairModal() {
         updateUI();
         updateDailyButton();
         window.updateStreakBar?.();
-    };
-}
-
-function showStreakMilestoneModal() {
-    if (_streakMilestoneModalLocked) return;
-
-    const modal = document.getElementById('streak-milestone-modal');
-    const titleEl = document.getElementById('streak-milestone-title');
-    const messageEl = document.getElementById('streak-milestone-message');
-    const rewardsEl = document.getElementById('streak-milestone-rewards');
-    const claimBtn = document.getElementById('btn-streak-milestone-claim');
-    if (!modal || !titleEl || !messageEl || !rewardsEl || !claimBtn) return;
-
-    const pending = _getPendingStreakMilestone();
-    if (!pending) return;
-
-    _streakMilestoneModalLocked = true;
-    titleEl.textContent = pending.title || 'Hito desbloqueado';
-    messageEl.textContent = pending.message || 'Gracias por tu constancia.';
-    rewardsEl.innerHTML = _renderStreakMilestoneRewards(pending.rewards || []);
-    modal.classList.remove('hidden');
-    modal.classList.add('streak-milestone-overlay--visible');
-    _vibrateLight();
-
-    claimBtn.onclick = () => {
-        _vibrateLight();
-        claimBtn.disabled = true;
-        const result = window.GameCenter.claimStreakMilestone(pending);
-        if (!result.success) {
-            claimBtn.disabled = false;
-            return;
-        }
-
-        updateDailyButton();
-        updateMoonBlessingUI();
-        modal.classList.add('hidden');
-        modal.classList.remove('streak-milestone-overlay--visible');
-        _streakMilestoneModalLocked = false;
-
-        // Si hay hitos encadenados (60/90/120), mostrar el siguiente.
-        requestAnimationFrame(showStreakMilestoneModal);
     };
 }
 
@@ -2216,7 +2074,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Re-sincronizar UI por si algún sub-módulo modificó el DOM
     updateUI();
-    showStreakMilestoneModal();
 
     // ── Analítica — open_game ─────────────────────────────────────────────────
     // Delegación global para detectar la apertura de cualquier minijuego.
@@ -2328,11 +2185,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateDailyButton();
             window.StreakHub?.playClaimSequence?.(result);
 
-            // Mostrar de inmediato los hitos desbloqueados por este reclamo.
-            // El retraso deja que termine primero el feedback visual del claim.
-            if (result.success) {
-                setTimeout(() => { showStreakMilestoneModal(); }, 600);
-            }
         });
     }
 

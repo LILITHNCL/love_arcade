@@ -273,7 +273,6 @@ button { font-family: var(--font-body); }
     .pill-nav-item,
     .identity-chip,
     .btn-edit-identity,
-    .streak-milestone-actions .btn-primary,
     .modal-actions .btn-primary,
     .modal-actions .btn-ghost
 ) {
@@ -2158,109 +2157,6 @@ body:has(.modal-overlay:not(.hidden)) {
 .modal-error { color: var(--error); font-size: 0.8rem; margin-top: 10px; min-height: 1rem; text-align: center; }
 
 /* ================================================================
-   STREAK MILESTONE MODAL — sólido, alto contraste, sin glass pesado
-   ================================================================ */
-.streak-milestone-overlay {
-    background: rgba(3, 5, 12, 0.94);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-.streak-milestone-overlay--visible .streak-milestone-box {
-    animation: streakMilestonePop 500ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
-}
-.streak-milestone-box {
-    max-width: 420px;
-    background: linear-gradient(160deg, #0b1020 0%, #141b33 56%, #1d1432 100%);
-    border: 2px solid rgba(255, 223, 122, 0.42);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.86), 0 0 0 1px rgba(250, 204, 21, 0.22);
-}
-.streak-milestone-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0 0 8px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #facc15;
-}
-.streak-milestone-title {
-    margin-bottom: 10px;
-    font-size: 1.18rem;
-    color: #ffffff;
-}
-.streak-milestone-message {
-    margin: 0 0 16px;
-    color: rgba(238, 242, 255, 0.9);
-    font-size: 0.86rem;
-    line-height: 1.55;
-}
-.streak-milestone-rewards {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 10px;
-}
-.streak-milestone-reward {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    overflow: hidden;
-    border-radius: 14px;
-    border: 1px solid transparent;
-    box-shadow: var(--surface-shadow-soft);
-    background: rgba(16, 24, 46, 0.9);
-    padding: 11px 12px;
-}
-.streak-milestone-reward-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
-    color: #facc15;
-    background: rgba(250, 204, 21, 0.16);
-}
-.streak-milestone-reward--moon .streak-milestone-reward-icon {
-    color: #c4b5fd;
-    background: rgba(196, 181, 253, 0.16);
-}
-.streak-milestone-reward-label {
-    font-weight: 700;
-    color: rgba(240, 245, 255, 0.96);
-}
-.streak-milestone-reward-fx {
-    pointer-events: none;
-    position: absolute;
-    inset: -70% -30% auto auto;
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 70%);
-    animation: streakRewardFloat 2.8s ease-in-out infinite;
-}
-.streak-milestone-actions {
-    margin-top: 16px;
-}
-.streak-milestone-actions .btn-primary {
-    font-size: 0.9rem;
-    font-weight: 900;
-}
-@keyframes streakMilestonePop {
-    0% { opacity: 0; transform: scale(0.82) translateY(20px); }
-    55% { opacity: 1; transform: scale(1.03) translateY(-2px); }
-    78% { transform: scale(0.985) translateY(0); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes streakRewardFloat {
-    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.36; }
-    50%      { transform: translate3d(-8px, 6px, 0) scale(1.08); opacity: 0.62; }
-}
-
-/* ================================================================
    IDENTITY MODAL — v9.4 Identity Update
    ================================================================ */
 
@@ -3519,14 +3415,14 @@ svg { stroke-width: 2; }
     }
 }
 
-/* Daily streak repair modal — reuses the milestone visual language without changing the HUD structure. */
+/* Daily streak repair modal — preserves the HUD structure. */
 .daily-repair-overlay {
     background: rgba(3, 5, 12, 0.9);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
 .daily-repair-overlay--visible .daily-repair-box {
-    animation: streakMilestonePop 220ms ease-out both;
+    animation: modalPopIn 220ms ease-out both;
 }
 .daily-repair-box {
     max-width: 380px;
@@ -3562,9 +3458,7 @@ svg { stroke-width: 2; }
 
 @media (prefers-reduced-motion: reduce) {
     .streak-day.today,
-    .streak-milestone-overlay--visible .streak-milestone-box,
-    .daily-repair-overlay--visible .daily-repair-box,
-    .streak-milestone-reward-fx {
+    .daily-repair-overlay--visible .daily-repair-box {
         animation: none !important;
         transform: none !important;
     }

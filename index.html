@@ -1097,50 +1097,24 @@
         </div>
     </div>
 
-    <div id="streak-milestone-modal"
-         class="modal-overlay streak-milestone-overlay hidden"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="streak-milestone-title">
-        <div class="modal-box streak-milestone-box">
-            <p class="streak-milestone-kicker">
-                <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-sparkles"></use></svg>
-                Hito de Lealtad
-            </p>
-            <h3 id="streak-milestone-title" class="modal-title streak-milestone-title"></h3>
-            <p id="streak-milestone-message" class="streak-milestone-message"></p>
-            <ul id="streak-milestone-rewards" class="streak-milestone-rewards"></ul>
-            <div class="modal-actions streak-milestone-actions">
-                <button id="btn-streak-milestone-claim"
-                        class="btn-primary"
-                        style="width:100%; justify-content:center;">
-                    Obtener recompensa
-                </button>
-            </div>
-        </div>
-    </div>
-
-
     <!-- ══════════════════════════════════════════════════════════
          SCRIPTS — Orden estricto:
          1. analytics.js  → Ghost Analytics, telemetría
          2. supabase-loader.js → Expone carga diferida de Supabase SDK (CDN + fallback)
-         3. milestones-config.js → Catálogo de hitos de racha (fuente de verdad)
-         4. lifecycle-scheduler.js → Coordinación de intervalos por ciclo de vida
-         5. app.js        → GameCenter, store, updateUI (núcleo)
+         3. lifecycle-scheduler.js → Coordinación de intervalos por ciclo de vida
+         4. app.js        → GameCenter, store, updateUI (núcleo)
                             Incluye Sentinel Cloud Sync v13.0:
                             StorageInterceptor + Supabase auth/sync
-         6. backup-engine.js y shop-logic.js
+         5. backup-engine.js y shop-logic.js
                             → Backup y Tienda
-         7. streak-hub.js → Widget de fuego, animaciones de reclamo,
+         6. streak-hub.js → Widget de fuego, animaciones de reclamo,
                             audio sintetizado
-         8. spa-router.js → Navegación SPA entre vistas
+         7. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
     <script src="js/analytics.js"></script>     
     <script src="js/supabase-loader.js"></script>
-    <script src="js/milestones-config.js"></script>
     <script src="js/lifecycle-scheduler.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>

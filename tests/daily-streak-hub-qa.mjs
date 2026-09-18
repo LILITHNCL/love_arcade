@@ -189,7 +189,13 @@ assert.match(html, /aria-describedby="daily-msg daily-countdown streak-hub-copy"
 assert.match(html, /id="daily-msg" class="daily-msg" role="status" aria-live="polite"/);
 assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
 assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
-assert.match(appSource, /setTimeout\(\(\) => \{ showStreakMilestoneModal\(\); \}, 600\);/);
+const appWithoutLegacyCleanup = appSource.replace(
+  /if \(Object\.prototype\.hasOwnProperty\.call\(merged, 'claimed_milestones'\)\)\s*\{\s*delete merged\.claimed_milestones;\s*\}/,
+  ''
+);
+assert.doesNotMatch(appWithoutLegacyCleanup, /Milestone|milestone|hito/i, 'The retired streak milestone system must have no app references.');
+assert.doesNotMatch(html, /milestone|hito/i, 'The retired streak milestone UI must have no HTML references.');
+assert.doesNotMatch(css, /streak-milestone|streakMilestone/i, 'The retired streak milestone styles must have no CSS references.');
 assert.match(
   css,
   /\.player-hud::before\s*\{[\s\S]*?inset:\s*0;[\s\S]*?background-image:[\s\S]*?feTurbulence[\s\S]*?radial-gradient\(circle at 20% 30%, var\(--accent-soft\), transparent 55%\)[\s\S]*?radial-gradient\(circle at 85% 72%, rgba\(255,255,255,0\.07\), transparent 48%\)[\s\S]*?linear-gradient\([\s\S]*?135deg,[\s\S]*?color-mix\(in srgb, var\(--accent\) 12%, var\(--solid-surface-float\) 88%\)[\s\S]*?background-repeat:\s*repeat, no-repeat, no-repeat, no-repeat;[\s\S]*?background-size:\s*200px 200px, cover, cover, cover;[\s\S]*?opacity:\s*0\.72;/,

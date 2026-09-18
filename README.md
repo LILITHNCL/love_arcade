@@ -122,6 +122,6 @@ Consulta `love-arcade-coin-system.md` para el contrato completo de integración.
 
 ## Versión
 
-**v14.3** — Daily Streak Hub · fuego animado SVG/CSS, feedback de reclamo con audio sintetizado y haptics, fix de celebración de hitos
+**v14.3** — Daily Streak Hub · fuego animado SVG/CSS, feedback de reclamo con audio sintetizado y haptics
 
 **v14.2** — Floating Pill Navigation · navegación principal unificada para móvil, tablet y desktop · estado SPA, accesibilidad y movimiento reducido preservados
