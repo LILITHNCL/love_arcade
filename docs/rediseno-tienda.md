@@ -2,7 +2,7 @@
 
 ## Problema actual — HECHO COMPROBADO
 
-La Tienda concentra tres experiencias incompatibles con el objetivo planteado: catálogo filtrable/buscable, carrusel de regalos y biblioteca. Todo se carga al iniciar la aplicación: `loadCatalog()` hace `Promise.all()` de `data/shop.json` y `data/shop-gifts.json` en `DOMContentLoaded`, aunque el usuario no entre en Tienda. El catálogo usa tarjetas con texto, precio y CTAs, no una experiencia visual de exploración. `js/shop-logic.js` tiene 2.805 líneas y combina catálogo, filtros, regalos, compra, modales, correo, export/import y navegación interna de Perfil.
+La Tienda concentra tres experiencias incompatibles con el objetivo planteado: catálogo filtrable/buscable, carrusel de regalos y biblioteca. Todo se carga al iniciar la aplicación: `loadCatalog()` hace `Promise.all()` de `data/shop.json` y `data/shop-gifts.json` en `DOMContentLoaded`, aunque el usuario no entre en Tienda. El catálogo usa tarjetas con texto, precio y CTAs, no una experiencia visual de exploración. `js/shop-logic.js` tiene 2.805 líneas y combina catálogo, filtros, regalos, compra, modales, export/import y navegación interna de Perfil.
 
 ## Oportunidad — INFERENCIA
 
@@ -38,13 +38,12 @@ Eliminar filtros, búsqueda global y regalos permite reducir bifurcaciones de es
 | Filtros/búsqueda | index.html:639–672, js/shop-logic.js:1504–1577, 2710+ | Filtros por NoObtenidos, Stickers, Mobile, Avatar, Regalos, PC, Todos; búsqueda global con debounce de 300 ms. |
 | Render del catálogo | js/shop-logic.js:1602–1770 | Tarjetas con imagen, nombre, precio, estado, preview y compra; lotes de 18 vía IntersectionObserver. |
 | Regalos | data/shop-gifts.json; js/shop-logic.js:1286–1503, 1799–1832 | Catálogo paralelo, requisitos game_played, carrusel, autoplay cada 3,8 s, colección secundaria y estado de sesión. |
-| Biblioteca | index.html:704–712, js/shop-logic.js:1835–1915 | Se renderiza durante la carga de catálogo y de nuevo tras una compra; tarjetas con descargar y correo. |
+| Biblioteca | index.html:704–712, js/shop-logic.js:1835–1915 | Se renderiza durante la carga de catálogo y de nuevo tras una compra; tarjetas con descarga. |
 | Preview | index.html:1089+, js/shop-logic.js:1001–1260 | Modal visual ligero en relación con versiones anteriores, pero aún resuelve aspecto desde tags, precarga alta resolución y aplica protección/context menu. |
 | Compra | js/shop-logic.js:1969–2050; js/app.js:904–935 | Confirmación genérica, `GameCenter.buyItem()` calcula precio con oferta, cashback, descuenta saldo, actualiza inventario, historial y cloud sync. |
 | Themes | js/app.js:131–167, 2044–2081 | 25 themes; `applyTheme()` deriva roles y escribe variables CSS de acento. |
 | Promociones | index.html:599–625; js/shop-logic.js:2154+; js/app.js:1016+ | UI en Tienda; negocio en `GameCenter.redeemPromoCode()` con SHA-256 y hashes persistidos. |
 | Descargas | js/app.js:994–1009; js/shop-logic.js:1140, 1622, 1852 | `getDownloadUrl(id, file)` solo admite ítems poseídos y construye URL de Cloudinary desde `file`, sin `fl_attachment`. |
-| Correo | js/shop-logic.js:2323–2417 | `openEmailModal()` y `MailHelper.buildMailtoLink()` siguen disponibles y se usan desde la biblioteca. |
 | Documentación | docs/DOCUMENTACION.md:404+, 2049+, 2178+, 2504+, 4646+; docs/ECONOMIA.md | Documentación extensa de Cloudinary, tienda, promociones, descuentos, cashback y regalos. |
 
 ## Datos actuales — HECHO COMPROBADO
@@ -90,7 +89,7 @@ Búsqueda local exclusiva de Colección: normalizar una vez `item.name` con `toL
 
 Mismo grid visual y patrón determinista.
 
-Tap abre un modal plano con imagen, "Descargar" y "Enviar por correo". Mantener el modal de correo existente y `MailHelper`.
+Tap abre un modal plano con imagen y "Descargar".
 
 ## Modal y compra — PROPUESTA
 
@@ -299,11 +298,11 @@ Actualizar `view_preview` y `buy_item` para enviar una categoría estable (`item
 
 **Riesgos:** el requisito usa "regalo" en el título de compra, pero el nuevo catálogo agrupa arte y elimina regalos. Mantener ese copy literalmente si es decisión de producto; de lo contrario, validar si debe ser "¿Adquirir ítem?".
 
-## TICKET-05 — Lazy Collection con descarga Cloudinary correcta y correo existente
+## TICKET-05 — Lazy Collection con descarga Cloudinary correcta
 
 **Tipo / Prioridad / Dependencias / Confianza:** Funcionalidad + rendimiento / P0 / TICKET-01, TICKET-02, TICKET-03 / Alta
 
-**Hallazgo — HECHO COMPROBADO:** `renderLibrary(allItems)` se invoca al cargar catálogo y tras comprar (js/shop-logic.js:2540, 2015). `GameCenter.getDownloadUrl()` sólo toma `file` y devuelve el master Cloudinary sin `fl_attachment` (js/app.js:994–1009). El correo está implementado por `openEmailModal()` y `_handleEmailConfirm()` (js/shop-logic.js:2323–2417).
+**Hallazgo — HECHO COMPROBADO:** `renderLibrary(allItems)` se invoca al cargar catálogo y tras comprar (js/shop-logic.js:2540, 2015). `GameCenter.getDownloadUrl()` sólo toma `file` y devuelve el master Cloudinary sin `fl_attachment` (js/app.js:994–1009).
 
 **Tarea sugerida:** Convertir Mis Tesoros en Colección lazy y unificar descargas por tipo
 
@@ -314,14 +313,14 @@ Crear un resolver de descarga por tipo. Para `type: "image"`, derivar una URL Cl
 
 Para ambas variantes, iniciar descarga mediante un `<a>` temporal programáticamente activado y eliminado, sin navegar fuera de la SPA. No depender solamente del atributo `download` para una URL Cloudinary cross-origin. Conservar analytics `click_download`, renombrando `fuente: "biblioteca"` a una fuente consistente con “colección”.
 
-Al tocar una tarjeta de Colección, abrir modal plano con “Descargar” y “Enviar por correo”. Reutilizar `openEmailModal(item, absoluteUrl)`, `MailHelper.isValidEmail()`, `MailHelper.buildMailtoLink()` y el fallback de copiar URL existentes. Actualizar el texto visible de la cabecera/modal de correo de “biblioteca” a “Colección” donde corresponda.
+Al tocar una tarjeta de Colección, abrir modal plano con “Descargar”.
 
-Eliminar estilos y markup exclusivos de `.treasury-grid`, `#library-container`, `.library-mail-btn` y tarjetas antiguas de biblioteca tras migrar sus consumidores. Mantener los estilos genéricos del modal de correo.
+Eliminar estilos y markup exclusivos de `.treasury-grid`, `#library-container`, `.library-mail-btn` y tarjetas antiguas de biblioteca tras migrar sus consumidores.
 ```
 
 *Iniciar tarea*
 
-**Comportamiento esperado:** Colección no tiene coste de render hasta abrirse; las imágenes descargan como adjunto y los archivos usan su URL directa; correo continúa funcionando.
+**Comportamiento esperado:** Colección no tiene coste de render hasta abrirse; las imágenes descargan como adjunto y los archivos usan su URL directa.
 
 **Performance:** no serializar el objeto entero en `data-item`; asociar el ID en `dataset` y resolverlo desde el catálogo en memoria.
 

@@ -128,7 +128,7 @@ Love Arcade es una **plataforma de recompensas sin backend** construida con HTML
 |---|---|
 | **Arquitectura** | `index.html` y `shop.html` fusionados en una única SPA. `shop.html` eliminado. |
 | **Navegación** | Cero recargas de página. El router SPA alterna `display:none` entre `#view-home` y `#view-shop`. |
-| **Modales** | `#preview-modal`, `#confirm-modal` y `#email-modal` movidos al final de `<body>`, fuera de `<main>`. Soluciona el bug de scroll gigante. |
+| **Modales** | `#preview-modal` y `#confirm-modal` movidos al final de `<body>`, fuera de `<main>`. Soluciona el bug de scroll gigante. |
 | **Separación JS** | Toda la lógica de tienda extraída de `shop.html` al módulo independiente `js/shop-logic.js`. |
 | **SPA Router** | Nuevo módulo `js/spa-router.js` gestiona navegación, scroll y sincronización de saldo. |
 | **Saldo sincronizado** | `window.GameCenter.syncUI()` garantiza que Navbar y HUD muestren el mismo saldo al cambiar de vista. |
@@ -1294,7 +1294,6 @@ Ambos mantienen el borde de 1px con `--border-subtle`. Los pseudo-elementos `::b
 │   │  <!-- Modales — fuera de main, position:fixed seguro -->    │   │
 │   │  <div id="preview-modal">                                   │   │
 │   │  <div id="confirm-modal">                                   │   │
-│   │  <div id="email-modal">                                     │   │
 │   └─────────────────────────────────────────────────────────────┘   │
 │                                                                      │
 │   JS Load Order:                                                     │
@@ -2159,7 +2158,6 @@ El botón `#btn-retry-shop` es enlazado por `loadCatalog()` en `shop-logic.js`.
   <!-- MODALES — fuera de <main> ─────────────────────────── -->
   <div id="preview-modal" class="modal-overlay hidden">
   <div id="confirm-modal" class="modal-overlay hidden">
-  <div id="email-modal"   class="modal-overlay hidden">
 
   <script src="js/app.js"></script>
   <script src="js/shop-logic.js"></script>
@@ -2218,7 +2216,7 @@ window.HomeView = {
 
 ## 9. js/shop-logic.js — Módulo de Tienda
 
-`shop-logic.js` carga y valida `data/shop.json`, controla las vistas Tienda/Colección, previews, compra, descargas, correo y la navegación interna de Perfil. Depende de `window.GameCenter`, `window.ECONOMY`, `window.MailHelper`, `window.ModalA11y` y `window.GhostAnalytics`.
+`shop-logic.js` carga y valida `data/shop.json`, controla las vistas Tienda/Colección, previews, compra, descargas y la navegación interna de Perfil. Depende de `window.GameCenter`, `window.ECONOMY`, `window.ModalA11y` y `window.GhostAnalytics`.
 
 ### Carga y vistas
 
