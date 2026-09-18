@@ -1,6 +1,3 @@
-const APP_URL = '/';
-const NOTIFICATION_ICON = '/assets/icon/icon-notification.png';
-
 const CACHE_VERSION = 'v2.04.07.34';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
@@ -16,12 +13,10 @@ const APP_SHELL_FILES = [
   '/js/sync-worker.js',
   '/js/analytics.js',
   '/js/supabase-loader.js',
-  '/js/push-notifications.js',
   '/js/backup-engine.js',
   '/data/shop.json',
   '/assets/icon/icon-512-any.png',
   '/assets/icon/icon-512-maskable.png',
-  '/assets/icon/icon-notification.png',
   '/assets/icon/favicon.ico',
   '/assets/icon/icon-192-any.png',
   '/assets/icon/apple-touch-icon.png',
@@ -75,76 +70,6 @@ const GAMES_FILES = [
   '/games/Shooter/index.html', '/games/Shooter/css/la-shooter-main.css', '/games/Shooter/calculadora-recompensas.html', '/games/Shooter/manifest.json', '/games/Shooter/js/core/la-core-input.mjs', '/games/Shooter/js/core/la-core-loop.mjs', '/games/Shooter/js/core/la-core-renderer.mjs', '/games/Shooter/js/core/la-core-pool.mjs', '/games/Shooter/js/entities/la-enemy-factory.mjs', '/games/Shooter/js/entities/la-player.mjs', '/games/Shooter/js/config/la-config.json', '/games/Shooter/js/modes/la-mode-infinite.mjs', '/games/Shooter/js/systems/la-sound.mjs', '/games/Shooter/js/systems/la-ui.mjs', '/games/Shooter/js/systems/la-asset-loader.mjs', '/games/Shooter/js/main.mjs', '/games/Shooter/assets/backgrounds/nebula.webp', '/games/Shooter/assets/backgrounds/space.webp', '/games/Shooter/assets/backgrounds/stars.webp', '/games/Shooter/assets/sprites/bosses/boss2.png', '/games/Shooter/assets/sprites/bosses/boss3.png', '/games/Shooter/assets/sprites/bosses/boss1.png', '/games/Shooter/assets/sprites/items/health.png', '/games/Shooter/assets/sprites/bullets/scout.png', '/games/Shooter/assets/sprites/bullets/shooter.png', '/games/Shooter/assets/sprites/bullets/tank.png', '/games/Shooter/assets/sprites/bullets/player.png', '/games/Shooter/assets/sprites/bullets/elite.png', '/games/Shooter/assets/sprites/bullets/boss.png', '/games/Shooter/assets/sprites/player/default.png', '/games/Shooter/assets/sprites/enemies/scout.png', '/games/Shooter/assets/sprites/enemies/shooter.png', '/games/Shooter/assets/sprites/enemies/tank.png', '/games/Shooter/assets/sprites/enemies/elite.png'
 ];
 
-function normalizePayload(payload = {}) {
-  const safePayload = payload && typeof payload === 'object' ? payload : {};
-  const nestedData = safePayload.data && typeof safePayload.data === 'object' ? safePayload.data : {};
-  const mergedData = { ...nestedData };
-
-  if (typeof safePayload.url === 'string' && safePayload.url.trim()) {
-    mergedData.url = safePayload.url;
-  }
-
-  const resolvedUrl = typeof mergedData.url === 'string' && mergedData.url.trim() ? mergedData.url : APP_URL;
-  const type = typeof mergedData.type === 'string' ? mergedData.type : '';
-  const slot = typeof mergedData.slot === 'string' ? mergedData.slot : '';
-  const shopVersion = mergedData.shop_version != null ? String(mergedData.shop_version) : '';
-  const semTagByType = {
-    local_daily: slot ? `local-daily-${slot}` : 'local-daily',
-    local_moon: 'local-moon',
-    local_shop: shopVersion ? `local-shop-v${shopVersion}` : 'local-shop'
-  };
-  const resolvedTag = semTagByType[type] || (typeof safePayload.tag === 'string' && safePayload.tag.trim() ? safePayload.tag : 'love-arcade');
-
-  return {
-    title: typeof safePayload.title === 'string' && safePayload.title.trim() ? safePayload.title : 'Love Arcade',
-    body: typeof safePayload.body === 'string' ? safePayload.body : '',
-    icon: typeof safePayload.icon === 'string' && safePayload.icon.trim() ? safePayload.icon : NOTIFICATION_ICON,
-    badge: typeof safePayload.badge === 'string' && safePayload.badge.trim() ? safePayload.badge : NOTIFICATION_ICON,
-    tag: resolvedTag,
-    renotify: type === 'local_daily',
-    data: { ...mergedData, url: resolvedUrl, type }
-  };
-}
-
-async function safeReadPushData(event) {
-  if (!event?.data) return {};
-  try {
-    const parsed = event.data.json();
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch (jsonErr) {
-    try {
-      const raw = event.data.text();
-      if (!raw || !raw.trim()) return {};
-      const parsedText = JSON.parse(raw);
-      if (parsedText && typeof parsedText === 'object') return parsedText;
-    } catch (textErr) {
-      console.warn('[SW] Push payload corrupto, usando fallback vacío.', {
-        jsonError: jsonErr?.message || String(jsonErr),
-        textError: textErr?.message || String(textErr)
-      });
-      return { data: { parse_error: true } };
-    }
-  }
-  return {};
-}
-
-async function showNormalizedNotification(rawPayload) {
-  const payload = normalizePayload(rawPayload || {});
-  if (payload.tag && payload.data?.type) {
-    const prior = await self.registration.getNotifications({ tag: payload.tag });
-    prior.forEach((n) => n.close());
-  }
-
-  await self.registration.showNotification(payload.title, {
-    body: payload.body,
-    icon: payload.icon,
-    badge: payload.badge,
-    tag: payload.tag,
-    renotify: Boolean(payload.renotify),
-    data: payload.data
-  });
-}
-
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -159,18 +84,6 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
     await self.clients.claim();
-  })());
-});
-
-self.addEventListener('push', (event) => {
-  event.waitUntil((async () => {
-    try {
-      const rawPayload = await safeReadPushData(event);
-      await showNormalizedNotification(rawPayload);
-    } catch (err) {
-      console.warn('[SW] Error manejando evento push, usando fallback.', err);
-      await showNormalizedNotification({});
-    }
   })());
 });
 
@@ -212,40 +125,4 @@ self.addEventListener('message', (event) => {
     return;
   }
 
-  const msg = event.data || {};
-  if (msg.type !== 'SHOW_NOTIFICATION') return;
-  event.waitUntil(showNormalizedNotification(msg.payload || {}));
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const requestedUrl = String(event.notification?.data?.url || APP_URL);
-
-  event.waitUntil((async () => {
-    const absoluteUrl = new URL(requestedUrl, self.location.origin).toString();
-    try {
-      const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      const appRoot = new URL(APP_URL, self.location.origin);
-      const preferred = allClients.find((client) => {
-        try {
-          const clientUrl = new URL(client.url);
-          const sameRoute = clientUrl.pathname === appRoot.pathname;
-          const hasViewHash = clientUrl.hash.includes('#view=');
-          return sameRoute && hasViewHash;
-        } catch (_) {
-          return false;
-        }
-      });
-
-      if (preferred) {
-        await preferred.focus();
-        preferred.postMessage({ type: 'LA_NOTIFICATION_OPEN', url: absoluteUrl });
-        return;
-      }
-    } catch (err) {
-      console.warn('[SW] Error enfocando cliente existente. Se abrirá nueva ventana.', err);
-    }
-
-    await self.clients.openWindow(absoluteUrl);
-  })());
 });

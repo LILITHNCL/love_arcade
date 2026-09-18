@@ -27,15 +27,6 @@ El arte central fue desarrollado en **Piskel**.
 
 ---
 
-## Icono de Notificaciones (Android Badge)
-Para garantizar la compatibilidad con el sistema de notificaciones de Android, se ha creado una versión específica.
-
-- **Archivo:** `icon-notification.png`
-- **Resolución:** 192x192 px.
-- **Color:** 100% Blanco (`#FFFFFF`) con fondo transparente.
-- **Uso:** Este asset se utiliza en la propiedad `badge` del Service Worker. 
-- **Nota técnica:** Android ignora los colores en los iconos de la barra de estado; por ello, este archivo es monocromático para evitar que el sistema lo renderice como un bloque sólido sin forma.
-
 ---
 
 ## Flujo de trabajo para actualizaciones

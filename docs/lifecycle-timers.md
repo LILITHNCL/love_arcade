@@ -5,8 +5,6 @@
 - `index.html` (inline Home): countdown diario cada `1000 ms` en `updateCountdownDisplay`.
 - `js/app.js`: flush de playtime visible cada `15000 ms`.
 - `js/app.js`: sync de caché de tiempo cada `30 min`.
-- `js/push-notifications.js`: polling de permisos cada `1500 ms` (Opera Android).
-- `js/push-notifications.js`: sync de estado de recordatorios cada `5 min`.
 
 ## Contrato de lifecycle (start/stop)
 
