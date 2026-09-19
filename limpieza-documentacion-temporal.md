@@ -54,7 +54,7 @@ El resto debe consolidarse, reescribirse o eliminarse tras extraer su conocimien
 | `docs/rediseno-tienda.md` | Plan/tickets de rediseño | Eliminar tras rescate | Contrato actual de tienda en `docs/ARCHITECTURE.md` | El propio documento mezcla estado antiguo, propuesta y tickets; el código actual ya refleja parte importante del rediseño |
 | `docs/shop-catalog-migration.md` | Ticket/documentación de migración | Eliminar tras rescate | Regla de catálogo en `docs/ARCHITECTURE.md` | El contrato publicado de `shop.json` y la retirada de regalos son conocimiento permanente |
 | `docs/sistema-racha-diaria.md` | Dominio + auditoría | Reescribir | `docs/DOMAIN.md` | Contiene conocimiento valioso, pero también recomendaciones, riesgos históricos, referencias a archivos inexistentes o no confirmados y secciones de actualización mezcladas |
-| `docs/supabase-recuperacion-racha.md` | Procedimiento operativo privilegiado | Actualizar y conservar separado | `docs/OPERATIONS.md` o `docs/operations/streak-recovery.md` | Es un procedimiento de soporte destructivo; debe quedar claramente marcado como operación manual con aprobación humana |
+| `docs/operations/streak-recovery.md` | Procedimiento operativo privilegiado | Mantener como guía canónica separada | `docs/operations/streak-recovery.md` | Es un procedimiento de soporte destructivo; debe quedar claramente marcado como operación manual con aprobación humana |
 
 ## Documentación de assets
 

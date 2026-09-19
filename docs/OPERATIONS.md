@@ -69,7 +69,7 @@ El comportamiento actual incluye:
 
 ## 6. Recuperación manual de racha
 
-El flujo de recuperación manual de racha se divide en una operación de soporte operativo, no en una API de la app. Debe documentarse como un trabajo con aprobación humana y con validación posterior.
+La recuperación manual de racha es una operación privilegiada de soporte, no una API de la aplicación ni una función normal del cliente. Requiere aprobación humana, backup previo y validación posterior; no debe automatizarse desde el frontend.
 
 Los criterios actuales del proyecto son:
 
@@ -78,6 +78,8 @@ Los criterios actuales del proyecto son:
 - respetar el patrón Last Write Wins;
 - ejecutar solo con aprobación del operador humano;
 - no tratarlo como una función del cliente disponible para todos los usuarios.
+
+El procedimiento detallado y canónico vive únicamente en [docs/operations/streak-recovery.md](operations/streak-recovery.md). Este documento no duplica su SQL.
 
 ## 7. Sistemas retirados relevantes
 

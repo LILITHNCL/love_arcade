@@ -2,56 +2,94 @@
 
 ## Propósito y alcance
 
-Este documento describe un procedimiento operativo de soporte para restaurar la racha diaria de un usuario en Supabase cuando ha ocurrido una pérdida de estado, una desincronización o una corrección manual del servicio.
+Esta es la guía canónica para restaurar manualmente la racha diaria de un usuario en Supabase después de una pérdida de estado, desincronización o corrección de soporte. Solo cubre `daily.streak` y, cuando el caso lo exige, `daily.lastClaim`.
 
-> Advertencia: esto no es una API del cliente ni una función de la app. Debe ejecutarse solo desde SQL Editor con aprobación humana, respaldo previo y validación posterior.
+> **Operación privilegiada:** esto no es una API del cliente ni una función normal de la aplicación. Solo debe ejecutarse desde un entorno autorizado, como el SQL Editor de Supabase, con aprobación humana, backup previo y validación posterior. No se debe automatizar desde el frontend ni copiar el SQL a un endpoint.
 
-## 1. Precondiciones
+Los UUID y números que aparecen aquí son placeholders. Sustitúyelos únicamente después de revisar el caso y nunca ejecutes una sentencia sin entender su resultado. No se ejecutan sentencias reales contra Supabase como parte de esta guía.
 
-Antes de ejecutar cualquier cambio:
+## Precondiciones
 
-- confirmar el `user_id` correcto;
-- confirmar el valor de racha que debe devolverse;
-- hacer backup de la fila antes de la edición;
-- confirmar que la operación será validada por un operador humano;
-- respetar la regla de Last Write Wins (`updated_at`).
+Antes de modificar datos:
 
-## 2. Dónde vive la racha
+- obtener y verificar el UUID del usuario (`auth.users.id` y `public.user_profiles.id` cuando ambos estén disponibles);
+- confirmar la racha objetivo y el motivo de soporte;
+- decidir uno de los tres casos de recuperación descritos más abajo;
+- confirmar que el usuario no está jugando ni tiene una sesión abierta que pueda escribir estado local durante la reparación;
+- contar con permisos suficientes para consultar y actualizar `public.user_profiles` y, si aplica, crear la tabla de backups manuales;
+- hacer backup de la fila completa;
+- acordar quién hará la validación posterior y conservar el resultado de las consultas.
 
-La sincronización cloud guarda el snapshot del hub en el campo `game_data` dentro de `public.user_profiles`.
+## Ubicación y formato de la racha
 
-La clave relevante es:
+El snapshot cloud se almacena en `public.user_profiles.game_data`. La ubicación relevante es:
 
 ```text
-game_data -> 'gamecenter_v6_promos'
+public.user_profiles.game_data
+  -> 'gamecenter_v6_promos'
+  -> 'daily'
+  -> 'streak'
+  -> 'lastClaim'
 ```
 
-Dentro de ese JSON se guardan los campos:
+La estructura esperada dentro del snapshot es:
 
 ```json
 {
   "daily": {
-    "lastClaim": 0,
-    "streak": 0
+    "streak": 14,
+    "lastClaim": 1720000000000
   }
 }
 ```
 
-Los valores clave son:
+- `daily.streak` es el contador de la racha.
+- `daily.lastClaim` es un timestamp Unix en milisegundos del último reclamo.
+- `updated_at` es la marca de escritura de la fila y debe actualizarse con `now()`.
 
-- `daily.streak`: racha vigente;
-- `daily.lastClaim`: timestamp en milisegundos del último reclamo exitoso;
-- `updated_at`: marca de última escritura en Supabase.
+`gamecenter_v6_promos` **no es un objeto JSONB directo** dentro de `game_data`: se guarda como un string que contiene JSON. Por eso las consultas usan `game_data ->> 'gamecenter_v6_promos'` y convierten el resultado con `::jsonb`. Al escribir, el snapshot parcheado se convierte de nuevo a texto con `to_jsonb(...::text)`. No cambies esa representación.
 
-## 3. Checklist mínimo antes de tocar datos
+La aplicación calcula los días con un desplazamiento de 03:00 y usa el reloj de red/cache para el reclamo normal. El timestamp elegido manualmente debe validarse contra la zona horaria y el estado real del usuario; una hora “de ayer” en UTC no garantiza por sí sola el mismo día lógico que el navegador.
 
-1. Confirmar UUID del usuario afectado.
-2. Confirmar la racha objetivo.
-3. Decidir si el usuario debe poder reclamar hoy o si se debe bloquear el reclamo para ese día.
-4. Hacer backup de la fila.
-5. Actualizar `updated_at = now()` al terminar.
+## Last Write Wins y sincronización
 
-## 4. Backup obligatorio
+La documentación operativa del proyecto trata `updated_at` como la marca usada por el mecanismo de sincronización para resolver conflictos con una regla Last Write Wins: una versión posterior puede ganar frente a otra anterior. Por eso todas las actualizaciones de esta guía incluyen `updated_at = now()`.
+
+El código inspeccionado confirma que `saveState()` escribe el snapshot local y que una sesión autenticada puede solicitar una sincronización mediante Sentinel. La implementación completa de la comparación de versiones de Sentinel no está presente en los archivos revisados; el operador debe tratar la precedencia exacta como **revisión humana requerida**. En cualquier caso, una escritura local posterior, una pestaña abierta o un dispositivo antiguo puede volver a subir un snapshot anterior y revertir la reparación.
+
+## Checklist antes de modificar datos
+
+1. Confirmar el UUID, la identidad del usuario y la racha aprobada.
+2. Confirmar que el usuario cerró la sesión o dejó de usar la aplicación durante la intervención.
+3. Ejecutar el diagnóstico y revisar que el snapshot sea válido.
+4. Si falta `gamecenter_v6_promos`, detenerse: investigar primero el estado local del usuario. No crear manualmente un snapshot completo sin esa investigación.
+5. Ejecutar y conservar el backup de la fila completa.
+6. Elegir exactamente el caso A, B o C.
+7. Revisar los placeholders y los valores calculados antes de ejecutar el `update`.
+8. Ejecutar el update una sola vez y guardar su `returning`.
+9. Ejecutar la validación posterior antes de pedir al usuario que vuelva a entrar.
+
+## Diagnóstico
+
+Sustituye el UUID placeholder por el UUID aprobado. No ejecutes un update si el snapshot no existe o si el casteo a JSONB falla.
+
+```sql
+select
+  id,
+  updated_at,
+  game_data ? 'gamecenter_v6_promos' as has_hub_snapshot,
+  ((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as current_streak,
+  to_timestamp(
+    (((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint / 1000.0)
+  ) as last_claim_at,
+  ((game_data ->> 'gamecenter_v6_promos')::jsonb #> '{daily}') as daily_json
+from public.user_profiles
+where id = '00000000-0000-0000-0000-000000000000';
+```
+
+## Backup de la fila completa
+
+Esta consulta es obligatoria. Copia y conserva el resultado antes de modificar nada.
 
 ```sql
 select *
@@ -59,7 +97,9 @@ from public.user_profiles
 where id = '00000000-0000-0000-0000-000000000000';
 ```
 
-Si hace falta dejar un respaldo adicional:
+### Backup opcional en una tabla manual
+
+La tabla siguiente es un respaldo creado por soporte, no una tabla ni una API del runtime. Verifica primero con el responsable de la base de datos que su nombre y esquema estén autorizados. Sustituye el UUID y el motivo antes de ejecutar. No la crees ni la uses como sustituto del backup obligatorio.
 
 ```sql
 create table if not exists public.user_profiles_manual_backups (
@@ -76,30 +116,13 @@ select
   id,
   to_jsonb(user_profiles.*)
 from public.user_profiles
-where id = '00000000-0000-0000-0000-000000000000';
+where id = '00000000-0000-0000-0000-000000000000'
+returning backup_id, backed_up_at, user_profile_id;
 ```
 
-## 5. Diagnóstico
+## Caso A: restaurar la racha conservando `lastClaim`
 
-```sql
-select
-  id,
-  updated_at,
-  game_data ? 'gamecenter_v6_promos' as has_hub_snapshot,
-  ((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as current_streak,
-  to_timestamp(
-    (((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint / 1000.0)
-  ) as last_claim_at,
-  ((game_data ->> 'gamecenter_v6_promos')::jsonb #> '{daily}') as daily_json
-from public.user_profiles
-where id = '00000000-0000-0000-0000-000000000000';
-```
-
-Si `has_hub_snapshot` es `false`, no se debe ejecutar un cambio sin revisar si existe estado local válido en el dispositivo.
-
-## 6. Recuperación conservando el último reclamo
-
-Usa este caso si solo necesitas ajustar la racha y no quieres que el usuario pueda reclamar nuevamente hoy:
+Usa este caso cuando la racha debe cambiar, pero la decisión sobre si ya reclamó hoy debe conservarse exactamente. Sustituye `target_user_id` y `target_streak`. El `lastClaim` no se toca.
 
 ```sql
 with params as (
@@ -117,7 +140,7 @@ with params as (
   select
     id,
     jsonb_set(
-      coalesce(hub, '{}'::jsonb),
+      hub,
       '{daily,streak}',
       to_jsonb((select target_streak from params)),
       true
@@ -134,12 +157,17 @@ set
   ),
   updated_at = now()
 from patched_snapshot
-where up.id = patched_snapshot.id;
+where up.id = patched_snapshot.id
+returning
+  up.id,
+  up.updated_at,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as restored_streak,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint as preserved_last_claim_ms;
 ```
 
-## 7. Recuperación y permitir reclamo hoy
+## Caso B: restaurar la racha y permitir un nuevo reclamo hoy
 
-Usa este caso cuando quieres restaurar la racha y permitir que el usuario vuelva a reclamar el bono del mismo día. Debe ejecutarse solo si el operador ha validado el escenario.
+Usa este caso solo cuando el soporte haya aprobado que el usuario pueda reclamar nuevamente durante el día actual. `repaired_last_claim_ms` es un placeholder calculado en el ejemplo para situar el último reclamo en el día UTC anterior. Debe ajustarse y validarse con el corte de 03:00 y la zona horaria efectiva del usuario; si no se puede determinar, detén la operación y pide revisión humana.
 
 ```sql
 with params as (
@@ -159,7 +187,7 @@ with params as (
     id,
     jsonb_set(
       jsonb_set(
-        coalesce(hub, '{}'::jsonb),
+        hub,
         '{daily,streak}',
         to_jsonb((select target_streak from params)),
         true
@@ -180,28 +208,115 @@ set
   ),
   updated_at = now()
 from patched_snapshot
-where up.id = patched_snapshot.id;
+where up.id = patched_snapshot.id
+returning
+  up.id,
+  up.updated_at,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as restored_streak,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint as repaired_last_claim_ms;
 ```
 
-## 8. Validación posterior
+## Caso C: restaurar la racha y bloquear un nuevo reclamo hoy
 
-Tras la actualización, debe comprobarse:
+Usa este caso cuando el bono del día ya fue compensado o cuando la aprobación de soporte exige impedir un segundo reclamo durante el mismo día. El valor de `repaired_last_claim_ms` usa la hora del servidor como referencia; valida después con el reloj de red y el corte de la aplicación.
 
-- que la racha restaure el valor esperado;
-- que `updated_at` haya cambiado;
-- que la app no muestre un estado incoherente;
-- que el usuario no quede en doble reclamo si no se espera.
+```sql
+with params as (
+  select
+    '00000000-0000-0000-0000-000000000000'::uuid as target_user_id,
+    14::int as target_streak,
+    (extract(epoch from now()) * 1000)::bigint as repaired_last_claim_ms
+), current_snapshot as (
+  select
+    up.id,
+    (up.game_data ->> 'gamecenter_v6_promos')::jsonb as hub
+  from public.user_profiles up
+  join params p on p.target_user_id = up.id
+  where up.game_data ? 'gamecenter_v6_promos'
+), patched_snapshot as (
+  select
+    id,
+    jsonb_set(
+      jsonb_set(
+        hub,
+        '{daily,streak}',
+        to_jsonb((select target_streak from params)),
+        true
+      ),
+      '{daily,lastClaim}',
+      to_jsonb((select repaired_last_claim_ms from params)),
+      true
+    ) as patched_hub
+  from current_snapshot
+)
+update public.user_profiles up
+set
+  game_data = jsonb_set(
+    up.game_data,
+    '{gamecenter_v6_promos}',
+    to_jsonb(patched_snapshot.patched_hub::text),
+    true
+  ),
+  updated_at = now()
+from patched_snapshot
+where up.id = patched_snapshot.id
+returning
+  up.id,
+  up.updated_at,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as restored_streak,
+  ((up.game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint as repaired_last_claim_ms;
+```
 
-## 9. Reglas de seguridad
+## Validación posterior
 
-- no se expone como endpoint del cliente;
-- no se usa como función de aplicación normal;
-- no se ejecuta sin aprobación humana;
-- no se trata como una operación reversible automática;
-- la edición debe dejar claro que es una corrección de soporte y no una API de negocio.
+Ejecuta la consulta siguiente con el mismo UUID y compara `restored_streak`, `last_claim_at` y `updated_at` con la aprobación de soporte:
 
-## 10. Referencias
+```sql
+select
+  id,
+  updated_at,
+  ((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,streak}')::int as current_streak,
+  to_timestamp(
+    (((game_data ->> 'gamecenter_v6_promos')::jsonb #>> '{daily,lastClaim}')::bigint / 1000.0)
+  ) as last_claim_at,
+  ((game_data ->> 'gamecenter_v6_promos')::jsonb #> '{daily}') as daily_json
+from public.user_profiles
+where id = '00000000-0000-0000-0000-000000000000';
+```
 
-- [docs/OPERATIONS.md](../OPERATIONS.md)
-- [docs/DOMAIN.md](../DOMAIN.md)
-- [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
+Confirma también que:
+
+- la fila devuelta es la del UUID correcto;
+- `gamecenter_v6_promos` sigue siendo un string JSON válido;
+- `daily.streak` y `daily.lastClaim` tienen los valores esperados;
+- `updated_at` refleja la operación;
+- el resultado coincide con el caso A, B o C y no concede un segundo reclamo por accidente;
+- no se modificaron monedas, inventario u otros datos no necesarios.
+
+Después de guardar la evidencia, pide al usuario cerrar y volver a abrir sesión. Si no basta, debe recargar la pestaña o reiniciar el dispositivo para que el snapshot cloud vuelva a cargarse. Una sesión o pestaña que permaneció abierta puede conservar y subir el snapshot local anterior.
+
+## Riesgos operativos
+
+- Una escritura local posterior puede revertir la reparación manual si gana la resolución de conflicto.
+- Reparar mientras el usuario juega o mantiene varias sesiones abiertas crea una carrera entre snapshots.
+- Un snapshot ausente o malformado no debe completarse con un objeto inventado: requiere investigar el estado local primero.
+- El caso B puede permitir un segundo reclamo si el timestamp no coincide con el día lógico de la aplicación.
+- El caso C puede no bloquear el reclamo si hay una discrepancia entre el reloj del servidor, el reloj de red o la zona horaria del dispositivo.
+- La tabla de backups manuales, si se autoriza, necesita sus propios permisos, retención y protección.
+- El comportamiento exacto de Sentinel, sus permisos RLS y la autoridad final entre local y cloud requieren revisión humana cuando no estén demostrados por el código o la configuración actual.
+
+## Reglas de seguridad
+
+- ejecutar únicamente en un entorno autorizado y con aprobación humana;
+- no exponer este procedimiento como endpoint ni llamarlo desde el cliente;
+- no incluir credenciales, tokens, anon keys ni datos reales en consultas, tickets o documentación;
+- no modificar monedas, inventario, historial u otros campos ajenos a la racha;
+- hacer backup antes de cada intervención y validar después;
+- no ejecutar SQL real durante revisiones automatizadas de documentación;
+- detenerse ante un UUID ambiguo, un snapshot ausente, un casteo fallido o una discrepancia de permisos.
+
+## Referencias
+
+- [../OPERATIONS.md](../OPERATIONS.md)
+- [../DOMAIN.md](../DOMAIN.md)
+- [../ARCHITECTURE.md](../ARCHITECTURE.md)
