@@ -1228,5 +1228,21 @@
     "type": "file",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/cuphead-mobile",
     "downloadUrl": "https://github.com/LilithNML/love-arcade-downloads/releases/download/APK/cuphead-dlc-v1.0.2.apk"
+},
+{
+    "id": 154,
+    "name": "Sunna",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sunna-zzz-0b1c8dc6"
+},
+{
+    "id": 155,
+    "name": "Ángeles de la Delusión ZZZ",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angeles-de-la-delusion-2940655b"
 }
 ]
