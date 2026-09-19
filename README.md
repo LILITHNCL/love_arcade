@@ -1,127 +1,53 @@
 # Love Arcade
 
-**Plataforma de minijuegos con economía de recompensas, tienda de wallpapers y sistema de rachas diarias.**
+Love Arcade es una SPA web de minijuegos con economía local, tienda de wallpapers y racha diaria. La aplicación funciona principalmente desde el navegador y usa `localStorage` como estado principal, con servicios opcionales de Vercel y Supabase cuando se configuran.
 
----
+## Entrada principal
 
-## ¿Qué es?
+- `index.html` es la entrada principal de la aplicación.
+- La navegación se maneja con `js/spa-router.js` y las vistas principales son `home`, `shop` y `profile`.
 
-Love Arcade es un Game Hub web donde cada partida genera **Monedas** que se acumulan en un saldo persistente. Con ese saldo las usuarias pueden canjear wallpapers exclusivos en la tienda integrada y activar el buff de Bendición Lunar.
+## Cómo ejecutarlo localmente
 
-La experiencia **prioriza ejecución local en navegador** (estado principal en `localStorage`) y añade un **backend serverless opcional** para funcionalidades concretas: telemetría/proxy API en Vercel y sincronización cloud con Supabase cuando la sesión está activa.
-
-```
-Flujo local (default):
-Cliente (SPA) ──► localStorage
-
-Flujo cloud (cuando aplica):
-Cliente (SPA) ──► API Vercel (serverless) ──► Supabase
-```
-
----
-
-## Tienda y Colección
-
-La Tienda usa una sola fuente de datos: `data/shop.json`. Sus ítems tienen IDs estables y el contrato `id`, `name`, `price`, `category: "art"`, `type`, `imageUrl` y, para archivos, `downloadUrl`. `imageUrl` conserva la fuente Cloudinary original; las miniaturas se derivan en cliente y las imágenes compradas se descargan con `fl_attachment`.
-
-- **Tienda:** muestra únicamente ítems no poseídos en un grid visual.
-- **Colección:** se monta al abrirse, muestra ítems poseídos y contiene la única búsqueda local por nombre.
-- **Compra:** `GameCenter.buyItem()` conserva la autoridad económica; el total es el precio tras descuento y el cashback se acredita aparte.
-- **Promociones:** se canjean desde **Perfil → Códigos promocionales**.
-
-Antes de publicar cambios del catálogo o flujo de Tienda, ejecuta `node tests/shop-catalog-static-qa.mjs`.
-
----
-
-## Stack
-
-| Capa | Tecnología |
-|---|---|
-| UI / Vistas | HTML5 · CSS3 (custom properties, Grid, transitions GPU) |
-| Lógica de negocio | Vanilla JavaScript ES2020+ (módulos sin bundler) |
-| Persistencia local | `localStorage` con checksum SHA-256 (integridad de partida) |
-| Sync/Encoding local | Web Worker (`sync-worker.js`) con `TextEncoder` / `TextDecoder` |
-| Backend opcional | Vercel Serverless Functions (`/api/*`) para proxy/telemetría/config segura |
-| Sincronización cloud opcional | Supabase (Auth + PostgreSQL JSONB + Storage) vía Sentinel Cloud Sync |
-| Imágenes | Cloudinary CDN (transformaciones `f_auto`, `q_auto`, `c_fill`) |
-| Routing | SPA custom (`spa-router.js`) con History API |
-
-**Impacto en rendimiento móvil (resumen):**
-- **Permanece local/offline:** navegación SPA, render UI, economía base, tienda local, inventario local y progreso en `localStorage`.
-- **Depende de red:** login/sesión cloud, subida/descarga de snapshot cloud (Supabase), funciones serverless de Vercel (proxy/telemetría), verificación de tiempo de red para anti-manipulación cuando hay conectividad.
-
----
-
-## Estructura
-
-```
-love_arcade/
-├── index.html          — SPA unificada (única página HTML)
-├── styles.css          — Sistema de diseño completo
-├── js/
-│   ├── app.js          — Motor principal + Sentinel Cloud Sync (Supabase opcional)
-│   ├── shop-logic.js   — Módulo de Tienda (catálogo, compras, sync)
-│   ├── streak-hub.js   — Daily Streak Hub (estado visual, reclamo, audio y haptics)
-│   ├── spa-router.js   — Router SPA con History API
-│   └── sync-worker.js  — Web Worker: Base64 + SHA-256
-├── api/                — Endpoints serverless de Vercel (proxy/config/reportes)
-├── data/
-│   └── shop.json       — Catálogo de wallpapers
-└── games/              — Minijuegos independientes (HTML/JS)
-```
-
----
-
-## Características principales
-
-- **Economía central** — `window.GameCenter` expone una API pública para que cualquier minijuego integrado deposite monedas mediante `completeLevel(gameId, levelId, coins)`.
-- **Tienda con descuentos y cashback** — El objeto `ECONOMY` en `app.js` controla ofertas globales y porcentaje de devolución desde un único punto.
-- **Bono Diario con racha** — Recompensa escalable (20 → 60 monedas) con verificación de tiempo de red en segundo plano para prevenir manipulación de reloj.
-- **Bendición Lunar** — Buff de +90 monedas por reclamo durante 7 días.
-- **Sincronización entre dispositivos** — Exporta / importa la partida completa como un código Base64 con checksum SHA-256.
-- **5 temas visuales** — Violeta · Rosa Neón · Cyan Arcade · Dorado · Carmesí, aplicados sin parpadeo (Zero-Flicker Initiative).
-- **Minijuegos** — 2048, Jungle Dash, Ollin Smash, Vortex, Word Hunt, Pixel Drop, Laberinto, Rompecabezas, Dodger (y más en desarrollo).
-
----
-
-## Inicio rápido
+Cualquiera de estas opciones sirve para levantar el proyecto en un navegador:
 
 ```bash
-# Cualquier servidor HTTP local sirve. Ejemplos:
-npx serve .
 python3 -m http.server 8080
+# o
+npx serve .
 ```
 
-Abre `http://localhost:8080` en el navegador. No requiere Node.js, npm ni compilación.
+Luego abre la URL local en el navegador, por ejemplo:
 
----
-
-## Integrar un minijuego
-
-```js
-// Al completar un nivel o logro:
-if (window.GameCenter) {
-    window.GameCenter.completeLevel('mi-juego', 'nivel-1', 50);
-}
+```text
+http://localhost:8080
 ```
 
-Consulta `love-arcade-coin-system.md` para el contrato completo de integración.
+## Stack actual
 
----
+- HTML, CSS y JavaScript vanilla
+- `localStorage` para persistencia principal
+- `js/app.js` como motor principal de economía y estado
+- `js/shop-logic.js` para catálogo y compra
+- `js/streak-hub.js` para feedback visual de la racha
+- `js/sync-worker.js` para export/import con checksum y backup gzip
+- `sw.js` para cache offline del shell
+- `/api/*` como capa opcional de Vercel
 
-## Documentación
+## Documentación normativa
 
-| Documento | Contenido |
-|---|---|
-| `DOCUMENTACION.md` | Referencia técnica completa del proyecto (arquitectura, APIs, changelog) |
-| `ECONOMIA.md` | Guía de configuración de ofertas, descuentos y cashback |
-| `love-arcade-coin-system.md` | Manual de integración para desarrolladores de minijuegos |
-| `love-arcade-minigame-dev-manual.md` | Guía de desarrollo de nuevos minijuegos |
+El mapa documental vigente para la plataforma es:
 
----
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — arquitectura actual, SPA, router, persistencia y runtime
+- [docs/DOMAIN.md](docs/DOMAIN.md) — economía, monedas, tienda, racha, historial y temas
+- [docs/INTEGRATION.md](docs/INTEGRATION.md) — contrato de integración para minijuegos
+- [docs/OPERATIONS.md](docs/OPERATIONS.md) — despliegue, variables de entorno, Supabase y soporte
+- [docs/DOCUMENTATION_POLICY.md](docs/DOCUMENTATION_POLICY.md) — reglas de mantenimiento documental
 
-## Versión
+## Validación disponible en el repositorio
 
-**v14.3** — Daily Streak Hub · fuego animado SVG/CSS, feedback de reclamo con audio sintetizado y haptics
+Actualmente el repositorio no incluye `package.json` ni scripts npm. Las validaciones documentadas para catálogo y flujo principal se ejecutan como comprobaciones estáticas o scripts de prueba específicos cuando existen.
 
-**v14.2** — Floating Pill Navigation · navegación principal unificada para móvil, tablet y desktop · estado SPA, accesibilidad y movimiento reducido preservados
+## Nota de alcance
+
+La documentación histórica del repositorio no sustituye a los archivos normativos anteriores. El contrato vigente debe leerse desde los documentos mencionados arriba y desde el código actual.

@@ -1,0 +1,136 @@
+# Contrato de integración de minijuegos
+
+## Propósito
+
+Este documento es la referencia actual para integradores de minijuegos dentro de Love Arcade. Define el contrato público que el hub usa para recompensar, persistir y mantener una identidad visual compartida sin duplicar la economía del proyecto central.
+
+## Estado del documento
+
+- Hecho verificado: los minijuegos viven bajo `games/` y cada uno tiene un `index.html` propio.
+- Hecho verificado: el hub expone `window.GameCenter` como API pública de dominio.
+- Hecho verificado: `window.GameCenter.completeLevel(gameId, levelId, rewardAmount)` es la forma actual de registrar recompensas del juego.
+- Inferencia: la arquitectura del proyecto asume juegos autónomos con persistencia local propia y con retorno al hub desde el navegador.
+- No confirmado: cualquier contrato adicional que no aparezca explícitamente en el código actual debe mantenerse en cada README del juego y revisarse localmente.
+
+## 1. Patrón de integración
+
+Los minijuegos se alojan en la carpeta `games/` y siguen un patrón de subaplicación independiente:
+
+- tienen un `index.html` propio;
+- encapsulan su lógica y assets en su carpeta local;
+- pueden abrirse desde el navegador sin depender de un bundler del proyecto central;
+- tienen una salida o retorno al hub principal;
+- usan `window.GameCenter` para registrar resultados con impacto económico.
+
+La lógica global de autenticación, economía, persistencia y rewards del hub no debe duplicarse en el juego.
+
+## 2. Entrypoint y bootstrap
+
+Cada juego debe tener un entrypoint HTML local. No se exige una compilación central ni un arranque dependiente de un entorno especial dentro del proyecto raíz.
+
+La disciplina del repositorio es atender cada juego como una miniaplicación independiente, con su propio flujo de render, input y assets, pero compartiendo el mismo patrón base de navegador estático.
+
+## 3. Contrato actual: `window.GameCenter.completeLevel()`
+
+La firma verificada en el código actual es:
+
+```js
+window.GameCenter.completeLevel(gameId, levelId, rewardAmount)
+```
+
+### Comportamiento actual
+
+La implementación vigente hace lo siguiente:
+
+- guarda el progreso del juego bajo `store.progress[gameId]`;
+- ignora el pago si el `levelId` ya estaba registrado;
+- suma `rewardAmount` al saldo global del usuario;
+- persiste el estado del hub con sincronización inmediata cuando procede;
+- devuelve un objeto con el resultado de la operación, incluyendo `{ paid, coins }`.
+
+La idempotencia es parte del contrato: el mismo `levelId` no debe pagar dos veces.
+
+## 4. Formato de la recompensa
+
+La recompensa debe ser un número entero expresado en monedas de Love Arcade.
+
+El juego no debe repartir valores no numéricos ni estados de progreso que el hub no pueda convertir a saldo. La lógica económica del hub es la única autoridad del saldo del usuario.
+
+## 5. Economía global frente a economía local del juego
+
+Los minijuegos pueden tener su economía propia para mecánicas internas, pero eso no sustituye ni replica la autoridad económica global del hub.
+
+Regla combinada con el código actual:
+
+- la economía del proyecto central vive en `window.GameCenter` y `store`;
+- el juego debe registrar el resultado final a través del contrato del hub;
+- la recompensa global se paga con monedas del hub;
+- la subaplicación no debe convertirse en una segunda fuente de verdad del saldo del usuario.
+
+## 6. Persistencia local del juego y aislamiento
+
+Un minijuego puede mantener su propio estado local dentro de su carpeta o en almacenamiento del navegador, siempre que ese estado no se confunda con el estado económico del hub.
+
+El aislamiento recomendable es:
+
+- persistencia del juego local al juego;
+- economía del hub centralizada en `store`;
+- reingreso al hub sin depender de rehidratar el estado del juego como si fuera la identidad del usuario.
+
+## 7. Modo standalone
+
+Los juegos deben seguir siendo operables si se abren directamente desde su carpeta local dentro de `games/`.
+
+Esto no implica un contrato de runtime especial ni un servidor propio del repositorio. El código actual refleja un modelo estático y navegador-first: cada juego se prueba y se ejecuta de forma autónoma, pero puede integrarse al hub cuando se decide abrirlo desde la aplicación principal.
+
+## 8. Namespacing y globals reservados
+
+Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La integración actual considera relevantes los siguientes globals públicos:
+
+- `window.GameCenter`
+- `window.THEMES`
+- `window.CONFIG` cuando se usa por compatibilidad de lectura
+
+Se debe evitar reescribir variables globales del hub ni declarar nombres que pudieran reemplazar API pública del proyecto.
+
+## 9. Contrato de temas: `window.THEMES`
+
+El hub expone `window.THEMES` como un mapa de temas con claves y definiciones de color. La compatibilidad visual del proyecto se apoya en ese objeto y la superficie pública que aparece en el código actual es:
+
+- `window.THEMES[key].accent`
+
+Esto debe tratarse como una superficie de compatibilidad visual del hub, no como un sistema completo de diseño para todos los minijuegos.
+
+## 10. Degradación cuando `GameCenter` no está disponible
+
+El documento no define una API alternativa que reemplace a `GameCenter`; lo que sí está respaldado por el patrón actual es que el juego debe respetar la ausencia de la API y degradar de forma segura.
+
+En la práctica, esto significa:
+
+- si `window.GameCenter` no existe o no tiene `completeLevel`, el juego no debe asumir que puede liquidar la recompensa del hub;
+- la oferta de rewards del juego debe comportarse como un resultado local o no ejecutarse si no hay contexto del hub;
+- la integración no debe inventar un contrato de fallback que el código actual no haya implementado.
+
+## 11. Checklist de integración
+
+Un minijuego está integrado de forma compatible con el contrato actual si:
+
+1. vive bajo `games/`;
+2. tiene un `index.html` local;
+3. ofrece una salida o retorno al hub principal;
+4. registra recompensas mediante `window.GameCenter.completeLevel()`;
+5. mantiene su estado local aislado del estado del hub;
+6. evita sobrescribir globals reservados;
+7. usa `window.THEMES` solo como compatibilidad visual si procede;
+8. no duplica la lógica de economía del proyecto central;
+9. responde con degradación segura si `GameCenter` no está disponible.
+
+## 12. Límites documentales
+
+Este documento no define nuevas APIs ni nuevos contratos de negocio no confirmados por el código actual. Cualquier regla adicional del juego debe mantenerse en el README local del juego y no debe confundirse con el contrato global del hub.
+
+## 13. Referencias cruzadas
+
+- [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
+- [docs/DOMAIN.md](./DOMAIN.md)
+- [README.md](../README.md)
