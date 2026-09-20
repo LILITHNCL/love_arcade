@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.40';
+const CACHE_VERSION = 'v2.04.07.41';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
