@@ -1244,5 +1244,29 @@
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angeles-de-la-delusion-2940655b"
+},
+{
+    "id": 156,
+    "name": "Darkspine Sonic",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/super-hyper-darkspine-dark-sonic-887fe357"
+},
+{
+    "id": 157,
+    "name": "Sonic the Hedgehog",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic-the-hedgehog-f2ef7092"
+},
+{
+    "id": 158,
+    "name": "Miku Nakano",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku-nakano-162d9434"
 }
 ]
