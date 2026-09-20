@@ -1268,5 +1268,21 @@
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku-nakano-162d9434"
+},
+{
+    "id": 159,
+    "name": "Hatsune Miku",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hatsune-miku-8aeb2afa"
+},
+{
+    "id": 160,
+    "name": "Waguri Kaoruko",
+    "price": 1000,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/waguri-kaoruko-b9005b9c"
 }
 ]
