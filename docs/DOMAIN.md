@@ -53,6 +53,8 @@ Si el precio base es `1000` y la oferta es `-20%`:
 - `cashback = Math.floor(800 * 0.10) = 80`
 - neto de compra: `-800` y luego `+80` de cashback; el saldo final baja en `720` respecto al precio base.
 
+Para el procedimiento operativo de activar/ajustar ofertas y cashback, ver [docs/ECONOMIA.md](./ECONOMIA.md).
+
 ## 3. Inventario, colección y catálogo
 
 Evidencia: `js/shop-logic.js` y `js/app.js` usan `store.inventory` y el catálogo de `data/shop.json` como fuente de productos; la tienda muestra artículos no poseídos y la colección muestra poseídos.
