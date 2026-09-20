@@ -81,6 +81,35 @@ Encapsula la lógica de la vista Tienda:
 - render de estados de error y vacíos;
 - precarga y observación de tarjetas con `IntersectionObserver` y gestión de reducción de movimiento.
 
+El contrato de interacción y rendimiento de los previews de Tienda y Colección se detalla en
+[docs/preview-interaction-performance.md](./preview-interaction-performance.md).
+
+### `js/spa-router.js`
+
+Gestiona la navegación entre las vistas `home`, `shop` y `profile`, sincroniza el estado visual
+y coordina los callbacks de ciclo de vida de las vistas mediante la History API.
+
+### `js/lifecycle-scheduler.js`
+
+Centraliza el registro, la pausa y la reanudación de intervalos según la visibilidad de la página,
+el ciclo de página y la vista SPA activa. Su contrato completo está en
+[docs/lifecycle-timers.md](./lifecycle-timers.md).
+
+### `js/analytics.js`
+
+Captura telemetría de interacción de forma no bloqueante y la envía a los endpoints serverless
+opcionales, con filtros de entorno, control de cola y limitación de frecuencia.
+
+### `js/backup-engine.js`
+
+Exporta e importa respaldos locales en formato `.labak`, usando checksum SHA-256 y compresión gzip
+cuando el navegador la soporta.
+
+### `js/supabase-loader.js`
+
+Expone una carga diferida del SDK de Supabase desde CDN con fallback, para que la sincronización
+cloud opcional pueda degradarse sin bloquear el runtime principal.
+
 ### `js/streak-hub.js`
 
 Es un adaptador visual para el estado diario y la retroalimentación interactiva de la racha. Su tarea principal es traducir el estado de negocio a UI, no sustituir la lógica del dominio.
@@ -166,6 +195,9 @@ La colección se monta bajo demanda y la búsqueda local se mantiene en la vista
 ## 6. Assets y flujo visual
 
 El HTML usa preloads de cover images y un sprite SVG estático para iconos. Los assets visuales se sirven con transformaciones de CDN cuando aplica, y los documentos históricos que mencionan un sistema de iconos generados dinámicamente o un flujo de assets antiguo no deben tratarse como contrato actual.
+
+La estrategia vigente de portadas AVIF responsivas está documentada en
+[docs/THUMBNAILS_OPTIMIZATION.md](./THUMBNAILS_OPTIMIZATION.md).
 
 ## 7. Límites documentales
 
