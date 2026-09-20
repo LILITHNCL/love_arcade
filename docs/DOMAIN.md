@@ -122,6 +122,9 @@ Evidencia: `_readTimeCache()`, `_getDailyDiffDays()`, `CLOCK_SKEW_LIMIT`, `TIME_
 - Si el reloj se detecta desincronizado, el reclamo se bloquea.
 - Si `lastClaim > now`, el sistema bloquea el reclamo por inconsistencia horaria.
 
+Para un análisis extendido (UX, accesibilidad, motion, riesgos y diagrama de flujo), ver
+[docs/sistema-racha-diaria.md](./sistema-racha-diaria.md).
+
 ## 6. Bendición Lunar como modificador de recompensa
 
 Evidencia: `GameCenter.buyMoonBlessing()`, `extendMoonBlessingDays()`, `getMoonBlessingStatus()` y la lógica dentro de `GameCenter.claimDaily()` en `js/app.js`.

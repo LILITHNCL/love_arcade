@@ -2,6 +2,10 @@
 
 Este documento describe el funcionamiento completo del sistema de **racha diaria** de Love Arcade: persistencia, reglas de negocio, flujo de reclamo, seguridad horaria, economía, UI, analítica, accesibilidad y riesgos actuales.
 
+> **Estado del documento:** informe técnico de profundidad complementario a `docs/DOMAIN.md` §5.
+> Las reglas de negocio autoritativas viven en `docs/DOMAIN.md`; este documento añade detalle de
+> implementación, UX, accesibilidad y motion que `DOMAIN.md` no cubre por diseño.
+
 ## 1. Resumen ejecutivo
 
 La racha diaria es un sistema de retención que recompensa al usuario por volver cada día y reclamar el **Bono Diario**. Técnicamente vive en `js/app.js` dentro de `window.GameCenter` y se representa en el estado persistido como:
@@ -29,7 +33,6 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
 | `styles.css` | Estilos visuales, estados y animaciones del HUD diario. |
 | `docs/DOMAIN.md` | Contrato actual de economía, racha y sistema de recompensas. |
-| `data/events.json` | Configura eventos LTE, incluyendo `streak_boost_v1`. |
 | `docs/operations/streak-recovery.md` | Guía operativa canónica con SQL para diagnosticar y restaurar manualmente la racha de un usuario desde Supabase. |
 
 ## 3. Modelo de datos y persistencia
@@ -124,7 +127,7 @@ Reglas:
 | `> 2` | La racha se rompió. Se reinicia a `1`. |
 | Sin reclamo previo | Se considera primer reclamo y queda en `1`. |
 
-La racha se incrementa normalmente en `+1`, pero si el evento LTE `streak_boost_v1` está activo, se incrementa en `+2` cuando `diffDays === 1`.
+La racha se incrementa en `+1` cuando `diffDays === 1`.
 
 ## 6. Flujo técnico de reclamo
 
@@ -230,11 +233,13 @@ Devuelve:
   streak,
   nextReward,
   canClaim,
-  streakBoosted
+  repairAvailable,
+  repairCost,
+  canAffordRepair
 }
 ```
 
-`nextReward` ya considera si `streak_boost_v1` aumentará la racha prevista, pero no suma Bendición Lunar; la UI suma esos 90 por separado.
+`nextReward` calcula la recompensa base de la siguiente racha prevista y no suma Bendición Lunar; la UI suma esos 90 por separado.
 
 ### `GameCenter.getState()`
 
@@ -288,19 +293,6 @@ La Bendición Lunar no cambia la racha; cambia el valor económico del reclamo d
 - la analítica marca `luna: '+90'`.
 
 La Bendición Lunar puede comprarse por 100 monedas durante 7 días y extenderse mediante sus operaciones de economía existentes.
-
-## 12. Eventos LTE relacionados
-
-El sistema de eventos puede modificar el incremento de racha mediante `streak_boost_v1`:
-
-```js
-const streakBoost = window.isEventActive('streak_boost_v1') ? 2 : 1;
-const newStreak = diffDays === 1 ? streak + streakBoost : 1;
-```
-
-`getStreakInfo()` replica esa lógica para que la UI previsualice la recompensa correcta y expone `streakBoosted: true` cuando aplica.
-
-Importante: el cap de recompensa sigue siendo `dailyStreakCap = 60`; el evento acelera el contador de racha, no elimina el límite económico del bono base.
 
 ## 13. Analítica y observabilidad
 
@@ -365,7 +357,6 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 | Reclamo a las 23:59 y luego a las 00:01 | No avanza prematuramente: ambos caen en el mismo día flexible hasta las 03:00 AM. |
 | Más de un día sin reclamar | `diffDays > 1`, racha se reinicia a 1. |
 | Racha mayor a 7 | Barra queda llena; contador textual muestra valor real. |
-| Evento `streak_boost_v1` activo | Siguiente racha suma +2 si venía de ayer. |
 | Caché horario vencido | Reclamo usa reloj local y `verified: false`. |
 | Caché horario desincronizado | Reclamo bloqueado. |
 | Usuario reclama y clickea varias veces | Botón se deshabilita antes de la mutación. |
@@ -386,9 +377,8 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 
 ### Media prioridad
 
-- Crear tests unitarios para `claimDaily()`, `canClaimDaily()` y `getStreakInfo()` con casos de medianoche, ruptura de racha, boost LTE, Bendición Lunar y reloj desincronizado.
+- Crear tests unitarios para `claimDaily()`, `canClaimDaily()` y `getStreakInfo()` con casos de medianoche, ruptura de racha, Bendición Lunar y reloj desincronizado.
 - Ajustar notificaciones para que `next_daily_claim_at` apunte a la próxima medianoche local en vez de `now + 24h`.
-- Mostrar en UI si `streakBoosted` está activo, para que el usuario entienda por qué la racha sube +2.
 
 ### Baja prioridad
 
@@ -408,7 +398,7 @@ flowchart TD
   G --> H{diffDays == 0?}
   H -- Sí --> I[Ya reclamado hoy]
   H -- No --> J{diffDays == 1?}
-  J -- Sí --> K[streak + boost]
+  J -- Sí --> K[streak + 1]
   J -- No --> L[streak = 1]
   K --> M[Calcular recompensa]
   L --> M
@@ -421,9 +411,9 @@ flowchart TD
 
 ## 24. Conclusión
 
-El sistema de racha diaria está bien integrado con la economía, la UI del HUD, Bendición Lunar, eventos LTE, analítica y notificaciones. Su decisión UX más importante es usar **días calendario** y no ventanas rígidas de 24 horas, lo cual reduce frustración y hace que el hábito diario sea más natural. La arquitectura prioriza respuesta instantánea con validación horaria en background; esto favorece la experiencia, aunque deja un riesgo residual cuando no hay caché de tiempo válido.
+El sistema de racha diaria está bien integrado con la economía, la UI del HUD, Bendición Lunar, analítica y notificaciones. Su decisión UX más importante es usar **días calendario** y no ventanas rígidas de 24 horas, lo cual reduce frustración y hace que el hábito diario sea más natural. La arquitectura prioriza respuesta instantánea con validación horaria en background; esto favorece la experiencia, aunque deja un riesgo residual cuando no hay caché de tiempo válido.
 
-Las mejoras más valiosas no requieren reescritura: reforzar accesibilidad de mensajes dinámicos y modal, añadir pruebas de fechas, alinear notificaciones con medianoche local y hacer visible el boost de evento cuando esté activo.
+Las mejoras más valiosas no requieren reescritura: reforzar accesibilidad de mensajes dinámicos y modal, añadir pruebas de fechas y alinear notificaciones con medianoche local.
 
 
 ## 22. Actualización v12 — Madrugada Flexible y Recuperación Retroactiva
