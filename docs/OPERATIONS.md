@@ -104,3 +104,4 @@ Cuando faltan servicios externos o configuraciones cloud:
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/DOMAIN.md](./DOMAIN.md)
 - [docs/INTEGRATION.md](./INTEGRATION.md)
+- [docs/DOCUMENTATION_POLICY.md](./DOCUMENTATION_POLICY.md)

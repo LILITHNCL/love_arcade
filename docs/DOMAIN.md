@@ -194,4 +194,5 @@ Los siguientes puntos no deben tratarse como contrato definitivo sin comprobaci√
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/INTEGRATION.md](./INTEGRATION.md)
 - [docs/OPERATIONS.md](./OPERATIONS.md)
+- [docs/DOCUMENTATION_POLICY.md](./DOCUMENTATION_POLICY.md)
 - [README.md](../README.md)

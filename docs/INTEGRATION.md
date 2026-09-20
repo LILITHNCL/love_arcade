@@ -133,6 +133,7 @@ Este documento no define nuevas APIs ni nuevos contratos de negocio no confirmad
 
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/DOMAIN.md](./DOMAIN.md)
+- [docs/DOCUMENTATION_POLICY.md](./DOCUMENTATION_POLICY.md)
 - [README.md](../README.md)
 
 ## 14. Ejemplos de referencia
