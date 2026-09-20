@@ -44,6 +44,19 @@ El mapa documental vigente para la plataforma es:
 - [docs/OPERATIONS.md](docs/OPERATIONS.md) — despliegue, variables de entorno, Supabase y soporte
 - [docs/DOCUMENTATION_POLICY.md](docs/DOCUMENTATION_POLICY.md) — reglas de mantenimiento documental
 
+## Guías y auditorías complementarias
+
+Documentos de profundidad sobre un subsistema concreto; no sustituyen al set normativo anterior
+en caso de conflicto:
+
+- [docs/ECONOMIA.md](docs/ECONOMIA.md) — guía operativa de ofertas y cashback
+- [docs/sistema-racha-diaria.md](docs/sistema-racha-diaria.md) — informe técnico y UX de la racha diaria
+- [docs/operations/streak-recovery.md](docs/operations/streak-recovery.md) — recuperación manual de racha (Supabase)
+- [docs/preview-interaction-performance.md](docs/preview-interaction-performance.md) — interacción y rendimiento del preview de Tienda/Colección
+- [docs/lifecycle-timers.md](docs/lifecycle-timers.md) — contrato del scheduler central de timers
+- [docs/THUMBNAILS_OPTIMIZATION.md](docs/THUMBNAILS_OPTIMIZATION.md) — optimización AVIF de portadas
+- [docs/JSDOC_GUIDE.md](docs/JSDOC_GUIDE.md) — convención de comentarios JSDoc del proyecto
+
 ## Validación disponible en el repositorio
 
 Actualmente el repositorio no incluye `package.json` ni scripts npm. Las validaciones documentadas para catálogo y flujo principal se ejecutan como comprobaciones estáticas o scripts de prueba específicos cuando existen.
