@@ -29,7 +29,6 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
 | `styles.css` | Estilos visuales, estados y animaciones del HUD diario. |
 | `docs/DOMAIN.md` | Contrato actual de economía, racha y sistema de recompensas. |
-| `docs/love-arcade-minigame-dev-manual.md` | Expone `window.GameCenter.getStreakInfo()` como API disponible para minijuegos. |
 | `data/events.json` | Configura eventos LTE, incluyendo `streak_boost_v1`. |
 | `docs/operations/streak-recovery.md` | Guía operativa canónica con SQL para diagnosticar y restaurar manualmente la racha de un usuario desde Supabase. |
 
