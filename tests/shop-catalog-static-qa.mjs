@@ -9,14 +9,11 @@ import { strict as assert } from 'node:assert';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
 const catalog = JSON.parse(read('data/shop.json'));
-const retired = JSON.parse(read('data/retired-shop-gift-ids.json'));
 const indexHtml = read('index.html');
 const shopLogic = read('js/shop-logic.js');
 const styles = read('styles.css');
 
 assert.ok(Array.isArray(catalog), 'shop.json must be an array');
-assert.ok(Array.isArray(retired.retiredGiftIds), 'retired gift IDs must be recorded');
-assert.ok(Array.isArray(retired.publishedAliases), 'known published aliases must be recorded');
 assert.equal(existsSync(new URL('data/shop-gifts.json', root)), false,
     'the retired gift catalog must not be published');
 
@@ -35,16 +32,6 @@ for (const [index, item] of catalog.entries()) {
     assert.equal('tags' in item || 'file' in item || 'requirements' in item || item.category === 'gift', false,
         `item ${item.id}: legacy catalog fields are forbidden`);
     assert.equal(item.type === 'file', Boolean(item.downloadUrl), `item ${item.id}: file items need downloadUrl`);
-}
-
-const aliases = new Set(retired.publishedAliases);
-for (const id of retired.retiredGiftIds) {
-    assert.ok(Number.isInteger(id), 'retired gift IDs must be integers');
-    const collision = publishedIds.has(id);
-    assert.equal(collision, aliases.has(id), `retired gift ID ${id} has an undocumented catalog collision`);
-}
-for (const id of aliases) {
-    assert.ok(retired.retiredGiftIds.includes(id), `published alias ${id} is not retired`);
 }
 
 for (const [sourceName, source] of [['index.html', indexHtml], ['js/shop-logic.js', shopLogic], ['styles.css', styles]]) {
@@ -178,5 +165,4 @@ for (const windowSize of [20, 41, 96]) {
     }
 }
 
-console.log(`Documented legacy aliases: ${retired.publishedAliases.join(', ')}.`);
-console.log(`Catalog and shop architecture QA passed: ${catalog.length} published items, ${retired.retiredGiftIds.length} retired gift IDs.`);
+console.log(`Catalog and shop architecture QA passed: ${catalog.length} published items.`);

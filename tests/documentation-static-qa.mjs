@@ -39,10 +39,6 @@ for (const filePath of markdownFiles) {
   const relPath = path.relative(repoRoot, filePath).replace(/\\/g, '/');
   const fileText = fs.readFileSync(filePath, 'utf8');
 
-  if (relPath === 'limpieza-documentacion.md') {
-    continue;
-  }
-
   for (const removedFile of removedDocs) {
     if (fileText.includes(removedFile)) {
       issues.push(`${relPath}: still references removed document ${removedFile}`);

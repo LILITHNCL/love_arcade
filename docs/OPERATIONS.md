@@ -87,6 +87,8 @@ La auditoría identifica que la capa de notificaciones push fue retirada por la 
 
 Esta referencia debe entenderse como una línea de contexto operativo: el sistema de notificaciones push ya no forma parte del flujo actual y debe mantenerse descrito como retiro, no como funcionalidad vigente.
 
+Para activar o ajustar ofertas y cashback en producción, ver la guía operativa [docs/ECONOMIA.md](./ECONOMIA.md).
+
 ## 8. Diagnóstico de degradación
 
 Cuando faltan servicios externos o configuraciones cloud:
@@ -102,3 +104,4 @@ Cuando faltan servicios externos o configuraciones cloud:
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/DOMAIN.md](./DOMAIN.md)
 - [docs/INTEGRATION.md](./INTEGRATION.md)
+- [docs/DOCUMENTATION_POLICY.md](./DOCUMENTATION_POLICY.md)

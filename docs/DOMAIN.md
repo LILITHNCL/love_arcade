@@ -53,6 +53,8 @@ Si el precio base es `1000` y la oferta es `-20%`:
 - `cashback = Math.floor(800 * 0.10) = 80`
 - neto de compra: `-800` y luego `+80` de cashback; el saldo final baja en `720` respecto al precio base.
 
+Para el procedimiento operativo de activar/ajustar ofertas y cashback, ver [docs/ECONOMIA.md](./ECONOMIA.md).
+
 ## 3. Inventario, colección y catálogo
 
 Evidencia: `js/shop-logic.js` y `js/app.js` usan `store.inventory` y el catálogo de `data/shop.json` como fuente de productos; la tienda muestra artículos no poseídos y la colección muestra poseídos.
@@ -122,6 +124,9 @@ Evidencia: `_readTimeCache()`, `_getDailyDiffDays()`, `CLOCK_SKEW_LIMIT`, `TIME_
 - Si el reloj se detecta desincronizado, el reclamo se bloquea.
 - Si `lastClaim > now`, el sistema bloquea el reclamo por inconsistencia horaria.
 
+Para un análisis extendido (UX, accesibilidad, motion, riesgos y diagrama de flujo), ver
+[docs/sistema-racha-diaria.md](./sistema-racha-diaria.md).
+
 ## 6. Bendición Lunar como modificador de recompensa
 
 Evidencia: `GameCenter.buyMoonBlessing()`, `extendMoonBlessingDays()`, `getMoonBlessingStatus()` y la lógica dentro de `GameCenter.claimDaily()` en `js/app.js`.
@@ -189,4 +194,5 @@ Los siguientes puntos no deben tratarse como contrato definitivo sin comprobaci�
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/INTEGRATION.md](./INTEGRATION.md)
 - [docs/OPERATIONS.md](./OPERATIONS.md)
+- [docs/DOCUMENTATION_POLICY.md](./DOCUMENTATION_POLICY.md)
 - [README.md](../README.md)

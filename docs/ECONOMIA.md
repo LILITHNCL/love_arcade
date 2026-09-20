@@ -26,20 +26,8 @@
 
 El sistema de economía de Love Arcade está diseñado para ser **controlado desde un único lugar** en el código: el objeto `ECONOMY` al inicio de `app.js`. No requiere tocar la lógica de compra, ni los HTMLs, ni el JSON de productos.
 
-Cuando una usuaria compra un wallpaper, la función `buyItem` de `app.js` consulta ese objeto en tiempo real para calcular:
-
-1. **El precio final** — aplicando el descuento si hay una oferta activa.
-2. **El cashback** — devolviendo un porcentaje al saldo tras la compra.
-
-```
-Precio final = precio_original × saleMultiplier   (si isSaleActive = true)
-Cashback     = precio_final × cashbackRate
-```
-
-> **Ejemplo:** Wallpaper de 1000 monedas · oferta del 20% · cashback del 10%
-> - Precio con oferta: 1000 × 0.8 = **800 monedas**
-> - Cashback: 800 × 0.1 = **80 monedas devueltas**
-> - Total de la compra: **800 monedas**; el cashback se devuelve por separado.
+La fórmula exacta y su ejemplo de cálculo son responsabilidad de [docs/DOMAIN.md](./DOMAIN.md) §2.
+Esta guía se enfoca en el procedimiento operativo: cómo activar, ajustar y desactivar ofertas y cashback.
 
 ---
 
@@ -166,25 +154,13 @@ El cashback es una **devolución automática de monedas** que se aplica en el mi
 1. La usuaria hace clic en "Canjear"
 2. buyItem() calcula el finalPrice (con o sin descuento)
 3. Se restan finalPrice monedas del saldo
-4. Se calculan las monedas de cashback: Math.floor(finalPrice × cashbackRate)
+4. Se calcula el cashback según la fórmula normativa de [docs/DOMAIN.md](./DOMAIN.md) §2
 5. Se suman esas monedas de vuelta al saldo
 6. El resultado neto se guarda en el store
 7. El toast notifica: "¡+X cashback devueltas!"
 ```
 
-La función `Math.floor` asegura que siempre se devuelven monedas enteras (sin decimales).
-
-```javascript
-// Fragmento de buyItem() en app.js
-const finalPrice = ECONOMY.isSaleActive
-    ? Math.floor(itemData.price * ECONOMY.saleMultiplier)
-    : itemData.price;
-
-const cashback = Math.floor(finalPrice * ECONOMY.cashbackRate);
-
-store.coins -= finalPrice;
-store.coins += cashback;  // Devolución inmediata
-```
+El cálculo usa monedas enteras; la fórmula y sus reglas de redondeo se definen en [docs/DOMAIN.md](./DOMAIN.md) §2.
 
 ---
 
@@ -234,7 +210,7 @@ const ECONOMY = {
 };
 ```
 
-Cuando es `0`, `Math.floor(finalPrice * 0)` devuelve `0`, así que no se suma nada al saldo y el toast omite la mención del cashback automáticamente (porque `result.cashback` es `0`).
+Cuando es `0`, no se suma nada al saldo y el toast omite la mención del cashback automáticamente (porque `result.cashback` es `0`).
 
 ---
 
@@ -342,4 +318,4 @@ const ECONOMY = {
 
 ---
 
-*Última actualización: Rediseño de Tienda — TICKET-07*
+*Documento operativo — ver docs/DOMAIN.md §2 para la fórmula normativa.*
