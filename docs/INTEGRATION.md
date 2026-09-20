@@ -134,3 +134,90 @@ Este documento no define nuevas APIs ni nuevos contratos de negocio no confirmad
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - [docs/DOMAIN.md](./DOMAIN.md)
 - [README.md](../README.md)
+
+## 14. Ejemplos de referencia
+
+Los siguientes fragmentos ilustran el contrato documentado en las secciones
+anteriores. Cada juego sigue siendo una página independiente bajo `games/` y
+debe conservar sus identificadores y su almacenamiento aislados del hub.
+
+### Namespacing del juego
+
+Use un prefijo propio para las claves de almacenamiento y los identificadores
+del juego. Encapsular la implementación evita añadir nombres genéricos a
+`window`:
+
+```js
+(() => {
+    const PUZZLE_STORAGE_KEY = 'PUZZLE_highscore';
+
+    function PUZZLE_saveHighScore(score) {
+        localStorage.setItem(PUZZLE_STORAGE_KEY, String(score));
+    }
+
+    // La lógica del juego puede llamar a PUZZLE_saveHighScore(score) localmente.
+})();
+```
+
+### Conversión de economía interna
+
+Convierta la puntuación o divisa interna del juego a un entero de monedas de
+Love Arcade antes de llamar al hub:
+
+```js
+const puntosInternos = 5000;
+const monedasLoveArcade = Math.floor(puntosInternos / 100);
+
+window.GameCenter.completeLevel(
+    'rompecabezas',
+    'partida_1',
+    monedasLoveArcade
+);
+```
+
+### Degradación elegante
+
+Un juego abierto sin el hub puede conservar su resultado local y omitir el
+registro de la recompensa global sin interrumpir su ejecución:
+
+```js
+if (typeof window.GameCenter !== 'undefined' &&
+    typeof window.GameCenter.completeLevel === 'function') {
+    window.GameCenter.completeLevel('rompecabezas', 'nivel_3_completado', 25);
+} else {
+    console.warn('[PUZZLE] Modo standalone: recompensa no registrada en el hub.');
+}
+```
+
+### `window.debounce(fn, delay)`
+
+La utilidad exportada por el hub recibe una función y un retraso opcional de
+300 ms. Su firma JSDoc coincide con la implementación actual:
+
+```js
+/**
+ * @param {Function} fn Función a debounce-ar.
+ * @param {number} delay Espera en ms antes de ejecutar (por defecto 300 ms).
+ * @returns {Function}
+ */
+function debounce(fn, delay = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
+window.debounce = debounce;
+```
+
+Por ejemplo, un juego puede usarla para limitar recálculos en `resize` y
+mantener un fallback local cuando se ejecute sin el hub:
+
+```js
+const PUZZLE_onResize = typeof window.debounce === 'function'
+    ? window.debounce(PUZZLE_recalcularLayout, 200)
+    : PUZZLE_recalcularLayout;
+
+window.addEventListener('resize', PUZZLE_onResize);
+```
