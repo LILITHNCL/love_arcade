@@ -414,8 +414,8 @@ El fallback se activa de forma transparente: el jugador no recibe ningún mensaj
 ### Inclusión del motor central
 
 ```html
-<!-- Al final del <body>, después de todos los scripts del juego -->
-<script src="../../js/app.js"></script>
+<!-- Antes de JD_Core.js y de cualquier código que informe recompensas -->
+<script src="../../js/game-bridge.js"></script>
 ```
 
 ### Modo standalone

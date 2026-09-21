@@ -70,7 +70,12 @@ const sources = fs.readdirSync(jsDir).filter((file) => file.endsWith('.js')).map
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 assert.equal((sources.find(([file]) => file === 'MAREJIG_economy.js')[1].match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
 sources.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not call completeLevel`));
-assert.equal([...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].at(-1)[1], '../../js/app.js', 'Love Arcade app.js stays last');
+const scriptSources = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((match) => match[1]);
+const bridgeIndex = scriptSources.indexOf('../../js/game-bridge.js');
+assert.ok(bridgeIndex !== -1, 'Love Arcade game bridge is loaded');
+assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_economy.js'), 'bridge loads before the economy');
+assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_main.js'), 'bridge loads before game startup');
+assert.equal(scriptSources.includes('../../js/app.js'), false, 'hub UI bootstrap is not loaded by Marejig');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /\b(?:addCoins|spendCoins|getBalance)\s*\(/, 'forbidden economy methods stay absent');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'forbidden window assignments stay absent');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /\b(?:CONFIG|ECONOMY|THEMES)\s*=/, 'forbidden globals stay absent');

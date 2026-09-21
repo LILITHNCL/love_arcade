@@ -251,7 +251,11 @@ function makeDocument() {
 {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const scriptSources = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((match) => match[1]);
-  assert.equal(scriptSources.at(-1), '../../js/app.js', 'Love Arcade app.js is last script');
+  const bridgeIndex = scriptSources.indexOf('../../js/game-bridge.js');
+  assert.ok(bridgeIndex !== -1, 'Love Arcade game bridge is loaded');
+  assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_economy.js'), 'bridge loads before the economy');
+  assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_main.js'), 'bridge loads before game startup');
+  assert.equal(scriptSources.includes('../../js/app.js'), false, 'hub UI bootstrap is not loaded by Marejig');
   const css = fs.readFileSync(path.join(root, 'css', 'marejig.css'), 'utf8');
   const selectors = [...css.matchAll(/(^|})\s*([^@{}][^{]+)\s*\{/g)].map((match) => match[2].trim()).filter((selector) => { const cleaned = selector.replace(/^}+/, '').trim(); return !cleaned.startsWith('from') && !cleaned.startsWith('to') && !cleaned.startsWith('@'); }).map((selector) => selector.replace(/^}+/, '').trim());
   for (const selector of selectors) {

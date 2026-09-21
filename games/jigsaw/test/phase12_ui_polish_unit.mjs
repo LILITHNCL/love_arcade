@@ -25,7 +25,9 @@ assert.match(main, /MAREJIG_trapModalFocus\(event\)/, 'dialogs preserve keyboard
 assert.match(main, /event\.key !== 'Escape'[\s\S]*marejig-confirm-reset-modal/, 'Escape closes the reset confirmation dialog');
 assert.equal((economy.match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
 sources.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not define or call completeLevel`));
-assert(html.lastIndexOf('../../js/app.js') > html.lastIndexOf('MAREJIG_main.js'), '../../js/app.js remains the final script');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_economy.js'), 'bridge loads before the economy');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_main.js'), 'bridge loads before game startup');
+assert.doesNotMatch(html, /\.\.\/\.\.\/js\/app\.js/, 'hub UI bootstrap is absent');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'scripts do not assign forbidden globals');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /\b(?:CONFIG|ECONOMY|THEMES)\s*=/, 'scripts do not declare forbidden unnamespaced identifiers');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /requestAnimationFrame\([^)]*requestAnimationFrame|setInterval\([^)]*render/i, 'scripts do not introduce permanent render loops');

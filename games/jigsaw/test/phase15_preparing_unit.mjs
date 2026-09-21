@@ -42,7 +42,9 @@ assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.marejig-pre
 assert.match(css, /@keyframes marejig-piece-premium-a[\s\S]*transform:[\s\S]*opacity:/, 'piece animation uses transform and opacity');
 assert.match(css, /marejig-preparing-ready-pop[\s\S]*transform:/, 'ready beat uses transform-only polish');
 assert.match(css, /marejig-preparing-meter[\s\S]*marejig-preparing-progress-track[\s\S]*marejig-preparing-progress-fill/, 'redesigned loading UI includes a premium meter');
-assert(html.lastIndexOf('../../js/app.js') > html.lastIndexOf('MAREJIG_main.js'), '../../js/app.js remains the final script');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_economy.js'), 'bridge loads before the economy');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_main.js'), 'bridge loads before game startup');
+assert.doesNotMatch(html, /\.\.\/\.\.\/js\/app\.js/, 'hub UI bootstrap is absent');
 assert.equal((read('js/MAREJIG_economy.js').match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
 sources.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not define or call completeLevel`));
 assert.doesNotMatch(allJs, /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'scripts do not assign forbidden globals');

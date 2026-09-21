@@ -72,7 +72,11 @@ function forceSegmentComplete(scene, segmentId) {
   const html = read('index.html');
   assert.match(html, /<a class="marejig-exit-link" href="\.\.\/\.\.\/"/, 'exit button points to the same Love Arcade root URL used by other games');
   const scriptSources = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((match) => match[1]);
-  assert.equal(scriptSources.at(-1), '../../js/app.js', 'Love Arcade app.js remains the final body script');
+  const bridgeIndex = scriptSources.indexOf('../../js/game-bridge.js');
+  assert.ok(bridgeIndex !== -1, 'Love Arcade game bridge is loaded');
+  assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_economy.js'), 'bridge loads before the economy');
+  assert.ok(bridgeIndex < scriptSources.indexOf('./js/MAREJIG_main.js'), 'bridge loads before game startup');
+  assert.equal(scriptSources.includes('../../js/app.js'), false, 'hub UI bootstrap is not loaded by Marejig');
   assert.equal([...html.matchAll(/role="dialog"/g)].length, [...html.matchAll(/aria-modal="true"/g)].length, 'dialogs are modal and labelled');
   assert.match(html, /id="marejig-confirm-reset-modal"[\s\S]*aria-describedby="marejig-confirm-reset-copy"/, 'destructive reset has explicit confirmation copy');
   assert.match(html, /id="marejig-level-grid"[\s\S]*aria-label="Lista de niveles pendientes"/, 'pending level grid is labelled for keyboard/screen reader navigation');

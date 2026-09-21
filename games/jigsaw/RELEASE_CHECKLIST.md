@@ -5,7 +5,7 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 ## 1. Integración Love Arcade
 
 - [ ] El botón **Salir** apunta a `../../`.
-- [ ] `../../js/app.js` es el último script del `<body>`.
+- [ ] `../../js/game-bridge.js` se carga una vez, antes de `MAREJIG_economy.js` y `MAREJIG_main.js`; no hay referencias a `../../js/app.js`.
 - [ ] El juego arranca standalone sin `GameCenter`.
 - [ ] Con mock de `GameCenter`, completar un nivel reporta una sola recompensa.
 - [ ] Repetir un nivel completado no vuelve a pagar.
