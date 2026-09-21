@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.41';
+const CACHE_VERSION = 'v2.04.07.44';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -8,6 +8,9 @@ const APP_SHELL_FILES = [
   '/manifest.webmanifest',
   '/js/shop-logic.js',
   '/js/spa-router.js',
+  '/js/core/config.js',
+  '/js/core/utils.js',
+  '/js/core/time-sync.js',
   '/js/app.js',
   '/js/sync-worker.js',
   '/js/analytics.js',

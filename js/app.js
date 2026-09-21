@@ -1,224 +1,18 @@
-// =====================================================
-// CONFIGURACIÓN GLOBAL
-// =====================================================
-const CONFIG = {
-    stateKey:      'gamecenter_v6_promos', // ← NO modificar jamás
-    initialCoins:  0,
-    dailyReward:   20,     // Monedas base del día 1 (se escala con racha)
-    dailyStreakCap: 60,    // Máximo de monedas por bono diario
-    dailyStreakStep: 5,    // Incremento por día de racha
-    wallpapersPath: 'https://res.cloudinary.com/dyspgn0sw/image/upload/'
-};
-// Exponer globalmente para que shop-logic.js pueda acceder a CONFIG.wallpapersPath
-// sin depender del scope de cierre del bundle (resuelve fragilidad en módulos ES).
-window.CONFIG = CONFIG;
+// Configuración estática cargada síncronamente por js/core/config.js antes de app.js.
+const CONFIG = window.CONFIG;
+const ECONOMY = window.ECONOMY;
+const THEMES = window.THEMES;
+const { LEGACY_THEME_FALLBACK, PROMO_CODES_HASHED } = window.LoveArcadeConfig;
+const { sha256, canUseVibration: _canUseVibration } = window.LoveArcadeUtils;
 
 // Salt para checksums de sincronización — mantener secreto
 const SYNC_SALT = 'love_arcade_v75_integrity_2026';
-
-// =====================================================
-// ECONOMÍA — Editar aquí para eventos especiales
-// =====================================================
-const ECONOMY = {
-    isSaleActive:   false,
-    saleMultiplier: 0.80,
-    saleLabel:      '-20%',
-    cashbackRate:   0.1
-};
-window.ECONOMY = ECONOMY;
-
-// =====================================================
-// TEMAS
-// =====================================================
-const THEMES = {
-    red:        { accent: '#FF3B30', name: 'Rojo' },
-    brick:      { accent: '#C0392B', name: 'Ladrillo' },
-    rose:       { accent: '#FF375F', name: 'Rosa Intenso' },
-    magenta:    { accent: '#FF2D92', name: 'Magenta' },
-    orange:     { accent: '#FF9500', name: 'Naranja' },
-    amber_deep: { accent: '#E67E22', name: 'Ámbar Profundo' },
-    yellow:     { accent: '#FFCC00', name: 'Amarillo' },
-    gold_soft:  { accent: '#F4D03F', name: 'Dorado Suave' },
-    lime:       { accent: '#A8E063', name: 'Lima' },
-    green:      { accent: '#30D158', name: 'Verde' },
-    emerald:    { accent: '#2ECC71', name: 'Esmeralda' },
-    teal:       { accent: '#1ABC9C', name: 'Verde Azulado' },
-    ocean:      { accent: '#006689', name: 'Océano' },
-    cyan:       { accent: '#26C6DA', name: 'Cian' },
-    sky:        { accent: '#5AC8FA', name: 'Cielo' },
-    blue:       { accent: '#0A84FF', name: 'Azul' },
-    azure:      { accent: '#2196F3', name: 'Azur' },
-    indigo:     { accent: '#5856D6', name: 'Índigo' },
-    violet:     { accent: '#7C3AED', name: 'Violeta' },
-    purple:     { accent: '#9B59B6', name: 'Púrpura' },
-    sienna:     { accent: '#A0522D', name: 'Siena' },
-    bronze:     { accent: '#8B6914', name: 'Bronce' },
-    graphite:   { accent: '#636366', name: 'Grafito' },
-    slate:      { accent: '#48484A', name: 'Pizarra' },
-    white:      { accent: '#FFFFFF', name: 'Blanco' }
-};
-
-// Convierte selecciones retiradas a la alternativa cromática más cercana.
-// `cyan` y `violet` se conservan como claves para no invalidar selecciones existentes.
-const LEGACY_THEME_FALLBACK = {
-    pink: 'magenta',
-    gold: 'yellow',
-    crimson: 'red'
-};
-
-window.THEMES = THEMES;
-
-// =====================================================
-// CÓDIGOS PROMOCIONALES — SHA-256 (no texto plano)
-// Generados con: echo -n "CODIGO" | sha256sum
-// Para agregar nuevos códigos ver DOCUMENTACION.md §12
-// =====================================================
-const PROMO_CODES_HASHED = {
-'4564f1daae1dd157925088fce37fefc9869dabbbd7f860069dcf593d4d620a4b': 2500,   // PVZGW2500
-'5136694194f15aecc6eae3645b56b6a8273876d6d830709cf7591dd89a05b066': 500,    // PVZGW500
-'fe499ddb40f6bf77d1b7b18efe6c365848b46a9522e8c37155bcf306fad2e0ee': 1000,   // BOCCHICAT1000
-'aec9091f68e1f1324e1ed9b8ccb6ce86a137a9b2c3440ea5d2fa83bb2fb70523': 1000,   // 09112024  
-'a6670a5454af70c97e1fc2fc457af9521383055a257ba58ac549c5ccc7766a85': 200,    // VERSION9
-'02d936b1e7ecebb010709ccc9b82509f092b98a89731dcf474829451dd627ee9': 13000,  // PAGO_QA
-'fc4cbe30d1379fac9ba1cf923cc7e076f3d90a69a321fce8d683e1380077a7d8': 1200,   // FIX_REWARD_120426
-'5c9808d0e5afe7cd0e5e19c64f438ebed38258f78d96f1a378a23726ba6ecbfc': 1000,   // SOLECITO
-'ec029eed55db3414455e78c607816941e092595f65d3cdb9dbe63a81cdcd1b2c': 1000,   // LUNITA
-'f28aab1b9b359e780d112664e9ff6dfd8cff51087b5f192d62635cc7f5b5342c': 6000,   // HACO260526
-'2bf4c2eb61f4e85707f9e605286940f92a89d689dd9a17b777bfd674ecb46caf': 2000,   // HLSEPENM
-'85b7e539867d4e35ff3ce361ffa570fb48e09eb49abdfe1b83887a96c8384260': 2800,   // MIKU9X0L
-'6e64009694ee0e0393b0f1f4cfc53243b8ebc124bee98cea44ceb3eeabf8693a': 1500,   // YORHA2B
-'90054feb0a9c729328ff46d4db30f3ea6c7d21345640baacf5e9a1467b216b0d': 2600,   // LOVEARCADE140
-'fadb13b212d99b0004d638aab80538248b9aec7574aa3405a719adcc0a7385fa': 3000,   // RACHA150
-'4e5940a77ef06b18f962a197d7575651c4c7eeefbacd9ca2b2368d346e3f4916': 3900,   // TEAMO505
-'582969a27a84f2b65970db6cb1907706e6518405ced1876352f6627d794b430e': 500,	// SOFIA
-'b4177b30a6360acd2218580059f57112eaf3d35235891587bf7b59c41898c445': 500,	// IRINA
-'886c69ca4881e8d3ae8eec6195a1938d60ec7571afc68e319cc83cc674f28a92': 500,	// PAMELA
-'a47c599679256867ef7830d708863532e26b39b95846119444126bd13aec00d6': 500,	// VALERIA
-'5517bab653668facef67e08f959d3af9f63e80a0570411d1f4f7c6b0460bc24e': 500,	// EVA
-'0764b5fde5722f06d5599cf473df5797f15789a5443d709c1fd4a527c678c1eb': 500,	// ESTRELLA
-'769ebd29743c25c40dafe90e67c66fde9c4eb024de71ef31be72a6ffa1554307': 500,	// ESTEFANIA
-'6206c228c84dd0e2b3392bb9d2eae9fef5cba0d0b9c272103aa35bdc02fbcb5b': 500,	// NATALIA
-'94d3ba4b903449974462271b33fdba878c0e3969d6f18fac49ca4146ae62f7c6': 500,	// MONTSERRAT
-'399c362cc8a1ccde7884efa95a2bffbddcb5eb23b32013a804af3a7e6a65ed4a': 500 	// JULIETA
-};
-
-// =====================================================
-// UTILIDADES
-// =====================================================
-
-/**
- * Calcula el SHA-256 de un texto y devuelve el hash en hexadecimal.
- * Usa la API nativa crypto.subtle — disponible en todos los navegadores modernos.
- * @param {string} text
- * @returns {Promise<string>}
- */
-async function sha256(text) {
-    const buffer = await crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(text)
-    );
-    return Array.from(new Uint8Array(buffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-
-/**
- * Crea una versión con debounce de una función.
- * Útil para controlar la frecuencia de operaciones costosas (buscador, resize).
- * @param {Function} fn    Función a debounce-ar.
- * @param {number}   delay Espera en ms antes de ejecutar (por defecto 300ms).
- * @returns {Function}
- */
-function debounce(fn, delay = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-    };
-}
-
-function _canUseVibration() {
-    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
-        return false;
-    }
-
-    const userActivation = navigator.userActivation;
-    if (!userActivation) return true;
-    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
-}
-window.debounce = debounce; // Disponible globalmente para shop-logic.js
-
-// =====================================================
-// TIEMPO DE RED — Fuente de verdad externa para el bono diario
-// =====================================================
-
-/** Máxima discrepancia tolerable entre reloj local y de red: 5 minutos. */
-const CLOCK_SKEW_LIMIT = 5 * 60 * 1000;
-
-/** Timeout de cada petición a una API de tiempo (ms). */
-const TIME_API_TIMEOUT = 4000;
-
-/**
- * Clave de localStorage para el caché de tiempo de red.
- * Separada del store principal para no contaminar checksums de sincronización.
- */
-const TIME_CACHE_KEY = 'love_arcade_time_cache';
-const DAILY_DAY_OFFSET_MS = 3 * 60 * 60 * 1000;
 const DAILY_REPAIR_COST = 500;
 
-/**
- * TTL del caché de tiempo (ms). Mientras el caché sea más reciente que este
- * valor, claimDaily() lo usa directamente sin ninguna petición de red.
- * 4 horas es suficiente: el usuario abre la app, el sync corre en background,
- * y el caché queda listo para el reclamo de ese día y el siguiente.
- */
-const TIME_CACHE_TTL = 4 * 60 * 60 * 1000;
-
-// ── Lectura / escritura del caché ─────────────────────────────────────────
-
-/**
- * Escribe el resultado de una sincronización en el caché local.
- * @param {{ drift: number, desynced: boolean }} data
- */
-function _writeTimeCache(data) {
-    try {
-        localStorage.setItem(TIME_CACHE_KEY, JSON.stringify({
-            drift:       data.drift,
-            desynced:    data.desynced,
-            capturedAt:  Date.now()
-        }));
-    } catch (_) {}
-}
-
-/**
- * Lee el caché y devuelve una estimación del tiempo de red actual.
- * No hace ninguna petición de red — es puramente síncrono.
- *
- * @returns {{
- *   time:       number,   — estimación del timestamp de red en ms
- *   verified:   boolean,  — true si el caché existe y no ha expirado
- *   desynced:   boolean,  — true si se detectó manipulación de reloj en el último sync
- *   cacheAge:   number    — antigüedad del caché en ms (0 si no existe)
- * }}
- */
-function _getDailyDayStart(ts) {
-    const shifted = ts - DAILY_DAY_OFFSET_MS;
-    return new Date(shifted).setHours(0, 0, 0, 0);
-}
-
-function _getDailyDiffDays(now, lastClaim) {
-    if (!lastClaim) return 1;
-    return Math.round((_getDailyDayStart(now) - _getDailyDayStart(lastClaim)) / 86_400_000);
-}
-
-function _getCurrentDailyTime() {
-    return _readTimeCache();
-}
-
 function _getDailyRepairState() {
-    const { time: now, verified, desynced } = _getCurrentDailyTime();
-    const { lastClaim, streak } = store.daily;
-    const diffDays = _getDailyDiffDays(now, lastClaim);
+    const { time: now, verified, desynced } = window.LoveArcadeTime.read();
+    const { lastClaim, streak } = StateStore.get().daily;
+    const diffDays = window.LoveArcadeTime.dayDiff(now, lastClaim);
     return {
         now,
         verified,
@@ -226,99 +20,8 @@ function _getDailyRepairState() {
         diffDays,
         repairAvailable: lastClaim > 0 && streak > 0 && diffDays === 2,
         repairCost: DAILY_REPAIR_COST,
-        canAffordRepair: store.coins >= DAILY_REPAIR_COST
+        canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST
     };
-}
-
-function _getNextDailyResetTime(now = Date.now()) {
-    const shifted = new Date(now - DAILY_DAY_OFFSET_MS);
-    shifted.setHours(24, 0, 0, 0);
-    return shifted.getTime() + DAILY_DAY_OFFSET_MS;
-}
-
-function _readTimeCache() {
-    try {
-        const raw = localStorage.getItem(TIME_CACHE_KEY);
-        if (!raw) return { time: Date.now(), verified: false, desynced: false, cacheAge: Infinity };
-
-        const { drift, desynced, capturedAt } = JSON.parse(raw);
-        const cacheAge = Date.now() - capturedAt;
-        const verified = cacheAge <= TIME_CACHE_TTL;
-
-        return {
-            time:     Date.now() + (drift || 0),
-            verified,
-            desynced: Boolean(desynced),
-            cacheAge
-        };
-    } catch (_) {
-        return { time: Date.now(), verified: false, desynced: false, cacheAge: Infinity };
-    }
-}
-
-// ── Sincronización en segundo plano ──────────────────────────────────────
-
-/**
- * Lee el encabezado HTTP Date del propio origen (Vercel) para tener una
- * referencia de tiempo sin depender de CORS de terceros.
- *
- * @returns {Promise<number>} Timestamp en ms.
- */
-async function _fetchServerDateHeader() {
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), TIME_API_TIMEOUT);
-    try {
-        const res = await fetch('/', {
-            method: 'HEAD',
-            cache: 'no-store',
-            signal: ctrl.signal
-        });
-        const dateHeader = res.headers.get('date');
-        if (!dateHeader) throw new Error('Date header ausente');
-        const ts = new Date(dateHeader).getTime();
-        if (!Number.isFinite(ts)) throw new Error('Date header inválido');
-        return ts;
-    } finally {
-        clearTimeout(tid);
-    }
-}
-
-let _timeSyncInFlight = false;
-let _lastTimeSyncAt   = 0;
-const TIME_SYNC_MIN_INTERVAL = 30_000;
-
-function _scheduleTimeSync(delay = 0) {
-    setTimeout(() => {
-        if (_timeSyncInFlight) return;
-        if ((Date.now() - _lastTimeSyncAt) < TIME_SYNC_MIN_INTERVAL) return;
-        _timeSyncInFlight = true;
-        _syncTimeBackground()
-            .finally(() => {
-                _timeSyncInFlight = false;
-                _lastTimeSyncAt = Date.now();
-            });
-    }, delay);
-}
-
-/**
- * Sincroniza el caché de tiempo en segundo plano usando el encabezado HTTP
- * Date del propio origen y persiste el resultado SIN bloquear la UI.
- *
- * No retorna ningún valor útil — su único efecto es actualizar el caché.
- * Se llama automáticamente al cargar la página, al volver a la pestaña
- * y cada 30 min mientras la app está abierta.
- */
-async function _syncTimeBackground() {
-    try {
-        const networkTime = await _fetchServerDateHeader();
-
-        const drift    = networkTime - Date.now();
-        const desynced = Math.abs(drift) > CLOCK_SKEW_LIMIT;
-        _writeTimeCache({ drift, desynced });
-    } catch (_) {
-        // Todas las fuentes fallaron (sin conexión) — no tocar el caché existente.
-        // claimDaily() seguirá usando el último caché válido o el reloj local.
-    }
 }
 
 // =====================================================
@@ -444,17 +147,40 @@ function migrateState(loadedStore) {
 
 
 // =====================================================
-// STORE — Carga y fusión con migración automática
+// STORE — Accessor interno y carga con migración automática
 // =====================================================
-let store = migrateState({});
+const StateStore = (function createStateStore() {
+    let _store = migrateState({});
+    const listeners = [];
 
-try {
-    const raw = localStorage.getItem(CONFIG.stateKey);
-    if (raw) store = migrateState(JSON.parse(raw));
-} catch (e) {
-    console.error('GameCenter: Error al cargar estado', e);
-    store = migrateState({});
-}
+    try {
+        const raw = localStorage.getItem(CONFIG.stateKey);
+        if (raw) _store = migrateState(JSON.parse(raw));
+    } catch (e) {
+        console.error('GameCenter: Error al cargar estado', e);
+        _store = migrateState({});
+    }
+
+    function notify(meta = {}) {
+        listeners.forEach(listener => listener(_store, meta));
+    }
+
+    return {
+        get: () => _store,
+        replace: (next, meta = {}) => {
+            _store = next;
+            notify({ source: 'replace', ...meta });
+        },
+        notify,
+        subscribe: (listener) => {
+            listeners.push(listener);
+            return () => {
+                const index = listeners.indexOf(listener);
+                if (index !== -1) listeners.splice(index, 1);
+            };
+        }
+    };
+})();
 
 // =====================================================
 // ANIMACIÓN DE CONTADOR (requestAnimationFrame)
@@ -475,7 +201,7 @@ try {
  * @param {number}        end       Valor final de la animación.
  * @param {number}        [duration=650] Duración en milisegundos.
  */
-let _displayedCoins = store.coins;
+let _displayedCoins = StateStore.get().coins;
 
 function animateValue(elements, start, end, duration = 650) {
     if (!elements || !elements.length) return;
@@ -502,11 +228,11 @@ function animateValue(elements, start, end, duration = 650) {
  * @param {string}             motivo
  */
 function logTransaction(tipo, cantidad, motivo) {
-    if (!Array.isArray(store.history)) store.history = [];
-    store.history.push({ tipo, cantidad, motivo, fecha: Date.now() });
+    if (!Array.isArray(StateStore.get().history)) StateStore.get().history = [];
+    StateStore.get().history.push({ tipo, cantidad, motivo, fecha: Date.now() });
     // Limitar a las últimas 50 entradas para no inflar el localStorage
-    if (store.history.length > 50) {
-        store.history = store.history.slice(-50);
+    if (StateStore.get().history.length > 50) {
+        StateStore.get().history = StateStore.get().history.slice(-50);
     }
 }
 
@@ -586,12 +312,12 @@ function compressImage(blob, maxWidth = 200, maxHeight = 200, quality = 0.7) {
 }
 
 function trimGameProgress() {
-    if (!store.progress || typeof store.progress !== 'object') return false;
+    if (!StateStore.get().progress || typeof StateStore.get().progress !== 'object') return false;
     let changed = false;
-    Object.keys(store.progress).forEach((gameId) => {
-        if (!Array.isArray(store.progress[gameId])) return;
-        if (store.progress[gameId].length > 50) {
-            store.progress[gameId] = store.progress[gameId].slice(-50);
+    Object.keys(StateStore.get().progress).forEach((gameId) => {
+        if (!Array.isArray(StateStore.get().progress[gameId])) return;
+        if (StateStore.get().progress[gameId].length > 50) {
+            StateStore.get().progress[gameId] = StateStore.get().progress[gameId].slice(-50);
             changed = true;
         }
     });
@@ -713,26 +439,26 @@ function initLoadingStateObserver() {
 function emergencyCleanup() {
     let changed = false;
 
-    if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-        store.userAvatar = null;
+    if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
+        StateStore.get().userAvatar = null;
         changed = true;
     }
 
-    if (Array.isArray(store.history) && store.history.length > 30) {
-        store.history = store.history.slice(-30);
+    if (Array.isArray(StateStore.get().history) && StateStore.get().history.length > 30) {
+        StateStore.get().history = StateStore.get().history.slice(-30);
         changed = true;
     }
 
-    if (Object.prototype.hasOwnProperty.call(store, 'redeemedCodes')) {
-        delete store.redeemedCodes;
+    if (Object.prototype.hasOwnProperty.call(StateStore.get(), 'redeemedCodes')) {
+        delete StateStore.get().redeemedCodes;
         changed = true;
     }
 
     if (trimGameProgress()) changed = true;
 
-    const serialized = JSON.stringify(store);
-    if (serialized.length > (4 * 1024 * 1024) && Array.isArray(store.history) && store.history.length) {
-        store.history = [];
+    const serialized = JSON.stringify(StateStore.get());
+    if (serialized.length > (4 * 1024 * 1024) && Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
+        StateStore.get().history = [];
         changed = true;
     }
 
@@ -741,7 +467,7 @@ function emergencyCleanup() {
 
 function checkStorageSize(precomputedLength) {
     try {
-        const sizeKB = (precomputedLength ?? JSON.stringify(store).length) / KB;
+        const sizeKB = (precomputedLength ?? JSON.stringify(StateStore.get()).length) / KB;
         if (sizeKB > STORE_WARNING_KB) {
             window.GhostAnalytics?.track('storage_warning', { size_kb: Math.round(sizeKB) });
             _showStorageToast(
@@ -764,7 +490,7 @@ async function _saveAvatarLocally(dataUrl) {
     if (sizeKB > AVATAR_MAX_LOCAL_KB) {
         throw new Error('Imagen demasiado grande. Usa una foto de menos de 100 KB.');
     }
-    store.userAvatar = finalDataUrl;
+    StateStore.get().userAvatar = finalDataUrl;
     saveState({ immediateCloudSync: true });
     applyAvatar();
 }
@@ -786,7 +512,7 @@ async function _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket =
     if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
 
     const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-    store.userAvatar = publicUrl;
+    StateStore.get().userAvatar = publicUrl;
     saveState({ immediateCloudSync: true });
     applyAvatar();
     return { path, publicUrl: data.publicUrl, cacheBustedUrl: publicUrl };
@@ -804,45 +530,45 @@ window.GameCenter = {
      * Es idempotente: si el levelId ya fue registrado, no vuelve a pagar.
      */
     completeLevel: (gameId, levelId, rewardAmount) => {
-        if (!store.progress[gameId]) store.progress[gameId] = [];
-        if (store.progress[gameId].includes(levelId)) {
-            return { paid: false, coins: store.coins };
+        if (!StateStore.get().progress[gameId]) StateStore.get().progress[gameId] = [];
+        if (StateStore.get().progress[gameId].includes(levelId)) {
+            return { paid: false, coins: StateStore.get().coins };
         }
-        store.progress[gameId].push(levelId);
+        StateStore.get().progress[gameId].push(levelId);
 
-        store.coins += rewardAmount;
+        StateStore.get().coins += rewardAmount;
         logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
         saveState({ immediateCloudSync: true });
 
-        return { paid: true, coins: store.coins };
+        return { paid: true, coins: StateStore.get().coins };
     },
 
     // ── TIENDA ───────────────────────────────────────────────────────────────
 
     buyItem: (itemData) => {
-        const bought = store.inventory[itemData.id] || 0;
+        const bought = StateStore.get().inventory[itemData.id] || 0;
         if (bought > 0) return { success: false, reason: 'owned' };
 
         const finalPrice = ECONOMY.isSaleActive
             ? Math.floor(itemData.price * ECONOMY.saleMultiplier)
             : itemData.price;
 
-        if (store.coins < finalPrice) {
+        if (StateStore.get().coins < finalPrice) {
             // [v9.9.2] Fricción de usuario: intento de compra sin saldo suficiente.
             // Ayuda a detectar precios demasiado elevados o HUD de saldo poco claro.
             window.GhostAnalytics?.track('insufficient_funds', {
                 wallpaper: itemData.name,
                 precio:    `${finalPrice} ⭐`,
-                saldo:     store.coins
+                saldo:     StateStore.get().coins
             });
             return { success: false, reason: 'coins' };
         }
 
         const cashback = Math.floor(finalPrice * ECONOMY.cashbackRate);
 
-        store.coins -= finalPrice;
-        store.coins += cashback;
-        store.inventory[itemData.id] = bought + 1;
+        StateStore.get().coins -= finalPrice;
+        StateStore.get().coins += cashback;
+        StateStore.get().inventory[itemData.id] = bought + 1;
 
         logTransaction('gasto',   finalPrice, `Compra: ${itemData.name}`);
         if (cashback > 0) {
@@ -864,17 +590,17 @@ window.GameCenter = {
      */
     spendCoins: (amount, motivo = 'Gasto directo') => {
         const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: store.coins };
-        if (store.coins < n) return { success: false, reason: 'insufficient', coins: store.coins };
-        store.coins -= n;
+        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
+        if (StateStore.get().coins < n) return { success: false, reason: 'insufficient', coins: StateStore.get().coins };
+        StateStore.get().coins -= n;
         logTransaction('gasto', n, motivo);
         saveState({ immediateCloudSync: true });
-        return { success: true, coins: store.coins };
+        return { success: true, coins: StateStore.get().coins };
     },
 
-    getBoughtCount: (id) => store.inventory[id] || 0,
-    getBalance:     ()   => store.coins,
-    getInventory:   ()   => ({ ...store.inventory }),
+    getBoughtCount: (id) => StateStore.get().inventory[id] || 0,
+    getBalance:     ()   => StateStore.get().coins,
+    getInventory:   ()   => ({ ...StateStore.get().inventory }),
 
     // ── v11.0 — ECONOMÍA DIRECTA ──────────────────────────────────────────────
 
@@ -887,11 +613,11 @@ window.GameCenter = {
      */
     addCoins: (amount, motivo = 'Depósito directo') => {
         const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: store.coins };
-        store.coins += n;
+        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
+        StateStore.get().coins += n;
         logTransaction('ingreso', n, motivo);
         saveState({ immediateCloudSync: true });
-        return { success: true, coins: store.coins };
+        return { success: true, coins: StateStore.get().coins };
     },
 
     /**
@@ -900,10 +626,10 @@ window.GameCenter = {
      * instantánea de sesión sin exponer el array completo de hashes.
      * @returns {number}
      */
-    getRedeemedCount: () => (store.redeemedHashes || []).length,
+    getRedeemedCount: () => (StateStore.get().redeemedHashes || []).length,
 
     getDownloadUrl: (itemId, sourceUrl) => {
-        if (!sourceUrl || (store.inventory[itemId] || 0) === 0) return null;
+        if (!sourceUrl || (StateStore.get().inventory[itemId] || 0) === 0) return null;
         const uploadMarker = '/image/upload/';
         if (sourceUrl.includes(uploadMarker)) {
             if (sourceUrl.includes(`${uploadMarker}fl_attachment/`)) return sourceUrl;
@@ -919,7 +645,7 @@ window.GameCenter = {
      * Devuelve el historial de transacciones en orden cronológico inverso
      * (la más reciente primero).
      */
-    getHistory: () => [...(store.history || [])].reverse(),
+    getHistory: () => [...(StateStore.get().history || [])].reverse(),
 
     // ── CÓDIGOS PROMO (async — SHA-256) ──────────────────────────────────────
 
@@ -937,12 +663,12 @@ window.GameCenter = {
         const reward = PROMO_CODES_HASHED[hash];
         if (!reward) return { success: false, message: 'Código inválido' };
 
-        if (store.redeemedHashes.includes(hash)) {
+        if (StateStore.get().redeemedHashes.includes(hash)) {
             return { success: false, message: 'Ya canjeaste este código' };
         }
 
-        store.coins += reward;
-        store.redeemedHashes.push(hash);
+        StateStore.get().coins += reward;
+        StateStore.get().redeemedHashes.push(hash);
         logTransaction('ingreso', reward, `Código canjeado`);
         saveState();
 
@@ -965,9 +691,9 @@ window.GameCenter = {
      *   diff_días  > 1 → racha se reinicia (streak = 1).
      *
      * Seguridad (v9.6 — Background Sync):
-     *   El tiempo de red se verifica en segundo plano (_syncTimeBackground),
+     *   El tiempo de red se verifica en segundo plano (LoveArcadeTime.scheduleSync),
      *   no en el momento del reclamo. claimDaily() lee el caché sincrónico
-     *   (_readTimeCache) y no hace ninguna petición de red, garantizando
+     *   (LoveArcadeTime.read) y no hace ninguna petición de red, garantizando
      *   respuesta instantánea en todos los casos.
      *
      *   - currentTime < lastClaimTime → salto negativo; bloquear sin tocar racha.
@@ -978,8 +704,8 @@ window.GameCenter = {
      *             moonBonus?: number, streak?: number, verified: boolean, message: string }}
      */
     claimDaily: () => {
-        const { time: now, verified, desynced } = _readTimeCache();
-        const { lastClaim, streak } = store.daily;
+        const { time: now, verified, desynced } = window.LoveArcadeTime.read();
+        const { lastClaim, streak } = StateStore.get().daily;
 
         // ── 1. Salto negativo (manipulación de reloj detectada por el caché) ──
         if (lastClaim > 0 && now < lastClaim) {
@@ -1000,7 +726,7 @@ window.GameCenter = {
         }
 
         // ── 3. Cálculo de días calendario (normalizar a medianoche) ──
-        const diffDays = _getDailyDiffDays(now, lastClaim);
+        const diffDays = window.LoveArcadeTime.dayDiff(now, lastClaim);
 
         if (diffDays === 0) {
             return {
@@ -1015,10 +741,10 @@ window.GameCenter = {
                 success: false,
                 repairRequired: true,
                 repairCost: DAILY_REPAIR_COST,
-                canAffordRepair: store.coins >= DAILY_REPAIR_COST,
+                canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST,
                 streak,
                 verified,
-                message: store.coins >= DAILY_REPAIR_COST
+                message: StateStore.get().coins >= DAILY_REPAIR_COST
                     ? `Puedes reparar tu racha de ${streak} día${streak !== 1 ? 's' : ''}.`
                     : 'Consigue las monedas que faltan jugando en el Arcade.'
             };
@@ -1038,13 +764,13 @@ window.GameCenter = {
         // detección de desynced en el sync anterior. Sin conexión genuina el
         // usuario tampoco puede comprar la Bendición Lunar, por lo que el
         // riesgo neto es despreciable.
-        const moonActive  = store.buffs.moonBlessingExpiry > now;
+        const moonActive  = StateStore.get().buffs.moonBlessingExpiry > now;
         const moonBonus   = moonActive ? 90 : 0;
         const totalReward = baseReward + moonBonus;
 
         // ── 6. Aplicar y persistir ──
-        store.coins += totalReward;
-        store.daily  = { lastClaim: now, streak: newStreak };
+        StateStore.get().coins += totalReward;
+        StateStore.get().daily  = { lastClaim: now, streak: newStreak };
 
         logTransaction(
             'ingreso',
@@ -1078,7 +804,7 @@ window.GameCenter = {
 
     repairDailyStreak: () => {
         const state = _getDailyRepairState();
-        const { lastClaim, streak } = store.daily;
+        const { lastClaim, streak } = StateStore.get().daily;
 
         if (lastClaim > 0 && state.now < lastClaim) {
             return { success: false, verified: state.verified, message: 'Se detectó una inconsistencia horaria. Por favor, verifica la configuración de tu dispositivo.' };
@@ -1089,12 +815,12 @@ window.GameCenter = {
         if (!state.repairAvailable) {
             return { success: false, verified: state.verified, message: 'La reparación de racha no está disponible ahora.' };
         }
-        if (store.coins < DAILY_REPAIR_COST) {
+        if (StateStore.get().coins < DAILY_REPAIR_COST) {
             return { success: false, repairRequired: true, verified: state.verified, message: 'Consigue las monedas que faltan jugando en el Arcade.' };
         }
 
-        store.coins -= DAILY_REPAIR_COST;
-        store.daily = { lastClaim: state.now, streak };
+        StateStore.get().coins -= DAILY_REPAIR_COST;
+        StateStore.get().daily = { lastClaim: state.now, streak };
         logTransaction('gasto', DAILY_REPAIR_COST, `Reparación de racha · ${streak} días`);
         saveState({ immediateCloudSync: true });
         window.GhostAnalytics?.track('daily_streak_repair', { costo: DAILY_REPAIR_COST, racha: streak });
@@ -1109,10 +835,10 @@ window.GameCenter = {
      *
      * @returns {boolean}
      */
-    getNextDailyResetTime: (now = Date.now()) => _getNextDailyResetTime(now),
+    getNextDailyResetTime: (now = Date.now()) => window.LoveArcadeTime.nextResetTime(now),
 
     canClaimDaily: () => {
-        const { lastClaim } = store.daily;
+        const { lastClaim } = StateStore.get().daily;
         if (lastClaim === 0) return true;
         const state = _getDailyRepairState();
         if (state.desynced) return false;
@@ -1125,7 +851,7 @@ window.GameCenter = {
      * Usa días calendario (medianoche) para consistencia con claimDaily().
      */
     getStreakInfo: () => {
-        const { lastClaim, streak } = store.daily;
+        const { lastClaim, streak } = StateStore.get().daily;
         const repairState = _getDailyRepairState();
         const diffDays = repairState.diffDays;
 
@@ -1156,21 +882,21 @@ window.GameCenter = {
         const COST = 100;
         const DURATION = 7 * 86_400_000; // 7 días en ms
 
-        if (store.coins < COST) {
+        if (StateStore.get().coins < COST) {
             // [v9.9.2] Fricción de usuario: saldo insuficiente para activar el buff.
             window.GhostAnalytics?.track('insufficient_funds', {
                 wallpaper: 'Bendición Lunar (buff)',
                 precio:    `${COST} ⭐`,
-                saldo:     store.coins
+                saldo:     StateStore.get().coins
             });
             return { success: false, reason: 'coins' };
         }
 
         const now = Date.now();
-        const isActive = store.buffs.moonBlessingExpiry > now;
-        store.coins -= COST;
-        store.buffs.moonBlessingExpiry = (isActive
-            ? store.buffs.moonBlessingExpiry
+        const isActive = StateStore.get().buffs.moonBlessingExpiry > now;
+        StateStore.get().coins -= COST;
+        StateStore.get().buffs.moonBlessingExpiry = (isActive
+            ? StateStore.get().buffs.moonBlessingExpiry
             : now
         ) + DURATION;
 
@@ -1178,7 +904,7 @@ window.GameCenter = {
         saveState();
         updateMoonBlessingUI();
 
-        const expiresAt = new Date(store.buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
+        const expiresAt = new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
             day: '2-digit', month: 'long', year: 'numeric'
         });
 
@@ -1198,15 +924,15 @@ window.GameCenter = {
             return { success: false };
         }
         const now = Date.now();
-        const baseTs = store.buffs.moonBlessingExpiry > now
-            ? store.buffs.moonBlessingExpiry
+        const baseTs = StateStore.get().buffs.moonBlessingExpiry > now
+            ? StateStore.get().buffs.moonBlessingExpiry
             : now;
-        store.buffs.moonBlessingExpiry = baseTs + (wholeDays * 86_400_000);
+        StateStore.get().buffs.moonBlessingExpiry = baseTs + (wholeDays * 86_400_000);
         logTransaction('ingreso', 0, `${motivo}: +${wholeDays} día(s)`);
         saveState({ immediateCloudSync: true });
         return {
             success: true,
-            expiresAt: new Date(store.buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
+            expiresAt: new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
                 day: '2-digit', month: 'long', year: 'numeric'
             })
         };
@@ -1214,7 +940,7 @@ window.GameCenter = {
 
     getMoonBlessingStatus: () => {
         const now    = Date.now();
-        const expiry = store.buffs.moonBlessingExpiry;
+        const expiry = StateStore.get().buffs.moonBlessingExpiry;
         const active = expiry > now;
         return {
             active,
@@ -1235,7 +961,7 @@ window.GameCenter = {
      */
     exportSave: async () => {
         try {
-            const result = await workerTask({ action: 'export', store, salt: SYNC_SALT });
+            const result = await workerTask({ action: 'export', store: StateStore.get(), salt: SYNC_SALT });
             return result;
         } catch (_) {
             // Fallback síncrono si el worker no está disponible
@@ -1244,9 +970,9 @@ window.GameCenter = {
         // TextEncoder convierte el payload UTF-8 a bytes, luego btoa codifica en Base64.
         // Reemplaza el patrón obsoleto btoa(unescape(encodeURIComponent())) que usa
         // funciones deprecadas en motores modernos.
-        const json     = JSON.stringify(store);
+        const json     = JSON.stringify(StateStore.get());
         const checksum = await sha256(json + SYNC_SALT);
-        const payload  = JSON.stringify({ data: store, checksum });
+        const payload  = JSON.stringify({ data: StateStore.get(), checksum });
         try {
             const bytes  = new TextEncoder().encode(payload);
             const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
@@ -1294,7 +1020,7 @@ window.GameCenter = {
             }
 
             if (typeof data.coins !== 'number') throw new Error('invalid');
-            store = migrateState(data);
+            StateStore.replace(migrateState(data), { notifyUI: false, notifyCloud: false });
             saveState();
             return { success: true };
         } catch {
@@ -1403,22 +1129,22 @@ window.GameCenter = {
             }
         }
 
-        store.userAvatar = normalized;
+        StateStore.get().userAvatar = normalized;
         saveState({ immediateCloudSync: true });
         applyAvatar();
         return { success: true, remote: false, preset: true, url: normalized };
     },
-    getAvatar: ()        => store.userAvatar,
+    getAvatar: ()        => StateStore.get().userAvatar,
 
     // ── TEMA ─────────────────────────────────────────────────────────────────
 
     setTheme: (key) => {
         if (!THEMES[key]) return;
-        store.theme = key;
+        StateStore.get().theme = key;
         saveState();
         applyTheme(key);
     },
-    getTheme: () => store.theme || 'violet',
+    getTheme: () => StateStore.get().theme || 'violet',
 
     // ── IDENTIDAD — v9.4 ─────────────────────────────────────────────────────
 
@@ -1429,20 +1155,20 @@ window.GameCenter = {
      */
     setIdentity: (nickname, gender) => {
         const VALID_GENDERS = ['o', 'a', '@'];
-        store.nickname = String(nickname).trim().slice(0, 15);
-        store.gender   = VALID_GENDERS.includes(gender) ? gender : '@';
+        StateStore.get().nickname = String(nickname).trim().slice(0, 15);
+        StateStore.get().gender   = VALID_GENDERS.includes(gender) ? gender : '@';
         saveState();
         applyIdentity();
     },
 
     /** @returns {{ nickname: string, gender: 'o'|'a'|'@' }} */
     getIdentity: () => ({
-        nickname: store.nickname || '',
-        gender:   store.gender   || '@'
+        nickname: StateStore.get().nickname || '',
+        gender:   StateStore.get().gender   || '@'
     }),
 
     /** @returns {boolean} true si el usuario ya eligió un nickname. */
-    hasIdentity: () => Boolean(store.nickname?.trim()),
+    hasIdentity: () => Boolean(StateStore.get().nickname?.trim()),
 
     // ── SPA / MÓDULOS EXTERNOS ────────────────────────────────────────────────
 
@@ -1453,12 +1179,12 @@ window.GameCenter = {
      * @returns {{ coins: number, streak: number, theme: string, moonBlessingExpiry: number, nickname: string, gender: string }}
      */
     getState: () => ({
-        coins:               store.coins,
-        streak:              store.daily?.streak || 0,
-        theme:               store.theme || 'violet',
-        moonBlessingExpiry:  store.buffs?.moonBlessingExpiry || 0,
-        nickname:            store.nickname || '',
-        gender:              store.gender   || '@'
+        coins:               StateStore.get().coins,
+        streak:              StateStore.get().daily?.streak || 0,
+        theme:               StateStore.get().theme || 'violet',
+        moonBlessingExpiry:  StateStore.get().buffs?.moonBlessingExpiry || 0,
+        nickname:            StateStore.get().nickname || '',
+        gender:              StateStore.get().gender   || '@'
     }),
 
     /**
@@ -1469,7 +1195,7 @@ window.GameCenter = {
      * @param {HTMLElement} [scope] Contenedor de la vista actualmente visible.
      */
     syncUI: (scope) => {
-        _displayedCoins = store.coins;
+        _displayedCoins = StateStore.get().coins;
         updateUI({ scope });
     }
 };
@@ -1557,12 +1283,20 @@ document.addEventListener('la:cloud-authenticated', () => {
     if (_pendingSyncRetries > 0) _syncCloudIfNeeded(true);
 });
 
+StateStore.subscribe((_state, { source, notifyUI = true } = {}) => {
+    if (source === 'save' && notifyUI) _scheduleUIUpdate();
+});
+
+StateStore.subscribe((_state, { source, notifyCloud = true, immediateCloudSync = false } = {}) => {
+    if (source === 'save' && notifyCloud) _scheduleCloudSync(immediateCloudSync);
+});
+
 function saveState(options = {}) {
     const { immediateCloudSync = false } = options;
-    let payload = JSON.stringify(store);
+    let payload = JSON.stringify(StateStore.get());
     if (payload.length > (STORE_WARNING_KB * KB)) {
         trimGameProgress();
-        payload = JSON.stringify(store);
+        payload = JSON.stringify(StateStore.get());
     }
 
     try {
@@ -1571,7 +1305,7 @@ function saveState(options = {}) {
         if (e?.name === 'QuotaExceededError') {
             const changed = emergencyCleanup();
             try {
-                payload = JSON.stringify(store);
+                payload = JSON.stringify(StateStore.get());
                 localStorage.setItem(CONFIG.stateKey, payload);
                 window.GhostAnalytics?.track('storage_cleaned', {
                     reason: 'quota_exceeded',
@@ -1583,10 +1317,10 @@ function saveState(options = {}) {
                     'No se puede guardar el progreso. Exporta tu partida y borra datos del sitio.',
                     'error'
                 );
-                if (Array.isArray(store.history) && store.history.length) {
-                    store.history = [];
+                if (Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
+                    StateStore.get().history = [];
                     try {
-                        localStorage.setItem(CONFIG.stateKey, JSON.stringify(store));
+                        localStorage.setItem(CONFIG.stateKey, JSON.stringify(StateStore.get()));
                     } catch (_) {}
                 }
                 return;
@@ -1596,8 +1330,7 @@ function saveState(options = {}) {
         }
     }
 
-    _scheduleUIUpdate();
-    _scheduleCloudSync(immediateCloudSync);
+    StateStore.notify({ source: 'save', immediateCloudSync });
     checkStorageSize(payload.length);
 }
 
@@ -1635,26 +1368,26 @@ function updateUI({ scope } = {}) {
         displayRoot.querySelectorAll('.coin-display')
     ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
 
-    if (_displayedCoins === store.coins) {
+    if (_displayedCoins === StateStore.get().coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
         // Evita sobrescribir el valor formateado que ya pintó el init silencioso.
         navbarDisplays.forEach(el => {
-            el.textContent = formatCoinsNavbar(store.coins);
+            el.textContent = formatCoinsNavbar(StateStore.get().coins);
             // El tooltip muestra el valor exacto cuando la navbar usa formato abreviado
             // (ej: "25.5k"). El usuario puede ver el número preciso sin ir al HUD.
-            el.closest('.coin-badge')?.setAttribute('title', `${store.coins} monedas`);
+            el.closest('.coin-badge')?.setAttribute('title', `${StateStore.get().coins} monedas`);
         });
-        otherDisplays.forEach(el  => { el.textContent = store.coins; });
+        otherDisplays.forEach(el  => { el.textContent = StateStore.get().coins; });
     } else {
         // Con delta: animar con número exacto y formatear navbar al terminar
-        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, store.coins);
+        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, StateStore.get().coins);
 
         // Sobrescribir la navbar con el valor formateado al terminar la animación
         // (animateValue dura ~650 ms; con 700 ms de margen evitamos parpadeos)
         if (navbarDisplays.length) {
             setTimeout(() => {
                 navbarDisplays.forEach(el => {
-                    el.textContent = formatCoinsNavbar(store.coins);
+                    el.textContent = formatCoinsNavbar(StateStore.get().coins);
                 });
             }, 700);
         }
@@ -1669,7 +1402,7 @@ function updateUI({ scope } = {}) {
 window.formatCoinsNavbar = formatCoinsNavbar;
 
 function applyAvatar(scope) {
-    if (!store.userAvatar) return;
+    if (!StateStore.get().userAvatar) return;
     // La navbar es chrome compartido; los demás avatares se limitan a la vista
     // entrante cuando syncUI() proporciona un scope.
     const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
@@ -1682,7 +1415,7 @@ function applyAvatar(scope) {
 
     avatars.forEach(el => {
         if (!el) return;
-        el.style.backgroundImage = `url('${store.userAvatar}')`;
+        el.style.backgroundImage = `url('${StateStore.get().userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
     });
@@ -1697,9 +1430,9 @@ function applyIdentity() {
     const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
     const profileNameEl = document.getElementById('profile-title');
-    if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
-    if (nicknameEl) nicknameEl.textContent = store.nickname || '';
-    if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
+    if (suffixEl)   suffixEl.textContent   = StateStore.get().gender   || '@';
+    if (nicknameEl) nicknameEl.textContent = StateStore.get().nickname || '';
+    if (profileNameEl) profileNameEl.textContent = StateStore.get().nickname || 'Love Arcade';
 }
 
 /**
@@ -2015,22 +1748,22 @@ window.revealUI = revealUI;
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 renderThemeGrid();
-applyTheme(store.theme || 'violet');
+applyTheme(StateStore.get().theme || 'violet');
 
-if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-    store.userAvatar = null;
+if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
+    StateStore.get().userAvatar = null;
     window.GhostAnalytics?.track('storage_cleaned', { reason: 'avatar_too_large' });
     saveState();
 }
 
 // 2. SALDO — escribe el valor formateado síncronamente.
 //    El .coin-badge tiene opacity:0 por CSS; nunca pintará el "0" del HTML.
-_displayedCoins = store.coins;
+_displayedCoins = StateStore.get().coins;
 document.querySelectorAll('.navbar .coin-display').forEach(el => {
-    el.textContent = formatCoinsNavbar(store.coins);
+    el.textContent = formatCoinsNavbar(StateStore.get().coins);
 });
 document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
-    el.textContent = store.coins;
+    el.textContent = StateStore.get().coins;
 });
 
 // 3. BOTÓN DIARIO Y LUNA — corrige el estado (activo/desactivado, texto de
@@ -2110,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (!raw) return;
-            store = migrateState(JSON.parse(raw));
+            StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
             // syncUI resetea _displayedCoins al valor actual del store para
             // evitar animaciones innecesarias en este refresco de retorno.
             window.GameCenter?.syncUI?.();
@@ -2125,14 +1858,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Background time sync (v9.6) ───────────────────────────────────────
     // Se lanza 800 ms después del DOMContentLoaded para no competir con el
-    // primer paint. El resultado se almacena en TIME_CACHE_KEY y será leído
+    // primer paint. El resultado se almacena en el caché de LoveArcadeTime y será leído
     // por claimDaily() de forma síncrona, sin espera de red en el reclamo.
-    _scheduleTimeSync(800);
+    window.LoveArcadeTime.scheduleSync(800);
 
     // Actualizar el caché cuando el usuario vuelve a la pestaña
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            _scheduleTimeSync(250);
+            window.LoveArcadeTime.scheduleSync(250);
         }
     });
 
@@ -2150,8 +1883,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('visibilitychange', syncHudMotionVisibility);
 
     // Refresco periódico cada 30 min por si la app permanece abierta mucho tiempo
-    window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
-        || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
+    window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => window.LoveArcadeTime.scheduleSync(), 30 * 60 * 1000)
+        || setInterval(() => window.LoveArcadeTime.scheduleSync(), 30 * 60 * 1000);
 
     // Bono diario — el botón se desactiva SÍNCRONAMENTE antes de cualquier operación
     // asíncrona para prevenir el "double-tap bug" (race condition por clics rápidos).
@@ -2450,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (raw) {
-                store = migrateState(JSON.parse(raw));
+                StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
                 window.GameCenter?.syncUI?.();
             }
         } catch (_) {}
@@ -2580,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data?.avatar_url && typeof data.avatar_url === 'string') {
                 const avatar = data.avatar_url.trim();
                 if (avatar) {
-                    store.userAvatar = avatar;
+                    StateStore.get().userAvatar = avatar;
                     saveState();
                 }
             }

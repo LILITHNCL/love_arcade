@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
-const appSource = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+const configSource = readFileSync(new URL('../js/core/config.js', import.meta.url), 'utf8');
 const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
 function cssRule(selector) {
@@ -33,7 +33,7 @@ assert.match(sheen, /background-size:\s*200px 200px, cover;/);
 assert.doesNotMatch(css, /\.player-hud\.is-ready::before|\.player-hud\.motion-paused::before/);
 assert.doesNotMatch(css, /hudAmbientSweep/);
 
-const themeBlock = appSource.match(/const THEMES = (\{[\s\S]*?\n\});/);
+const themeBlock = configSource.match(/const THEMES = (\{[\s\S]*?\n    \})\;/);
 assert.ok(themeBlock, 'Could not locate the THEMES map.');
 const themes = Function(`return (${themeBlock[1]})`)();
 const bootThemeMap = indexHtml.match(/var T=(\{[^;]+\});/);
