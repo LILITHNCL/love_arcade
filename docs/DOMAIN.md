@@ -12,7 +12,7 @@ Este documento es la fuente normativa para la economía y el estado persistido d
 
 ## 1. Estado persistido y autoridad económica
 
-Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'`; `js/core/state-store.js` expone `window.LoveArcadeStore` para persistir y migrar el estado; `js/app.js` define `window.GameCenter` como la API pública del dominio.
+Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'`; `js/core/state-store.js` expone `window.LoveArcadeStore` para persistir y migrar el estado; `js/app.js` ensambla temporalmente `window.GameCenter` como la API pública del dominio; `js/domain/daily-streak.js` contiene las reglas de racha.
 
 La fuente de verdad económica principal es el snapshot encapsulado por `window.LoveArcadeStore`, guardado en `localStorage` bajo la clave `gamecenter_v6_promos`.
 
@@ -81,7 +81,7 @@ Reglas verificadas:
 
 ## 5. Racha diaria
 
-Evidencia: `window.GameCenter.claimDaily()`, `canClaimDaily()`, `getStreakInfo()`, `repairDailyStreak()` en `js/app.js`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` en `js/core/config.js`.
+Evidencia: `js/domain/daily-streak.js` implementa `claimDaily()`, `canClaimDaily()`, `getStreakInfo()` y `repairDailyStreak()`; `js/app.js` conserva temporalmente el ensamblado de esas APIs en `window.GameCenter`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` viven en `js/core/config.js`.
 
 ### Fórmula de recompensa
 
@@ -108,7 +108,7 @@ El valor `store.daily.lastClaim` se actualiza solo cuando el reclamo tiene éxit
 
 ### Reparación de racha
 
-Evidencia: `GameCenter.repairDailyStreak()` en `js/app.js` y `DAILY_REPAIR_COST = 500`.
+Evidencia: `GameCenter.repairDailyStreak()` delega en `js/domain/daily-streak.js`, donde `DAILY_REPAIR_COST = 500`.
 
 Si hay una ruptura de 2 días, la UI puede ofrecer reparación por 500 monedas. La reparación:
 
@@ -130,7 +130,7 @@ Para un análisis extendido (UX, accesibilidad, motion, riesgos y diagrama de fl
 
 ## 6. Bendición Lunar como modificador de recompensa
 
-Evidencia: `js/domain/moon-blessing.js` implementa `buyMoonBlessing()`, `extendMoonBlessingDays()` y `getMoonBlessingStatus()`; `window.GameCenter` conserva esas APIs públicas. La lógica de aplicación del bonus durante el reclamo diario permanece temporalmente en `js/app.js`.
+Evidencia: `js/domain/moon-blessing.js` implementa `buyMoonBlessing()`, `extendMoonBlessingDays()` y `getMoonBlessingStatus()`; `window.GameCenter` conserva esas APIs públicas. La lógica de aplicación del bonus durante el reclamo diario vive en `js/domain/daily-streak.js`.
 
 La Bendición Lunar no es una racha por sí misma; es un modificador de recompensa del bono diario.
 

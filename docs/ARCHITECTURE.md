@@ -19,8 +19,8 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, core/time-sync.js, core/state-store.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
-5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; `js/app.js` ensambla la racha y la API pública `window.GameCenter`.
+4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/*, domain/*, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
+5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; los módulos de `js/domain/` aportan reglas de negocio antes de que `js/app.js` ensamble temporalmente la API pública `window.GameCenter`.
 6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
 ## 2. Vistas SPA y router
@@ -61,10 +61,26 @@ La implementación actual del lifecycle enlaza el router con la vista del home y
 
 ### `js/app.js`
 
-Es el motor principal del hub. Aquí se definen:
+Es el bootstrap actual del hub. Mantiene el renderizado de UI y Sentinel Cloud Sync; `js/domain/game-center.js` ensambla la API pública `window.GameCenter`.
 
-- la API pública `window.GameCenter`;
-- la lógica de bono diario, racha, Bendición Lunar, historial y sincronización local/cloud.
+### `js/domain/game-center.js`
+
+Ensambla `window.GameCenter` con los módulos de dominio y conserva sin cambios la
+superficie pública consumida por la SPA y los minijuegos. `syncUI()` delega a un
+puente configurado por `js/app.js`, que conserva temporalmente el renderizado.
+
+### `js/domain/theming.js` y `js/ui/theme-grid.js`
+
+`theming.js` persiste y aplica los roles CSS del tema activo; `theme-grid.js` renderiza
+los botones nativos del selector y delega sus clics a `window.GameCenter.setTheme()`.
+
+### `js/domain/avatar.js`
+
+Encapsula la conversión y compresión de imágenes, el guardado local y las operaciones
+`setAvatar()`, `setAvatarPath()` y `getAvatar()`. Depende de `window.LoveArcadeStore`
+y consume opcionalmente `window.Sentinel.getSession()` / `getClient()` como contrato
+externo para Auth y Supabase Storage; el renderizado del avatar permanece en `js/app.js`
+hasta que se extraiga el HUD.
 
 ### `js/core/config.js`
 

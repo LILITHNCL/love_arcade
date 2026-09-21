@@ -51,6 +51,8 @@ La estructura esperada dentro del snapshot es:
 
 La aplicación calcula los días con un desplazamiento de 03:00 y usa el reloj de red/cache para el reclamo normal. El timestamp elegido manualmente debe validarse contra la zona horaria y el estado real del usuario; una hora “de ayer” en UTC no garantiza por sí sola el mismo día lógico que el navegador.
 
+La lógica cliente que aplica estas reglas está en `js/domain/daily-streak.js`; el módulo no sustituye este procedimiento privilegiado ni escribe directamente en el snapshot cloud.
+
 ## Last Write Wins y sincronización
 
 La documentación operativa del proyecto trata `updated_at` como la marca usada por el mecanismo de sincronización para resolver conflictos con una regla Last Write Wins: una versión posterior puede ganar frente a otra anterior. Por eso todas las actualizaciones de esta guía incluyen `updated_at = now()`.
