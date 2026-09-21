@@ -11,7 +11,7 @@ const DAILY_REPAIR_COST = 500;
 
 function _getDailyRepairState() {
     const { time: now, verified, desynced } = window.LoveArcadeTime.read();
-    const { lastClaim, streak } = store.daily;
+    const { lastClaim, streak } = StateStore.get().daily;
     const diffDays = window.LoveArcadeTime.dayDiff(now, lastClaim);
     return {
         now,
@@ -20,7 +20,7 @@ function _getDailyRepairState() {
         diffDays,
         repairAvailable: lastClaim > 0 && streak > 0 && diffDays === 2,
         repairCost: DAILY_REPAIR_COST,
-        canAffordRepair: store.coins >= DAILY_REPAIR_COST
+        canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST
     };
 }
 
@@ -147,17 +147,40 @@ function migrateState(loadedStore) {
 
 
 // =====================================================
-// STORE — Carga y fusión con migración automática
+// STORE — Accessor interno y carga con migración automática
 // =====================================================
-let store = migrateState({});
+const StateStore = (function createStateStore() {
+    let _store = migrateState({});
+    const listeners = [];
 
-try {
-    const raw = localStorage.getItem(CONFIG.stateKey);
-    if (raw) store = migrateState(JSON.parse(raw));
-} catch (e) {
-    console.error('GameCenter: Error al cargar estado', e);
-    store = migrateState({});
-}
+    try {
+        const raw = localStorage.getItem(CONFIG.stateKey);
+        if (raw) _store = migrateState(JSON.parse(raw));
+    } catch (e) {
+        console.error('GameCenter: Error al cargar estado', e);
+        _store = migrateState({});
+    }
+
+    function notify(meta = {}) {
+        listeners.forEach(listener => listener(_store, meta));
+    }
+
+    return {
+        get: () => _store,
+        replace: (next, meta = {}) => {
+            _store = next;
+            notify({ source: 'replace', ...meta });
+        },
+        notify,
+        subscribe: (listener) => {
+            listeners.push(listener);
+            return () => {
+                const index = listeners.indexOf(listener);
+                if (index !== -1) listeners.splice(index, 1);
+            };
+        }
+    };
+})();
 
 // =====================================================
 // ANIMACIÓN DE CONTADOR (requestAnimationFrame)
@@ -178,7 +201,7 @@ try {
  * @param {number}        end       Valor final de la animación.
  * @param {number}        [duration=650] Duración en milisegundos.
  */
-let _displayedCoins = store.coins;
+let _displayedCoins = StateStore.get().coins;
 
 function animateValue(elements, start, end, duration = 650) {
     if (!elements || !elements.length) return;
@@ -205,11 +228,11 @@ function animateValue(elements, start, end, duration = 650) {
  * @param {string}             motivo
  */
 function logTransaction(tipo, cantidad, motivo) {
-    if (!Array.isArray(store.history)) store.history = [];
-    store.history.push({ tipo, cantidad, motivo, fecha: Date.now() });
+    if (!Array.isArray(StateStore.get().history)) StateStore.get().history = [];
+    StateStore.get().history.push({ tipo, cantidad, motivo, fecha: Date.now() });
     // Limitar a las últimas 50 entradas para no inflar el localStorage
-    if (store.history.length > 50) {
-        store.history = store.history.slice(-50);
+    if (StateStore.get().history.length > 50) {
+        StateStore.get().history = StateStore.get().history.slice(-50);
     }
 }
 
@@ -289,12 +312,12 @@ function compressImage(blob, maxWidth = 200, maxHeight = 200, quality = 0.7) {
 }
 
 function trimGameProgress() {
-    if (!store.progress || typeof store.progress !== 'object') return false;
+    if (!StateStore.get().progress || typeof StateStore.get().progress !== 'object') return false;
     let changed = false;
-    Object.keys(store.progress).forEach((gameId) => {
-        if (!Array.isArray(store.progress[gameId])) return;
-        if (store.progress[gameId].length > 50) {
-            store.progress[gameId] = store.progress[gameId].slice(-50);
+    Object.keys(StateStore.get().progress).forEach((gameId) => {
+        if (!Array.isArray(StateStore.get().progress[gameId])) return;
+        if (StateStore.get().progress[gameId].length > 50) {
+            StateStore.get().progress[gameId] = StateStore.get().progress[gameId].slice(-50);
             changed = true;
         }
     });
@@ -416,26 +439,26 @@ function initLoadingStateObserver() {
 function emergencyCleanup() {
     let changed = false;
 
-    if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-        store.userAvatar = null;
+    if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
+        StateStore.get().userAvatar = null;
         changed = true;
     }
 
-    if (Array.isArray(store.history) && store.history.length > 30) {
-        store.history = store.history.slice(-30);
+    if (Array.isArray(StateStore.get().history) && StateStore.get().history.length > 30) {
+        StateStore.get().history = StateStore.get().history.slice(-30);
         changed = true;
     }
 
-    if (Object.prototype.hasOwnProperty.call(store, 'redeemedCodes')) {
-        delete store.redeemedCodes;
+    if (Object.prototype.hasOwnProperty.call(StateStore.get(), 'redeemedCodes')) {
+        delete StateStore.get().redeemedCodes;
         changed = true;
     }
 
     if (trimGameProgress()) changed = true;
 
-    const serialized = JSON.stringify(store);
-    if (serialized.length > (4 * 1024 * 1024) && Array.isArray(store.history) && store.history.length) {
-        store.history = [];
+    const serialized = JSON.stringify(StateStore.get());
+    if (serialized.length > (4 * 1024 * 1024) && Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
+        StateStore.get().history = [];
         changed = true;
     }
 
@@ -444,7 +467,7 @@ function emergencyCleanup() {
 
 function checkStorageSize(precomputedLength) {
     try {
-        const sizeKB = (precomputedLength ?? JSON.stringify(store).length) / KB;
+        const sizeKB = (precomputedLength ?? JSON.stringify(StateStore.get()).length) / KB;
         if (sizeKB > STORE_WARNING_KB) {
             window.GhostAnalytics?.track('storage_warning', { size_kb: Math.round(sizeKB) });
             _showStorageToast(
@@ -467,7 +490,7 @@ async function _saveAvatarLocally(dataUrl) {
     if (sizeKB > AVATAR_MAX_LOCAL_KB) {
         throw new Error('Imagen demasiado grande. Usa una foto de menos de 100 KB.');
     }
-    store.userAvatar = finalDataUrl;
+    StateStore.get().userAvatar = finalDataUrl;
     saveState({ immediateCloudSync: true });
     applyAvatar();
 }
@@ -489,7 +512,7 @@ async function _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket =
     if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
 
     const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-    store.userAvatar = publicUrl;
+    StateStore.get().userAvatar = publicUrl;
     saveState({ immediateCloudSync: true });
     applyAvatar();
     return { path, publicUrl: data.publicUrl, cacheBustedUrl: publicUrl };
@@ -507,45 +530,45 @@ window.GameCenter = {
      * Es idempotente: si el levelId ya fue registrado, no vuelve a pagar.
      */
     completeLevel: (gameId, levelId, rewardAmount) => {
-        if (!store.progress[gameId]) store.progress[gameId] = [];
-        if (store.progress[gameId].includes(levelId)) {
-            return { paid: false, coins: store.coins };
+        if (!StateStore.get().progress[gameId]) StateStore.get().progress[gameId] = [];
+        if (StateStore.get().progress[gameId].includes(levelId)) {
+            return { paid: false, coins: StateStore.get().coins };
         }
-        store.progress[gameId].push(levelId);
+        StateStore.get().progress[gameId].push(levelId);
 
-        store.coins += rewardAmount;
+        StateStore.get().coins += rewardAmount;
         logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
         saveState({ immediateCloudSync: true });
 
-        return { paid: true, coins: store.coins };
+        return { paid: true, coins: StateStore.get().coins };
     },
 
     // ── TIENDA ───────────────────────────────────────────────────────────────
 
     buyItem: (itemData) => {
-        const bought = store.inventory[itemData.id] || 0;
+        const bought = StateStore.get().inventory[itemData.id] || 0;
         if (bought > 0) return { success: false, reason: 'owned' };
 
         const finalPrice = ECONOMY.isSaleActive
             ? Math.floor(itemData.price * ECONOMY.saleMultiplier)
             : itemData.price;
 
-        if (store.coins < finalPrice) {
+        if (StateStore.get().coins < finalPrice) {
             // [v9.9.2] Fricción de usuario: intento de compra sin saldo suficiente.
             // Ayuda a detectar precios demasiado elevados o HUD de saldo poco claro.
             window.GhostAnalytics?.track('insufficient_funds', {
                 wallpaper: itemData.name,
                 precio:    `${finalPrice} ⭐`,
-                saldo:     store.coins
+                saldo:     StateStore.get().coins
             });
             return { success: false, reason: 'coins' };
         }
 
         const cashback = Math.floor(finalPrice * ECONOMY.cashbackRate);
 
-        store.coins -= finalPrice;
-        store.coins += cashback;
-        store.inventory[itemData.id] = bought + 1;
+        StateStore.get().coins -= finalPrice;
+        StateStore.get().coins += cashback;
+        StateStore.get().inventory[itemData.id] = bought + 1;
 
         logTransaction('gasto',   finalPrice, `Compra: ${itemData.name}`);
         if (cashback > 0) {
@@ -567,17 +590,17 @@ window.GameCenter = {
      */
     spendCoins: (amount, motivo = 'Gasto directo') => {
         const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: store.coins };
-        if (store.coins < n) return { success: false, reason: 'insufficient', coins: store.coins };
-        store.coins -= n;
+        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
+        if (StateStore.get().coins < n) return { success: false, reason: 'insufficient', coins: StateStore.get().coins };
+        StateStore.get().coins -= n;
         logTransaction('gasto', n, motivo);
         saveState({ immediateCloudSync: true });
-        return { success: true, coins: store.coins };
+        return { success: true, coins: StateStore.get().coins };
     },
 
-    getBoughtCount: (id) => store.inventory[id] || 0,
-    getBalance:     ()   => store.coins,
-    getInventory:   ()   => ({ ...store.inventory }),
+    getBoughtCount: (id) => StateStore.get().inventory[id] || 0,
+    getBalance:     ()   => StateStore.get().coins,
+    getInventory:   ()   => ({ ...StateStore.get().inventory }),
 
     // ── v11.0 — ECONOMÍA DIRECTA ──────────────────────────────────────────────
 
@@ -590,11 +613,11 @@ window.GameCenter = {
      */
     addCoins: (amount, motivo = 'Depósito directo') => {
         const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: store.coins };
-        store.coins += n;
+        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
+        StateStore.get().coins += n;
         logTransaction('ingreso', n, motivo);
         saveState({ immediateCloudSync: true });
-        return { success: true, coins: store.coins };
+        return { success: true, coins: StateStore.get().coins };
     },
 
     /**
@@ -603,10 +626,10 @@ window.GameCenter = {
      * instantánea de sesión sin exponer el array completo de hashes.
      * @returns {number}
      */
-    getRedeemedCount: () => (store.redeemedHashes || []).length,
+    getRedeemedCount: () => (StateStore.get().redeemedHashes || []).length,
 
     getDownloadUrl: (itemId, sourceUrl) => {
-        if (!sourceUrl || (store.inventory[itemId] || 0) === 0) return null;
+        if (!sourceUrl || (StateStore.get().inventory[itemId] || 0) === 0) return null;
         const uploadMarker = '/image/upload/';
         if (sourceUrl.includes(uploadMarker)) {
             if (sourceUrl.includes(`${uploadMarker}fl_attachment/`)) return sourceUrl;
@@ -622,7 +645,7 @@ window.GameCenter = {
      * Devuelve el historial de transacciones en orden cronológico inverso
      * (la más reciente primero).
      */
-    getHistory: () => [...(store.history || [])].reverse(),
+    getHistory: () => [...(StateStore.get().history || [])].reverse(),
 
     // ── CÓDIGOS PROMO (async — SHA-256) ──────────────────────────────────────
 
@@ -640,12 +663,12 @@ window.GameCenter = {
         const reward = PROMO_CODES_HASHED[hash];
         if (!reward) return { success: false, message: 'Código inválido' };
 
-        if (store.redeemedHashes.includes(hash)) {
+        if (StateStore.get().redeemedHashes.includes(hash)) {
             return { success: false, message: 'Ya canjeaste este código' };
         }
 
-        store.coins += reward;
-        store.redeemedHashes.push(hash);
+        StateStore.get().coins += reward;
+        StateStore.get().redeemedHashes.push(hash);
         logTransaction('ingreso', reward, `Código canjeado`);
         saveState();
 
@@ -682,7 +705,7 @@ window.GameCenter = {
      */
     claimDaily: () => {
         const { time: now, verified, desynced } = window.LoveArcadeTime.read();
-        const { lastClaim, streak } = store.daily;
+        const { lastClaim, streak } = StateStore.get().daily;
 
         // ── 1. Salto negativo (manipulación de reloj detectada por el caché) ──
         if (lastClaim > 0 && now < lastClaim) {
@@ -718,10 +741,10 @@ window.GameCenter = {
                 success: false,
                 repairRequired: true,
                 repairCost: DAILY_REPAIR_COST,
-                canAffordRepair: store.coins >= DAILY_REPAIR_COST,
+                canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST,
                 streak,
                 verified,
-                message: store.coins >= DAILY_REPAIR_COST
+                message: StateStore.get().coins >= DAILY_REPAIR_COST
                     ? `Puedes reparar tu racha de ${streak} día${streak !== 1 ? 's' : ''}.`
                     : 'Consigue las monedas que faltan jugando en el Arcade.'
             };
@@ -741,13 +764,13 @@ window.GameCenter = {
         // detección de desynced en el sync anterior. Sin conexión genuina el
         // usuario tampoco puede comprar la Bendición Lunar, por lo que el
         // riesgo neto es despreciable.
-        const moonActive  = store.buffs.moonBlessingExpiry > now;
+        const moonActive  = StateStore.get().buffs.moonBlessingExpiry > now;
         const moonBonus   = moonActive ? 90 : 0;
         const totalReward = baseReward + moonBonus;
 
         // ── 6. Aplicar y persistir ──
-        store.coins += totalReward;
-        store.daily  = { lastClaim: now, streak: newStreak };
+        StateStore.get().coins += totalReward;
+        StateStore.get().daily  = { lastClaim: now, streak: newStreak };
 
         logTransaction(
             'ingreso',
@@ -781,7 +804,7 @@ window.GameCenter = {
 
     repairDailyStreak: () => {
         const state = _getDailyRepairState();
-        const { lastClaim, streak } = store.daily;
+        const { lastClaim, streak } = StateStore.get().daily;
 
         if (lastClaim > 0 && state.now < lastClaim) {
             return { success: false, verified: state.verified, message: 'Se detectó una inconsistencia horaria. Por favor, verifica la configuración de tu dispositivo.' };
@@ -792,12 +815,12 @@ window.GameCenter = {
         if (!state.repairAvailable) {
             return { success: false, verified: state.verified, message: 'La reparación de racha no está disponible ahora.' };
         }
-        if (store.coins < DAILY_REPAIR_COST) {
+        if (StateStore.get().coins < DAILY_REPAIR_COST) {
             return { success: false, repairRequired: true, verified: state.verified, message: 'Consigue las monedas que faltan jugando en el Arcade.' };
         }
 
-        store.coins -= DAILY_REPAIR_COST;
-        store.daily = { lastClaim: state.now, streak };
+        StateStore.get().coins -= DAILY_REPAIR_COST;
+        StateStore.get().daily = { lastClaim: state.now, streak };
         logTransaction('gasto', DAILY_REPAIR_COST, `Reparación de racha · ${streak} días`);
         saveState({ immediateCloudSync: true });
         window.GhostAnalytics?.track('daily_streak_repair', { costo: DAILY_REPAIR_COST, racha: streak });
@@ -815,7 +838,7 @@ window.GameCenter = {
     getNextDailyResetTime: (now = Date.now()) => window.LoveArcadeTime.nextResetTime(now),
 
     canClaimDaily: () => {
-        const { lastClaim } = store.daily;
+        const { lastClaim } = StateStore.get().daily;
         if (lastClaim === 0) return true;
         const state = _getDailyRepairState();
         if (state.desynced) return false;
@@ -828,7 +851,7 @@ window.GameCenter = {
      * Usa días calendario (medianoche) para consistencia con claimDaily().
      */
     getStreakInfo: () => {
-        const { lastClaim, streak } = store.daily;
+        const { lastClaim, streak } = StateStore.get().daily;
         const repairState = _getDailyRepairState();
         const diffDays = repairState.diffDays;
 
@@ -859,21 +882,21 @@ window.GameCenter = {
         const COST = 100;
         const DURATION = 7 * 86_400_000; // 7 días en ms
 
-        if (store.coins < COST) {
+        if (StateStore.get().coins < COST) {
             // [v9.9.2] Fricción de usuario: saldo insuficiente para activar el buff.
             window.GhostAnalytics?.track('insufficient_funds', {
                 wallpaper: 'Bendición Lunar (buff)',
                 precio:    `${COST} ⭐`,
-                saldo:     store.coins
+                saldo:     StateStore.get().coins
             });
             return { success: false, reason: 'coins' };
         }
 
         const now = Date.now();
-        const isActive = store.buffs.moonBlessingExpiry > now;
-        store.coins -= COST;
-        store.buffs.moonBlessingExpiry = (isActive
-            ? store.buffs.moonBlessingExpiry
+        const isActive = StateStore.get().buffs.moonBlessingExpiry > now;
+        StateStore.get().coins -= COST;
+        StateStore.get().buffs.moonBlessingExpiry = (isActive
+            ? StateStore.get().buffs.moonBlessingExpiry
             : now
         ) + DURATION;
 
@@ -881,7 +904,7 @@ window.GameCenter = {
         saveState();
         updateMoonBlessingUI();
 
-        const expiresAt = new Date(store.buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
+        const expiresAt = new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
             day: '2-digit', month: 'long', year: 'numeric'
         });
 
@@ -901,15 +924,15 @@ window.GameCenter = {
             return { success: false };
         }
         const now = Date.now();
-        const baseTs = store.buffs.moonBlessingExpiry > now
-            ? store.buffs.moonBlessingExpiry
+        const baseTs = StateStore.get().buffs.moonBlessingExpiry > now
+            ? StateStore.get().buffs.moonBlessingExpiry
             : now;
-        store.buffs.moonBlessingExpiry = baseTs + (wholeDays * 86_400_000);
+        StateStore.get().buffs.moonBlessingExpiry = baseTs + (wholeDays * 86_400_000);
         logTransaction('ingreso', 0, `${motivo}: +${wholeDays} día(s)`);
         saveState({ immediateCloudSync: true });
         return {
             success: true,
-            expiresAt: new Date(store.buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
+            expiresAt: new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
                 day: '2-digit', month: 'long', year: 'numeric'
             })
         };
@@ -917,7 +940,7 @@ window.GameCenter = {
 
     getMoonBlessingStatus: () => {
         const now    = Date.now();
-        const expiry = store.buffs.moonBlessingExpiry;
+        const expiry = StateStore.get().buffs.moonBlessingExpiry;
         const active = expiry > now;
         return {
             active,
@@ -938,7 +961,7 @@ window.GameCenter = {
      */
     exportSave: async () => {
         try {
-            const result = await workerTask({ action: 'export', store, salt: SYNC_SALT });
+            const result = await workerTask({ action: 'export', store: StateStore.get(), salt: SYNC_SALT });
             return result;
         } catch (_) {
             // Fallback síncrono si el worker no está disponible
@@ -947,9 +970,9 @@ window.GameCenter = {
         // TextEncoder convierte el payload UTF-8 a bytes, luego btoa codifica en Base64.
         // Reemplaza el patrón obsoleto btoa(unescape(encodeURIComponent())) que usa
         // funciones deprecadas en motores modernos.
-        const json     = JSON.stringify(store);
+        const json     = JSON.stringify(StateStore.get());
         const checksum = await sha256(json + SYNC_SALT);
-        const payload  = JSON.stringify({ data: store, checksum });
+        const payload  = JSON.stringify({ data: StateStore.get(), checksum });
         try {
             const bytes  = new TextEncoder().encode(payload);
             const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
@@ -997,7 +1020,7 @@ window.GameCenter = {
             }
 
             if (typeof data.coins !== 'number') throw new Error('invalid');
-            store = migrateState(data);
+            StateStore.replace(migrateState(data), { notifyUI: false, notifyCloud: false });
             saveState();
             return { success: true };
         } catch {
@@ -1106,22 +1129,22 @@ window.GameCenter = {
             }
         }
 
-        store.userAvatar = normalized;
+        StateStore.get().userAvatar = normalized;
         saveState({ immediateCloudSync: true });
         applyAvatar();
         return { success: true, remote: false, preset: true, url: normalized };
     },
-    getAvatar: ()        => store.userAvatar,
+    getAvatar: ()        => StateStore.get().userAvatar,
 
     // ── TEMA ─────────────────────────────────────────────────────────────────
 
     setTheme: (key) => {
         if (!THEMES[key]) return;
-        store.theme = key;
+        StateStore.get().theme = key;
         saveState();
         applyTheme(key);
     },
-    getTheme: () => store.theme || 'violet',
+    getTheme: () => StateStore.get().theme || 'violet',
 
     // ── IDENTIDAD — v9.4 ─────────────────────────────────────────────────────
 
@@ -1132,20 +1155,20 @@ window.GameCenter = {
      */
     setIdentity: (nickname, gender) => {
         const VALID_GENDERS = ['o', 'a', '@'];
-        store.nickname = String(nickname).trim().slice(0, 15);
-        store.gender   = VALID_GENDERS.includes(gender) ? gender : '@';
+        StateStore.get().nickname = String(nickname).trim().slice(0, 15);
+        StateStore.get().gender   = VALID_GENDERS.includes(gender) ? gender : '@';
         saveState();
         applyIdentity();
     },
 
     /** @returns {{ nickname: string, gender: 'o'|'a'|'@' }} */
     getIdentity: () => ({
-        nickname: store.nickname || '',
-        gender:   store.gender   || '@'
+        nickname: StateStore.get().nickname || '',
+        gender:   StateStore.get().gender   || '@'
     }),
 
     /** @returns {boolean} true si el usuario ya eligió un nickname. */
-    hasIdentity: () => Boolean(store.nickname?.trim()),
+    hasIdentity: () => Boolean(StateStore.get().nickname?.trim()),
 
     // ── SPA / MÓDULOS EXTERNOS ────────────────────────────────────────────────
 
@@ -1156,12 +1179,12 @@ window.GameCenter = {
      * @returns {{ coins: number, streak: number, theme: string, moonBlessingExpiry: number, nickname: string, gender: string }}
      */
     getState: () => ({
-        coins:               store.coins,
-        streak:              store.daily?.streak || 0,
-        theme:               store.theme || 'violet',
-        moonBlessingExpiry:  store.buffs?.moonBlessingExpiry || 0,
-        nickname:            store.nickname || '',
-        gender:              store.gender   || '@'
+        coins:               StateStore.get().coins,
+        streak:              StateStore.get().daily?.streak || 0,
+        theme:               StateStore.get().theme || 'violet',
+        moonBlessingExpiry:  StateStore.get().buffs?.moonBlessingExpiry || 0,
+        nickname:            StateStore.get().nickname || '',
+        gender:              StateStore.get().gender   || '@'
     }),
 
     /**
@@ -1172,7 +1195,7 @@ window.GameCenter = {
      * @param {HTMLElement} [scope] Contenedor de la vista actualmente visible.
      */
     syncUI: (scope) => {
-        _displayedCoins = store.coins;
+        _displayedCoins = StateStore.get().coins;
         updateUI({ scope });
     }
 };
@@ -1260,12 +1283,20 @@ document.addEventListener('la:cloud-authenticated', () => {
     if (_pendingSyncRetries > 0) _syncCloudIfNeeded(true);
 });
 
+StateStore.subscribe((_state, { source, notifyUI = true } = {}) => {
+    if (source === 'save' && notifyUI) _scheduleUIUpdate();
+});
+
+StateStore.subscribe((_state, { source, notifyCloud = true, immediateCloudSync = false } = {}) => {
+    if (source === 'save' && notifyCloud) _scheduleCloudSync(immediateCloudSync);
+});
+
 function saveState(options = {}) {
     const { immediateCloudSync = false } = options;
-    let payload = JSON.stringify(store);
+    let payload = JSON.stringify(StateStore.get());
     if (payload.length > (STORE_WARNING_KB * KB)) {
         trimGameProgress();
-        payload = JSON.stringify(store);
+        payload = JSON.stringify(StateStore.get());
     }
 
     try {
@@ -1274,7 +1305,7 @@ function saveState(options = {}) {
         if (e?.name === 'QuotaExceededError') {
             const changed = emergencyCleanup();
             try {
-                payload = JSON.stringify(store);
+                payload = JSON.stringify(StateStore.get());
                 localStorage.setItem(CONFIG.stateKey, payload);
                 window.GhostAnalytics?.track('storage_cleaned', {
                     reason: 'quota_exceeded',
@@ -1286,10 +1317,10 @@ function saveState(options = {}) {
                     'No se puede guardar el progreso. Exporta tu partida y borra datos del sitio.',
                     'error'
                 );
-                if (Array.isArray(store.history) && store.history.length) {
-                    store.history = [];
+                if (Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
+                    StateStore.get().history = [];
                     try {
-                        localStorage.setItem(CONFIG.stateKey, JSON.stringify(store));
+                        localStorage.setItem(CONFIG.stateKey, JSON.stringify(StateStore.get()));
                     } catch (_) {}
                 }
                 return;
@@ -1299,8 +1330,7 @@ function saveState(options = {}) {
         }
     }
 
-    _scheduleUIUpdate();
-    _scheduleCloudSync(immediateCloudSync);
+    StateStore.notify({ source: 'save', immediateCloudSync });
     checkStorageSize(payload.length);
 }
 
@@ -1338,26 +1368,26 @@ function updateUI({ scope } = {}) {
         displayRoot.querySelectorAll('.coin-display')
     ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
 
-    if (_displayedCoins === store.coins) {
+    if (_displayedCoins === StateStore.get().coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
         // Evita sobrescribir el valor formateado que ya pintó el init silencioso.
         navbarDisplays.forEach(el => {
-            el.textContent = formatCoinsNavbar(store.coins);
+            el.textContent = formatCoinsNavbar(StateStore.get().coins);
             // El tooltip muestra el valor exacto cuando la navbar usa formato abreviado
             // (ej: "25.5k"). El usuario puede ver el número preciso sin ir al HUD.
-            el.closest('.coin-badge')?.setAttribute('title', `${store.coins} monedas`);
+            el.closest('.coin-badge')?.setAttribute('title', `${StateStore.get().coins} monedas`);
         });
-        otherDisplays.forEach(el  => { el.textContent = store.coins; });
+        otherDisplays.forEach(el  => { el.textContent = StateStore.get().coins; });
     } else {
         // Con delta: animar con número exacto y formatear navbar al terminar
-        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, store.coins);
+        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, StateStore.get().coins);
 
         // Sobrescribir la navbar con el valor formateado al terminar la animación
         // (animateValue dura ~650 ms; con 700 ms de margen evitamos parpadeos)
         if (navbarDisplays.length) {
             setTimeout(() => {
                 navbarDisplays.forEach(el => {
-                    el.textContent = formatCoinsNavbar(store.coins);
+                    el.textContent = formatCoinsNavbar(StateStore.get().coins);
                 });
             }, 700);
         }
@@ -1372,7 +1402,7 @@ function updateUI({ scope } = {}) {
 window.formatCoinsNavbar = formatCoinsNavbar;
 
 function applyAvatar(scope) {
-    if (!store.userAvatar) return;
+    if (!StateStore.get().userAvatar) return;
     // La navbar es chrome compartido; los demás avatares se limitan a la vista
     // entrante cuando syncUI() proporciona un scope.
     const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
@@ -1385,7 +1415,7 @@ function applyAvatar(scope) {
 
     avatars.forEach(el => {
         if (!el) return;
-        el.style.backgroundImage = `url('${store.userAvatar}')`;
+        el.style.backgroundImage = `url('${StateStore.get().userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
     });
@@ -1400,9 +1430,9 @@ function applyIdentity() {
     const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
     const profileNameEl = document.getElementById('profile-title');
-    if (suffixEl)   suffixEl.textContent   = store.gender   || '@';
-    if (nicknameEl) nicknameEl.textContent = store.nickname || '';
-    if (profileNameEl) profileNameEl.textContent = store.nickname || 'Love Arcade';
+    if (suffixEl)   suffixEl.textContent   = StateStore.get().gender   || '@';
+    if (nicknameEl) nicknameEl.textContent = StateStore.get().nickname || '';
+    if (profileNameEl) profileNameEl.textContent = StateStore.get().nickname || 'Love Arcade';
 }
 
 /**
@@ -1718,22 +1748,22 @@ window.revealUI = revealUI;
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 renderThemeGrid();
-applyTheme(store.theme || 'violet');
+applyTheme(StateStore.get().theme || 'violet');
 
-if (_isBase64Avatar(store.userAvatar) && store.userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-    store.userAvatar = null;
+if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
+    StateStore.get().userAvatar = null;
     window.GhostAnalytics?.track('storage_cleaned', { reason: 'avatar_too_large' });
     saveState();
 }
 
 // 2. SALDO — escribe el valor formateado síncronamente.
 //    El .coin-badge tiene opacity:0 por CSS; nunca pintará el "0" del HTML.
-_displayedCoins = store.coins;
+_displayedCoins = StateStore.get().coins;
 document.querySelectorAll('.navbar .coin-display').forEach(el => {
-    el.textContent = formatCoinsNavbar(store.coins);
+    el.textContent = formatCoinsNavbar(StateStore.get().coins);
 });
 document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
-    el.textContent = store.coins;
+    el.textContent = StateStore.get().coins;
 });
 
 // 3. BOTÓN DIARIO Y LUNA — corrige el estado (activo/desactivado, texto de
@@ -1813,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (!raw) return;
-            store = migrateState(JSON.parse(raw));
+            StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
             // syncUI resetea _displayedCoins al valor actual del store para
             // evitar animaciones innecesarias en este refresco de retorno.
             window.GameCenter?.syncUI?.();
@@ -2153,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (raw) {
-                store = migrateState(JSON.parse(raw));
+                StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
                 window.GameCenter?.syncUI?.();
             }
         } catch (_) {}
@@ -2283,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data?.avatar_url && typeof data.avatar_url === 'string') {
                 const avatar = data.avatar_url.trim();
                 if (avatar) {
-                    store.userAvatar = avatar;
+                    StateStore.get().userAvatar = avatar;
                     saveState();
                 }
             }
