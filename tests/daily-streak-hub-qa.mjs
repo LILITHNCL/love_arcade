@@ -4,10 +4,7 @@ import vm from 'node:vm';
 
 const hubSource = readFileSync(new URL('../js/streak-hub.js', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const appSource = [
-  readFileSync(new URL('../js/app.js', import.meta.url), 'utf8'),
-  readFileSync(new URL('../js/ui/hud-render.js', import.meta.url), 'utf8'),
-].join('\n');
+const hudRenderSource = readFileSync(new URL('../js/ui/hud-render.js', import.meta.url), 'utf8');
 const stateStoreSource = readFileSync(new URL('../js/core/state-store.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
@@ -192,7 +189,7 @@ assert.match(html, /<button type="button"\s+id="btn-daily"/);
 assert.match(html, /aria-describedby="daily-msg daily-countdown streak-hub-copy"/);
 assert.match(html, /id="daily-msg" class="daily-msg" role="status" aria-live="polite"/);
 assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
-assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
+assert.match(hudRenderSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
 const stateStoreWithoutLegacyCleanup = stateStoreSource.replace(
   /if \(Object\.prototype\.hasOwnProperty\.call\(merged, 'claimed_milestones'\)\)\s*delete merged\.claimed_milestones;/,
   ''
@@ -228,7 +225,7 @@ assert.doesNotMatch(
   'The static ambient must not remain in animation-specific selectors.'
 );
 assert.match(
-  appSource,
+  hudRenderSource,
   /hud\.classList\.toggle\('motion-paused', document\.hidden\);/,
   'The visibility lifecycle must continue to drive the HUD motion pause state.'
 );

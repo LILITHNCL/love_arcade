@@ -89,7 +89,9 @@ Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La 
 
 - `window.GameCenter`
 - `window.THEMES`
-- `window.CONFIG` cuando se usa por compatibilidad de lectura
+- `window.CONFIG` y `window.ECONOMY` cuando se usan por compatibilidad de lectura
+- `window.LoveArcadeStore`, `window.LoveArcadeTime` y `window.Sentinel`, reservados para infraestructura del hub
+- `window.AppScheduler`, `window.debounce`, `window.formatCoinsNavbar`, `window.revealUI` y `window.workerTask`, reservados para runtime y UI del hub
 
 Se debe evitar reescribir variables globales del hub ni declarar nombres que pudieran reemplazar API pública del proyecto.
 

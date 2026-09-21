@@ -19,9 +19,9 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga scripts clásicos, sin `defer` ni `type="module"`, en el orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, core/sync-worker-client.js, core/time-sync.js, core/state-store.js, cloud/sentinel.js, domain/*, ui/*, pwa/sw-update-bridge.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js. Sentinel es la excepción deliberada entre core y domain: instala su interceptor de `localStorage` antes de cualquier escritura de una clave vigilada.
-5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; los módulos de `js/domain/` aportan reglas de negocio y `js/domain/game-center.js` ensambla la API pública `window.GameCenter` antes de que `js/ui/hud-render.js` se suscriba al estado.
-6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
+4. El HTML carga scripts clásicos, sin `defer` ni `type="module"`, según el siguiente diagrama de dependencias: `analytics` → `supabase-loader` → `lifecycle-scheduler` → `core/config` → `core/utils` → `core/sync-worker-client` → `core/time-sync` → `core/state-store` → `cloud/sentinel` → `domain/history` → `domain/economy` → `domain/promo-codes` → `domain/moon-blessing` → `domain/identity` → `domain/daily-streak` → `domain/avatar` → `domain/theming` → `ui/theme-grid` → `domain/game-center` → `ui/coin-display` → `ui/hud-render` → `ui/micro-interactions` → `pwa/sw-update-bridge` → `app` (bootstrap) → `backup-engine` → `shop-logic` → `streak-hub` → `spa-router`. Sentinel es la excepción deliberada entre core y domain: instala su interceptor de `localStorage` antes de cualquier escritura de una clave vigilada.
+5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; los módulos de `js/domain/` aportan reglas de negocio y `js/domain/game-center.js` ensambla la API pública `window.GameCenter` antes de que `js/ui/hud-render.js` se suscriba al estado. Las responsabilidades visuales están en `js/ui/`, la sincronización cloud en `js/cloud/` y la integración PWA en `js/pwa/`.
+6. `js/app.js` sólo orquesta el bootstrap síncrono con los módulos ya cargados; `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
 ## 2. Vistas SPA y router
 
@@ -112,7 +112,7 @@ recarga la página cuando el Service Worker actualizado toma el control.
 
 ### `js/core/config.js`
 
-Contiene la configuración estática cargada antes de `js/app.js`:
+Contiene la configuración estática cargada antes de los módulos que consumen estado:
 
 - `window.CONFIG` y `window.ECONOMY`;
 - `window.THEMES`;
