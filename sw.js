@@ -29,6 +29,7 @@ const APP_SHELL_FILES = [
   '/js/ui/micro-interactions.js',
   '/js/pwa/sw-update-bridge.js',
   '/js/app.js',
+  '/js/pwa/sw-update-bridge.js',
   '/js/sync-worker.js',
   '/js/analytics.js',
   '/js/supabase-loader.js',
