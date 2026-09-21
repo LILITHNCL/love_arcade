@@ -2,12 +2,10 @@
 const CONFIG = window.CONFIG;
 const StateStore = window.LoveArcadeStore;
 const { KB, AVATAR_CLEANUP_KB } = StateStore.constants;
-const { canUseVibration: _canUseVibration } = window.LoveArcadeUtils;
-const MoonBlessing = window.LoveArcadeMoonBlessing;
-const Identity = window.LoveArcadeIdentity;
 const Theming = window.LoveArcadeTheming;
 const ThemeGrid = window.LoveArcadeThemeGrid;
-const GameCenterModule = window.LoveArcadeGameCenter;
+const HUD = window.LoveArcadeHUD;
+const MicroInteractions = window.LoveArcadeMicroInteractions;
 
 // =====================================================
 // WEB WORKER — Sincronización en hilo separado
@@ -59,179 +57,15 @@ function workerTask(payload) {
 window.workerTask = workerTask;
 
 // =====================================================
-// ANIMACIÓN DE CONTADOR (requestAnimationFrame)
-// =====================================================
-
-/**
- * Anima el contador de monedas de `start` a `end` en `duration` ms usando
- * una curva ease-out cúbica, y escribe el valor en cada elemento del array.
- *
- * CONTRATO IMPORTANTE: esta función modifica `_displayedCoins` como efecto
- * secundario al terminar la animación. Cualquier llamada a `syncUI()` antes
- * de que termine la animación debe primero resetear `_displayedCoins` al
- * valor actual del store para que `animateValue` arranque desde el valor
- * correcto. Ver `GameCenter.syncUI()`.
- *
- * @param {HTMLElement[]} elements  Nodos cuyo `textContent` se actualiza en cada frame.
- * @param {number}        start     Valor inicial de la animación.
- * @param {number}        end       Valor final de la animación.
- * @param {number}        [duration=650] Duración en milisegundos.
- */
-let _displayedCoins = StateStore.getStore().coins;
-
-function animateValue(elements, start, end, duration = 650) {
-    if (!elements || !elements.length) return;
-    if (start === end) { elements.forEach(el => el.textContent = end); return; }
-    const range = end - start;
-    const t0 = performance.now();
-    const step = (now) => {
-        const p     = Math.min((now - t0) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3); // ease-out cúbico
-        elements.forEach(el => el.textContent = Math.round(start + range * eased));
-        if (p < 1) requestAnimationFrame(step);
-        else _displayedCoins = end;
-    };
-    requestAnimationFrame(step);
-}
-
-function _showStorageToast(message, type = 'warning') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast--${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('toast--visible'));
-    setTimeout(() => {
-        toast.classList.remove('toast--visible');
-        setTimeout(() => toast.remove(), 400);
-    }, 5200);
-}
-
-StateStore.setStorageToastHandler(_showStorageToast);
-
-function initInteractiveMicroFX() {
-    const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container';
-    const coarsePointerMql = window.matchMedia('(pointer: coarse)');
-    const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let coarsePointer = coarsePointerMql.matches;
-    let reducedMotion = reducedMotionMql.matches;
-    const _bindMediaChange = (mql, handler) => {
-        if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
-        else if (typeof mql.addListener === 'function') mql.addListener(handler);
-    };
-    _bindMediaChange(coarsePointerMql, (e) => { coarsePointer = e.matches; });
-    _bindMediaChange(reducedMotionMql, (e) => { reducedMotion = e.matches; });
-    const isAndroid = /Android/i.test(navigator.userAgent || '');
-    let activePressEl = null;
-
-    document.querySelectorAll(interactiveSelector).forEach((el) => {
-        el.classList.add('interactive-ripple');
-    });
-
-    const releasePress = () => {
-        if (!activePressEl) return;
-        activePressEl.classList.remove('is-pressing');
-        activePressEl = null;
-    };
-
-    document.addEventListener('pointerdown', (event) => {
-        const el = event.target.closest(interactiveSelector);
-        if (!el) return;
-        releasePress();
-        activePressEl = el;
-        if (!el.classList.contains('interactive-ripple')) {
-            el.classList.add('interactive-ripple');
-        }
-        el.classList.add('ripple-active');
-        el.classList.add('is-pressing');
-        if (!reducedMotion && !coarsePointer) {
-            const rect = el.getBoundingClientRect();
-            el.style.setProperty('--tap-x', `${event.clientX - rect.left}px`);
-            el.style.setProperty('--tap-y', `${event.clientY - rect.top}px`);
-            el.classList.remove('is-rippling');
-            requestAnimationFrame(() => el.classList.add('is-rippling'));
-            setTimeout(() => {
-                el.classList.remove('is-rippling');
-                el.classList.remove('ripple-active');
-            }, 430);
-        } else {
-            setTimeout(() => el.classList.remove('ripple-active'), 90);
-        }
-        if (isAndroid && _canUseVibration()) {
-            navigator.vibrate(8);
-        }
-    }, { passive: true });
-
-    document.addEventListener('pointerup', () => {
-        releasePress();
-    }, { passive: true });
-    document.addEventListener('pointercancel', () => {
-        releasePress();
-    }, { passive: true });
-    document.addEventListener('scroll', () => {
-        releasePress();
-    }, { passive: true });
-}
-
-function initLoadingStateObserver() {
-    const loadingSelector = 'button[data-loading], [role="button"][data-loading]';
-    const syncButtonState = (button) => {
-        const isLoading = button.getAttribute('data-loading') === 'true';
-        if (isLoading) {
-            if (!button.dataset.lockedInlineSize) {
-                button.dataset.lockedInlineSize = `${Math.ceil(button.getBoundingClientRect().width)}px`;
-            }
-            button.style.width = button.dataset.lockedInlineSize;
-            button.setAttribute('aria-busy', 'true');
-            button.disabled = true;
-            return;
-        }
-        button.style.removeProperty('width');
-        button.removeAttribute('aria-busy');
-        button.disabled = false;
-        delete button.dataset.lockedInlineSize;
-    };
-
-    document.querySelectorAll(loadingSelector).forEach(syncButtonState);
-
-    const observer = new MutationObserver((records) => {
-        records.forEach((record) => {
-            if (!(record.target instanceof HTMLElement)) return;
-            if (!record.target.matches(loadingSelector)) return;
-            syncButtonState(record.target);
-        });
-    });
-
-    observer.observe(document.body, {
-        attributes: true,
-        subtree: true,
-        attributeFilter: ['data-loading']
-    });
-}
-
-// =====================================================
 // FUNCIONES INTERNAS
 // =====================================================
 
 let _pendingSyncRetries = 0;
 let _cloudSyncRetryTimer = null;
-let _deferredUIFrame = null;
 let _deferredCloudSyncHandle = null;
 let _pendingDeferredCloudSync = false;
 const MAX_SYNC_RETRIES = 3;
 const SYNC_RETRY_DELAY = 500;
-
-/**
- * Deja que el navegador pinte el feedback de una mutación antes de recorrer
- * el DOM completo. Varias escrituras dentro del mismo frame se coalescen para
- * que updateUI() siempre lea el estado más reciente una sola vez.
- */
-function _scheduleUIUpdate() {
-    if (_deferredUIFrame !== null) return;
-    _deferredUIFrame = requestAnimationFrame(() => {
-        _deferredUIFrame = null;
-        updateUI();
-    });
-}
 
 /**
  * Ejecuta la sincronización cloud después del frame crítico de interacción.
@@ -291,284 +125,9 @@ document.addEventListener('la:cloud-authenticated', () => {
     if (_pendingSyncRetries > 0) _syncCloudIfNeeded(true);
 });
 
-StateStore.subscribe((_state, { source, notifyUI = true } = {}) => {
-    if (source === 'save' && notifyUI) _scheduleUIUpdate();
-});
-
 StateStore.subscribe((_state, { source, notifyCloud = true, immediateCloudSync = false } = {}) => {
     if (source === 'save' && notifyCloud) _scheduleCloudSync(immediateCloudSync);
 });
-
-/**
- * Formatea un número de monedas para la Navbar.
- * < 10 000 → número completo (ej: 9 500 → "9500")
- * ≥ 10 000 → formato "k" con un decimal si aplica (ej: 25 500 → "25.5k", 20 000 → "20k")
- * El Player Hub siempre recibe el número exacto; esta función es solo para .navbar .coin-display.
- * @param {number} n
- * @returns {string}
- */
-function formatCoinsNavbar(n) {
-    if (n < 10_000) return String(n);
-    const k = n / 1000;
-    // Usar un decimal solo si el resultado no es entero
-    return (Number.isInteger(k) ? k : Math.floor(k * 10) / 10) + 'k';
-}
-
-/**
- * Actualiza toda la UI o solo el chrome compartido y una vista concreta.
- *
- * @param {{ scope?: HTMLElement }} [options]
- */
-function updateUI({ scope } = {}) {
-    // La navbar está fuera de las vistas SPA y siempre es visible. El resto se
-    // limita a `scope` durante una navegación para no recorrer vistas ocultas.
-    const navbarDisplays = Array.from(
-        document.querySelectorAll('.navbar .coin-display')
-    );
-    const displayRoot = scope || document;
-    // Las vistas SPA permanecen montadas, pero solo una está visible. Excluir
-    // contadores de una .view-section oculta evita escribir en ellos en cada
-    // frame de animateValue(); syncUI() los actualiza al entrar en su vista.
-    const otherDisplays = Array.from(
-        displayRoot.querySelectorAll('.coin-display')
-    ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
-
-    if (_displayedCoins === StateStore.getStore().coins) {
-        // Sin delta: escribir valores formateados directamente, sin animación.
-        // Evita sobrescribir el valor formateado que ya pintó el init silencioso.
-        navbarDisplays.forEach(el => {
-            el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
-            // El tooltip muestra el valor exacto cuando la navbar usa formato abreviado
-            // (ej: "25.5k"). El usuario puede ver el número preciso sin ir al HUD.
-            el.closest('.coin-badge')?.setAttribute('title', `${StateStore.getStore().coins} monedas`);
-        });
-        otherDisplays.forEach(el  => { el.textContent = StateStore.getStore().coins; });
-    } else {
-        // Con delta: animar con número exacto y formatear navbar al terminar
-        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, StateStore.getStore().coins);
-
-        // Sobrescribir la navbar con el valor formateado al terminar la animación
-        // (animateValue dura ~650 ms; con 700 ms de margen evitamos parpadeos)
-        if (navbarDisplays.length) {
-            setTimeout(() => {
-                navbarDisplays.forEach(el => {
-                    el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
-                });
-            }, 700);
-        }
-    }
-
-    applyAvatar(scope);
-    updateDailyButton(scope);
-    updateMoonBlessingUI(scope);
-}
-
-// Puente transitorio: game-center.js conserva la API pública y app.js mantiene
-// el renderizado hasta el Ticket-013.
-GameCenterModule.setUIRefreshHandler((scope) => {
-    _displayedCoins = StateStore.getStore().coins;
-    updateUI({ scope });
-});
-
-/** Exponer formatCoinsNavbar para uso en shop.html si fuera necesario. */
-window.formatCoinsNavbar = formatCoinsNavbar;
-
-function applyAvatar(scope) {
-    if (!StateStore.getStore().userAvatar) return;
-    // La navbar es chrome compartido; los demás avatares se limitan a la vista
-    // entrante cuando syncUI() proporciona un scope.
-    const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
-    const avatars = scope
-        ? new Set([
-            document.getElementById('user-avatar-display'),
-            ...scope.querySelectorAll('#hud-avatar-display, #profile-avatar-display, .hud-avatar')
-        ])
-        : document.querySelectorAll(avatarSelector);
-
-    avatars.forEach(el => {
-        if (!el) return;
-        el.style.backgroundImage = `url('${StateStore.getStore().userAvatar}')`;
-        const icon = el.querySelector('i, svg');
-        if (icon) icon.style.display = 'none';
-    });
-}
-
-/**
- * Escribe el nickname y el sufijo de género en el DOM del HUD de forma síncrona.
- * Llamada antes de revealUI() para que el usuario nunca vea el estado por defecto.
- * Si el store no tiene nickname, no modifica el DOM (el modal se encargará).
- */
-function applyIdentity() {
-    const suffixEl   = document.getElementById('pref-suffix');
-    const nicknameEl = document.getElementById('display-nickname');
-    const profileNameEl = document.getElementById('profile-title');
-    if (suffixEl)   suffixEl.textContent   = StateStore.getStore().gender   || '@';
-    if (nicknameEl) nicknameEl.textContent = StateStore.getStore().nickname || '';
-    if (profileNameEl) profileNameEl.textContent = StateStore.getStore().nickname || 'Love Arcade';
-}
-
-// Puente transitorio: avatar.js persiste datos; app.js mantiene el DOM hasta el Ticket-013.
-Avatar.setUIRefreshHandler(applyAvatar);
-
-// Puente transitorio: identidad es dato puro; el DOM se moverá en el Ticket-013.
-Identity.setUIRefreshHandler(applyIdentity);
-
-function updateDailyButton(scope) {
-    const root = scope || document;
-    const btn = root.querySelector('#btn-daily');
-    if (!btn) return;
-
-    const can  = window.GameCenter.canClaimDaily();
-    const info = window.GameCenter.getStreakInfo();
-
-    const repairMode = Boolean(info.repairAvailable);
-    const enabled = repairMode ? Boolean(info.canAffordRepair) : can;
-
-    btn.disabled      = !enabled;
-    btn.style.opacity = enabled ? '1' : '0.5';
-    btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
-    btn.dataset.mode  = repairMode ? 'repair' : 'claim';
-    btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
-
-    const ctaTextEl = root.querySelector('#hud-daily-cta-text');
-    if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
-
-    const msg = root.querySelector('#daily-msg');
-    if (msg && repairMode && !info.canAffordRepair) {
-        msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
-        msg.style.color = '#facc15';
-        msg.style.opacity = '1';
-    }
-
-    // El único botón diario de la SPA contiene el importe específico del hub.
-    const rewardEl = root.querySelector('#hud-reward-amount');
-    if (rewardEl) {
-        // Solo actualizar la cifra; la etiqueta "DÍAS" se queda fija.
-        if (repairMode) {
-            rewardEl.textContent = `${info.repairCost} 🪙`;
-        } else if (!can) {
-            rewardEl.textContent = `×${info.streak}`;
-        } else {
-            const moonStatus = window.GameCenter.getMoonBlessingStatus();
-            const total = info.nextReward + (moonStatus.active ? 90 : 0);
-            rewardEl.textContent = `+${total}`;
-        }
-        return;
-    }
-}
-
-function updateMoonBlessingUI(scope) {
-    const status   = window.GameCenter.getMoonBlessingStatus();
-    // La insignia de la navbar es compartida; las demás se actualizan solo en
-    // la vista visible cuando la sincronización viene del router.
-    const moonBadges = scope
-        ? new Set([
-            ...document.querySelectorAll('.navbar .moon-blessing-badge'),
-            ...scope.querySelectorAll('.moon-blessing-badge')
-        ])
-        : document.querySelectorAll('.moon-blessing-badge');
-
-    moonBadges.forEach(badge => {
-        badge.classList.toggle('hidden', !status.active);
-        if (status.active) {
-            badge.title = `Bendición Lunar activa hasta ${status.expiresAt}`;
-        }
-    });
-
-    // Botón de compra en tienda
-    const root = scope || document;
-    const moonBtn = root.querySelector('#btn-moon-blessing');
-    if (moonBtn) {
-        const statusEl = root.querySelector('#moon-blessing-status');
-        if (status.active) {
-            moonBtn.textContent = 'Extender Bendición (+7 días)';
-            if (statusEl) statusEl.textContent = `Activa hasta ${status.expiresAt}`;
-        } else {
-            moonBtn.textContent = 'Activar Bendición Lunar (100 monedas)';
-            if (statusEl) statusEl.textContent = 'Inactiva';
-        }
-    }
-}
-
-// Puente transitorio: la actualización de DOM se mantiene en app.js hasta el Ticket-013.
-MoonBlessing.setUIRefreshHandler(updateMoonBlessingUI);
-
-function _setDailyMessage(message, success = false) {
-    const msg = document.getElementById('daily-msg');
-    if (!msg) return;
-    msg.textContent   = message;
-    msg.style.color   = success ? '#4ade80' : '#facc15';
-    msg.style.opacity = '1';
-    setTimeout(() => { msg.style.opacity = '0'; }, 3500);
-}
-
-function showDailyRepairModal() {
-    const modal = document.getElementById('daily-repair-modal');
-    const messageEl = document.getElementById('daily-repair-message');
-    const confirmBtn = document.getElementById('btn-daily-repair-confirm');
-    const cancelBtn = document.getElementById('btn-daily-repair-cancel');
-    const info = window.GameCenter.getStreakInfo();
-    if (!modal || !messageEl || !confirmBtn || !cancelBtn || !info.repairAvailable) return;
-
-    messageEl.textContent = `¿Quieres usar ${info.repairCost} monedas para rescatar tu racha de ${info.streak} día${info.streak !== 1 ? 's' : ''}? 🪙✨`;
-    modal.classList.remove('hidden');
-    modal.classList.add('daily-repair-overlay--visible');
-    confirmBtn.disabled = !info.canAffordRepair;
-    confirmBtn.focus();
-
-    const close = () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('daily-repair-overlay--visible');
-        document.getElementById('btn-daily')?.focus();
-    };
-    cancelBtn.onclick = close;
-    confirmBtn.onclick = () => {
-        confirmBtn.disabled = true;
-        const result = window.GameCenter.repairDailyStreak();
-        close();
-        _setDailyMessage(result.message, result.success);
-        updateUI();
-        updateDailyButton();
-        window.updateStreakBar?.();
-    };
-}
-
-// =====================================================
-// REVEAL UI — v9.3 Zero-Flicker
-// =====================================================
-/**
- * Revela bloques críticos de UI en el primer frame seguro tras hidratación.
- *
- * Precondiciones: saldo/avatar/hud ya escritos con valores reales.
- * Efectos secundarios: escrituras DOM de clases CSS; dispara transiciones visuales.
- * Coste esperado: O(n) sobre nodos HUD (pequeño y acotado).
- * Diseño (por qué): usar `requestAnimationFrame` separa "hidratar datos" de
- * "mostrar UI", evitando flicker del estado placeholder y layout-shift temprano.
- */
-function revealUI() {
-    requestAnimationFrame(() => {
-        // coin-badge: usa su propia clase para compatibilidad con v9.2
-        document.querySelectorAll('.coin-badge').forEach(el => {
-            el.classList.add('coin-badge--visible');
-        });
-        // hud-avatar-wrap: se revela solo cuando el avatar (o el placeholder)
-        // ya está correctamente pintado
-        document.querySelectorAll('.hud-avatar-wrap').forEach(el => {
-            el.classList.add('is-ready');
-        });
-        // player-hud: se revela completo una vez que botón diario, countdown
-        // y barras de racha están en su estado correcto en el DOM oculto.
-        // Esto evita:
-        //  - El fade del botón disabled (transition:all disparada por CSS)
-        //  - El layout-shift del countdown (display:none → block mueve .hud-streak)
-        document.querySelectorAll('.player-hud').forEach(el => {
-            el.classList.add('is-ready');
-        });
-    });
-}
-// Expuesta globalmente para que el inline script de index.html pueda llamarla
-// DESPUÉS de que updateStreakBar() y updateCountdownDisplay() hayan corrido.
-window.revealUI = revealUI;
 
 // =====================================================
 // INIT SÍNCRONO — v9.3 Zero-Flicker Initiative
@@ -598,26 +157,20 @@ if (StateStore.isBase64Avatar(StateStore.getStore().userAvatar) && StateStore.ge
 
 // 2. SALDO — escribe el valor formateado síncronamente.
 //    El .coin-badge tiene opacity:0 por CSS; nunca pintará el "0" del HTML.
-_displayedCoins = StateStore.getStore().coins;
-document.querySelectorAll('.navbar .coin-display').forEach(el => {
-    el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
-});
-document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
-    el.textContent = StateStore.getStore().coins;
-});
+HUD.syncInitialCoinDisplay();
 
 // 3. BOTÓN DIARIO Y LUNA — corrige el estado (activo/desactivado, texto de
 //    recompensa) antes del primer paint, eliminando el "salto de estado".
-updateDailyButton();
-updateMoonBlessingUI();
+HUD.updateDailyButton();
+HUD.updateMoonBlessingUI();
 
 // 4. AVATAR — aplica la imagen guardada síncronamente (si existe).
-applyAvatar();
+HUD.applyAvatar();
 
 // 5. IDENTIDAD — escribe nickname y sufijo de género en el DOM antes del reveal.
 //    Solo actúa si hay nickname guardado; si no, el modal de bienvenida (en el
 //    inline script de index.html) se encarga de llamar a revealUI() al confirmar.
-applyIdentity();
+HUD.applyIdentity();
 
 // NOTA: revealUI() se llama desde el inline script de index.html, DESPUÉS de
 // que updateStreakBar() y updateCountdownDisplay() también hayan corrido.
@@ -642,11 +195,11 @@ applyIdentity();
 // Los listeners no afectan al primer paint; se registran aquí por claridad.
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
-    initInteractiveMicroFX();
-    initLoadingStateObserver();
+    MicroInteractions.initInteractiveMicroFX();
+    MicroInteractions.initLoadingStateObserver();
 
     // Re-sincronizar UI por si algún sub-módulo modificó el DOM
-    updateUI();
+    HUD.updateUI();
 
     // ── Analítica — open_game ─────────────────────────────────────────────────
     // Delegación global para detectar la apertura de cualquier minijuego.
@@ -737,8 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dailyBtn.style.cursor  = 'not-allowed';
 
             if (dailyBtn.dataset.mode === 'repair') {
-                showDailyRepairModal();
-                updateDailyButton();
+                HUD.showDailyRepairModal();
+                HUD.updateDailyButton();
                 return;
             }
 
@@ -747,18 +300,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // ── Paso 3: mostrar mensaje y actualizar UI ──
             if (result.repairRequired) {
-                showDailyRepairModal();
+                HUD.showDailyRepairModal();
             } else {
-                _setDailyMessage(result.message, result.success);
+                HUD.setDailyMessage(result.message, result.success);
             }
 
             // updateDailyButton() recalcula el estado correcto del botón
             // (puede habilitarlo si el reclamo falló por error recuperable,
             //  o dejarlo desactivado con el contador si fue exitoso).
-            updateDailyButton();
+            HUD.updateDailyButton();
             // El dominio ya no escribe DOM: conservar el refresco que hacía
             // claimDaily() antes de la extracción.
-            updateMoonBlessingUI();
+            HUD.updateMoonBlessingUI();
             window.StreakHub?.playClaimSequence?.(result);
 
         });
@@ -1547,38 +1100,3 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 })(); // fin IIFE SentinelCloudSync
-
-
-(function setupServiceWorkerUpdateBridge() {
-    if (!('serviceWorker' in navigator)) return;
-
-    function showUpdateBanner(registration) {
-        if (document.getElementById('sw-update-banner')) return;
-        const banner = document.createElement('div');
-        banner.id = 'sw-update-banner';
-        banner.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;padding:12px 14px;border-radius:10px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;';
-        banner.innerHTML = '<span>Nueva versión disponible.</span><button id="sw-update-btn" style="background:#6d28d9;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;">Actualizar</button>';
-        document.body.appendChild(banner);
-        banner.querySelector('#sw-update-btn')?.addEventListener('click', () => {
-            registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
-        });
-    }
-
-    navigator.serviceWorker.getRegistration('/').then((registration) => {
-        if (!registration) return;
-        if (registration.waiting) showUpdateBanner(registration);
-        registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (!newWorker) return;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    showUpdateBanner(registration);
-                }
-            });
-        });
-    }).catch(() => {});
-
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-    });
-})();
