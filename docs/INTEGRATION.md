@@ -7,7 +7,7 @@ Este documento es la referencia actual para integradores de minijuegos dentro de
 ## Estado del documento
 
 - Hecho verificado: los minijuegos viven bajo `games/` y cada uno tiene un `index.html` propio.
-- Hecho verificado: el hub expone `window.GameCenter` como API pública de dominio.
+- Hecho verificado: `js/domain/game-center.js` ensambla `window.GameCenter` como API pública de dominio, sin cambiar el contrato para minijuegos.
 - Hecho verificado: `window.GameCenter.completeLevel(gameId, levelId, rewardAmount)` es la forma actual de registrar recompensas del juego.
 - Inferencia: la arquitectura del proyecto asume juegos autónomos con persistencia local propia y con retorno al hub desde el navegador.
 - No confirmado: cualquier contrato adicional que no aparezca explícitamente en el código actual debe mantenerse en cada README del juego y revisarse localmente.
@@ -85,7 +85,7 @@ Esto no implica un contrato de runtime especial ni un servidor propio del reposi
 
 ## 8. Namespacing y globals reservados
 
-Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La integración actual considera relevantes los siguientes globals públicos:
+Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La integración actual considera relevantes los siguientes globals públicos; los namespaces internos `LoveArcadeTheming`, `LoveArcadeThemeGrid` y `LoveArcadeGameCenter` no son contrato de integración:
 
 - `window.GameCenter`
 - `window.THEMES`

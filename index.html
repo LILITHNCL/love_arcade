@@ -1111,14 +1111,15 @@
         10. domain/promo-codes.js → Canje de promociones SHA-256
         11. domain/moon-blessing.js → Estado de Bendición Lunar
         12. domain/identity.js → Nickname y género persistidos
-        13. app.js        → GameCenter y updateUI (núcleo)
-                            Incluye Sentinel Cloud Sync v13.0:
-                            StorageInterceptor + Supabase auth/sync
-        14. backup-engine.js y shop-logic.js
-                            → Backup y Tienda
-        15. streak-hub.js → Widget de fuego, animaciones de reclamo,
-                            audio sintetizado
-        16. spa-router.js → Navegación SPA entre vistas
+        13. domain/daily-streak.js → Bono diario y reparación de racha
+        14. domain/avatar.js → Avatar local y Storage cloud
+        15. domain/theming.js → Estado y aplicación de temas
+        16. ui/theme-grid.js → Selector accesible de temas
+        17. domain/game-center.js → Ensambla window.GameCenter
+        18. app.js        → Bootstrap UI y Sentinel Cloud Sync
+        19. backup-engine.js y shop-logic.js → Backup y Tienda
+        20. streak-hub.js → Widget de fuego y feedback de reclamo
+        21. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1134,6 +1135,11 @@
     <script src="js/domain/promo-codes.js"></script>
     <script src="js/domain/moon-blessing.js"></script>
     <script src="js/domain/identity.js"></script>
+    <script src="js/domain/daily-streak.js"></script>
+    <script src="js/domain/avatar.js"></script>
+    <script src="js/domain/theming.js"></script>
+    <script src="js/ui/theme-grid.js"></script>
+    <script src="js/domain/game-center.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/shop-logic.js"></script>
