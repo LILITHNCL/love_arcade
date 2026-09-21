@@ -28,7 +28,8 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 
 | Archivo | Rol dentro del sistema |
 |---|---|
-| `js/app.js` | Fuente principal de lógica: configuración económica, estado, migración, reclamo, cálculo de racha, Bendición Lunar, UI y listener del botón diario. |
+| `js/app.js` | Fuente principal de estado, migración, reclamo, cálculo de racha, Bendición Lunar, UI y listener del botón diario. |
+| `js/core/time-sync.js` | Caché y sincronización de tiempo de red; expone `window.LoveArcadeTime` para cálculo de día, lectura de caché y próximo reset. |
 | `js/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
 | `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
 | `styles.css` | Estilos visuales, estados y animaciones del HUD diario. |
@@ -113,8 +114,8 @@ Ejemplos:
 
 El sistema compara **medianoche relativa contra medianoche relativa** con una madrugada flexible de 3 horas:
 
-1. `nowMidnight = _getDailyDayStart(now)`, que resta 3 horas antes de normalizar a medianoche local.
-2. `lastMidnight = _getDailyDayStart(lastClaim)`, aplicando el mismo desfase de 3 horas.
+1. `nowMidnight = LoveArcadeTime.dayStart(now)`, que resta 3 horas antes de normalizar a medianoche local.
+2. `lastMidnight = LoveArcadeTime.dayStart(lastClaim)`, aplicando el mismo desfase de 3 horas.
 3. `diffDays = Math.round((nowMidnight - lastMidnight) / 86_400_000)`.
 
 Reglas:
@@ -135,7 +136,7 @@ El flujo principal ocurre cuando el usuario pulsa `#btn-daily`:
 
 1. El listener del botón desactiva el botón **sincrónicamente** antes de ejecutar la lógica. Esto evita dobles clics o carreras.
 2. Se ejecuta `window.GameCenter.claimDaily()`.
-3. `claimDaily()` lee el caché de tiempo con `_readTimeCache()`.
+3. `claimDaily()` lee el caché de tiempo con `LoveArcadeTime.read()`.
 4. Se bloquea si detecta salto negativo de reloj (`now < lastClaim`).
 5. Se bloquea si el último sync marcó `desynced`.
 6. Se calcula `diffDays` usando días calendario.
@@ -175,7 +176,7 @@ El TTL del caché es de **4 horas**. Si no hay caché o expiró, `claimDaily()` 
 
 ### 7.2 Fuente de tiempo
 
-`_fetchServerDateHeader()` hace un `HEAD /` y usa el header HTTP `Date` del propio origen. Esto evita depender de APIs de terceros y problemas CORS.
+`_fetchServerDateHeader()` en `js/core/time-sync.js` hace un `HEAD /` y usa el header HTTP `Date` del propio origen. Esto evita depender de APIs de terceros y problemas CORS.
 
 ### 7.3 Casos bloqueados
 
@@ -391,7 +392,7 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 flowchart TD
   A[Usuario pulsa BONO DIARIO] --> B[Deshabilitar botón inmediatamente]
   B --> C[GameCenter.claimDaily]
-  C --> D[_readTimeCache]
+  C --> D[LoveArcadeTime.read]
   D --> E{Reloj inválido o desynced?}
   E -- Sí --> F[Error sin mutar racha]
   E -- No --> G[Calcular diffDays por medianoche]

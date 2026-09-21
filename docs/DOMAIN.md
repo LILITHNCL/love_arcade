@@ -118,7 +118,7 @@ Si hay una ruptura de 2 días, la UI puede ofrecer reparación por 500 monedas. 
 
 ### Reloj y seguridad
 
-Evidencia: `_readTimeCache()`, `_getDailyDiffDays()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL`, y la validación de `desynced` en `claimDaily()`.
+Evidencia: `window.LoveArcadeTime.read()`, `dayDiff()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL` en `js/core/time-sync.js`, y la validación de `desynced` en `claimDaily()`.
 
 - El sistema usa un caché sincronizado en `localStorage` para evaluar la validez del día.
 - Si el reloj se detecta desincronizado, el reclamo se bloquea.

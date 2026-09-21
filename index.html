@@ -1104,14 +1104,15 @@
          3. lifecycle-scheduler.js → Coordinación de intervalos por ciclo de vida
          4. core/config.js → CONFIG, ECONOMY y THEMES (síncrono)
          5. core/utils.js → sha256, debounce y haptics (síncrono)
-         6. app.js        → GameCenter, store, updateUI (núcleo)
+         6. core/time-sync.js → caché y sincronización horaria (síncrono)
+         7. app.js        → GameCenter, store, updateUI (núcleo)
                             Incluye Sentinel Cloud Sync v13.0:
                             StorageInterceptor + Supabase auth/sync
-         7. backup-engine.js y shop-logic.js
+         8. backup-engine.js y shop-logic.js
                             → Backup y Tienda
-         8. streak-hub.js → Widget de fuego, animaciones de reclamo,
+         9. streak-hub.js → Widget de fuego, animaciones de reclamo,
                             audio sintetizado
-         9. spa-router.js → Navegación SPA entre vistas
+        10. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1120,6 +1121,7 @@
     <script src="js/lifecycle-scheduler.js"></script>
     <script src="js/core/config.js"></script>
     <script src="js/core/utils.js"></script>
+    <script src="js/core/time-sync.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/shop-logic.js"></script>
