@@ -24,7 +24,7 @@
 
 ## 1. ¿Cómo funciona el sistema de economía?
 
-El sistema de economía de Love Arcade está diseñado para ser **controlado desde un único lugar** en el código: el objeto `ECONOMY` en `js/core/config.js`. No requiere tocar la lógica de compra, ni los HTMLs, ni el JSON de productos.
+El sistema de economía de Love Arcade está diseñado para ser **controlado desde un único lugar** en el código: el objeto `ECONOMY` en `js/core/config.js`. La implementación de compras está aislada en `js/domain/economy.js`, por lo que no requiere tocar la lógica de compra, los HTMLs ni el JSON de productos al ajustar una oferta.
 
 La fórmula exacta y su ejemplo de cálculo son responsabilidad de [docs/DOMAIN.md](./DOMAIN.md) §2.
 Esta guía se enfoca en el procedimiento operativo: cómo activar, ajustar y desactivar ofertas y cashback.

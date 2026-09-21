@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.44';
+const CACHE_VERSION = 'v2.04.07.48';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -11,6 +11,12 @@ const APP_SHELL_FILES = [
   '/js/core/config.js',
   '/js/core/utils.js',
   '/js/core/time-sync.js',
+  '/js/core/state-store.js',
+  '/js/domain/history.js',
+  '/js/domain/economy.js',
+  '/js/domain/promo-codes.js',
+  '/js/domain/moon-blessing.js',
+  '/js/domain/identity.js',
   '/js/app.js',
   '/js/sync-worker.js',
   '/js/analytics.js',

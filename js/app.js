@@ -1,9 +1,14 @@
 // Configuración estática cargada síncronamente por js/core/config.js antes de app.js.
 const CONFIG = window.CONFIG;
-const ECONOMY = window.ECONOMY;
 const THEMES = window.THEMES;
-const { LEGACY_THEME_FALLBACK, PROMO_CODES_HASHED } = window.LoveArcadeConfig;
+const StateStore = window.LoveArcadeStore;
+const { logTransaction, getHistory } = window.LoveArcadeHistory;
+const Economy = window.LoveArcadeEconomy;
+const { KB, AVATAR_MAX_LOCAL_KB, AVATAR_CLEANUP_KB } = StateStore.constants;
 const { sha256, canUseVibration: _canUseVibration } = window.LoveArcadeUtils;
+const PromoCodes = window.LoveArcadePromoCodes;
+const MoonBlessing = window.LoveArcadeMoonBlessing;
+const Identity = window.LoveArcadeIdentity;
 
 // Salt para checksums de sincronización — mantener secreto
 const SYNC_SALT = 'love_arcade_v75_integrity_2026';
@@ -11,7 +16,7 @@ const DAILY_REPAIR_COST = 500;
 
 function _getDailyRepairState() {
     const { time: now, verified, desynced } = window.LoveArcadeTime.read();
-    const { lastClaim, streak } = StateStore.get().daily;
+    const { lastClaim, streak } = StateStore.getStore().daily;
     const diffDays = window.LoveArcadeTime.dayDiff(now, lastClaim);
     return {
         now,
@@ -20,7 +25,7 @@ function _getDailyRepairState() {
         diffDays,
         repairAvailable: lastClaim > 0 && streak > 0 && diffDays === 2,
         repairCost: DAILY_REPAIR_COST,
-        canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST
+        canAffordRepair: StateStore.getStore().coins >= DAILY_REPAIR_COST
     };
 }
 
@@ -74,115 +79,6 @@ function workerTask(payload) {
 window.workerTask = workerTask;
 
 // =====================================================
-// MIGRACIÓN SILENCIOSA
-// Garantiza retrocompatibilidad con stores de versiones anteriores.
-// Nunca sobrescribe datos existentes; solo rellena campos faltantes.
-// =====================================================
-/**
- * Normaliza estado persistido y aplica migraciones backward-compatible.
- *
- * Precondiciones: `loadedStore` puede venir incompleto o con schema legado.
- * Efectos secundarios: ninguno fuera del objeto retornado (función pura).
- * Coste esperado: O(p) sobre cantidad de propiedades/colecciones migradas.
- * Diseño (por qué): centralizar migración en un único punto reduce riesgo de
- * corrupción al agregar features y evita condicionales de versión dispersos.
- */
-function migrateState(loadedStore) {
-    const defaults = {
-        coins:          CONFIG.initialCoins,
-        progress:       { maze: [], wordsearch: [], secretWordsFound: [] },
-        inventory:      {},
-        redeemedHashes: [],   // v7.5: hashes SHA-256 de códigos canjeados
-        history:        [],
-        userAvatar:     null,
-        theme:          'violet',
-        daily:          { lastClaim: 0, streak: 0 },
-        buffs:          { moonBlessingExpiry: 0 },
-        // v9.4 — Identity
-        nickname:       '',    // Máx. 15 chars. Vacío = primer acceso → flujo de bienvenida.
-        gender:         '@',   // 'o' | 'a' | '@' — controla el sufijo del saludo.
-    };
-
-    const merged = { ...defaults, ...loadedStore };
-
-    // v14.7 — Migración de los themes retirados a la paleta de 25 opciones.
-    // Mantiene la intención cromática antes de que applyTheme() aplique el fallback visual.
-    if (merged.theme && !THEMES[merged.theme]) {
-        merged.theme = LEGACY_THEME_FALLBACK[merged.theme] || 'violet';
-    }
-
-    // Migración: lastDaily (string fecha) → daily.lastClaim (timestamp)
-    if (merged.lastDaily && merged.daily.lastClaim === 0) {
-        const lastDate = new Date(merged.lastDaily);
-        if (!isNaN(lastDate.getTime())) {
-            merged.daily = { lastClaim: lastDate.getTime(), streak: 1 };
-        }
-    }
-    delete merged.lastDaily; // Eliminar campo legado
-
-    // Asegurar sub-objetos faltantes
-    if (!merged.daily   || typeof merged.daily !== 'object')  merged.daily = defaults.daily;
-    if (!merged.buffs   || typeof merged.buffs !== 'object')  merged.buffs = defaults.buffs;
-    if (!Array.isArray(merged.redeemedHashes))  merged.redeemedHashes = [];
-    if (!Array.isArray(merged.history))         merged.history = [];
-
-    // v9.4 — Validación de identidad (migración silenciosa)
-    if (typeof merged.nickname !== 'string')           merged.nickname = '';
-    if (!['o', 'a', '@'].includes(merged.gender))      merged.gender   = '@';
-
-    // v14.1 — Limpieza de legado: eliminar lista en texto plano ya obsoleta.
-    if (Object.prototype.hasOwnProperty.call(merged, 'redeemedCodes')) {
-        delete merged.redeemedCodes;
-    }
-    // v14.6 — Limpieza de legado: Misiones del Día ya no forma parte del store.
-    if (Object.prototype.hasOwnProperty.call(merged, 'missions')) {
-        delete merged.missions;
-    }
-    if (Object.prototype.hasOwnProperty.call(merged, 'claimed_milestones')) {
-        delete merged.claimed_milestones;
-    }
-
-    return merged;
-}
-
-
-// =====================================================
-// STORE — Accessor interno y carga con migración automática
-// =====================================================
-const StateStore = (function createStateStore() {
-    let _store = migrateState({});
-    const listeners = [];
-
-    try {
-        const raw = localStorage.getItem(CONFIG.stateKey);
-        if (raw) _store = migrateState(JSON.parse(raw));
-    } catch (e) {
-        console.error('GameCenter: Error al cargar estado', e);
-        _store = migrateState({});
-    }
-
-    function notify(meta = {}) {
-        listeners.forEach(listener => listener(_store, meta));
-    }
-
-    return {
-        get: () => _store,
-        replace: (next, meta = {}) => {
-            _store = next;
-            notify({ source: 'replace', ...meta });
-        },
-        notify,
-        subscribe: (listener) => {
-            listeners.push(listener);
-            return () => {
-                const index = listeners.indexOf(listener);
-                if (index !== -1) listeners.splice(index, 1);
-            };
-        }
-    };
-})();
-
-// =====================================================
 // ANIMACIÓN DE CONTADOR (requestAnimationFrame)
 // =====================================================
 
@@ -201,7 +97,7 @@ const StateStore = (function createStateStore() {
  * @param {number}        end       Valor final de la animación.
  * @param {number}        [duration=650] Duración en milisegundos.
  */
-let _displayedCoins = StateStore.get().coins;
+let _displayedCoins = StateStore.getStore().coins;
 
 function animateValue(elements, start, end, duration = 650) {
     if (!elements || !elements.length) return;
@@ -216,33 +112,6 @@ function animateValue(elements, start, end, duration = 650) {
         else _displayedCoins = end;
     };
     requestAnimationFrame(step);
-}
-
-// =====================================================
-// HISTORIAL DE TRANSACCIONES
-// =====================================================
-/**
- * Registra una transacción en store.history con formato estructurado.
- * @param {'ingreso'|'gasto'} tipo
- * @param {number}             cantidad
- * @param {string}             motivo
- */
-function logTransaction(tipo, cantidad, motivo) {
-    if (!Array.isArray(StateStore.get().history)) StateStore.get().history = [];
-    StateStore.get().history.push({ tipo, cantidad, motivo, fecha: Date.now() });
-    // Limitar a las últimas 50 entradas para no inflar el localStorage
-    if (StateStore.get().history.length > 50) {
-        StateStore.get().history = StateStore.get().history.slice(-50);
-    }
-}
-
-const KB = 1024;
-const AVATAR_MAX_LOCAL_KB = 100;
-const AVATAR_CLEANUP_KB = 200;
-const STORE_WARNING_KB = 4000;
-
-function _isBase64Avatar(value) {
-    return typeof value === 'string' && value.startsWith('data:image/');
 }
 
 function _trackAvatarStorageFallback(reason, meta = {}) {
@@ -311,19 +180,6 @@ function compressImage(blob, maxWidth = 200, maxHeight = 200, quality = 0.7) {
     });
 }
 
-function trimGameProgress() {
-    if (!StateStore.get().progress || typeof StateStore.get().progress !== 'object') return false;
-    let changed = false;
-    Object.keys(StateStore.get().progress).forEach((gameId) => {
-        if (!Array.isArray(StateStore.get().progress[gameId])) return;
-        if (StateStore.get().progress[gameId].length > 50) {
-            StateStore.get().progress[gameId] = StateStore.get().progress[gameId].slice(-50);
-            changed = true;
-        }
-    });
-    return changed;
-}
-
 function _showStorageToast(message, type = 'warning') {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
@@ -335,6 +191,8 @@ function _showStorageToast(message, type = 'warning') {
         setTimeout(() => toast.remove(), 400);
     }, 5200);
 }
+
+StateStore.setStorageToastHandler(_showStorageToast);
 
 function initInteractiveMicroFX() {
     const interactiveSelector = 'button, [role="button"], a[href], summary, .game-card, .shop-card, .avatar-container';
@@ -436,52 +294,6 @@ function initLoadingStateObserver() {
     });
 }
 
-function emergencyCleanup() {
-    let changed = false;
-
-    if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-        StateStore.get().userAvatar = null;
-        changed = true;
-    }
-
-    if (Array.isArray(StateStore.get().history) && StateStore.get().history.length > 30) {
-        StateStore.get().history = StateStore.get().history.slice(-30);
-        changed = true;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(StateStore.get(), 'redeemedCodes')) {
-        delete StateStore.get().redeemedCodes;
-        changed = true;
-    }
-
-    if (trimGameProgress()) changed = true;
-
-    const serialized = JSON.stringify(StateStore.get());
-    if (serialized.length > (4 * 1024 * 1024) && Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
-        StateStore.get().history = [];
-        changed = true;
-    }
-
-    return changed;
-}
-
-function checkStorageSize(precomputedLength) {
-    try {
-        const sizeKB = (precomputedLength ?? JSON.stringify(StateStore.get()).length) / KB;
-        if (sizeKB > STORE_WARNING_KB) {
-            window.GhostAnalytics?.track('storage_warning', { size_kb: Math.round(sizeKB) });
-            _showStorageToast(
-                'Tu progreso está cerca del límite de almacenamiento. Exporta tu partida y contacta soporte.',
-                'warning'
-            );
-            return sizeKB;
-        }
-        return sizeKB;
-    } catch (_) {
-        return 0;
-    }
-}
-
 async function _saveAvatarLocally(dataUrl) {
     const sourceBlob = _dataUrlToBlob(dataUrl);
     const compressed = await compressImage(sourceBlob, 200, 200, 0.7);
@@ -490,8 +302,8 @@ async function _saveAvatarLocally(dataUrl) {
     if (sizeKB > AVATAR_MAX_LOCAL_KB) {
         throw new Error('Imagen demasiado grande. Usa una foto de menos de 100 KB.');
     }
-    StateStore.get().userAvatar = finalDataUrl;
-    saveState({ immediateCloudSync: true });
+    StateStore.getStore().userAvatar = finalDataUrl;
+    StateStore.save({ immediateCloudSync: true });
     applyAvatar();
 }
 
@@ -512,8 +324,8 @@ async function _uploadAvatarBlobToCloud(sourceBlob, { userId, sbClient, bucket =
     if (!data?.publicUrl) throw new Error('No se pudo generar URL pública del avatar.');
 
     const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-    StateStore.get().userAvatar = publicUrl;
-    saveState({ immediateCloudSync: true });
+    StateStore.getStore().userAvatar = publicUrl;
+    StateStore.save({ immediateCloudSync: true });
     applyAvatar();
     return { path, publicUrl: data.publicUrl, cacheBustedUrl: publicUrl };
 }
@@ -530,154 +342,38 @@ window.GameCenter = {
      * Es idempotente: si el levelId ya fue registrado, no vuelve a pagar.
      */
     completeLevel: (gameId, levelId, rewardAmount) => {
-        if (!StateStore.get().progress[gameId]) StateStore.get().progress[gameId] = [];
-        if (StateStore.get().progress[gameId].includes(levelId)) {
-            return { paid: false, coins: StateStore.get().coins };
+        if (!StateStore.getStore().progress[gameId]) StateStore.getStore().progress[gameId] = [];
+        if (StateStore.getStore().progress[gameId].includes(levelId)) {
+            return { paid: false, coins: StateStore.getStore().coins };
         }
-        StateStore.get().progress[gameId].push(levelId);
+        StateStore.getStore().progress[gameId].push(levelId);
 
-        StateStore.get().coins += rewardAmount;
+        StateStore.getStore().coins += rewardAmount;
         logTransaction('ingreso', rewardAmount, `Nivel ${levelId} completado · ${gameId}`);
-        saveState({ immediateCloudSync: true });
+        StateStore.save({ immediateCloudSync: true });
 
-        return { paid: true, coins: StateStore.get().coins };
+        return { paid: true, coins: StateStore.getStore().coins };
     },
 
-    // ── TIENDA ───────────────────────────────────────────────────────────────
-
-    buyItem: (itemData) => {
-        const bought = StateStore.get().inventory[itemData.id] || 0;
-        if (bought > 0) return { success: false, reason: 'owned' };
-
-        const finalPrice = ECONOMY.isSaleActive
-            ? Math.floor(itemData.price * ECONOMY.saleMultiplier)
-            : itemData.price;
-
-        if (StateStore.get().coins < finalPrice) {
-            // [v9.9.2] Fricción de usuario: intento de compra sin saldo suficiente.
-            // Ayuda a detectar precios demasiado elevados o HUD de saldo poco claro.
-            window.GhostAnalytics?.track('insufficient_funds', {
-                wallpaper: itemData.name,
-                precio:    `${finalPrice} ⭐`,
-                saldo:     StateStore.get().coins
-            });
-            return { success: false, reason: 'coins' };
-        }
-
-        const cashback = Math.floor(finalPrice * ECONOMY.cashbackRate);
-
-        StateStore.get().coins -= finalPrice;
-        StateStore.get().coins += cashback;
-        StateStore.get().inventory[itemData.id] = bought + 1;
-
-        logTransaction('gasto',   finalPrice, `Compra: ${itemData.name}`);
-        if (cashback > 0) {
-            logTransaction('ingreso', cashback, `Cashback: ${itemData.name}`);
-        }
-
-        saveState({ immediateCloudSync: true });
-        return { success: true, finalPrice, cashback };
-    },
-
-    /**
-     * Deduce monedas del saldo directamente.
-     * Usado por el Gachapón Relámpago (event-logic.js) para cobrar el costo
-     * de giro sin pasar por buyItem(), que requiere un catálogo de ítem.
-     * No registra en store.progress ni invalida idempotencia de completeLevel().
-     * @param {number} amount  Cantidad entera positiva a deducir.
-     * @param {string} [motivo]  Descripción para el historial.
-     * @returns {{ success: boolean, coins: number }}
-     */
-    spendCoins: (amount, motivo = 'Gasto directo') => {
-        const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
-        if (StateStore.get().coins < n) return { success: false, reason: 'insufficient', coins: StateStore.get().coins };
-        StateStore.get().coins -= n;
-        logTransaction('gasto', n, motivo);
-        saveState({ immediateCloudSync: true });
-        return { success: true, coins: StateStore.get().coins };
-    },
-
-    getBoughtCount: (id) => StateStore.get().inventory[id] || 0,
-    getBalance:     ()   => StateStore.get().coins,
-    getInventory:   ()   => ({ ...StateStore.get().inventory }),
-
-    // ── v11.0 — ECONOMÍA DIRECTA ──────────────────────────────────────────────
-
-    /**
-     * Deposita monedas directamente en el saldo sin pasar por completeLevel().
-     * Usado por la Cacería de Tesoros y el Gachapón Relámpago (event-logic.js).
-     * @param {number} amount  Cantidad entera positiva de monedas a añadir.
-     * @param {string} [motivo] Descripción para el historial de transacciones.
-     * @returns {{ success: boolean, coins: number }}
-     */
-    addCoins: (amount, motivo = 'Depósito directo') => {
-        const n = Math.floor(amount);
-        if (!Number.isFinite(n) || n <= 0) return { success: false, coins: StateStore.get().coins };
-        StateStore.get().coins += n;
-        logTransaction('ingreso', n, motivo);
-        saveState({ immediateCloudSync: true });
-        return { success: true, coins: StateStore.get().coins };
-    },
-
-    /**
-     * Devuelve el número de códigos promocionales ya canjeados.
-     * Usado por el user_snapshot de shop-logic.js para enriquecer la
-     * instantánea de sesión sin exponer el array completo de hashes.
-     * @returns {number}
-     */
-    getRedeemedCount: () => (StateStore.get().redeemedHashes || []).length,
-
-    getDownloadUrl: (itemId, sourceUrl) => {
-        if (!sourceUrl || (StateStore.get().inventory[itemId] || 0) === 0) return null;
-        const uploadMarker = '/image/upload/';
-        if (sourceUrl.includes(uploadMarker)) {
-            if (sourceUrl.includes(`${uploadMarker}fl_attachment/`)) return sourceUrl;
-            return sourceUrl.replace(uploadMarker, `${uploadMarker}fl_attachment/`);
-        }
-        return sourceUrl;
-    },
-
+    // ── TIENDA Y ECONOMÍA ───────────────────────────────────────────────────
+    // La implementación vive en js/domain/economy.js; se conserva exactamente
+    // el contrato público de GameCenter mientras el ensamblado se extrae en el Ticket-012.
+    buyItem: Economy.buyItem,
+    spendCoins: Economy.spendCoins,
+    getBoughtCount: Economy.getBoughtCount,
+    getBalance: Economy.getBalance,
+    getInventory: Economy.getInventory,
+    addCoins: Economy.addCoins,
+    getRedeemedCount: Economy.getRedeemedCount,
+    getDownloadUrl: Economy.getDownloadUrl,
 
     // ── HISTORIAL ────────────────────────────────────────────────────────────
+    getHistory,
 
-    /**
-     * Devuelve el historial de transacciones en orden cronológico inverso
-     * (la más reciente primero).
-     */
-    getHistory: () => [...(StateStore.get().history || [])].reverse(),
-
-    // ── CÓDIGOS PROMO (async — SHA-256) ──────────────────────────────────────
-
-    /**
-     * Canjea un código promocional.
-     * El código se hashea en el cliente antes de compararlo; el texto plano
-     * nunca se almacena ni se compara directamente, protegiendo los códigos
-     * de una lectura trivial en DevTools.
-     * @returns {Promise<{success: boolean, reward?: number, message: string}>}
-     */
-    redeemPromoCode: async (inputCode) => {
-        const code = inputCode.trim().toUpperCase();
-        const hash = await sha256(code);
-
-        const reward = PROMO_CODES_HASHED[hash];
-        if (!reward) return { success: false, message: 'Código inválido' };
-
-        if (StateStore.get().redeemedHashes.includes(hash)) {
-            return { success: false, message: 'Ya canjeaste este código' };
-        }
-
-        StateStore.get().coins += reward;
-        StateStore.get().redeemedHashes.push(hash);
-        logTransaction('ingreso', reward, `Código canjeado`);
-        saveState();
-
-        // [v9.9.2] track('redeem_code') fue movido a handleRedeem() en shop-logic.js
-        // para que el disparo ocurra UNA SOLA VEZ, al final de la cadena de éxito
-        // de UI. No se trackea aquí para evitar el doble reporte.
-
-        return { success: true, reward, message: `¡+${reward} Monedas!` };
-    },
+    // ── CÓDIGOS PROMO ─────────────────────────────────────────────────────────
+    // La implementación vive en js/domain/promo-codes.js; GameCenter conserva
+    // el contrato público hasta que se extraiga su ensamblado.
+    redeemPromoCode: PromoCodes.redeemPromoCode,
 
     // ── BONO DIARIO CON RACHA ────────────────────────────────────────────────
 
@@ -705,7 +401,7 @@ window.GameCenter = {
      */
     claimDaily: () => {
         const { time: now, verified, desynced } = window.LoveArcadeTime.read();
-        const { lastClaim, streak } = StateStore.get().daily;
+        const { lastClaim, streak } = StateStore.getStore().daily;
 
         // ── 1. Salto negativo (manipulación de reloj detectada por el caché) ──
         if (lastClaim > 0 && now < lastClaim) {
@@ -741,10 +437,10 @@ window.GameCenter = {
                 success: false,
                 repairRequired: true,
                 repairCost: DAILY_REPAIR_COST,
-                canAffordRepair: StateStore.get().coins >= DAILY_REPAIR_COST,
+                canAffordRepair: StateStore.getStore().coins >= DAILY_REPAIR_COST,
                 streak,
                 verified,
-                message: StateStore.get().coins >= DAILY_REPAIR_COST
+                message: StateStore.getStore().coins >= DAILY_REPAIR_COST
                     ? `Puedes reparar tu racha de ${streak} día${streak !== 1 ? 's' : ''}.`
                     : 'Consigue las monedas que faltan jugando en el Arcade.'
             };
@@ -764,13 +460,13 @@ window.GameCenter = {
         // detección de desynced en el sync anterior. Sin conexión genuina el
         // usuario tampoco puede comprar la Bendición Lunar, por lo que el
         // riesgo neto es despreciable.
-        const moonActive  = StateStore.get().buffs.moonBlessingExpiry > now;
+        const moonActive  = StateStore.getStore().buffs.moonBlessingExpiry > now;
         const moonBonus   = moonActive ? 90 : 0;
         const totalReward = baseReward + moonBonus;
 
         // ── 6. Aplicar y persistir ──
-        StateStore.get().coins += totalReward;
-        StateStore.get().daily  = { lastClaim: now, streak: newStreak };
+        StateStore.getStore().coins += totalReward;
+        StateStore.getStore().daily  = { lastClaim: now, streak: newStreak };
 
         logTransaction(
             'ingreso',
@@ -778,7 +474,7 @@ window.GameCenter = {
             `Bono diario · racha ${newStreak}` + (moonBonus ? ' + Bendición Lunar' : '')
         );
 
-        saveState();
+        StateStore.save();
         updateMoonBlessingUI();
 
         // [v9.9.2] Analítica — daily_bonus: solo en éxito para no saturar el canal.
@@ -804,7 +500,7 @@ window.GameCenter = {
 
     repairDailyStreak: () => {
         const state = _getDailyRepairState();
-        const { lastClaim, streak } = StateStore.get().daily;
+        const { lastClaim, streak } = StateStore.getStore().daily;
 
         if (lastClaim > 0 && state.now < lastClaim) {
             return { success: false, verified: state.verified, message: 'Se detectó una inconsistencia horaria. Por favor, verifica la configuración de tu dispositivo.' };
@@ -815,14 +511,14 @@ window.GameCenter = {
         if (!state.repairAvailable) {
             return { success: false, verified: state.verified, message: 'La reparación de racha no está disponible ahora.' };
         }
-        if (StateStore.get().coins < DAILY_REPAIR_COST) {
+        if (StateStore.getStore().coins < DAILY_REPAIR_COST) {
             return { success: false, repairRequired: true, verified: state.verified, message: 'Consigue las monedas que faltan jugando en el Arcade.' };
         }
 
-        StateStore.get().coins -= DAILY_REPAIR_COST;
-        StateStore.get().daily = { lastClaim: state.now, streak };
+        StateStore.getStore().coins -= DAILY_REPAIR_COST;
+        StateStore.getStore().daily = { lastClaim: state.now, streak };
         logTransaction('gasto', DAILY_REPAIR_COST, `Reparación de racha · ${streak} días`);
-        saveState({ immediateCloudSync: true });
+        StateStore.save({ immediateCloudSync: true });
         window.GhostAnalytics?.track('daily_streak_repair', { costo: DAILY_REPAIR_COST, racha: streak });
         return { success: true, verified: state.verified, cost: DAILY_REPAIR_COST, streak, message: `Racha de ${streak} día${streak !== 1 ? 's' : ''} rescatada por ${DAILY_REPAIR_COST} monedas.` };
     },
@@ -838,7 +534,7 @@ window.GameCenter = {
     getNextDailyResetTime: (now = Date.now()) => window.LoveArcadeTime.nextResetTime(now),
 
     canClaimDaily: () => {
-        const { lastClaim } = StateStore.get().daily;
+        const { lastClaim } = StateStore.getStore().daily;
         if (lastClaim === 0) return true;
         const state = _getDailyRepairState();
         if (state.desynced) return false;
@@ -851,7 +547,7 @@ window.GameCenter = {
      * Usa días calendario (medianoche) para consistencia con claimDaily().
      */
     getStreakInfo: () => {
-        const { lastClaim, streak } = StateStore.get().daily;
+        const { lastClaim, streak } = StateStore.getStore().daily;
         const repairState = _getDailyRepairState();
         const diffDays = repairState.diffDays;
 
@@ -872,86 +568,10 @@ window.GameCenter = {
     },
 
     // ── BENDICIÓN LUNAR ──────────────────────────────────────────────────────
-
-    /**
-     * Activa (o extiende) la Bendición Lunar. Costo: 100 monedas.
-     * Efecto: +90 monedas extra por cada reclamo diario.
-     * Vigencia: 7 días. Si ya está activa, extiende desde el vencimiento actual.
-     */
-    buyMoonBlessing: () => {
-        const COST = 100;
-        const DURATION = 7 * 86_400_000; // 7 días en ms
-
-        if (StateStore.get().coins < COST) {
-            // [v9.9.2] Fricción de usuario: saldo insuficiente para activar el buff.
-            window.GhostAnalytics?.track('insufficient_funds', {
-                wallpaper: 'Bendición Lunar (buff)',
-                precio:    `${COST} ⭐`,
-                saldo:     StateStore.get().coins
-            });
-            return { success: false, reason: 'coins' };
-        }
-
-        const now = Date.now();
-        const isActive = StateStore.get().buffs.moonBlessingExpiry > now;
-        StateStore.get().coins -= COST;
-        StateStore.get().buffs.moonBlessingExpiry = (isActive
-            ? StateStore.get().buffs.moonBlessingExpiry
-            : now
-        ) + DURATION;
-
-        logTransaction('gasto', COST, 'Bendición Lunar activada (7 días)');
-        saveState();
-        updateMoonBlessingUI();
-
-        const expiresAt = new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
-            day: '2-digit', month: 'long', year: 'numeric'
-        });
-
-        return { success: true, expiresAt };
-    },
-
-    /**
-     * Extiende la Bendición Lunar una cantidad de días, sin costo.
-     * Si no está activa, inicia desde "ahora".
-     * @param {number} days
-     * @param {string} motivo
-     * @returns {{ success: boolean, expiresAt?: string }}
-     */
-    extendMoonBlessingDays: (days, motivo = 'Extensión de Bendición Lunar') => {
-        const wholeDays = Math.floor(days);
-        if (!Number.isFinite(wholeDays) || wholeDays <= 0) {
-            return { success: false };
-        }
-        const now = Date.now();
-        const baseTs = StateStore.get().buffs.moonBlessingExpiry > now
-            ? StateStore.get().buffs.moonBlessingExpiry
-            : now;
-        StateStore.get().buffs.moonBlessingExpiry = baseTs + (wholeDays * 86_400_000);
-        logTransaction('ingreso', 0, `${motivo}: +${wholeDays} día(s)`);
-        saveState({ immediateCloudSync: true });
-        return {
-            success: true,
-            expiresAt: new Date(StateStore.get().buffs.moonBlessingExpiry).toLocaleDateString('es-MX', {
-                day: '2-digit', month: 'long', year: 'numeric'
-            })
-        };
-    },
-
-    getMoonBlessingStatus: () => {
-        const now    = Date.now();
-        const expiry = StateStore.get().buffs.moonBlessingExpiry;
-        const active = expiry > now;
-        return {
-            active,
-            expiresAt: active
-                ? new Date(expiry).toLocaleDateString('es-MX', {
-                      day: '2-digit', month: 'long', year: 'numeric'
-                  })
-                : null,
-            remainingMs: active ? expiry - now : 0
-        };
-    },
+    // La lógica de dominio vive en js/domain/moon-blessing.js.
+    buyMoonBlessing: MoonBlessing.buyMoonBlessing,
+    extendMoonBlessingDays: MoonBlessing.extendMoonBlessingDays,
+    getMoonBlessingStatus: MoonBlessing.getMoonBlessingStatus,
 
     // ── SINCRONIZACIÓN (async — Worker + Checksum) ───────────────────────────
 
@@ -961,7 +581,7 @@ window.GameCenter = {
      */
     exportSave: async () => {
         try {
-            const result = await workerTask({ action: 'export', store: StateStore.get(), salt: SYNC_SALT });
+            const result = await workerTask({ action: 'export', store: StateStore.getStore(), salt: SYNC_SALT });
             return result;
         } catch (_) {
             // Fallback síncrono si el worker no está disponible
@@ -970,9 +590,9 @@ window.GameCenter = {
         // TextEncoder convierte el payload UTF-8 a bytes, luego btoa codifica en Base64.
         // Reemplaza el patrón obsoleto btoa(unescape(encodeURIComponent())) que usa
         // funciones deprecadas en motores modernos.
-        const json     = JSON.stringify(StateStore.get());
+        const json     = JSON.stringify(StateStore.getStore());
         const checksum = await sha256(json + SYNC_SALT);
-        const payload  = JSON.stringify({ data: StateStore.get(), checksum });
+        const payload  = JSON.stringify({ data: StateStore.getStore(), checksum });
         try {
             const bytes  = new TextEncoder().encode(payload);
             const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
@@ -1020,8 +640,8 @@ window.GameCenter = {
             }
 
             if (typeof data.coins !== 'number') throw new Error('invalid');
-            StateStore.replace(migrateState(data), { notifyUI: false, notifyCloud: false });
-            saveState();
+            StateStore.replaceStore(StateStore.migrate(data), { notifyUI: false, notifyCloud: false });
+            StateStore.save();
             return { success: true };
         } catch {
             return { success: false, message: 'Código inválido o corrupto.' };
@@ -1129,46 +749,29 @@ window.GameCenter = {
             }
         }
 
-        StateStore.get().userAvatar = normalized;
-        saveState({ immediateCloudSync: true });
+        StateStore.getStore().userAvatar = normalized;
+        StateStore.save({ immediateCloudSync: true });
         applyAvatar();
         return { success: true, remote: false, preset: true, url: normalized };
     },
-    getAvatar: ()        => StateStore.get().userAvatar,
+    getAvatar: ()        => StateStore.getStore().userAvatar,
 
     // ── TEMA ─────────────────────────────────────────────────────────────────
 
     setTheme: (key) => {
         if (!THEMES[key]) return;
-        StateStore.get().theme = key;
-        saveState();
+        StateStore.getStore().theme = key;
+        StateStore.save();
         applyTheme(key);
     },
-    getTheme: () => StateStore.get().theme || 'violet',
+    getTheme: () => StateStore.getStore().theme || 'violet',
 
-    // ── IDENTIDAD — v9.4 ─────────────────────────────────────────────────────
-
-    /**
-     * Guarda el nickname y género elegidos por el usuario y actualiza el DOM.
-     * @param {string} nickname  Nombre a mostrar (max 15 chars, se recorta).
-     * @param {'o'|'a'|'@'} gender  Sufijo del saludo.
-     */
-    setIdentity: (nickname, gender) => {
-        const VALID_GENDERS = ['o', 'a', '@'];
-        StateStore.get().nickname = String(nickname).trim().slice(0, 15);
-        StateStore.get().gender   = VALID_GENDERS.includes(gender) ? gender : '@';
-        saveState();
-        applyIdentity();
-    },
-
-    /** @returns {{ nickname: string, gender: 'o'|'a'|'@' }} */
-    getIdentity: () => ({
-        nickname: StateStore.get().nickname || '',
-        gender:   StateStore.get().gender   || '@'
-    }),
-
-    /** @returns {boolean} true si el usuario ya eligió un nickname. */
-    hasIdentity: () => Boolean(StateStore.get().nickname?.trim()),
+    // ── IDENTIDAD ────────────────────────────────────────────────────────────
+    // La persistencia vive en js/domain/identity.js; applyIdentity() permanece
+    // temporalmente en esta capa de UI hasta el Ticket-013.
+    setIdentity: Identity.setIdentity,
+    getIdentity: Identity.getIdentity,
+    hasIdentity: Identity.hasIdentity,
 
     // ── SPA / MÓDULOS EXTERNOS ────────────────────────────────────────────────
 
@@ -1179,12 +782,12 @@ window.GameCenter = {
      * @returns {{ coins: number, streak: number, theme: string, moonBlessingExpiry: number, nickname: string, gender: string }}
      */
     getState: () => ({
-        coins:               StateStore.get().coins,
-        streak:              StateStore.get().daily?.streak || 0,
-        theme:               StateStore.get().theme || 'violet',
-        moonBlessingExpiry:  StateStore.get().buffs?.moonBlessingExpiry || 0,
-        nickname:            StateStore.get().nickname || '',
-        gender:              StateStore.get().gender   || '@'
+        coins:               StateStore.getStore().coins,
+        streak:              StateStore.getStore().daily?.streak || 0,
+        theme:               StateStore.getStore().theme || 'violet',
+        moonBlessingExpiry:  StateStore.getStore().buffs?.moonBlessingExpiry || 0,
+        nickname:            StateStore.getStore().nickname || '',
+        gender:              StateStore.getStore().gender   || '@'
     }),
 
     /**
@@ -1195,7 +798,7 @@ window.GameCenter = {
      * @param {HTMLElement} [scope] Contenedor de la vista actualmente visible.
      */
     syncUI: (scope) => {
-        _displayedCoins = StateStore.get().coins;
+        _displayedCoins = StateStore.getStore().coins;
         updateUI({ scope });
     }
 };
@@ -1291,49 +894,6 @@ StateStore.subscribe((_state, { source, notifyCloud = true, immediateCloudSync =
     if (source === 'save' && notifyCloud) _scheduleCloudSync(immediateCloudSync);
 });
 
-function saveState(options = {}) {
-    const { immediateCloudSync = false } = options;
-    let payload = JSON.stringify(StateStore.get());
-    if (payload.length > (STORE_WARNING_KB * KB)) {
-        trimGameProgress();
-        payload = JSON.stringify(StateStore.get());
-    }
-
-    try {
-        localStorage.setItem(CONFIG.stateKey, payload);
-    } catch (e) {
-        if (e?.name === 'QuotaExceededError') {
-            const changed = emergencyCleanup();
-            try {
-                payload = JSON.stringify(StateStore.get());
-                localStorage.setItem(CONFIG.stateKey, payload);
-                window.GhostAnalytics?.track('storage_cleaned', {
-                    reason: 'quota_exceeded',
-                    cleaned: changed
-                });
-            } catch (retryError) {
-                console.error('GameCenter: No se pudo guardar estado tras cleanup', retryError);
-                _showStorageToast(
-                    'No se puede guardar el progreso. Exporta tu partida y borra datos del sitio.',
-                    'error'
-                );
-                if (Array.isArray(StateStore.get().history) && StateStore.get().history.length) {
-                    StateStore.get().history = [];
-                    try {
-                        localStorage.setItem(CONFIG.stateKey, JSON.stringify(StateStore.get()));
-                    } catch (_) {}
-                }
-                return;
-            }
-        } else {
-            throw e;
-        }
-    }
-
-    StateStore.notify({ source: 'save', immediateCloudSync });
-    checkStorageSize(payload.length);
-}
-
 /**
  * Formatea un número de monedas para la Navbar.
  * < 10 000 → número completo (ej: 9 500 → "9500")
@@ -1368,26 +928,26 @@ function updateUI({ scope } = {}) {
         displayRoot.querySelectorAll('.coin-display')
     ).filter(el => !el.matches('.navbar .coin-display') && !el.closest('.view-section.hidden'));
 
-    if (_displayedCoins === StateStore.get().coins) {
+    if (_displayedCoins === StateStore.getStore().coins) {
         // Sin delta: escribir valores formateados directamente, sin animación.
         // Evita sobrescribir el valor formateado que ya pintó el init silencioso.
         navbarDisplays.forEach(el => {
-            el.textContent = formatCoinsNavbar(StateStore.get().coins);
+            el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
             // El tooltip muestra el valor exacto cuando la navbar usa formato abreviado
             // (ej: "25.5k"). El usuario puede ver el número preciso sin ir al HUD.
-            el.closest('.coin-badge')?.setAttribute('title', `${StateStore.get().coins} monedas`);
+            el.closest('.coin-badge')?.setAttribute('title', `${StateStore.getStore().coins} monedas`);
         });
-        otherDisplays.forEach(el  => { el.textContent = StateStore.get().coins; });
+        otherDisplays.forEach(el  => { el.textContent = StateStore.getStore().coins; });
     } else {
         // Con delta: animar con número exacto y formatear navbar al terminar
-        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, StateStore.get().coins);
+        animateValue([...navbarDisplays, ...otherDisplays], _displayedCoins, StateStore.getStore().coins);
 
         // Sobrescribir la navbar con el valor formateado al terminar la animación
         // (animateValue dura ~650 ms; con 700 ms de margen evitamos parpadeos)
         if (navbarDisplays.length) {
             setTimeout(() => {
                 navbarDisplays.forEach(el => {
-                    el.textContent = formatCoinsNavbar(StateStore.get().coins);
+                    el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
                 });
             }, 700);
         }
@@ -1402,7 +962,7 @@ function updateUI({ scope } = {}) {
 window.formatCoinsNavbar = formatCoinsNavbar;
 
 function applyAvatar(scope) {
-    if (!StateStore.get().userAvatar) return;
+    if (!StateStore.getStore().userAvatar) return;
     // La navbar es chrome compartido; los demás avatares se limitan a la vista
     // entrante cuando syncUI() proporciona un scope.
     const avatarSelector = '#user-avatar-display, #hud-avatar-display, #profile-avatar-display, .hud-avatar';
@@ -1415,7 +975,7 @@ function applyAvatar(scope) {
 
     avatars.forEach(el => {
         if (!el) return;
-        el.style.backgroundImage = `url('${StateStore.get().userAvatar}')`;
+        el.style.backgroundImage = `url('${StateStore.getStore().userAvatar}')`;
         const icon = el.querySelector('i, svg');
         if (icon) icon.style.display = 'none';
     });
@@ -1430,10 +990,13 @@ function applyIdentity() {
     const suffixEl   = document.getElementById('pref-suffix');
     const nicknameEl = document.getElementById('display-nickname');
     const profileNameEl = document.getElementById('profile-title');
-    if (suffixEl)   suffixEl.textContent   = StateStore.get().gender   || '@';
-    if (nicknameEl) nicknameEl.textContent = StateStore.get().nickname || '';
-    if (profileNameEl) profileNameEl.textContent = StateStore.get().nickname || 'Love Arcade';
+    if (suffixEl)   suffixEl.textContent   = StateStore.getStore().gender   || '@';
+    if (nicknameEl) nicknameEl.textContent = StateStore.getStore().nickname || '';
+    if (profileNameEl) profileNameEl.textContent = StateStore.getStore().nickname || 'Love Arcade';
 }
+
+// Puente transitorio: identidad es dato puro; el DOM se moverá en el Ticket-013.
+Identity.setUIRefreshHandler(applyIdentity);
 
 /**
  * Deriva los roles de color que consumen los componentes del arcade.
@@ -1653,6 +1216,9 @@ function updateMoonBlessingUI(scope) {
     }
 }
 
+// Puente transitorio: la actualización de DOM se mantiene en app.js hasta el Ticket-013.
+MoonBlessing.setUIRefreshHandler(updateMoonBlessingUI);
+
 function _setDailyMessage(message, success = false) {
     const msg = document.getElementById('daily-msg');
     if (!msg) return;
@@ -1748,22 +1314,22 @@ window.revealUI = revealUI;
 //    El script crítico del <head> ya habrá ajustado los CSS vars; applyTheme()
 //    añade la clase theme-{key} al <body> y actualiza los botones de ajustes.
 renderThemeGrid();
-applyTheme(StateStore.get().theme || 'violet');
+applyTheme(StateStore.getStore().theme || 'violet');
 
-if (_isBase64Avatar(StateStore.get().userAvatar) && StateStore.get().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
-    StateStore.get().userAvatar = null;
+if (StateStore.isBase64Avatar(StateStore.getStore().userAvatar) && StateStore.getStore().userAvatar.length > (AVATAR_CLEANUP_KB * KB)) {
+    StateStore.getStore().userAvatar = null;
     window.GhostAnalytics?.track('storage_cleaned', { reason: 'avatar_too_large' });
-    saveState();
+    StateStore.save();
 }
 
 // 2. SALDO — escribe el valor formateado síncronamente.
 //    El .coin-badge tiene opacity:0 por CSS; nunca pintará el "0" del HTML.
-_displayedCoins = StateStore.get().coins;
+_displayedCoins = StateStore.getStore().coins;
 document.querySelectorAll('.navbar .coin-display').forEach(el => {
-    el.textContent = formatCoinsNavbar(StateStore.get().coins);
+    el.textContent = formatCoinsNavbar(StateStore.getStore().coins);
 });
 document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => {
-    el.textContent = StateStore.get().coins;
+    el.textContent = StateStore.getStore().coins;
 });
 
 // 3. BOTÓN DIARIO Y LUNA — corrige el estado (activo/desactivado, texto de
@@ -1843,7 +1409,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (!raw) return;
-            StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
+            StateStore.replaceStore(StateStore.migrate(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
             // syncUI resetea _displayedCoins al valor actual del store para
             // evitar animaciones innecesarias en este refresco de retorno.
             window.GameCenter?.syncUI?.();
@@ -2050,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const avatar = window.GameCenter?.getAvatar?.();
             if (typeof avatar !== 'string') return null;
-            if (_isBase64Avatar(avatar)) return null;
+            if (StateStore.isBase64Avatar(avatar)) return null;
             return /^https?:\/\//i.test(avatar) ? avatar : null;
         } catch (_) {
             return null;
@@ -2183,7 +1749,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const raw = localStorage.getItem(CONFIG.stateKey);
             if (raw) {
-                StateStore.replace(migrateState(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
+                StateStore.replaceStore(StateStore.migrate(JSON.parse(raw)), { notifyUI: false, notifyCloud: false });
                 window.GameCenter?.syncUI?.();
             }
         } catch (_) {}
@@ -2313,8 +1879,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data?.avatar_url && typeof data.avatar_url === 'string') {
                 const avatar = data.avatar_url.trim();
                 if (avatar) {
-                    StateStore.get().userAvatar = avatar;
-                    saveState();
+                    StateStore.getStore().userAvatar = avatar;
+                    StateStore.save();
                 }
             }
 
