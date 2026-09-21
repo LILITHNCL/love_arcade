@@ -1119,11 +1119,12 @@
         18. ui/coin-display.js → Formato y animación de monedas
         19. ui/hud-render.js → Renderizado y actualización del HUD
         20. ui/micro-interactions.js → Ripple, haptics y estados loading
-        21. app.js        → Bootstrap y Sentinel Cloud Sync
-        22. pwa/sw-update-bridge.js → Aviso de actualización del Service Worker
-        23. backup-engine.js y shop-logic.js → Backup y Tienda
-        24. streak-hub.js → Widget de fuego y feedback de reclamo
-        25. spa-router.js → Navegación SPA entre vistas
+        21. cloud/sentinel.js → Sincronización cloud e interceptor de storage
+        22. app.js        → Bootstrap del hub
+        23. pwa/sw-update-bridge.js → Aviso de actualización del Service Worker
+        24. backup-engine.js y shop-logic.js → Backup y Tienda
+        25. streak-hub.js → Widget de fuego y feedback de reclamo
+        26. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1134,6 +1135,7 @@
     <script src="js/core/utils.js"></script>
     <script src="js/core/time-sync.js"></script>
     <script src="js/core/state-store.js"></script>
+    <script src="js/cloud/sentinel.js"></script>
     <script src="js/domain/history.js"></script>
     <script src="js/domain/economy.js"></script>
     <script src="js/domain/promo-codes.js"></script>
