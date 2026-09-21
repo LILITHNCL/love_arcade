@@ -27,7 +27,12 @@ http://localhost:8080
 
 - HTML, CSS y JavaScript vanilla
 - `localStorage` para persistencia principal
-- `js/app.js` como motor principal de economía y estado
+- `js/core/` para configuración, tiempo, estado, utilidades y cliente del Web Worker
+- `js/domain/` para economía, racha, identidad, avatar, temas y la API `window.GameCenter`
+- `js/ui/` para HUD, monedas, selector de temas y microinteracciones
+- `js/cloud/sentinel.js` para sincronización opcional con Supabase
+- `js/pwa/sw-update-bridge.js` para el aviso de actualización del Service Worker
+- `js/app.js` como bootstrap clásico síncrono pre-paint
 - `js/shop-logic.js` para catálogo y compra
 - `js/streak-hub.js` para feedback visual de la racha
 - `js/sync-worker.js` para export/import con checksum y backup gzip

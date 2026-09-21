@@ -152,9 +152,19 @@
         }
     }
 
+    function initBackgroundSync() {
+        _scheduleTimeSync(800);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') _scheduleTimeSync(250);
+        });
+        window.AppScheduler?.registerInterval('sync', 'time-cache-sync', () => _scheduleTimeSync(), 30 * 60 * 1000)
+            || setInterval(() => _scheduleTimeSync(), 30 * 60 * 1000);
+    }
+
     window.LoveArcadeTime = {
         read: _readTimeCache,
         scheduleSync: _scheduleTimeSync,
+        initBackgroundSync,
         dayDiff: _getDailyDiffDays,
         dayStart: _getDailyDayStart,
         nextResetTime: _getNextDailyResetTime

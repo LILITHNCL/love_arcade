@@ -49,7 +49,7 @@ Forma parte del mismo conjunto de endpoints de observabilidad y reportes. No es 
 
 ## 4. Supabase y sincronización cloud
 
-La sincronización cloud es opcional. Cuando la configuración está activa, el frontend puede sincronizar snapshots de estado, perfiles y datos persistentes con Supabase.
+La sincronización cloud es opcional. Cuando la configuración está activa, `js/cloud/sentinel.js` puede sincronizar snapshots de estado, perfiles y datos persistentes con Supabase. Sentinel consume `window.LoveArcadeStore` y `window.CONFIG.stateKey`, por lo que el bootstrap no conserva un acoplamiento privado con la sincronización.
 
 El documento actual distingue claramente entre:
 

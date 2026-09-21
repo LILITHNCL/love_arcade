@@ -2,7 +2,7 @@
 //
 // API externa esperada: window.Sentinel puede exponer getSession() y getClient().
 // El cliente devuelto debe conservar el contrato de Supabase Auth/Storage usado aquí.
-// Sentinel sigue viviendo temporalmente en app.js; este módulo no modifica ese contrato.
+// Sentinel vive en cloud/sentinel.js; este módulo no modifica ese contrato.
 (function initLoveArcadeAvatar() {
     const Store = window.LoveArcadeStore;
     const { KB, AVATAR_MAX_LOCAL_KB } = Store.constants;

@@ -3,8 +3,8 @@
 ## Inventario de `setInterval` original
 
 - `index.html` (inline Home): countdown diario cada `1000 ms` en `updateCountdownDisplay`.
-- `js/app.js`: flush de playtime visible cada `15000 ms`.
-- `js/app.js`: sync de caché de tiempo cada `30 min`.
+- `js/lifecycle-scheduler.js`: gestiona el ciclo de vida de los intervalos registrados.
+- `js/core/time-sync.js`: sync de caché de tiempo cada `30 min`, registrado bajo el grupo `sync`.
 
 ## Contrato de lifecycle (start/stop)
 

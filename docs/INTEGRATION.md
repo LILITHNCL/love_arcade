@@ -93,6 +93,17 @@ Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La 
 
 Se debe evitar reescribir variables globales del hub ni declarar nombres que pudieran reemplazar API pública del proyecto.
 
+### Interceptor de almacenamiento de Sentinel
+
+El hub carga `js/cloud/sentinel.js` antes de los módulos de dominio. Sentinel
+aplica un *monkey-patch* global a `localStorage.setItem()` y
+`localStorage.removeItem()` para observar únicamente sus claves vigiladas y
+programar la sincronización cloud cuando exista sesión. Este efecto es
+intencional: los minijuegos deben usar claves con prefijo propio, no sobrescribir
+las claves reservadas del hub y no sustituir los métodos de `localStorage`.
+Las escrituras en claves no vigiladas conservan el comportamiento nativo y no
+generan una sincronización cloud.
+
 ## 9. Contrato de temas: `window.THEMES`
 
 El hub expone `window.THEMES` como un mapa de temas con claves y definiciones de color. La compatibilidad visual del proyecto se apoya en ese objeto y la superficie pública que aparece en el código actual es:
