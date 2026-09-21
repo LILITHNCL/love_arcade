@@ -8,7 +8,7 @@ Este documento describe el funcionamiento completo del sistema de **racha diaria
 
 ## 1. Resumen ejecutivo
 
-La racha diaria es un sistema de retención que recompensa al usuario por volver cada día y reclamar el **Bono Diario**. Técnicamente vive en `js/domain/daily-streak.js`; `js/app.js` ensambla temporalmente sus métodos dentro de `window.GameCenter`, y se representa en el estado persistido como:
+La racha diaria es un sistema de retención que recompensa al usuario por volver cada día y reclamar el **Bono Diario**. Técnicamente vive en `js/domain/daily-streak.js`; `js/domain/game-center.js` expone sus métodos mediante `window.GameCenter` y `js/ui/hud-render.js` actualiza el HUD, y se representa en el estado persistido como:
 
 ```js
 daily: { lastClaim: 0, streak: 0 }
@@ -29,7 +29,9 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | Archivo | Rol dentro del sistema |
 |---|---|
 | `js/domain/daily-streak.js` | Reclamo, cálculo de racha, reparación y bonus de Bendición Lunar; depende de tiempo, store e historial, sin manipular el DOM. |
-| `js/app.js` | Ensambla temporalmente la API pública `window.GameCenter`, actualiza la UI y registra el listener del botón diario. |
+| `js/domain/game-center.js` | Ensambla la API pública `window.GameCenter`, incluida la racha diaria. |
+| `js/ui/hud-render.js` | Actualiza el HUD diario, el mensaje de estado y el modal de reparación; se suscribe al store. |
+| `js/app.js` | Registra el listener del botón diario y conserva el bootstrap síncrono y la sincronización cloud. |
 | `js/core/time-sync.js` | Caché y sincronización de tiempo de red; expone `window.LoveArcadeTime` para cálculo de día, lectura de caché y próximo reset. |
 | `js/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
 | `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
@@ -271,7 +273,7 @@ Debajo del botón se mantienen `#streak-days` (siete segmentos) y `#streak-count
 
 ### 9.3 Sincronización y feedback de reclamo
 
-El módulo `js/streak-hub.js` se carga después de `js/domain/daily-streak.js` y `app.js`. No crea polling: se refresca al cargar el DOM, mediante `HomeView.refresh()` y después de los refrescos ya existentes del HUD. Tras un resultado exitoso, `playClaimSequence(result)` coloca el fuego en `claiming`, llama al audio sintetizado dentro del gesto de usuario y, 480 ms después, restaura el estado final, anima una vez `#streak-count-big` y genera ocho monedas en `#streak-coin-burst` que se eliminan al terminar su animación. Si el reclamo falla, no genera el burst y solo refresca el estado.
+El módulo `js/streak-hub.js` se carga después de `js/domain/daily-streak.js`, `js/ui/hud-render.js` y `app.js`. No crea polling: se refresca al cargar el DOM, mediante `HomeView.refresh()` y después de los refrescos ya existentes del HUD. Tras un resultado exitoso, `playClaimSequence(result)` coloca el fuego en `claiming`, llama al audio sintetizado dentro del gesto de usuario y, 480 ms después, restaura el estado final, anima una vez `#streak-count-big` y genera ocho monedas en `#streak-coin-burst` que se eliminan al terminar su animación. Si el reclamo falla, no genera el burst y solo refresca el estado.
 
 El resultado textual continúa en `#daily-msg[role="status"][aria-live="polite"]`, visible durante 3.5 segundos. El fuego y las monedas son decorativos y no emiten anuncios adicionales.
 

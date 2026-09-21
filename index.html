@@ -252,7 +252,7 @@
 
         <div class="nav-user">
             <!-- title muestra saldo exacto cuando el formato navbar usa "k" abreviado.
-                 El valor se actualiza dinámicamente en app.js updateUI(). -->
+                 El valor se actualiza dinámicamente en ui/hud-render.js. -->
             <div class="coin-badge" title="0 monedas" role="status" aria-live="polite">
                 <span class="moon-blessing-badge hidden" title="Bendición Lunar activa">
                     <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-moon"></use></svg>
@@ -1116,10 +1116,15 @@
         15. domain/theming.js → Estado y aplicación de temas
         16. ui/theme-grid.js → Selector accesible de temas
         17. domain/game-center.js → Ensambla window.GameCenter
-        18. app.js        → Bootstrap UI y Sentinel Cloud Sync
-        19. backup-engine.js y shop-logic.js → Backup y Tienda
-        20. streak-hub.js → Widget de fuego y feedback de reclamo
-        21. spa-router.js → Navegación SPA entre vistas
+        18. ui/coin-display.js → Formato y animación de monedas
+        19. ui/hud-render.js → Renderizado y actualización del HUD
+        20. ui/micro-interactions.js → Ripple, haptics y estados loading
+        21. cloud/sentinel.js → Sincronización cloud e interceptor de storage
+        22. app.js        → Bootstrap del hub
+        23. pwa/sw-update-bridge.js → Aviso de actualización del Service Worker
+        24. backup-engine.js y shop-logic.js → Backup y Tienda
+        25. streak-hub.js → Widget de fuego y feedback de reclamo
+        26. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1130,6 +1135,7 @@
     <script src="js/core/utils.js"></script>
     <script src="js/core/time-sync.js"></script>
     <script src="js/core/state-store.js"></script>
+    <script src="js/cloud/sentinel.js"></script>
     <script src="js/domain/history.js"></script>
     <script src="js/domain/economy.js"></script>
     <script src="js/domain/promo-codes.js"></script>
@@ -1140,7 +1146,11 @@
     <script src="js/domain/theming.js"></script>
     <script src="js/ui/theme-grid.js"></script>
     <script src="js/domain/game-center.js"></script>
+    <script src="js/ui/coin-display.js"></script>
+    <script src="js/ui/hud-render.js"></script>
+    <script src="js/ui/micro-interactions.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/pwa/sw-update-bridge.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/shop-logic.js"></script>
     <script src="js/streak-hub.js"></script>
