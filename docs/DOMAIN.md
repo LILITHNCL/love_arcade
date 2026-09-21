@@ -12,7 +12,7 @@ Este documento es la fuente normativa para la economía y el estado persistido d
 
 ## 1. Estado persistido y autoridad económica
 
-Evidencia: `js/app.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'` y `window.GameCenter` como la API pública del dominio.
+Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'` y `js/app.js` define `window.GameCenter` como la API pública del dominio.
 
 La fuente de verdad económica principal es `store` del navegador, guardado en `localStorage` bajo la clave `gamecenter_v6_promos`.
 
@@ -29,7 +29,7 @@ La autoridad económica del negocio y del flujo comercial está en `window.GameC
 
 ## 2. Economía: descuento, cashback y precios finales
 
-Evidencia: `const ECONOMY = { isSaleActive: false, saleMultiplier: 0.80, saleLabel: '-20%', cashbackRate: 0.1 }` en `js/app.js`; `buyItem()` aplica la fórmula exacta en `window.GameCenter.buyItem(itemData)`.
+Evidencia: `const ECONOMY = { isSaleActive: false, saleMultiplier: 0.80, saleLabel: '-20%', cashbackRate: 0.1 }` en `js/core/config.js`; `buyItem()` aplica la fórmula exacta en `window.GameCenter.buyItem(itemData)`.
 
 ### Fórmula vigente
 
@@ -69,7 +69,7 @@ Reglas verificadas:
 
 ## 4. Códigos promocionales
 
-Evidencia: `const PROMO_CODES_HASHED = { ... }` en `js/app.js`; `GameCenter.redeemPromoCode()` aplica `sha256()` antes de comparar.
+Evidencia: `const PROMO_CODES_HASHED = { ... }` en `js/core/config.js`; `GameCenter.redeemPromoCode()` aplica `sha256()` antes de comparar.
 
 Reglas verificadas:
 
@@ -80,7 +80,7 @@ Reglas verificadas:
 
 ## 5. Racha diaria
 
-Evidencia: `window.GameCenter.claimDaily()`, `canClaimDaily()`, `getStreakInfo()`, `repairDailyStreak()` en `js/app.js`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` en el mismo archivo.
+Evidencia: `window.GameCenter.claimDaily()`, `canClaimDaily()`, `getStreakInfo()`, `repairDailyStreak()` en `js/app.js`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` en `js/core/config.js`.
 
 ### Fórmula de recompensa
 
@@ -118,7 +118,7 @@ Si hay una ruptura de 2 días, la UI puede ofrecer reparación por 500 monedas. 
 
 ### Reloj y seguridad
 
-Evidencia: `_readTimeCache()`, `_getDailyDiffDays()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL`, y la validación de `desynced` en `claimDaily()`.
+Evidencia: `window.LoveArcadeTime.read()`, `dayDiff()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL` en `js/core/time-sync.js`, y la validación de `desynced` en `claimDaily()`.
 
 - El sistema usa un caché sincronizado en `localStorage` para evaluar la validez del día.
 - Si el reloj se detecta desincronizado, el reclamo se bloquea.
@@ -145,7 +145,7 @@ Debe documentarse como una mejora de recompensa, no como una segunda racha o un 
 
 ## 7. Identidad, perfil y temas
 
-Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/app.js`; `index.html` y `styles.css` leen esa estructura para el selector visual del usuario.
+Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/core/config.js`; `index.html` y `styles.css` leen esa estructura para el selector visual del usuario.
 
 Reglas verificadas:
 
