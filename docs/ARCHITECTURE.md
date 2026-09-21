@@ -19,8 +19,8 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
-5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/app.js` inicializa el estado global, la racha y la API pública `window.GameCenter`.
+4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, core/time-sync.js, core/state-store.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
+5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; `js/app.js` ensambla la racha y la API pública `window.GameCenter`.
 6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
 ## 2. Vistas SPA y router
@@ -63,7 +63,6 @@ La implementación actual del lifecycle enlaza el router con la vista del home y
 
 Es el motor principal del hub. Aquí se definen:
 
-- la persistencia principal en `localStorage` usando la clave `gamecenter_v6_promos`;
 - la API pública `window.GameCenter`;
 - la lógica de bono diario, racha, Bendición Lunar, historial y sincronización local/cloud.
 
@@ -79,6 +78,10 @@ Contiene la configuración estática cargada antes de `js/app.js`:
 
 Contiene utilidades sin estado ni acceso al DOM: expone `window.debounce` por compatibilidad y
 `window.LoveArcadeUtils` con `sha256` y `canUseVibration` para consumo interno del hub.
+
+### `js/core/state-store.js`
+
+Contiene la persistencia local del hub: migración, control de cuota, limpieza de emergencia y serialización de `localStorage` para `gamecenter_v6_promos`. Expone `window.LoveArcadeStore` con `getStore`, `replaceStore`, `save`, `migrate` y `subscribe`; los consumidores de dominio conservan el estado encapsulado detrás de esa API.
 
 ### `js/shop-logic.js`
 
@@ -140,7 +143,7 @@ El Service Worker gestiona un app shell y cache runtime, con foco en una experie
 
 ### Local (runtime principal)
 
-La persistencia principal vive en `localStorage` con clave `gamecenter_v6_promos`.
+La persistencia principal vive en `js/core/state-store.js` y usa `localStorage` con clave `gamecenter_v6_promos`. `window.LoveArcadeStore` encapsula las lecturas, reemplazos, guardados, migraciones y suscripciones del snapshot.
 
 La capa de referencia del estado del usuario incluye, entre otros datos:
 

@@ -1105,14 +1105,20 @@
          4. core/config.js → CONFIG, ECONOMY y THEMES (síncrono)
          5. core/utils.js → sha256, debounce y haptics (síncrono)
          6. core/time-sync.js → caché y sincronización horaria (síncrono)
-         7. app.js        → GameCenter, store, updateUI (núcleo)
+         7. core/state-store.js → Persistencia, migración y LoveArcadeStore
+         8. domain/history.js → Historial de transacciones
+         9. domain/economy.js → Compras, saldo e inventario
+        10. domain/promo-codes.js → Canje de promociones SHA-256
+        11. domain/moon-blessing.js → Estado de Bendición Lunar
+        12. domain/identity.js → Nickname y género persistidos
+        13. app.js        → GameCenter y updateUI (núcleo)
                             Incluye Sentinel Cloud Sync v13.0:
                             StorageInterceptor + Supabase auth/sync
-         8. backup-engine.js y shop-logic.js
+        14. backup-engine.js y shop-logic.js
                             → Backup y Tienda
-         9. streak-hub.js → Widget de fuego, animaciones de reclamo,
+        15. streak-hub.js → Widget de fuego, animaciones de reclamo,
                             audio sintetizado
-        10. spa-router.js → Navegación SPA entre vistas
+        16. spa-router.js → Navegación SPA entre vistas
          Nota: supabase-loader.js expone bootstrap compartido para
          garantizar createClient antes de _sentinelInit().
          ══════════════════════════════════════════════════════════ -->
@@ -1122,6 +1128,12 @@
     <script src="js/core/config.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/time-sync.js"></script>
+    <script src="js/core/state-store.js"></script>
+    <script src="js/domain/history.js"></script>
+    <script src="js/domain/economy.js"></script>
+    <script src="js/domain/promo-codes.js"></script>
+    <script src="js/domain/moon-blessing.js"></script>
+    <script src="js/domain/identity.js"></script>
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/shop-logic.js"></script>
