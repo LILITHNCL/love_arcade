@@ -12,7 +12,7 @@ Este documento es la fuente normativa para la economía y el estado persistido d
 
 ## 1. Estado persistido y autoridad económica
 
-Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'`; `js/core/state-store.js` expone `window.LoveArcadeStore` para persistir y migrar el estado; `js/app.js` ensambla temporalmente `window.GameCenter` como la API pública del dominio; `js/domain/daily-streak.js` contiene las reglas de racha.
+Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'`; `js/core/state-store.js` expone `window.LoveArcadeStore` para persistir y migrar el estado; `js/domain/game-center.js` ensambla `window.GameCenter` como la API pública del dominio; `js/domain/daily-streak.js` contiene las reglas de racha.
 
 La fuente de verdad económica principal es el snapshot encapsulado por `window.LoveArcadeStore`, guardado en `localStorage` bajo la clave `gamecenter_v6_promos`.
 
@@ -81,7 +81,7 @@ Reglas verificadas:
 
 ## 5. Racha diaria
 
-Evidencia: `js/domain/daily-streak.js` implementa `claimDaily()`, `canClaimDaily()`, `getStreakInfo()` y `repairDailyStreak()`; `js/app.js` conserva temporalmente el ensamblado de esas APIs en `window.GameCenter`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` viven en `js/core/config.js`.
+Evidencia: `js/domain/daily-streak.js` implementa `claimDaily()`, `canClaimDaily()`, `getStreakInfo()` y `repairDailyStreak()`; `js/domain/game-center.js` expone esas APIs mediante `window.GameCenter`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` viven en `js/core/config.js`.
 
 ### Fórmula de recompensa
 
@@ -146,7 +146,7 @@ Debe documentarse como una mejora de recompensa, no como una segunda racha o un 
 
 ## 7. Identidad, perfil y temas
 
-Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/core/config.js`; `js/domain/identity.js` persiste nickname y género; `index.html` y `styles.css` leen la estructura de temas para el selector visual del usuario.
+Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/core/config.js`; `js/domain/identity.js` persiste nickname y género; `js/domain/avatar.js` persiste el avatar; `js/domain/theming.js` aplica el tema; `js/ui/hud-render.js` renderiza identidad y avatar, y `js/ui/theme-grid.js` renderiza el selector visual del usuario.
 
 Reglas verificadas:
 
@@ -154,11 +154,11 @@ Reglas verificadas:
 - Cada clave tiene un `accent` y un `name`.
 - El tema persistido forma parte del estado principal del usuario.
 - Los minijuegos reciben acceso a la identidad visual de la plataforma a través de `window.THEMES` y el `accent` del tema activo.
-- `window.GameCenter.setIdentity()`, `getIdentity()` y `hasIdentity()` delegan en `js/domain/identity.js`; el renderizado de nickname y género permanece temporalmente en `app.js` hasta el Ticket-013.
+- `window.GameCenter.setIdentity()`, `getIdentity()` y `hasIdentity()` delegan en `js/domain/identity.js`; `js/ui/hud-render.js` renderiza nickname y género.
 
 Revisión humana:
 
-- Las decisiones sobre generación de tokens visuales, duplicación de paletas y la relación exacta entre `index.html` y `app.js` requieren comprobación adicional antes de tratar esas secciones como contrato formal de diseño.
+- Las decisiones sobre generación de tokens visuales, duplicación de paletas y la relación exacta entre `index.html`, `js/domain/theming.js` y `js/ui/theme-grid.js` requieren comprobación adicional antes de tratar esas secciones como contrato formal de diseño.
 
 ## 8. Historial y transacciones
 
