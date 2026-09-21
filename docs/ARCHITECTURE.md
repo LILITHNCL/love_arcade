@@ -19,7 +19,7 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, core/time-sync.js, core/state-store.js, cloud/sentinel.js, domain/*, ui/*, app.js, pwa/sw-update-bridge.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js. Sentinel se carga antes de dominio para instalar su interceptor de `localStorage` antes de cualquier escritura de una clave vigilada.
+4. El HTML carga scripts clásicos, sin `defer` ni `type="module"`, en el orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, core/sync-worker-client.js, core/time-sync.js, core/state-store.js, cloud/sentinel.js, domain/*, ui/*, pwa/sw-update-bridge.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js. Sentinel es la excepción deliberada entre core y domain: instala su interceptor de `localStorage` antes de cualquier escritura de una clave vigilada.
 5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; los módulos de `js/domain/` aportan reglas de negocio y `js/domain/game-center.js` ensambla la API pública `window.GameCenter` antes de que `js/ui/hud-render.js` se suscriba al estado.
 6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
@@ -61,7 +61,7 @@ La implementación actual del lifecycle enlaza el router con la vista del home y
 
 ### `js/app.js`
 
-Es el bootstrap actual del hub. `js/domain/game-center.js` ensambla la API pública `window.GameCenter`; el renderizado del HUD reside en `js/ui/hud-render.js` y la sincronización cloud en `js/cloud/sentinel.js`.
+Es un orquestador clásico y bloqueante de 38 líneas. Ejecuta el bootstrap síncrono pre-paint —tema, saldo, botón diario/Bendición Lunar, avatar e identidad— y en `DOMContentLoaded` delega la inicialización restante a los módulos ya cargados. No contiene lógica de dominio, persistencia, Worker, UI ni cloud.
 
 ### `js/cloud/sentinel.js`
 
@@ -71,6 +71,12 @@ expone `window.Sentinel` con `syncNow`, `getSession`, `getClient`, `getStatus`
 y `_rehydrateHubStoreFromDisk`. Consume exclusivamente la API pública de
 `window.LoveArcadeStore` y `window.CONFIG.stateKey`; no accede al cierre de
 estado del bootstrap.
+
+### `js/core/sync-worker-client.js`
+
+Expone `window.workerTask` y encapsula el ciclo de vida del Worker de
+exportación/importación. `js/domain/game-center.js` y `js/backup-engine.js`
+mantienen ese contrato público y sus fallbacks locales.
 
 ### `js/domain/game-center.js`
 

@@ -174,6 +174,35 @@
         document.querySelectorAll('.coin-display:not(.navbar .coin-display)').forEach(el => { el.textContent = displayedCoins; });
     }
 
+    function initInteractionControllers() {
+        const syncHudMotionVisibility = () => {
+            document.querySelectorAll('.player-hud').forEach(hud => {
+                hud.classList.toggle('motion-paused', document.hidden);
+            });
+        };
+        syncHudMotionVisibility();
+        document.addEventListener('visibilitychange', syncHudMotionVisibility);
+
+        const dailyBtn = document.getElementById('btn-daily');
+        if (!dailyBtn) return;
+        dailyBtn.addEventListener('click', () => {
+            dailyBtn.disabled = true;
+            dailyBtn.style.opacity = '0.5';
+            dailyBtn.style.cursor = 'not-allowed';
+            if (dailyBtn.dataset.mode === 'repair') {
+                showDailyRepairModal();
+                updateDailyButton();
+                return;
+            }
+            const result = window.GameCenter.claimDaily();
+            if (result.repairRequired) showDailyRepairModal();
+            else setDailyMessage(result.message, result.success);
+            updateDailyButton();
+            updateMoonBlessingUI();
+            window.StreakHub?.playClaimSequence?.(result);
+        });
+    }
+
     function scheduleUIUpdate() {
         if (deferredUIFrame !== null) return;
         deferredUIFrame = requestAnimationFrame(() => {
@@ -196,7 +225,7 @@
 
     window.LoveArcadeHUD = {
         applyAvatar, applyIdentity, revealUI, setDailyMessage, showDailyRepairModal,
-        syncInitialCoinDisplay, updateDailyButton, updateMoonBlessingUI, updateUI
+        initInteractionControllers, syncInitialCoinDisplay, updateDailyButton, updateMoonBlessingUI, updateUI
     };
     window.revealUI = revealUI;
 })();

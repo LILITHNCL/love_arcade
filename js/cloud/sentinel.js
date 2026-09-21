@@ -697,6 +697,89 @@
         }
     });
 
+    // ── Puente de persistencia hacia el bootstrap ─────────────────────────────
+
+    let _pendingSyncRetries = 0;
+    let _cloudSyncRetryTimer = null;
+    let _deferredCloudSyncHandle = null;
+    let _pendingDeferredCloudSync = false;
+    const MAX_SYNC_RETRIES = 3;
+    const SYNC_RETRY_DELAY = 500;
+
+    /**
+     * Ejecuta la sincronización cloud después del frame crítico de interacción.
+     * El timeout evita que requestIdleCallback la retrase indefinidamente durante
+     * actividad continua, y el fallback mantiene compatibilidad con Safari.
+     */
+    function _scheduleCloudSync(immediateCloudSync) {
+        if (immediateCloudSync) _pendingDeferredCloudSync = true;
+        if (_deferredCloudSyncHandle !== null) return;
+
+        const run = () => {
+            _deferredCloudSyncHandle = null;
+            const shouldSyncImmediately = _pendingDeferredCloudSync;
+            _pendingDeferredCloudSync = false;
+            _syncCloudIfNeeded(shouldSyncImmediately);
+        };
+
+        if ('requestIdleCallback' in window) {
+            _deferredCloudSyncHandle = requestIdleCallback(run, { timeout: 200 });
+        } else {
+            _deferredCloudSyncHandle = setTimeout(run, 0);
+        }
+    }
+
+    function _scheduleImmediateCloudRetry() {
+        if (_pendingSyncRetries >= MAX_SYNC_RETRIES) return;
+        if (_cloudSyncRetryTimer) return;
+        _pendingSyncRetries += 1;
+        _cloudSyncRetryTimer = setTimeout(() => {
+            _cloudSyncRetryTimer = null;
+            _syncCloudIfNeeded(true);
+        }, SYNC_RETRY_DELAY);
+    }
+
+    function _syncCloudIfNeeded(immediate = false) {
+        const sentinel = window.Sentinel;
+        if (!sentinel?.getStatus) {
+            if (immediate) _scheduleImmediateCloudRetry();
+            return;
+        }
+        try {
+            const status = sentinel.getStatus();
+            if (status?.hasSession) {
+                _pendingSyncRetries = 0;
+                if (_cloudSyncRetryTimer) {
+                    clearTimeout(_cloudSyncRetryTimer);
+                    _cloudSyncRetryTimer = null;
+                }
+                if (immediate && sentinel.syncNow) sentinel.syncNow();
+                return;
+            }
+            if (immediate) _scheduleImmediateCloudRetry();
+        } catch (_) {}
+    }
+
+    document.addEventListener('la:cloud-authenticated', () => {
+        if (_pendingSyncRetries > 0) _syncCloudIfNeeded(true);
+    });
+
+    window.LoveArcadeStore.subscribe((_state, { source, notifyCloud = true, immediateCloudSync = false } = {}) => {
+        if (source === 'save' && notifyCloud) _scheduleCloudSync(immediateCloudSync);
+    });
+
+    function initHubRehydration() {
+        const refreshHubStateFromDisk = () => {
+            try {
+                _rehydrateHubStoreFromDisk();
+            } catch (_) {
+                // JSON inválido o storage inaccesible → ignorar sin romper la SPA.
+            }
+        };
+        window.addEventListener('pageshow', refreshHubStateFromDisk);
+        window.addEventListener('focus', refreshHubStateFromDisk);
+    }
+
     // ── Arranque ─────────────────────────────────────────────────────────────
     // Espera explícitamente a que el loader de Supabase confirme createClient
     // antes de invocar _sentinelInit(), evitando un init prematuro en degradado.
@@ -777,5 +860,6 @@
         getStatus:  () => ({ hasClient: !!_sbClient, hasSession: !!_sbSession }),
         _rehydrateHubStoreFromDisk: () => _rehydrateHubStoreFromDisk(),
     };
+    window.LoveArcadeSentinel = { initHubRehydration };
 
 })(); // fin IIFE SentinelCloudSync

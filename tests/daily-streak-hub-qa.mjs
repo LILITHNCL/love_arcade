@@ -4,7 +4,11 @@ import vm from 'node:vm';
 
 const hubSource = readFileSync(new URL('../js/streak-hub.js', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const appSource = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+const appSource = [
+  readFileSync(new URL('../js/app.js', import.meta.url), 'utf8'),
+  readFileSync(new URL('../js/ui/hud-render.js', import.meta.url), 'utf8'),
+].join('\n');
+const stateStoreSource = readFileSync(new URL('../js/core/state-store.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
 class FakeElement {
@@ -189,11 +193,11 @@ assert.match(html, /aria-describedby="daily-msg daily-countdown streak-hub-copy"
 assert.match(html, /id="daily-msg" class="daily-msg" role="status" aria-live="polite"/);
 assert.match(html, /window\.StreakHub\?\.refresh\?\.\(\);/);
 assert.match(appSource, /window\.StreakHub\?\.playClaimSequence\?\.\(result\);/);
-const appWithoutLegacyCleanup = appSource.replace(
-  /if \(Object\.prototype\.hasOwnProperty\.call\(merged, 'claimed_milestones'\)\)\s*\{\s*delete merged\.claimed_milestones;\s*\}/,
+const stateStoreWithoutLegacyCleanup = stateStoreSource.replace(
+  /if \(Object\.prototype\.hasOwnProperty\.call\(merged, 'claimed_milestones'\)\)\s*delete merged\.claimed_milestones;/,
   ''
 );
-assert.doesNotMatch(appWithoutLegacyCleanup, /Milestone|milestone|hito/i, 'The retired streak milestone system must have no app references.');
+assert.doesNotMatch(stateStoreWithoutLegacyCleanup, /Milestone|milestone|hito/i, 'The retired streak milestone system must have no state-store references.');
 assert.doesNotMatch(html, /milestone|hito/i, 'The retired streak milestone UI must have no HTML references.');
 assert.doesNotMatch(css, /streak-milestone|streakMilestone/i, 'The retired streak milestone styles must have no CSS references.');
 assert.match(

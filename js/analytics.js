@@ -1374,6 +1374,18 @@
         } catch (_) { /* nunca propagar */ }
     });
 
+    function initGameOpenTracking() {
+        document.addEventListener('click', (event) => {
+            const link = event.target.closest('a[href*="games/"]');
+            if (!link) return;
+            const gameId = link.dataset.gameId
+                || link.dataset.gameName
+                || link.getAttribute('href')?.split('/').pop()?.replace(/\.html?$/, '')
+                || 'desconocido';
+            track('open_game', { juego: gameId });
+        }, { passive: true });
+    }
+
     // ── Confirmación de carga ─────────────────────────────────────────────────
     // Este log es el primer punto de diagnóstico: si no aparece, el <script>
     // no está incluido en index.html o hay un error de sintaxis en el módulo.
@@ -1414,6 +1426,6 @@
     })();
 
     // ── Exposición global ─────────────────────────────────────────────────────
-    window.GhostAnalytics = Object.freeze({ track, test, debug, status });
+    window.GhostAnalytics = Object.freeze({ track, test, debug, status, initGameOpenTracking });
 
 })();
