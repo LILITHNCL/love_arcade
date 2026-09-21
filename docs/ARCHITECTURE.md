@@ -19,7 +19,7 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
+4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, core/config.js, core/utils.js, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
 5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/app.js` inicializa el estado global, la racha y la API pública `window.GameCenter`.
 6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
@@ -74,6 +74,11 @@ Contiene la configuración estática cargada antes de `js/app.js`:
 - `window.CONFIG` y `window.ECONOMY`;
 - `window.THEMES`;
 - los códigos promocionales hash SHA-256 y el fallback de temas legado consumidos por el hub.
+
+### `js/core/utils.js`
+
+Contiene utilidades sin estado ni acceso al DOM: expone `window.debounce` por compatibilidad y
+`window.LoveArcadeUtils` con `sha256` y `canUseVibration` para consumo interno del hub.
 
 ### `js/shop-logic.js`
 

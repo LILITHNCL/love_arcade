@@ -3,55 +3,10 @@ const CONFIG = window.CONFIG;
 const ECONOMY = window.ECONOMY;
 const THEMES = window.THEMES;
 const { LEGACY_THEME_FALLBACK, PROMO_CODES_HASHED } = window.LoveArcadeConfig;
+const { sha256, canUseVibration: _canUseVibration } = window.LoveArcadeUtils;
 
 // Salt para checksums de sincronización — mantener secreto
 const SYNC_SALT = 'love_arcade_v75_integrity_2026';
-// =====================================================
-// UTILIDADES
-// =====================================================
-
-/**
- * Calcula el SHA-256 de un texto y devuelve el hash en hexadecimal.
- * Usa la API nativa crypto.subtle — disponible en todos los navegadores modernos.
- * @param {string} text
- * @returns {Promise<string>}
- */
-async function sha256(text) {
-    const buffer = await crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(text)
-    );
-    return Array.from(new Uint8Array(buffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-
-/**
- * Crea una versión con debounce de una función.
- * Útil para controlar la frecuencia de operaciones costosas (buscador, resize).
- * @param {Function} fn    Función a debounce-ar.
- * @param {number}   delay Espera en ms antes de ejecutar (por defecto 300ms).
- * @returns {Function}
- */
-function debounce(fn, delay = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-    };
-}
-
-function _canUseVibration() {
-    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
-        return false;
-    }
-
-    const userActivation = navigator.userActivation;
-    if (!userActivation) return true;
-    return Boolean(userActivation.isActive || userActivation.hasBeenActive);
-}
-window.debounce = debounce; // Disponible globalmente para shop-logic.js
-
 // =====================================================
 // TIEMPO DE RED — Fuente de verdad externa para el bono diario
 // =====================================================
