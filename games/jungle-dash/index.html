@@ -282,6 +282,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════════
      Scripts — orden de carga: dependencias primero, núcleo al final.
      ═══════════════════════════════════════════════════════════════════════ -->
+<script src="../../js/game-bridge.js"></script>
 <script src="js/JD_Audio.js"></script>
 <script src="js/JD_Physics.js"></script>
 <script src="js/JD_Entities.js"></script>
@@ -492,9 +493,8 @@
 })();
 </script>
 
-<!-- Motor central de Love Arcade — DEBE ir al final del body ────────────── -->
+<!-- Cargador opcional de Supabase para el juego ─────────────────────────── -->
 <script src="../../js/supabase-loader.js"></script>
-<script src="../../js/app.js"></script>
 
 </body>
 </html>

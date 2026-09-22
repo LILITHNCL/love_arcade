@@ -12,9 +12,9 @@ Este documento es la fuente normativa para la economía y el estado persistido d
 
 ## 1. Estado persistido y autoridad económica
 
-Evidencia: `js/app.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'` y `window.GameCenter` como la API pública del dominio.
+Evidencia: `js/core/config.js` define `CONFIG.stateKey = 'gamecenter_v6_promos'`; `js/core/state-store.js` expone `window.LoveArcadeStore` para persistir y migrar el estado; `js/domain/game-center.js` ensambla `window.GameCenter` como la API pública del dominio; `js/domain/daily-streak.js` contiene las reglas de racha.
 
-La fuente de verdad económica principal es `store` del navegador, guardado en `localStorage` bajo la clave `gamecenter_v6_promos`.
+La fuente de verdad económica principal es el snapshot encapsulado por `window.LoveArcadeStore`, guardado en `localStorage` bajo la clave `gamecenter_v6_promos`.
 
 Reglas verificadas:
 
@@ -29,7 +29,7 @@ La autoridad económica del negocio y del flujo comercial está en `window.GameC
 
 ## 2. Economía: descuento, cashback y precios finales
 
-Evidencia: `const ECONOMY = { isSaleActive: false, saleMultiplier: 0.80, saleLabel: '-20%', cashbackRate: 0.1 }` en `js/app.js`; `buyItem()` aplica la fórmula exacta en `window.GameCenter.buyItem(itemData)`.
+Evidencia: `const ECONOMY = { isSaleActive: false, saleMultiplier: 0.80, saleLabel: '-20%', cashbackRate: 0.1 }` en `js/core/config.js`; `js/domain/economy.js` implementa `buyItem()` y `window.GameCenter.buyItem(itemData)` conserva el contrato público.
 
 ### Fórmula vigente
 
@@ -57,7 +57,7 @@ Para el procedimiento operativo de activar/ajustar ofertas y cashback, ver [docs
 
 ## 3. Inventario, colección y catálogo
 
-Evidencia: `js/shop-logic.js` y `js/app.js` usan `store.inventory` y el catálogo de `data/shop.json` como fuente de productos; la tienda muestra artículos no poseídos y la colección muestra poseídos.
+Evidencia: `js/shop-logic.js` consume el inventario mediante `window.GameCenter`; `js/domain/economy.js` administra `store.inventory` y el catálogo de `data/shop.json` es la fuente de productos; la tienda muestra artículos no poseídos y la colección muestra poseídos.
 
 Reglas verificadas:
 
@@ -69,7 +69,7 @@ Reglas verificadas:
 
 ## 4. Códigos promocionales
 
-Evidencia: `const PROMO_CODES_HASHED = { ... }` en `js/app.js`; `GameCenter.redeemPromoCode()` aplica `sha256()` antes de comparar.
+Evidencia: `js/domain/promo-codes.js` contiene `PROMO_CODES_HASHED` y aplica `sha256()` antes de comparar; `window.GameCenter.redeemPromoCode()` conserva el contrato público.
 
 Reglas verificadas:
 
@@ -77,10 +77,11 @@ Reglas verificadas:
 - El valor introducido se normaliza a mayúsculas y se hashea con SHA-256 antes de buscar coincidencia.
 - Si el hash ya existe en `store.redeemedHashes`, el código se rechaza como duplicado.
 - Cuando es válido, se añade el premio al saldo y se registra en `store.history`.
+- La separación en un módulo de dominio no reduce la exposición client-side de la tabla de hashes; no debe interpretarse como un control de seguridad adicional.
 
 ## 5. Racha diaria
 
-Evidencia: `window.GameCenter.claimDaily()`, `canClaimDaily()`, `getStreakInfo()`, `repairDailyStreak()` en `js/app.js`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` en el mismo archivo.
+Evidencia: `js/domain/daily-streak.js` implementa `claimDaily()`, `canClaimDaily()`, `getStreakInfo()` y `repairDailyStreak()`; `js/domain/game-center.js` expone esas APIs mediante `window.GameCenter`; `CONFIG.dailyReward`, `CONFIG.dailyStreakCap`, `CONFIG.dailyStreakStep` viven en `js/core/config.js`.
 
 ### Fórmula de recompensa
 
@@ -107,7 +108,7 @@ El valor `store.daily.lastClaim` se actualiza solo cuando el reclamo tiene éxit
 
 ### Reparación de racha
 
-Evidencia: `GameCenter.repairDailyStreak()` en `js/app.js` y `DAILY_REPAIR_COST = 500`.
+Evidencia: `GameCenter.repairDailyStreak()` delega en `js/domain/daily-streak.js`, donde `DAILY_REPAIR_COST = 500`.
 
 Si hay una ruptura de 2 días, la UI puede ofrecer reparación por 500 monedas. La reparación:
 
@@ -118,7 +119,7 @@ Si hay una ruptura de 2 días, la UI puede ofrecer reparación por 500 monedas. 
 
 ### Reloj y seguridad
 
-Evidencia: `_readTimeCache()`, `_getDailyDiffDays()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL`, y la validación de `desynced` en `claimDaily()`.
+Evidencia: `window.LoveArcadeTime.read()`, `dayDiff()`, `CLOCK_SKEW_LIMIT`, `TIME_CACHE_TTL` en `js/core/time-sync.js`, y la validación de `desynced` en `claimDaily()`.
 
 - El sistema usa un caché sincronizado en `localStorage` para evaluar la validez del día.
 - Si el reloj se detecta desincronizado, el reclamo se bloquea.
@@ -129,7 +130,7 @@ Para un análisis extendido (UX, accesibilidad, motion, riesgos y diagrama de fl
 
 ## 6. Bendición Lunar como modificador de recompensa
 
-Evidencia: `GameCenter.buyMoonBlessing()`, `extendMoonBlessingDays()`, `getMoonBlessingStatus()` y la lógica dentro de `GameCenter.claimDaily()` en `js/app.js`.
+Evidencia: `js/domain/moon-blessing.js` implementa `buyMoonBlessing()`, `extendMoonBlessingDays()` y `getMoonBlessingStatus()`; `window.GameCenter` conserva esas APIs públicas. La lógica de aplicación del bonus durante el reclamo diario vive en `js/domain/daily-streak.js`.
 
 La Bendición Lunar no es una racha por sí misma; es un modificador de recompensa del bono diario.
 
@@ -145,7 +146,7 @@ Debe documentarse como una mejora de recompensa, no como una segunda racha o un 
 
 ## 7. Identidad, perfil y temas
 
-Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/app.js`; `index.html` y `styles.css` leen esa estructura para el selector visual del usuario.
+Evidencia: `const THEMES = { ... }` y `window.THEMES = THEMES` en `js/core/config.js`; `js/domain/identity.js` persiste nickname y género; `js/domain/avatar.js` persiste el avatar; `js/domain/theming.js` aplica el tema; `js/ui/hud-render.js` renderiza identidad y avatar, y `js/ui/theme-grid.js` renderiza el selector visual del usuario.
 
 Reglas verificadas:
 
@@ -153,14 +154,15 @@ Reglas verificadas:
 - Cada clave tiene un `accent` y un `name`.
 - El tema persistido forma parte del estado principal del usuario.
 - Los minijuegos reciben acceso a la identidad visual de la plataforma a través de `window.THEMES` y el `accent` del tema activo.
+- `window.GameCenter.setIdentity()`, `getIdentity()` y `hasIdentity()` delegan en `js/domain/identity.js`; `js/ui/hud-render.js` renderiza nickname y género.
 
 Revisión humana:
 
-- Las decisiones sobre generación de tokens visuales, duplicación de paletas y la relación exacta entre `index.html` y `app.js` requieren comprobación adicional antes de tratar esas secciones como contrato formal de diseño.
+- Las decisiones sobre generación de tokens visuales, duplicación de paletas y la relación exacta entre `index.html`, `js/domain/theming.js` y `js/ui/theme-grid.js` requieren comprobación adicional antes de tratar esas secciones como contrato formal de diseño.
 
 ## 8. Historial y transacciones
 
-Evidencia: `GameCenter.getHistory()` y los `logTransaction()` emitidos en `js/app.js`.
+Evidencia: `js/domain/history.js` implementa `logTransaction()` y `getHistory()`; `window.GameCenter.getHistory()` conserva el contrato público.
 
 El historial documenta:
 

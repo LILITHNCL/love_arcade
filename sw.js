@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.41';
+const CACHE_VERSION = 'v2.04.07.56';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -8,7 +8,30 @@ const APP_SHELL_FILES = [
   '/manifest.webmanifest',
   '/js/shop-logic.js',
   '/js/spa-router.js',
+  '/js/core/config.js',
+  '/js/core/utils.js',
+  '/js/core/sync-worker-client.js',
+  '/js/core/time-sync.js',
+  '/js/core/state-store.js',
+  '/js/cloud/sentinel.js',
+  '/js/domain/history.js',
+  '/js/domain/economy.js',
+  '/js/domain/promo-codes.js',
+  '/js/domain/moon-blessing.js',
+  '/js/domain/identity.js',
+  '/js/domain/daily-streak.js',
+  '/js/domain/avatar.js',
+  '/js/domain/theming.js',
+  '/js/ui/theme-grid.js',
+  '/js/domain/game-center.js',
+  '/js/ui/coin-display.js',
+  '/js/ui/hud-render.js',
+  '/js/ui/micro-interactions.js',
+  '/js/pwa/sw-update-bridge.js',
   '/js/app.js',
+  '/js/game-bridge.js',
+  '/js/game-bridge-runtime.js',
+  '/js/pwa/sw-update-bridge.js',
   '/js/sync-worker.js',
   '/js/analytics.js',
   '/js/supabase-loader.js',

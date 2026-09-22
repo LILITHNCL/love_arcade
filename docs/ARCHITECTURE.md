@@ -19,9 +19,9 @@ Love Arcade se ejecuta como una SPA estática. La aplicación no usa un framewor
 1. El navegador carga `index.html`.
 2. El documento define la estructura global del shell: navbar, navegación, vistas SPA y sprite SVG.
 3. El script crítico dentro del `<head>` aplica el tema persistido antes del primer paint para evitar parpadeo visual.
-4. El HTML carga los scripts principales de lógica en orden funcional: analytics, supabase-loader, lifecycle-scheduler, app.js, backup-engine.js, shop-logic.js, streak-hub.js y spa-router.js.
-5. `js/app.js` inicializa el estado global, la economía, los temas, la racha y la API pública `window.GameCenter`.
-6. `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
+4. El HTML carga scripts clásicos, sin `defer` ni `type="module"`, según el siguiente diagrama de dependencias: `analytics` → `supabase-loader` → `lifecycle-scheduler` → `core/config` → `core/utils` → `core/sync-worker-client` → `core/time-sync` → `core/state-store` → `cloud/sentinel` → `domain/history` → `domain/economy` → `domain/promo-codes` → `domain/moon-blessing` → `domain/identity` → `domain/daily-streak` → `domain/avatar` → `domain/theming` → `ui/theme-grid` → `domain/game-center` → `ui/coin-display` → `ui/hud-render` → `ui/micro-interactions` → `pwa/sw-update-bridge` → `app` (bootstrap) → `backup-engine` → `shop-logic` → `streak-hub` → `spa-router`. Sentinel es la excepción deliberada entre core y domain: instala su interceptor de `localStorage` antes de cualquier escritura de una clave vigilada.
+5. `js/core/config.js` inicializa la configuración estática, economía y temas; `js/core/state-store.js` inicializa el estado global; los módulos de `js/domain/` aportan reglas de negocio y `js/domain/game-center.js` ensambla la API pública `window.GameCenter` antes de que `js/ui/hud-render.js` se suscriba al estado. Las responsabilidades visuales están en `js/ui/`, la sincronización cloud en `js/cloud/` y la integración PWA en `js/pwa/`.
+6. `js/app.js` sólo orquesta el bootstrap síncrono con los módulos ya cargados; `js/spa-router.js` controla la transición entre `home`, `shop` y `profile` usando `hidden` y la History API.
 
 ## 2. Vistas SPA y router
 
@@ -61,14 +61,71 @@ La implementación actual del lifecycle enlaza el router con la vista del home y
 
 ### `js/app.js`
 
-Es el motor principal del hub. Aquí se definen:
+Es un orquestador clásico y bloqueante de 38 líneas. Ejecuta el bootstrap síncrono pre-paint —tema, saldo, botón diario/Bendición Lunar, avatar e identidad— y en `DOMContentLoaded` delega la inicialización restante a los módulos ya cargados. No contiene lógica de dominio, persistencia, Worker, UI ni cloud.
 
-- `CONFIG` y `ECONOMY`;
+### `js/cloud/sentinel.js`
+
+Contiene la IIFE `SentinelCloudSync`: instala el interceptor global de
+`localStorage` para las claves vigiladas, sincroniza snapshots con Supabase y
+expone `window.Sentinel` con `syncNow`, `getSession`, `getClient`, `getStatus`
+y `_rehydrateHubStoreFromDisk`. Consume exclusivamente la API pública de
+`window.LoveArcadeStore` y `window.CONFIG.stateKey`; no accede al cierre de
+estado del bootstrap.
+
+### `js/core/sync-worker-client.js`
+
+Expone `window.workerTask` y encapsula el ciclo de vida del Worker de
+exportación/importación. `js/domain/game-center.js` y `js/backup-engine.js`
+mantienen ese contrato público y sus fallbacks locales.
+
+### `js/domain/game-center.js`
+
+Ensambla `window.GameCenter` con los módulos de dominio y conserva sin cambios la
+superficie pública consumida por la SPA y los minijuegos. `syncUI()` delega a un
+puente configurado por `js/ui/hud-render.js`, que conserva el renderizado.
+
+### `js/domain/theming.js` y `js/ui/theme-grid.js`
+
+`theming.js` persiste y aplica los roles CSS del tema activo; `theme-grid.js` renderiza
+los botones nativos del selector y delega sus clics a `window.GameCenter.setTheme()`.
+
+### `js/domain/avatar.js`
+
+Encapsula la conversión y compresión de imágenes, el guardado local y las operaciones
+`setAvatar()`, `setAvatarPath()` y `getAvatar()`. Depende de `window.LoveArcadeStore`
+y consume opcionalmente `window.Sentinel.getSession()` / `getClient()` como contrato
+externo para Auth y Supabase Storage; `js/ui/hud-render.js` aplica el avatar persistido al DOM.
+
+### `js/ui/coin-display.js` y `js/ui/hud-render.js`
+
+`coin-display.js` concentra el formato abreviado de la navbar y la animación de saldo,
+manteniendo `window.formatCoinsNavbar`. `hud-render.js` se suscribe a
+`window.LoveArcadeStore`, actualiza el HUD, avatar, identidad, botón diario y Bendición
+Lunar, y mantiene `window.revealUI` para el orden crítico sin flicker.
+
+### `js/ui/micro-interactions.js` y `js/pwa/sw-update-bridge.js`
+
+`micro-interactions.js` inicializa el ripple, la respuesta háptica Android con
+reducción de movimiento y el observador de controles `data-loading` tras
+`DOMContentLoaded`. `sw-update-bridge.js` registra el aviso de nueva versión y
+recarga la página cuando el Service Worker actualizado toma el control.
+
+### `js/core/config.js`
+
+Contiene la configuración estática cargada antes de los módulos que consumen estado:
+
+- `window.CONFIG` y `window.ECONOMY`;
 - `window.THEMES`;
-- los códigos promocionales hash SHA-256;
-- la persistencia principal en `localStorage` usando la clave `gamecenter_v6_promos`;
-- la API pública `window.GameCenter`;
-- la lógica de bono diario, racha, Bendición Lunar, historial y sincronización local/cloud.
+- los códigos promocionales hash SHA-256 y el fallback de temas legado consumidos por el hub.
+
+### `js/core/utils.js`
+
+Contiene utilidades sin estado ni acceso al DOM: expone `window.debounce` por compatibilidad y
+`window.LoveArcadeUtils` con `sha256` y `canUseVibration` para consumo interno del hub.
+
+### `js/core/state-store.js`
+
+Contiene la persistencia local del hub: migración, control de cuota, limpieza de emergencia y serialización de `localStorage` para `gamecenter_v6_promos`. Expone `window.LoveArcadeStore` con `getStore`, `replaceStore`, `save`, `migrate` y `subscribe`; los consumidores de dominio conservan el estado encapsulado detrás de esa API.
 
 ### `js/shop-logic.js`
 
@@ -130,7 +187,7 @@ El Service Worker gestiona un app shell y cache runtime, con foco en una experie
 
 ### Local (runtime principal)
 
-La persistencia principal vive en `localStorage` con clave `gamecenter_v6_promos`.
+La persistencia principal vive en `js/core/state-store.js` y usa `localStorage` con clave `gamecenter_v6_promos`. `window.LoveArcadeStore` encapsula las lecturas, reemplazos, guardados, migraciones y suscripciones del snapshot.
 
 La capa de referencia del estado del usuario incluye, entre otros datos:
 

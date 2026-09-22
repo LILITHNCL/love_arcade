@@ -175,11 +175,10 @@
     │  runs inside main.js.                                           │
     └─────────────────────────────────────────────────────────────────┘
   -->
-  <script type="module" src="./js/main.js"></script>
-
-  <!-- Love Arcade Core — must stay last, must stay a classic script -->
+  <!-- Love Arcade game bridge — classic and blocking before the game entrypoint -->
   <script src="../../js/supabase-loader.js"></script>
-  <script src="../../js/app.js"></script>
+  <script src="../../js/game-bridge.js"></script>
+  <script type="module" src="./js/main.js"></script>
 
 </body>
 </html>

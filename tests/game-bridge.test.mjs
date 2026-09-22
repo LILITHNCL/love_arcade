@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
+const storage = new Map();
+const document = { writes: [], write(value) { this.writes.push(value); } };
+const context = vm.createContext({
+    window: {}, document, localStorage: {
+        getItem: (key) => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+    },
+    console, JSON, Math, Object, Array, String, Number, Boolean, RegExp, Error, Date,
+    setTimeout, clearTimeout
+});
+context.window.window = context.window;
+
+vm.runInContext(read('js/game-bridge.js'), context, { filename: 'js/game-bridge.js' });
+assert.equal(document.writes.length, 1, 'The bridge must synchronously request its classic dependencies.');
+for (const source of ['/js/core/config.js', '/js/core/state-store.js', '/js/domain/history.js', '/js/domain/economy.js', '/js/domain/identity.js', '/js/game-bridge-runtime.js']) {
+    assert.match(document.writes[0], new RegExp(source.replace(/[./]/g, '\\$&')));
+}
+
+for (const file of [
+    'js/core/config.js', 'js/core/state-store.js', 'js/domain/history.js',
+    'js/domain/economy.js', 'js/domain/identity.js'
+]) vm.runInContext(read(file), context, { filename: file });
+vm.runInContext(read('js/game-bridge-runtime.js'), context, { filename: 'js/game-bridge-runtime.js' });
+
+const { GameCenter } = context.window;
+for (const method of ['completeLevel', 'getBalance', 'getHistory', 'addCoins', 'spendCoins', 'buyItem', 'getIdentity', 'hasIdentity']) {
+    assert.equal(typeof GameCenter[method], 'function', `${method} must be available to games.`);
+}
+assert.equal(GameCenter.getBalance(), 0);
+assert.deepEqual({ ...GameCenter.completeLevel('test-game', 'level-1', 25) }, { paid: true, coins: 25 });
+assert.equal(GameCenter.getBalance(), 25);
+assert.deepEqual({ ...GameCenter.completeLevel('test-game', 'level-1', 25) }, { paid: false, coins: 25 });
+assert.equal(JSON.parse(storage.get('gamecenter_v6_promos')).coins, 25, 'Rewards must persist in the hub state key.');
+assert.equal(typeof context.window.CONFIG, 'object');
+assert.equal(typeof context.window.ECONOMY, 'object');
+assert.equal(typeof context.window.THEMES, 'object');
+
+const gameScriptSources = (file) => [...read(file).matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g)].map((match) => match[1]);
+const gameEntrypoints = {
+    'games/2048/index.html': 'lumina_bridge.js',
+    'games/word-hunt/index.html': 'config_levels.js',
+    'games/jungle-dash/index.html': 'js/JD_Core.js',
+    'games/jigsaw/index.html': './js/MAREJIG_economy.js',
+    'games/Dodger/index.html': 'src/main.js',
+    'games/Shooter/index.html': 'js/main.mjs',
+    'games/ollin-smash/index.html': './js/main.js',
+    'games/rompecabezas/index.html': './src/main.js'
+};
+const gameIndexFiles = fs.readdirSync(path.join(projectRoot, 'games'), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(projectRoot, 'games', entry.name, 'index.html')))
+    .map((entry) => `games/${entry.name}/index.html`)
+    .sort();
+assert.deepEqual(Object.keys(gameEntrypoints).sort(), gameIndexFiles, 'Every game document must declare its bridge ordering contract.');
+for (const file of gameIndexFiles) {
+    const entrypoint = gameEntrypoints[file];
+    const scripts = gameScriptSources(file);
+    const bridgeIndex = scripts.indexOf('../../js/game-bridge.js');
+    assert.notEqual(bridgeIndex, -1, `${file} must load the game bridge.`);
+    assert.equal(scripts.includes('../../js/app.js'), false, `${file} must not load the hub UI bootstrap.`);
+    assert.ok(bridgeIndex < scripts.indexOf(entrypoint), `${file} must load the bridge before ${entrypoint}.`);
+}
+
+const serviceWorker = read('sw.js');
+assert.match(serviceWorker, /const CACHE_VERSION = 'v2\.04\.07\.56';/, 'The bridge deployment must invalidate the prior cache.');
+for (const source of ['/js/app.js', '/js/game-bridge.js', '/js/game-bridge-runtime.js']) {
+    assert.match(serviceWorker, new RegExp(`'${source.replace(/[./]/g, '\\$&')}'`), `${source} must be precached.`);
+}
+for (const file of gameIndexFiles) {
+    assert.match(serviceWorker, new RegExp(`'/${file.replace(/[./]/g, '\\$&')}'`), `${file} must remain precached.`);
+}
+
+console.log('Game bridge integration tests passed.');

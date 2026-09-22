@@ -7,7 +7,7 @@ Este documento es la referencia actual para integradores de minijuegos dentro de
 ## Estado del documento
 
 - Hecho verificado: los minijuegos viven bajo `games/` y cada uno tiene un `index.html` propio.
-- Hecho verificado: el hub expone `window.GameCenter` como API pública de dominio.
+- Hecho verificado: `js/domain/game-center.js` ensambla `window.GameCenter` como API pública de dominio, sin cambiar el contrato para minijuegos.
 - Hecho verificado: `window.GameCenter.completeLevel(gameId, levelId, rewardAmount)` es la forma actual de registrar recompensas del juego.
 - Inferencia: la arquitectura del proyecto asume juegos autónomos con persistencia local propia y con retorno al hub desde el navegador.
 - No confirmado: cualquier contrato adicional que no aparezca explícitamente en el código actual debe mantenerse en cada README del juego y revisarse localmente.
@@ -30,6 +30,23 @@ Cada juego debe tener un entrypoint HTML local. No se exige una compilación cen
 
 La disciplina del repositorio es atender cada juego como una miniaplicación independiente, con su propio flujo de render, input y assets, pero compartiendo el mismo patrón base de navegador estático.
 
+### Único entrypoint de integración con el hub
+
+`../../js/game-bridge.js` es el **único** entrypoint de integración admitido para documentos bajo `games/`. Un juego que consuma recompensas o compatibilidad del hub debe cargarlo **una sola vez**, como script clásico, durante el parseo del documento y **antes** de cualquier script propio que pueda consultar `window.GameCenter`. No usar `type="module"` ni `defer` para el bridge. El bridge carga de manera síncrona y ordenada la configuración, el store, el historial, la economía mínima y la identidad que respaldan el contrato de juego.
+
+No se debe cargar `../../js/app.js` desde `games/`: ese archivo sólo orquesta el bootstrap visual del hub y presupone módulos de UI que una página de juego no carga.
+
+`game-bridge.js` expone los globals de compatibilidad de lectura `window.CONFIG`, `window.ECONOMY` y `window.THEMES`, además de una superficie deliberadamente pequeña de `window.GameCenter`: `completeLevel`, `getBalance`, `getHistory`, `addCoins`, `spendCoins`, `buyItem`, `getIdentity` y `hasIdentity`. No carga UI del hub, Sentinel, `postMessage` ni infraestructura de iframe.
+
+Los juegos son documentos independientes del mismo origen. `completeLevel()` persiste el saldo en `localStorage` bajo `CONFIG.stateKey`; al regresar o recargar la página principal, el hub rehidrata esa misma clave y actualiza su HUD. No existe comunicación por iframe, `postMessage` ni eventos cross-document para acreditar recompensas.
+
+Orden mínimo obligatorio:
+
+```html
+<script src="../../js/game-bridge.js"></script>
+<script src="./js/game-entry.js"></script>
+```
+
 ## 3. Contrato actual: `window.GameCenter.completeLevel()`
 
 La firma verificada en el código actual es:
@@ -48,7 +65,19 @@ La implementación vigente hace lo siguiente:
 - persiste el estado del hub con sincronización inmediata cuando procede;
 - devuelve un objeto con el resultado de la operación, incluyendo `{ paid, coins }`.
 
-La idempotencia es parte del contrato: el mismo `levelId` no debe pagar dos veces.
+La idempotencia es parte del contrato: el mismo `levelId` no debe pagar dos veces para un mismo `gameId`. Por ello, `levelId` debe ser un identificador estable y único del nivel, hito o sesión que se está acreditando; no se debe reutilizar para recompensas distintas.
+
+Ejemplo mínimo:
+
+```js
+const result = window.GameCenter.completeLevel(
+    'mi-juego',
+    'nivel-003-completado',
+    125
+);
+
+if (result.paid) console.log(`Saldo actualizado: ${result.coins}`);
+```
 
 ## 4. Formato de la recompensa
 
@@ -81,17 +110,30 @@ El aislamiento recomendable es:
 
 Los juegos deben seguir siendo operables si se abren directamente desde su carpeta local dentro de `games/`.
 
-Esto no implica un contrato de runtime especial ni un servidor propio del repositorio. El código actual refleja un modelo estático y navegador-first: cada juego se prueba y se ejecuta de forma autónoma, pero puede integrarse al hub cuando se decide abrirlo desde la aplicación principal.
+Esto no implica un contrato de runtime especial ni un servidor propio del repositorio. Si el bridge no se incluye, `window.GameCenter` no está disponible: el juego debe degradar de forma segura, conservar únicamente su resultado local y no intentar acreditar monedas del hub. El código actual refleja un modelo estático y navegador-first: cada juego se prueba y se ejecuta de forma autónoma, pero puede integrarse al hub cuando se decide abrirlo desde la aplicación principal.
 
 ## 8. Namespacing y globals reservados
 
-Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La integración actual considera relevantes los siguientes globals públicos:
+Los minijuegos deben evitar colisiones de nombres con el proyecto principal. La integración actual considera relevantes los siguientes globals públicos; los namespaces internos `LoveArcadeTheming`, `LoveArcadeThemeGrid` y `LoveArcadeGameCenter` no son contrato de integración:
 
 - `window.GameCenter`
 - `window.THEMES`
-- `window.CONFIG` cuando se usa por compatibilidad de lectura
+- `window.CONFIG` y `window.ECONOMY` cuando se usan por compatibilidad de lectura
+- `window.LoveArcadeStore`, `window.LoveArcadeTime` y `window.Sentinel`, reservados para infraestructura del hub
+- `window.AppScheduler`, `window.debounce`, `window.formatCoinsNavbar`, `window.revealUI` y `window.workerTask`, reservados para runtime y UI del hub
 
 Se debe evitar reescribir variables globales del hub ni declarar nombres que pudieran reemplazar API pública del proyecto.
+
+### Interceptor de almacenamiento de Sentinel
+
+El hub carga `js/cloud/sentinel.js` antes de los módulos de dominio. Sentinel
+aplica un *monkey-patch* global a `localStorage.setItem()` y
+`localStorage.removeItem()` para observar únicamente sus claves vigiladas y
+programar la sincronización cloud cuando exista sesión. Este efecto es
+intencional: los minijuegos deben usar claves con prefijo propio, no sobrescribir
+las claves reservadas del hub y no sustituir los métodos de `localStorage`.
+Las escrituras en claves no vigiladas conservan el comportamiento nativo y no
+generan una sincronización cloud.
 
 ## 9. Contrato de temas: `window.THEMES`
 

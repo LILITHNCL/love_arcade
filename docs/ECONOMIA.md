@@ -24,7 +24,7 @@
 
 ## 1. ¿Cómo funciona el sistema de economía?
 
-El sistema de economía de Love Arcade está diseñado para ser **controlado desde un único lugar** en el código: el objeto `ECONOMY` al inicio de `app.js`. No requiere tocar la lógica de compra, ni los HTMLs, ni el JSON de productos.
+El sistema de economía de Love Arcade está diseñado para ser **controlado desde un único lugar** en el código: el objeto `ECONOMY` en `js/core/config.js`. La implementación de compras está aislada en `js/domain/economy.js`, por lo que no requiere tocar la lógica de compra, los HTMLs ni el JSON de productos al ajustar una oferta.
 
 La fórmula exacta y su ejemplo de cálculo son responsabilidad de [docs/DOMAIN.md](./DOMAIN.md) §2.
 Esta guía se enfoca en el procedimiento operativo: cómo activar, ajustar y desactivar ofertas y cashback.
@@ -33,12 +33,12 @@ Esta guía se enfoca en el procedimiento operativo: cómo activar, ajustar y des
 
 ## 2. El objeto ECONOMY
 
-Se encuentra en las primeras líneas de `app.js`, después de `CONFIG`:
+Se encuentra en `js/core/config.js`, después de `CONFIG`:
 
 ```javascript
-// app.js — línea ~20
+// js/core/config.js
 // NOTA: el estado de isSaleActive en el código puede diferir del que se muestra
-// aquí como ejemplo. Verifica el archivo app.js para conocer el estado actual en producción.
+// aquí como ejemplo. Verifica el archivo js/core/config.js para conocer el estado actual en producción.
 const ECONOMY = {
     isSaleActive:   false,    // ¿Hay oferta activa ahora mismo?
     saleMultiplier: 0.8,      // Factor de precio (0.8 = 20% de descuento)
@@ -288,7 +288,7 @@ const ECONOMY = {
 // ╔══════════════════════════════════════════════╗
 // ║  PANEL DE CONTROL — EVENTOS LOVE ARCADE      ║
 // ╠══════════════════════════════════════════════╣
-// ║  Archivo: app.js — objeto ECONOMY (~línea 20)║
+// ║  Archivo: js/core/config.js — objeto ECONOMY  ║
 // ╚══════════════════════════════════════════════╝
 
 const ECONOMY = {
