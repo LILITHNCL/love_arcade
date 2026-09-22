@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.55';
+const CACHE_VERSION = 'v2.04.07.56';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -29,6 +29,8 @@ const APP_SHELL_FILES = [
   '/js/ui/micro-interactions.js',
   '/js/pwa/sw-update-bridge.js',
   '/js/app.js',
+  '/js/game-bridge.js',
+  '/js/game-bridge-runtime.js',
   '/js/pwa/sw-update-bridge.js',
   '/js/sync-worker.js',
   '/js/analytics.js',

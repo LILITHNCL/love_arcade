@@ -49,7 +49,9 @@ assert.doesNotMatch(css, /backdrop-filter|filter\s*:\s*blur\s*\(/, 'CSS contains
 assert.doesNotMatch(css, /animation\s*:[^;]*infinite/, 'CSS contains no infinite animation loops');
 assert.equal((economy.match(/completeLevel\s*\(/g) || []).length, 1, 'economy retains the only completeLevel call');
 sources.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not define or call completeLevel`));
-assert(html.lastIndexOf('../../js/app.js') > html.lastIndexOf('MAREJIG_main.js'), '../../js/app.js remains the final script');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_economy.js'), 'bridge loads before the economy');
+assert(html.indexOf('../../js/game-bridge.js') < html.indexOf('MAREJIG_main.js'), 'bridge loads before game startup');
+assert.doesNotMatch(html, /\.\.\/\.\.\/js\/app\.js/, 'hub UI bootstrap is absent');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'scripts do not assign forbidden globals');
 assert.doesNotMatch(sources.map(([, source]) => source).join('\n'), /\b(?:CONFIG|ECONOMY|THEMES)\s*=/, 'scripts do not declare forbidden unnamespaced identifiers');
 console.log('phase13 menu redesign unit tests ok');
