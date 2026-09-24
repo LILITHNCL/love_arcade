@@ -1170,7 +1170,7 @@
   {
     "id": 147,
     "name": "Angry Birds Epic: All Stars APK",
-    "price": 2500,
+    "price": 1,
     "category": "art",
     "type": "file",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-epic-all-stars",
@@ -1188,7 +1188,7 @@
 {
     "id": 149,
     "name": "Angry Birds Space APK",
-    "price": 2500,
+    "price": 1,
     "category": "art",
     "type": "file",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/angry-birds-space",
@@ -1248,7 +1248,7 @@
 {
     "id": 156,
     "name": "Darkspine Sonic",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/super-hyper-darkspine-dark-sonic-887fe357"
@@ -1256,7 +1256,7 @@
 {
     "id": 157,
     "name": "Sonic the Hedgehog",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic-the-hedgehog-f2ef7092"
@@ -1264,7 +1264,7 @@
 {
     "id": 158,
     "name": "Miku Nakano",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku-nakano-162d9434"
@@ -1272,7 +1272,7 @@
 {
     "id": 159,
     "name": "Hatsune Miku",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hatsune-miku-8aeb2afa"
@@ -1280,7 +1280,7 @@
 {
     "id": 160,
     "name": "Waguri Kaoruko",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/waguri-kaoruko-b9005b9c"
@@ -1288,7 +1288,7 @@
 {
     "id": 161,
     "name": "Kita Ikuyo",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ikuyo-kita-b0ffd0ed"
@@ -1296,7 +1296,7 @@
 {
     "id": 162,
     "name": "Rem",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rem-4eddc3ae"
@@ -1304,7 +1304,7 @@
 {
     "id": 163,
     "name": "Amy Rose",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/amy-rose-7e2801b6"
@@ -1312,7 +1312,7 @@
 {
     "id": 164,
     "name": "Blaze the Cat",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/blaze-the-cat-a2fe72c8"
@@ -1320,7 +1320,7 @@
 {
     "id": 165,
     "name": "Gogeta SSJ4",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta-ssj4-7c18d060"
@@ -1328,7 +1328,7 @@
 {
     "id": 166,
     "name": "Itsuki Nakano",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/itsuki-nakano-45ad85e0"
@@ -1336,7 +1336,7 @@
 {
     "id": 167,
     "name": "Jane Doe",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane-doe-25eb91a3"
@@ -1344,7 +1344,7 @@
 {
     "id": 168,
     "name": "Mitsuri Kanroji",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri-kanroji-6a2d9cbe"
@@ -1352,7 +1352,7 @@
 {
     "id": 169,
     "name": "Sacarosa",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa-1ecbcc04"
@@ -1360,7 +1360,7 @@
 {
     "id": 170,
     "name": "Uraraka Ochako",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/uraraka-ochako-850bfdc6"
@@ -1368,7 +1368,7 @@
 {
     "id": 171,
     "name": "Varesa",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa-09cfd64c"
@@ -1376,7 +1376,7 @@
 {
     "id": 172,
     "name": "Vegetto",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto-e04df20e"
@@ -1384,7 +1384,7 @@
 {
     "id": 173,
     "name": "Xilonen",
-    "price": 1000,
+    "price": 1,
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen-399ba084"
