@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.04.07.57';
+const CACHE_VERSION = 'v2.04.07.58';
 const CACHE_NAME = `love-arcade-${CACHE_VERSION}`;
 
 const APP_SHELL_FILES = [
@@ -31,7 +31,6 @@ const APP_SHELL_FILES = [
   '/js/app.js',
   '/js/game-bridge.js',
   '/js/game-bridge-runtime.js',
-  '/js/pwa/sw-update-bridge.js',
   '/js/sync-worker.js',
   '/js/analytics.js',
   '/js/supabase-loader.js',
@@ -92,11 +91,12 @@ const GAMES_FILES = [
   '/games/Shooter/index.html', '/games/Shooter/css/la-shooter-main.css', '/games/Shooter/calculadora-recompensas.html', '/games/Shooter/manifest.json', '/games/Shooter/js/core/la-core-input.mjs', '/games/Shooter/js/core/la-core-loop.mjs', '/games/Shooter/js/core/la-core-renderer.mjs', '/games/Shooter/js/core/la-core-pool.mjs', '/games/Shooter/js/entities/la-enemy-factory.mjs', '/games/Shooter/js/entities/la-player.mjs', '/games/Shooter/js/config/la-config.json', '/games/Shooter/js/modes/la-mode-infinite.mjs', '/games/Shooter/js/systems/la-sound.mjs', '/games/Shooter/js/systems/la-ui.mjs', '/games/Shooter/js/systems/la-asset-loader.mjs', '/games/Shooter/js/main.mjs', '/games/Shooter/assets/backgrounds/nebula.webp', '/games/Shooter/assets/backgrounds/space.webp', '/games/Shooter/assets/backgrounds/stars.webp', '/games/Shooter/assets/sprites/bosses/boss2.png', '/games/Shooter/assets/sprites/bosses/boss3.png', '/games/Shooter/assets/sprites/bosses/boss1.png', '/games/Shooter/assets/sprites/items/health.png', '/games/Shooter/assets/sprites/bullets/scout.png', '/games/Shooter/assets/sprites/bullets/shooter.png', '/games/Shooter/assets/sprites/bullets/tank.png', '/games/Shooter/assets/sprites/bullets/player.png', '/games/Shooter/assets/sprites/bullets/elite.png', '/games/Shooter/assets/sprites/bullets/boss.png', '/games/Shooter/assets/sprites/player/default.png', '/games/Shooter/assets/sprites/enemies/scout.png', '/games/Shooter/assets/sprites/enemies/shooter.png', '/games/Shooter/assets/sprites/enemies/tank.png', '/games/Shooter/assets/sprites/enemies/elite.png'
 ];
 
+const PRECACHE_FILES = [...APP_SHELL_FILES, ...GAMES_FILES];
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(APP_SHELL_FILES);
-    await cache.addAll(GAMES_FILES);
+    await cache.addAll(PRECACHE_FILES);
     await self.skipWaiting();
   })());
 });
