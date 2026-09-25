@@ -69,12 +69,24 @@ for (const file of gameIndexFiles) {
 }
 
 const serviceWorker = read('sw.js');
-assert.match(serviceWorker, /const CACHE_VERSION = 'v2\.04\.07\.56';/, 'The bridge deployment must invalidate the prior cache.');
+assert.match(serviceWorker, /const CACHE_VERSION = 'v2\.04\.07\.58';/, 'The bridge deployment must invalidate the prior cache.');
 for (const source of ['/js/app.js', '/js/game-bridge.js', '/js/game-bridge-runtime.js']) {
     assert.match(serviceWorker, new RegExp(`'${source.replace(/[./]/g, '\\$&')}'`), `${source} must be precached.`);
 }
 for (const file of gameIndexFiles) {
     assert.match(serviceWorker, new RegExp(`'/${file.replace(/[./]/g, '\\$&')}'`), `${file} must remain precached.`);
 }
+
+
+const precacheLists = vm.runInNewContext(`
+${serviceWorker.match(/const APP_SHELL_FILES = \[[\s\S]*?\n\];/)[0]}
+${serviceWorker.match(/const GAMES_FILES = \[[\s\S]*?\n\];/)[0]}
+({ appShell: APP_SHELL_FILES, games: GAMES_FILES });
+`);
+const precacheFiles = [...precacheLists.appShell, ...precacheLists.games];
+assert.equal(new Set(precacheFiles).size, precacheFiles.length, 'Precache resources must be unique across all lists passed to Cache.addAll().');
+assert.match(serviceWorker, /const PRECACHE_FILES = \[\.\.\.APP_SHELL_FILES, \.\.\.GAMES_FILES\];/, 'The complete precache manifest must be installed atomically.');
+assert.match(serviceWorker, /await cache\.addAll\(PRECACHE_FILES\);/, 'The install handler must cache the complete manifest.');
+assert.equal(gameScriptSources('index.html').filter((source) => source === 'js/pwa/sw-update-bridge.js').length, 1, 'The update bridge must be loaded exactly once.');
 
 console.log('Game bridge integration tests passed.');
