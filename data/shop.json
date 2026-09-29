@@ -1388,5 +1388,37 @@
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen-399ba084"
+},
+{
+    "id": 174,
+    "name": "Astra Yao",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/astra-yao-6942c8e0"
+},
+{
+    "id": 175,
+    "name": "Marin Kitagawa",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/marin-kitagawa-f2d9cc5b"
+},
+{
+    "id": 176,
+    "name": "Ironmouse",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ironmouse-fa31f7d6"
+},
+{
+    "id": 177,
+    "name": "Mona Magistus",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mona-magistus-bc24f1e0"
 }
 ]
