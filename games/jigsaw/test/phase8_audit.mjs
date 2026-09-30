@@ -186,8 +186,8 @@ function forceSegmentComplete(scene, segmentId) {
   const sandbox = loadGameplaySandbox({ Date });
   const level = sandbox.MAREJIG_LevelCatalog.getById('nivel_003');
   const puzzle = sandbox.MAREJIG_Generator.generate(level);
-  assert.equal(level.difficulty, 'standard', 'Nivel 003 remains standard difficulty');
-  assert.ok(puzzle.validation.pieceCount >= 28 && puzzle.validation.pieceCount <= 34, 'Nivel 003 standard puzzle uses 28–34 piece range');
+  assert.equal(level.difficulty, 'easy', 'Nivel 003 uses easy difficulty');
+  assert.ok(puzzle.validation.pieceCount >= 22 && puzzle.validation.pieceCount <= 28, 'Nivel 003 easy puzzle uses 22–28 piece range');
   assert.equal(puzzle.validation.ok, true, `Nivel 003 puzzle validates: ${puzzle.validation.errors.join('; ')}`);
 }
 
@@ -197,6 +197,7 @@ function forceSegmentComplete(scene, segmentId) {
   const standard = sandbox.MAREJIG_LevelCatalog.getDifficultyConfig('standard');
   const hard = sandbox.MAREJIG_LevelCatalog.getDifficultyConfig('hard');
   assert.deepEqual([easy.board.cols, easy.board.rows, easy.targetPieceCount, ...easy.segmentPlan], [12, 9, 24, 6, 6, 6, 6], 'easy uses 12×9, 24 target pieces and four segments of six');
+  assert.equal(easy.rewardCoins, 200, 'easy awards 200 coins');
   assert.deepEqual([standard.board.cols, standard.board.rows, standard.targetPieceCount, ...standard.segmentPlan], [12, 9, 32, 8, 8, 8, 8], 'standard uses 12×9, 32 target pieces and four segments of eight');
   assert.deepEqual([hard.board.cols, hard.board.rows, hard.targetPieceCount], [16, 12, 60], 'hard uses 16×12 and 60 target pieces');
   assert.equal(hard.board.cols / hard.board.rows, 4 / 3, 'hard board keeps 4:3');

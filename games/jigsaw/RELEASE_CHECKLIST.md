@@ -31,7 +31,7 @@ Usa esta checklist antes de integrar `games/jigsaw/` en Love Arcade como release
 
 - [ ] La economía sigue centralizada en `js/MAREJIG_economy.js`.
 - [ ] No hay usos de `addCoins`, `spendCoins` ni `getBalance`.
-- [ ] La recompensa se deriva de la dificultad: Fácil `75`, Normal `125`, Difícil `200` monedas.
+- [ ] Los 25 niveles de producción usan dificultad Fácil y otorgan `200` monedas cada uno.
 - [ ] La recompensa se paga una sola vez por nivel completado; repetir un completado no vuelve a pagar.
 - [ ] En standalone el nivel se completa localmente, pero no se acreditan monedas globales.
 - [ ] La idempotencia local evita pagos repetidos por victoria, replay o reload.
