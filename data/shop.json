@@ -5,7 +5,7 @@
     "price": 110,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rouge_the_bat_a94a3cca"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rouge-the-bat-8a4b78b4"
   },
   {
     "id": 2,
@@ -13,7 +13,7 @@
     "price": 110,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic_the_hedgehog_2936a9be"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonic-the-hedgehog-495a194e"
   },
   {
     "id": 3,
@@ -21,7 +21,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_the_hedgehog_6ff623c4"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-the-hedgehog-43706c96"
   },
   {
     "id": 4,
@@ -29,7 +29,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_the_hedgehog_2_18b617f7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-the-hedgehog-2-938b3dd6"
   },
   {
     "id": 5,
@@ -37,7 +37,7 @@
     "price": 450,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku_ultra_instinto_f089881b"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku-ultra-instinto-25d47874"
   },
   {
     "id": 6,
@@ -45,7 +45,7 @@
     "price": 1050,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_d9040eb4"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina-72fef061"
   },
   {
     "id": 7,
@@ -53,7 +53,7 @@
     "price": 1050,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/chuck_49168af7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/chuck-feb16124"
   },
   {
     "id": 8,
@@ -61,7 +61,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/blaze_the_cat_3ca68b7d"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/blaze-the-cat-dd036200"
   },
   {
     "id": 9,
@@ -69,7 +69,7 @@
     "price": 530,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ochaco_uraraka_68e2e708"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ochaco-uraraka-d08c013c"
   },
   {
     "id": 10,
@@ -77,7 +77,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/metal_sonic_f76ecb8c"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/metal-sonic-329e46bb"
   },
   {
     "id": 11,
@@ -85,7 +85,7 @@
     "price": 530,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku_black_05117d17"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/goku-black-1f4354af"
   },
   {
     "id": 12,
@@ -93,7 +93,7 @@
     "price": 530,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto_3d2e6f5d"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto-426a5a7a"
   },
   {
     "id": 13,
@@ -101,7 +101,7 @@
     "price": 750,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta_d68cb043"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta-c493d113"
   },
   {
     "id": 14,
@@ -109,7 +109,7 @@
     "price": 530,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/himiko_toga_3f42c0d7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/himiko-toga-dd18641d"
   },
   {
     "id": 15,
@@ -117,7 +117,7 @@
     "price": 630,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kaoruko_waguri_96348cb3"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kaoruko-waguri-da2b523b"
   },
   {
     "id": 16,
@@ -125,7 +125,7 @@
     "price": 630,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hitori_gotou_69e25c56"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hitori-gotou-71f318b6"
   },
   {
     "id": 17,
@@ -133,7 +133,7 @@
     "price": 1050,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/burnice_white_86d8d99c"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/burnice-white-1f0d0f24"
   },
   {
     "id": 18,
@@ -141,7 +141,7 @@
     "price": 300,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen_joe_25d19b28"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen-joe-1e5018de"
   },
   {
     "id": 19,
@@ -149,7 +149,7 @@
     "price": 1050,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nicole_demara_131cf874"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nicole-demara-8af73574"
   },
   {
     "id": 20,
@@ -157,7 +157,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lanzaguisantes_de_hielo_7041b0cf"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lanzaguisantes-de-hielo-3afe42fa"
   },
   {
     "id": 21,
@@ -165,7 +165,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/astra_yao_ec9bcd48"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/astra-yao-0d76b582"
   },
   {
     "id": 22,
@@ -173,7 +173,7 @@
     "price": 1300,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen_c4f2a9d1"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen-920f62d6"
   },
   {
     "id": 23,
@@ -181,7 +181,7 @@
     "price": 530,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_7b8e3f6a"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa-61ab8975"
   },
   {
     "id": 24,
@@ -189,7 +189,7 @@
     "price": 730,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mavuika_9e41d6b2"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mavuika-40ca1339"
   },
   {
     "id": 25,
@@ -197,7 +197,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hutao_f3a7c981"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hutao-f0cf4000"
   },
   {
     "id": 26,
@@ -205,7 +205,7 @@
     "price": 630,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonicxshadow_4a9c2d7e"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sonicxshadow-caa412e8"
   },
   {
     "id": 27,
@@ -213,7 +213,7 @@
     "price": 900,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gokuxvegeta_8f3b6c1a"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gokuxvegeta-9196cb03"
   },
   {
     "id": 28,
@@ -221,7 +221,7 @@
     "price": 1800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hatsunemiku_b2e7a94f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hatsunemiku-d2b1d715"
   },
   {
     "id": 29,
@@ -229,7 +229,7 @@
     "price": 800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_5c8a1f2e"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane-doe-bc0a8f2b"
   },
   {
     "id": 30,
@@ -237,7 +237,7 @@
     "price": 50,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_chibi_1_9d3f7b4a"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane-doe-chibi-1-2ec7db2a"
   },
   {
     "id": 31,
@@ -245,7 +245,7 @@
     "price": 700,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku_nakano_3e9d2a6c"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku-nakano-e7e2ee72"
   },
   {
     "id": 32,
@@ -253,7 +253,7 @@
     "price": 500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa_8b1f4d9e"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa-395d3352"
   },
   {
     "id": 33,
@@ -261,7 +261,7 @@
     "price": 700,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/trunks_del_futuro_6a0c3f8d"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/trunks-del-futuro-efcd98ef"
   },
   {
     "id": 34,
@@ -269,7 +269,7 @@
     "price": 200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta_vs_broly_2d9a7e4c"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gogeta-vs-broly-cd098e64"
   },
   {
     "id": 35,
@@ -277,7 +277,7 @@
     "price": 800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto_vs_zamasu_b5c8f1a3"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/vegetto-vs-zamasu-dd600f43"
   },
   {
     "id": 36,
@@ -285,7 +285,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/amy_rose_7e3d9c2b"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/amy-rose-d1332a53"
   },
   {
     "id": 37,
@@ -293,7 +293,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/akaza_9ffa9051"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/akaza-de505bef"
   },
   {
     "id": 38,
@@ -301,7 +301,7 @@
     "price": 1200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/all_might_cd42d6db"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/all-might-8f4b83a3"
   },
   {
     "id": 39,
@@ -309,7 +309,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/androide_numero_17_42bbef89"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/androide-numero-17-ec8abb01"
   },
   {
     "id": 40,
@@ -317,7 +317,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/arlecchino_51eddcf7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/arlecchino-50c76d19"
   },
   {
     "id": 41,
@@ -325,7 +325,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/batman_522fa884"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/batman-d1db4452"
   },
   {
     "id": 42,
@@ -333,7 +333,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/citlali_efcd7773"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/citlali-2b9e3a8d"
   },
   {
     "id": 43,
@@ -341,7 +341,7 @@
     "price": 1200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina_80942540"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina-969e8dd7"
   },
   {
     "id": 44,
@@ -349,7 +349,7 @@
     "price": 800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/giyu_tomioka_cda472a0"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/giyu-tomioka-8085df81"
   },
   {
     "id": 45,
@@ -357,7 +357,7 @@
     "price": 800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hoshimi_miyabi_39d046aa"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hoshimi-miyabi-e273ded2"
   },
   {
     "id": 46,
@@ -365,7 +365,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/inosuke_hashibira_21200eb8"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/inosuke-hashibira-7627f8a1"
   },
   {
     "id": 47,
@@ -373,7 +373,7 @@
     "price": 1100,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku_midoriya_c4d27cd0"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku-midoriya-9ebc2365"
   },
   {
     "id": 48,
@@ -381,7 +381,7 @@
     "price": 200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku_midoriya_regalo_0417bd9f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/izuku-midoriya-regalo-68474e7a"
   },
   {
     "id": 49,
@@ -389,7 +389,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/katsuki_bakugo_96451f25"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/katsuki-bakugo-c8cad637"
   },
   {
     "id": 50,
@@ -397,7 +397,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kessoku_band_725e1272"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kessoku-band-39974540"
   },
   {
     "id": 51,
@@ -405,7 +405,7 @@
     "price": 1100,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/knuckles_d3efdda0"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/knuckles-4805cebf"
   },
   {
     "id": 52,
@@ -413,7 +413,7 @@
     "price": 1400,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kyojuro_rengoku_40c550c3"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/kyojuro-rengoku-2a431602"
   },
   {
     "id": 53,
@@ -421,7 +421,7 @@
     "price": 900,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lazer_bird_6eb931d5"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/lazer-bird-ebdc7b7e"
   },
   {
     "id": 54,
@@ -429,7 +429,7 @@
     "price": 300,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miles_tails_prower_1beadf62"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miles-tails-prower-d9ebbd8f"
   },
   {
     "id": 55,
@@ -437,7 +437,7 @@
     "price": 900,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/neuvillette_47979e62"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/neuvillette-a56c62b4"
   },
   {
     "id": 56,
@@ -445,7 +445,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino_nakano_01c51a71"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino-nakano-a7879c5a"
   },
   {
     "id": 57,
@@ -453,7 +453,7 @@
     "price": 500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pablo_078dfbcb"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pablo-6d3a183d"
   },
   {
     "id": 58,
@@ -461,7 +461,7 @@
     "price": 1400,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/robin_damian_wayne_c6cb008d"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/robin-damian-wayne-e112b6db"
   },
   {
     "id": 59,
@@ -469,7 +469,7 @@
     "price": 1100,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shinobu_kocho_81949198"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shinobu-kocho-b856ad58"
   },
   {
     "id": 60,
@@ -477,7 +477,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tanjiro_kamado_008a7fe9"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tanjiro-kamado-a8c268af"
   },
   {
     "id": 61,
@@ -485,7 +485,7 @@
     "price": 900,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tengen_uzui_4c2e4345"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tengen-uzui-6c99d33d"
   },
   {
     "id": 62,
@@ -493,7 +493,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tsukasa_tsukuyomi_4f3b4357"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/tsukasa-tsukuyomi-6f555e36"
   },
   {
     "id": 63,
@@ -501,7 +501,7 @@
     "price": 800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/zhu_yuan_5458e3ae"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/zhu-yuan-a8fb502a"
   },
   {
     "id": 64,
@@ -509,7 +509,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane_doe_chibi_2825e27f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/jane-doe-chibi-d78f28a5"
   },
   {
     "id": 65,
@@ -517,7 +517,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri_c03d99bc"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri-8575c2f3"
   },
   {
     "id": 66,
@@ -525,7 +525,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_2d5569da"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina-65af53b6"
   },
   {
     "id": 67,
@@ -533,7 +533,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hielaguisantes_dfe630b4"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hielaguisantes-54e0e0e6"
   },
   {
     "id": 68,
@@ -541,7 +541,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu_tao_11bb943c"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu-tao-be33f006"
   },
   {
     "id": 69,
@@ -549,7 +549,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_tb9umwhk"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina-c7baea76"
   },
   {
     "id": 70,
@@ -557,7 +557,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_y_hu_tao_otl04rf5"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina-y-hu-tao-4f86a94b"
   },
   {
     "id": 71,
@@ -565,7 +565,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri_hm8std1r"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mitsuri-a1230e8d"
   },
   {
     "id": 72,
@@ -573,7 +573,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mualani_3vpnj2bg"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mualani-9962472a"
   },
   {
     "id": 73,
@@ -581,7 +581,7 @@
     "price": 20000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/plants_vs_eo6bp9wt"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/plants-vs-dbf72fb2"
   },
   {
     "id": 74,
@@ -589,7 +589,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow_39glbr2m"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/shadow-5d8b6936"
   },
   {
     "id": 75,
@@ -597,7 +597,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_bjwn7cw5"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa-90f369dc"
   },
   {
     "id": 76,
@@ -605,7 +605,7 @@
     "price": 1200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen_joe_67275c11"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen-joe-99840efc"
   },
   {
     "id": 77,
@@ -613,7 +613,7 @@
     "price": 1700,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/eula_lawrence_139a7bc5"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/eula-lawrence-5cb34d2b"
   },
   {
     "id": 78,
@@ -621,7 +621,7 @@
     "price": 1200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina_6b757324"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/furina-d20315a9"
   },
   {
     "id": 79,
@@ -629,7 +629,7 @@
     "price": 1400,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu_tao_0a8b2f8f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/hu-tao-91a1bb68"
   },
   {
     "id": 80,
@@ -637,7 +637,7 @@
     "price": 1200,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/joe_ellen_3308e3ea"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/joe-ellen-75eff7e0"
   },
   {
     "id": 81,
@@ -645,7 +645,7 @@
     "price": 1100,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/las_quintillizas_ca630f78"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/las-quintillizas-7af9cdb7"
   },
   {
     "id": 82,
@@ -653,7 +653,7 @@
     "price": 1700,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/marin_kitagawa_37e443ba"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/marin-kitagawa-902289d2"
   },
   {
     "id": 83,
@@ -661,7 +661,7 @@
     "price": 1400,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku_nakano_6d3c7b64"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/miku-nakano-3dfea5c9"
   },
   {
     "id": 84,
@@ -669,7 +669,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mona_megistus_cf65001f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mona-megistus-608de23d"
   },
   {
     "id": 85,
@@ -677,7 +677,7 @@
     "price": 1800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_ichika_33c02c40"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano-ichika-d58c2e31"
   },
   {
     "id": 86,
@@ -685,7 +685,7 @@
     "price": 3500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_miku_a82b95b7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano-miku-4e83e4b5"
   },
   {
     "id": 87,
@@ -693,7 +693,7 @@
     "price": 3500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_nino_65063b9f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano-nino-db4d507d"
   },
   {
     "id": 88,
@@ -701,7 +701,7 @@
     "price": 2300,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino_nakano_g5hi3xdr"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nino-nakano-3bb137d0"
   },
   {
     "id": 89,
@@ -709,7 +709,7 @@
     "price": 1700,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa_2d2b6a68"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/sacarosa-5b098699"
   },
   {
     "id": 90,
@@ -717,7 +717,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen_013befea"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/xilonen-56747035"
   },
   {
     "id": 91,
@@ -725,7 +725,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yamada_ryo_40d0f932"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yamada-ryo-2a4abc8c"
   },
   {
     "id": 92,
@@ -733,7 +733,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bardock_1fbcba3f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bardock-49ef8ef8"
   },
   {
     "id": 93,
@@ -741,7 +741,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible_vs_cecil_46f5a56f"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible-vs-cecil-a58bb04a"
   },
   {
     "id": 94,
@@ -749,7 +749,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_itsuki_c30720a9"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano-itsuki-c43ade15"
   },
   {
     "id": 95,
@@ -757,7 +757,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gran_regente_thragg_6717e4af"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/gran-regente-thragg-3bd25884"
   },
   {
     "id": 96,
@@ -765,7 +765,7 @@
     "price": 3000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/itsuki_nakano_8905039e"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/itsuki-nakano-4b94ff77"
   },
   {
     "id": 97,
@@ -773,7 +773,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano_nino_a2f17957"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/nakano-nino-a614a36a"
   },
   {
     "id": 98,
@@ -781,7 +781,7 @@
     "price": 1800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible_7e362442"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/invencible-d1abd43c"
   },
   {
     "id": 99,
@@ -789,7 +789,7 @@
     "price": 3000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/makima_95376fff"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/makima-0aef9c43"
   },
   {
     "id": 100,
@@ -797,7 +797,7 @@
     "price": 1800,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rias_gremory_fa7587d2"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/rias-gremory-006ee7af"
   },
   {
     "id": 101,
@@ -805,7 +805,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_blaze_the_cat_e2567d98"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-blaze-the-cat-7bcc26e9"
   },
   {
     "id": 102,
@@ -813,7 +813,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_nakano_miku_6593596d"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-nakano-miku-e1a41a9d"
   },
   {
     "id": 103,
@@ -821,7 +821,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_ellen_joe_7fdb9274"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-ellen-joe-85f528d4"
   },
   {
     "id": 104,
@@ -829,7 +829,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_nakano_nino_d78efa29"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-nakano-nino-08f5eb1e"
   },
   {
     "id": 105,
@@ -837,7 +837,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_himiko_toga_e52a90df"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-himiko-toga-f3f3fe08"
   },
   {
     "id": 106,
@@ -845,7 +845,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_shadow_el_latinas_3587f310"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-shadow-el-latinas-7f6cdc7b"
   },
   {
     "id": 107,
@@ -853,7 +853,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_mitsuri_kanroji_918226b9"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-mitsuri-kanroji-9ce4ce28"
   },
   {
     "id": 108,
@@ -861,7 +861,7 @@
     "price": 0,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina_e0740cc9"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/columbina-32d4239a"
   },
   {
     "id": 109,
@@ -869,7 +869,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_columbina_0e69d178"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-columbina-9cae5489"
   },
   {
     "id": 110,
@@ -877,7 +877,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_furina_280a2068"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-furina-964cd61f"
   },
   {
     "id": 111,
@@ -885,7 +885,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_mavuika_9785a191"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-mavuika-8f5905b0"
   },
   {
     "id": 112,
@@ -893,7 +893,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/uraraka_8dffd239"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/uraraka-603e8410"
   },
   {
     "id": 113,
@@ -901,7 +901,7 @@
     "price": 1500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa_3e364fb5"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/varesa-2df932ed"
   },
   {
     "id": 114,
@@ -909,7 +909,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp_varesa_4cac5208"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/pfp-varesa-5835893b"
   },
   {
     "id": 115,
@@ -997,7 +997,7 @@
     "price": 2500,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bocchi-the-cat-073d42ad"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/bocchi-the-cat-1ddd5c40"
   },
   {
     "id": 126,
@@ -1005,7 +1005,7 @@
     "price": 2000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yor-forger-91c2a701"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/yor-forger-0fb21c39"
   },
   {
     "id": 127,
@@ -1013,7 +1013,7 @@
     "price": 1000,
     "category": "art",
     "type": "image",
-    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/anya-forger-e46cc4d7"
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/anya-forger-41318ff6"
   },
   {
     "id": 128,
