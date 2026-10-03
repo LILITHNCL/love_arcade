@@ -1,1 +1,39 @@
 /* styles/tokens/03-spacing-layout.css — Spacing, sizing, radius, and layout tokens */
+
+:root {
+    --radius-xs:  6px;
+    --radius-sm:  10px;
+    --radius-md:  14px;
+    --radius-lg:  20px;
+    --radius-xl:  28px;
+    --radius-card-product: 24px;
+    --nav-height: 68px;
+    --pill-nav-height: 56px;
+    --pill-nav-offset: 16px;
+    /* Keep the fixed pill and document clearance in lockstep. The fallback
+       preserves the floating spacing in browsers without display cutouts. */
+    --pill-nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --pill-nav-bottom: calc(var(--pill-nav-safe-area-bottom) + var(--pill-nav-offset));
+    --pill-nav-clearance: calc(var(--pill-nav-height) + var(--pill-nav-bottom));
+    --pill-nav-track-max-width: 320px;
+    --pill-nav-track-inset: 4px;
+    --pill-nav-track-gap: 4px;
+}
+
+/* The floating pill is the only primary navigation on every platform.
+   These variables grow its usable mouse target without introducing a second
+   desktop navigation implementation or animating any layout property. */
+@media (min-width: 640px) {
+    :root {
+        --pill-nav-track-max-width: 360px;
+        --pill-nav-track-inset: 6px;
+        --pill-nav-track-gap: 6px;
+    }
+}
+
+@media (min-width: 768px) {
+    :root {
+        --pill-nav-track-max-width: 384px;
+        --pill-nav-offset: 20px;
+    }
+}

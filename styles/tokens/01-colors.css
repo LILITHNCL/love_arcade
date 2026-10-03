@@ -1,1 +1,97 @@
 /* styles/tokens/01-colors.css — Color tokens and semantic theme roles */
+
+:root {
+    /* =========================================================
+       SURFACES (dark theme — fondos base del proyecto)
+       ========================================================= */
+    --surface-0: #050508;
+    --surface-1: #0d0e15;
+    --surface-2: #10121a;
+
+    /* =========================================================
+       TEXT TOKENS — WCAG AA: texto normal >= 4.5:1
+       ========================================================= */
+    --text-primary-aa:   #e8edf8;
+    --text-secondary-aa: #c6d0e3;
+    --text-tertiary-aa:  #aebbd3;
+    --text-muted-aa:     #95a5c1; /* Solo contenido auxiliar no crítico */
+
+    --on-accent:          #ffffff;
+    /* Alias de compatibilidad para consumidores externos heredados. */
+    --text-on-accent-aa:  var(--on-accent);
+    --text-on-warning-aa: #1b1200;
+    --text-on-success-aa: #04190b;
+    --text-on-danger-aa:  #ffffff;
+
+    --price-current-aa:  #f6c453;
+
+    /* Non-text contrast / focus */
+    --border-subtle-aa: #2a3040;
+    --border-strong-aa: #3a4358;
+    /* Default theme: violet (#7C3AED). Keep this in sync with THEMES. */
+    --accent-500: #7C3AED;
+    --accent-400: color-mix(in srgb, var(--accent-500) 82%, #ffffff 18%);
+    --accent-soft-aa:   color-mix(in srgb, var(--accent) 28%, #0b0d14 72%);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 44%, #0b0d14 56%);
+    --accent-border-aa: color-mix(in srgb, var(--accent) 62%, #20263a 38%);
+    --accent-glow-aa:   color-mix(in srgb, var(--accent) 34%, #0a0d18 66%);
+    --success-500: #22d07a;
+    --danger-500:  #ff5c7a;
+    --focus-ring-aa: #c4b5fd;
+
+    /* ── Backgrounds ── */
+    --bg-main:       var(--surface-0);
+    --bg-elevated:   var(--surface-2);
+    --bg-overlay:    rgba(7, 7, 13, 0.95);
+
+    /* ── Solid Surface System (Arcade Solid 3.0) ── */
+    /* Base: subtle panels — solid dark */
+    --solid-surface-base:    var(--surface-2);
+    --solid-surface-float:   #141620;
+    --solid-surface-hi:      #1a1d2e;
+    --solid-surface-deep:    var(--surface-1);
+    /* Theme-aware persistent navigation surface; remains deep for white. */
+    --surface-nav: color-mix(in srgb, var(--accent) 8%, #050508 92%);
+
+    /* Premium edges — no white/grey outlines; depth comes from tone + shadow. */
+    --border-subtle:   transparent;
+    --border-mid:      color-mix(in srgb, var(--accent) 14%, transparent);
+
+    /* ── Legacy aliases kept for backward-compat with JS that may read them ── */
+    --glass-base-bg:      #0f1018;
+    --glass-base-border:  transparent;
+    --glass-base-blur:    none;
+    --glass-float-bg:     #141620;
+    --glass-float-border: transparent;
+    --glass-float-blur:   none;
+    --glass-hi-bg:        #1a1d2e;
+    --glass-hi-border:    color-mix(in srgb, var(--accent) 18%, transparent);
+    --glass-hi-blur:      none;
+
+    /* ── Accent (overridden by applyTheme) ── */
+    --accent:       var(--accent-500);
+    --accent-hover: var(--accent-400);
+    --accent-dim:   color-mix(in srgb, var(--accent) 72%, #0b0d14 28%);
+    --accent-glow:  var(--accent-glow-aa);
+    --accent-soft:  var(--accent-soft-aa);
+    --accent-border: var(--accent-border-aa);
+
+    /* ── Text Scale ── */
+    --text-high: var(--text-primary-aa);
+    --text-med:  var(--text-secondary-aa);
+    --text-low:  var(--text-tertiary-aa);
+    --text-mute: var(--text-muted-aa);
+
+    /* ── Semantic ── */
+    --success:        var(--success-500);
+    --success-glow:   rgba(34, 208, 122, 0.3);
+    --success-soft:   color-mix(in srgb, var(--success) 24%, #0b1510 76%);
+    --error:          var(--danger-500);
+    --error-soft:     color-mix(in srgb, var(--error) 24%, #170c12 76%);
+    --gold:           var(--price-current-aa);
+    --gold-glow:      rgba(246, 196, 83, 0.38);
+    --gold-soft:      color-mix(in srgb, var(--gold) 26%, #181209 74%);
+    --moon:           #c084fc;
+
+    --focus-ring: color-mix(in srgb, var(--accent) 72%, #fff);
+}
