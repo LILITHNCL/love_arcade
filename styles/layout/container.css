@@ -1,1 +1,35 @@
 /* styles/layout/container.css — Application container layout */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    width: 100%;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-high);
+    letter-spacing: -0.3px;
+}
+.section-subtitle {
+    color: var(--text-low);
+    font-size: 0.88rem;
+    margin-top: 4px;
+}
+.section-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (min-width: 768px) {
+    .container { padding: 36px 24px; }
+    .section-title { font-size: 1.7rem; }
+    .section-header { margin-bottom: 28px; }
+}
