@@ -1,1 +1,139 @@
 /* styles/layout/pill-nav.css — Pill navigation layout */
+
+/* ================================================================
+   FLOATING PILL NAV (todas las plataformas)
+   ================================================================ */
+.pill-nav {
+    position: fixed;
+    right: 0;
+    /* No viewport-height unit: fixed positioning follows dynamic mobile
+       viewports without introducing a keyboard-driven layout calculation. */
+    bottom: var(--pill-nav-bottom);
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.pill-nav__track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--pill-nav-track-gap);
+    width: min(var(--pill-nav-track-max-width), calc(100vw - 32px));
+    min-height: var(--pill-nav-height);
+    padding: var(--pill-nav-track-inset);
+    background: var(--surface-nav);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    pointer-events: auto;
+}
+
+.pill-nav-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-low);
+    border-radius: var(--radius-lg);
+    z-index: 1;
+}
+
+.pill-nav-item.active {
+    /* Keep the active icon and section name as one centered group inside
+       the indicator, regardless of the label's length. */
+    justify-content: center;
+    gap: 6px;
+    /* The indicator is stronger than generic accent-soft surfaces. */
+    color: var(--on-accent);
+}
+
+.pill-nav__indicator {
+    position: absolute;
+    top: var(--pill-nav-track-inset);
+    bottom: var(--pill-nav-track-inset);
+    left: var(--pill-nav-track-inset);
+    width: var(--pill-nav-indicator-width, 0px);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft-strong);
+    box-shadow: 0 0 20px var(--accent-glow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(var(--pill-nav-indicator-x, 0px));
+}
+
+.pill-nav__indicator--ready {
+    opacity: 1;
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+}
+
+.pill-nav__indicator--moving {
+    will-change: transform;
+}
+
+.pill-nav-item__icon {
+    display: inline-flex;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.pill-nav-item__label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    clip-path: inset(0 100% 0 0);
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: clip-path 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+}
+
+.pill-nav-item.active .pill-nav-item__label {
+    /* Returning the label to the flex flow lets the icon + label group be
+       centered as a unit instead of anchoring the label to the left edge. */
+    position: static;
+    transform: none;
+    clip-path: inset(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pill-nav__indicator--ready {
+        transition: transform 0.01ms linear, opacity 0.01ms linear;
+    }
+
+    .pill-nav-item__label {
+        transition: opacity 0.01ms linear;
+    }
+}
+
+.pill-nav-item:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* The floating pill is the only primary navigation on every platform.
+   These variables grow its usable mouse target without introducing a second
+   desktop navigation implementation or animating any layout property. */
+@media (min-width: 640px) {
+    :root {
+        --pill-nav-track-max-width: 360px;
+        --pill-nav-track-inset: 6px;
+        --pill-nav-track-gap: 6px;
+    }
+}
+
+@media (min-width: 768px) {
+    :root {
+        --pill-nav-track-max-width: 384px;
+        --pill-nav-offset: 20px;
+    }
+}
