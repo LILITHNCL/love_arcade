@@ -1420,5 +1420,37 @@
     "category": "art",
     "type": "image",
     "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/mona-magistus-bc24f1e0"
+},
+{
+    "id": 178,
+    "name": "Ada Wong",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ada-wong-d238900e"
+},
+{
+    "id": 179,
+    "name": "Leon Scott Kennedy & Ada Wong",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/leon-kennedy-x-ada-wong-04c97962"
+},
+{
+    "id": 180,
+    "name": "Ellen Joe",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/ellen-joe-13d40066"
+},
+{
+    "id": 181,
+    "name": "Burnice White",
+    "price": 700,
+    "category": "art",
+    "type": "image",
+    "imageUrl": "https://res.cloudinary.com/dyspgn0sw/image/upload/burnice-white-29568f26"
 }
 ]
