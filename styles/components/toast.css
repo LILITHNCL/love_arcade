@@ -1,0 +1,43 @@
+/* ================================================================
+   TOAST — 10% Glass exception: legibility over any background.
+   Reduced blur (12px) + solid 97% base layer = performance-safe.
+   ================================================================ */
+.toast {
+    position: fixed;
+    bottom: calc(var(--pill-nav-clearance) + 12px);
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    padding: 12px 18px; border-radius: var(--radius-md);
+    font-size: 0.82rem; font-weight: 600;
+    display: flex; align-items: flex-start; gap: 10px;
+    z-index: 9999; opacity: 0;
+    transition: opacity var(--motion-small), transform var(--motion-small);
+    max-width: 92vw; text-align: left;
+    /* 10% glass: minimal blur for text legibility */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-md), 0 0 0 1px rgba(255,255,255,0.04);
+    pointer-events: none;
+    line-height: 1.5;
+}
+.toast--visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast--success.toast--visible {
+    animation: toastSuccessPop 380ms cubic-bezier(.2,.9,.2,1);
+}
+.toast--error.toast--visible {
+    animation: shakeX 220ms cubic-bezier(.36,.07,.19,.97);
+}
+.toast--success {
+    background: rgba(10,20,14,0.97);
+    border: 1px solid rgba(34,208,122,0.35);
+    color: var(--success);
+}
+.toast--error {
+    background: rgba(20,10,10,0.97);
+    border: 1px solid rgba(255,66,102,0.35);
+    color: var(--error);
+}
+.toast--warning {
+    background: rgba(20, 10, 0, 0.97);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #f59e0b;
+}

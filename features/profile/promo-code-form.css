@@ -1,0 +1,54 @@
+/* PROMO CODE FORM — Perfil
+   ================================================================ */
+.promo-icon-wrap {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.promo-redemption-card .promo-icon-wrap,
+.settings-card .promo-icon-wrap {
+    color: var(--on-accent);
+}
+.promo-input-group { display: flex; flex-direction: column; gap: 8px; }
+.promo-redemption-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.promo-redemption-card__header h3,
+.promo-redemption-card__header p { margin: 0; }
+.promo-redemption-card__header h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-high);
+}
+.promo-redemption-card__header p {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--text-low);
+    line-height: 1.45;
+}
+.promo-input {
+    width: 100%;
+    background: var(--solid-surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-high);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    padding: 10px 16px;
+    outline: 2px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.promo-input:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+#btn-redeem { width: 100%; justify-content: center; }
+
+/* ================================================================

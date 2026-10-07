@@ -1,0 +1,233 @@
+/* PROFILE INTERNAL SCREENS — app-like account flows
+   ================================================================ */
+
+.profile-screen {
+    max-width: 760px;
+    margin-inline: auto;
+    display: grid;
+    gap: clamp(16px, 2.5vw, 24px);
+}
+
+.profile-screen-header {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+}
+
+.profile-screen-header > div {
+    display: grid;
+    gap: 6px;
+}
+
+.profile-screen-header .section-title,
+.profile-screen-header .section-subtitle {
+    margin: 0;
+}
+
+.profile-back-btn {
+    justify-self: start;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background: var(--solid-surface-base);
+    color: var(--text-med);
+    font-weight: 800;
+    box-shadow: var(--control-shadow-rest);
+    cursor: pointer;
+    transition: transform var(--motion-micro), color var(--motion-small), border-color var(--motion-small), box-shadow var(--motion-small);
+}
+
+.profile-back-btn:hover,
+.profile-back-btn:focus-visible {
+    color: var(--text-high);
+    border-color: var(--accent-border);
+    box-shadow: var(--control-shadow-hover);
+}
+
+.profile-back-btn:active { transform: scale(0.97); }
+
+.profile-screen-card,
+#view-profile .memory-card,
+#view-profile .settings-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: var(--solid-surface-base);
+    box-shadow: var(--control-shadow-rest);
+}
+
+#view-profile .profile-screen .memory-card,
+#view-profile .profile-screen .profile-feature-card,
+#view-profile .profile-screen .settings-card {
+    margin: 0;
+}
+
+#view-profile .memory-card,
+#view-profile .profile-screen-card,
+#view-profile .settings-card,
+#view-profile .profile-feature-card {
+    padding: clamp(18px, 3vw, 24px);
+}
+
+#view-profile .memory-card__header {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+#view-profile .memory-card__title {
+    line-height: 1.3;
+}
+
+#view-profile .memory-card__sub {
+    margin-top: 3px;
+    line-height: 1.5;
+}
+
+#view-profile .feedback-msg {
+    margin: 12px 0 0;
+}
+
+#view-profile .file-name-display {
+    margin-top: 8px;
+}
+
+#view-profile .theme-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#view-profile .theme-btn {
+    min-height: 68px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    border-color: var(--border-subtle);
+}
+
+#view-profile .theme-swatch {
+    width: 30px;
+    height: 30px;
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.04), 0 8px 20px rgba(0,0,0,0.28);
+}
+
+#view-profile .theme-btn--active {
+    border-color: var(--accent-border);
+    background: color-mix(in srgb, var(--accent) 14%, var(--solid-surface-base));
+}
+
+.profile-feature-card {
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(192,132,252,0.26);
+    background: radial-gradient(circle at 15% 0%, rgba(192,132,252,0.18), transparent 36%), var(--solid-surface-base);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.profile-coming-soon-grid {
+    display: grid;
+    gap: clamp(12px, 2vw, 16px);
+}
+
+.profile-coming-soon-card {
+    padding: clamp(18px, 3vw, 22px);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--accent-border);
+    background: color-mix(in srgb, var(--solid-surface-base) 86%, var(--accent) 14%);
+}
+
+.profile-coming-soon-card__badge {
+    display: inline-flex;
+    margin-bottom: 12px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 850;
+}
+
+.profile-coming-soon-card h3 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    color: var(--text-high);
+    font-size: 0.98rem;
+}
+
+.profile-coming-soon-card p { margin: 0; color: var(--text-low); font-size: 0.8rem; line-height: 1.45; }
+
+#view-profile .history-list {
+    max-height: none;
+    gap: 8px;
+}
+
+#view-profile .history-entry {
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: var(--solid-surface-deep);
+    border: 1px solid var(--border-subtle);
+}
+
+/* En pantallas estrechas, apilar el importe bajo el detalle evita que el
+   movimiento compita por el mismo ancho y mantiene el motivo completo visible. */
+@media (max-width: 719px) {
+    #view-profile .history-entry {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        align-items: start;
+        column-gap: 10px;
+        row-gap: 6px;
+    }
+
+    #view-profile .history-icon {
+        grid-row: span 2;
+        margin-top: 1px;
+    }
+
+    #view-profile .history-motivo {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+    }
+
+    #view-profile .history-amount {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
+@media (min-width: 720px) {
+    #view-profile .theme-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .profile-coming-soon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-back-btn {
+        transition: none;
+    }
+}
+
+.history-empty-state {
+    display: grid;
+    gap: 6px;
+    padding: 24px 14px;
+    text-align: center;
+    color: var(--text-low);
+}
+
+.history-empty-state strong {
+    color: var(--text-high);
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+}
+
+.history-empty-state span {
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+/* ================================================================

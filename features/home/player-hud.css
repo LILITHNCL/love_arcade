@@ -1,0 +1,288 @@
+/* PLAYER HUD — Dashboard Header
+   ================================================================ */
+.player-hud {
+    background: var(--solid-surface-float);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 18px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 2px 0 rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.5);
+    /*
+     * v9.3: oculto durante el setup síncrono.
+     */
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+.player-hud::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        radial-gradient(circle at 20% 30%, var(--accent-soft), transparent 55%),
+        radial-gradient(circle at 85% 72%, rgba(255,255,255,0.07), transparent 48%),
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--accent) 12%, var(--solid-surface-float) 88%) 0%,
+            var(--solid-surface-float) 55%,
+            var(--solid-surface-hi) 100%
+        );
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+    background-size: 200px 200px, cover, cover, cover;
+    filter: blur(12px);
+    opacity: 0.72;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.player-hud::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, rgba(255,255,255,0.035), transparent 42%);
+    background-repeat: repeat, no-repeat;
+    background-size: 200px 200px, cover;
+    pointer-events: none;
+}
+/* Clase añadida por revealUI() en app.js tras el init síncrono completo */
+.player-hud.is-ready {
+    opacity: 1;
+    box-shadow:
+        0 14px 36px rgba(0,0,0,0.52),
+        0 0 28px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Ticket 10: pausa todo el movimiento decorativo del HUD fuera de la pestaña. */
+.player-hud.motion-paused .hud-avatar-ring,
+.player-hud.motion-paused .flame-layer,
+.player-hud.motion-paused .spark {
+    animation-play-state: paused;
+}
+
+
+.hud-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.hud-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    /* v9.3: oculto hasta que app.js haya aplicado el avatar real (o placeholder).
+       Evita el destello del avatar por defecto antes de que JS corrija la imagen. */
+    opacity: 0;
+    transition: opacity 100ms ease;
+}
+/* Clase añadida por revealUI() en app.js tras el init síncrono */
+.hud-avatar-wrap.is-ready {
+    opacity: 1;
+}
+
+.hud-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-border);
+    background-size: cover; background-position: center;
+    background-color: var(--bg-elevated);
+    box-shadow: 0 0 20px var(--accent-glow);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-low);
+    transition: 0.25s;
+}
+.hud-avatar:hover { transform: scale(1.05); border-color: var(--accent); }
+
+/* ── HUD Avatar — Power Ring (Arcade Solid 3.0)
+   Uses conic-gradient on a pseudo-element layer for a GPU-composited
+   energy ring. Hover triggers speed-up + stronger glow.
+   transform: rotate() runs on the GPU compositor thread — zero repaints.
+   ── */
+.hud-avatar-ring {
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        var(--accent) 0%,
+        var(--accent-dim) 30%,
+        transparent 50%,
+        transparent 70%,
+        var(--accent-dim) 85%,
+        var(--accent) 100%
+    );
+    -webkit-mask:
+        radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 3px));
+    mask:
+        radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 3px));
+    animation: powerRingRotate 3s linear infinite;
+    opacity: 0.75;
+    transition: opacity 0.3s, animation-duration 0.3s;
+    /* GPU layer promotion */
+    will-change: transform;
+}
+/* Hover: ring accelerates + glows brighter */
+.hud-avatar-wrap:hover .hud-avatar-ring,
+.hud-avatar-wrap:focus-within .hud-avatar-ring {
+    animation-duration: 1s;
+    opacity: 1;
+    filter: drop-shadow(0 0 6px var(--accent));
+}
+@keyframes powerRingRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.hud-info { flex: 1; min-width: 0; }
+.hud-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-high);
+    letter-spacing: -0.2px;
+    /* v9.4: mínimo para que el contenedor no colapses cuando el nickname
+       todavía no está escrito (durante el init síncrono antes de revealUI) */
+    min-height: 1.3em;
+}
+
+/* Fila que agrupa el nombre y el botón de edición */
+.hud-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 1.3em;   /* mismo min-height que .hud-name para estabilidad de layout */
+}
+
+/* Botón lápiz de edición de identidad */
+.btn-edit-identity {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-float-border);
+    background: var(--glass-base-bg);
+    color: var(--text-low);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--control-shadow-rest);
+    transition: transform 150ms cubic-bezier(.22,1,.36,1), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    padding: 0;
+    line-height: 1;
+}
+.btn-edit-identity:hover {
+    color: var(--text-high);
+    background: var(--accent-soft);
+    box-shadow: var(--control-shadow-hover);
+    transform: scale(1.08);
+}
+
+.hud-cloud-sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(99, 179, 237, 0.35);
+    background: rgba(99, 179, 237, 0.08);
+    color: #63b3ed;
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0;
+    transform: translateY(2px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hud-cloud-sync-indicator.is-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hud-cloud-sync-indicator.is-pulse {
+    animation: cloudSyncPulse 0.8s ease-in-out 2;
+}
+
+@keyframes cloudSyncPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(99, 179, 237, 0); }
+    50%      { box-shadow: 0 0 14px rgba(99, 179, 237, 0.45); }
+}
+/* Streak bar */
+.hud-streak {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.streak-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-tertiary-aa);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    flex-shrink: 0;
+}
+.streak-days {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+.streak-day {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--solid-surface-deep);
+    border: 1px solid var(--border-subtle);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.streak-day.active {
+    background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+    border-color: var(--accent-border);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+.streak-day.today {
+    animation: streakPulse 1.5s ease-in-out infinite;
+}
+@keyframes streakPulse {
+    0%, 100% { box-shadow: 0 0 6px var(--accent-glow); }
+    50% { box-shadow: 0 0 14px var(--accent-glow); }
+}
+.streak-count {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+/* Countdown */
+.hud-countdown {
+    font-size: 0.7rem;
+    color: var(--text-low);
+    text-align: center;
+}
+#countdown-display {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text-med);
+}
+
+/* Daily msg */
+#daily-msg.daily-msg {
+    font-size: 0.76rem;
+    font-weight: 600;
+    min-height: 1rem;
+    transition: opacity 0.4s;
+    opacity: 0;
+}
+
+/* ================================================================

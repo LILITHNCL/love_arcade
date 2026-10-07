@@ -1,0 +1,41 @@
+/* styles/layout/view-transitions.css — View transition layout states */
+
+/* ================================================================
+   VIEW TRANSITIONS — Anti-Golpe (v10.1)
+   GPU-only: opacity + translateY. No height/width/margin animations.
+   Regla de los 300ms: duración máx 0.25s para que la app se sienta
+   reactiva. contain:paint limita el área de repaint al propio nodo.
+   El scroll reset se ejecuta ANTES de que empiece la transición
+   de entrada (ver spa-router.js _applyView).
+
+   will-change se activa de forma temporal mediante .view-transitioning
+   desde spa-router.js y se libera al terminar la transición. Así se evita
+   retener capas de composición de tamaño viewport mientras la SPA está en
+   reposo, sin cambiar la animación de entrada.
+   ================================================================ */
+.view-section {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    contain: layout;
+}
+.view-section.view-transitioning {
+    will-change: opacity, transform;
+}
+.view-section:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── Scroll Performance Hints (v9.8) ─────────────────────────────────────────
+   overscroll-behavior-y: contain — previene el scroll chaining al body cuando
+   el usuario llega al final de la vista. Elimina el rebote elástico que fuerza
+   al compositor a sincronizar dos capas de scroll simultáneamente.
+   touch-action: pan-y — informa al browser que solo se espera scroll vertical.
+   Descarta el hit-testing horizontal en cada evento touch, reduciendo la
+   latencia al primer frame de scroll ~16 ms en Chrome/Android.
+   ─────────────────────────────────────────────────────────────────────────── */
+#view-shop {
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+}

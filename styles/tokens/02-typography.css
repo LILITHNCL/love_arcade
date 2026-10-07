@@ -1,0 +1,40 @@
+/* styles/tokens/02-typography.css — Font faces and typography tokens */
+
+@font-face {
+    font-family: 'Exo 2';
+    src: local('Arial');
+    font-style: normal;
+    font-weight: 400 900;
+    size-adjust: 104%;
+    ascent-override: 90%;
+    descent-override: 22%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: local('Arial');
+    font-style: normal;
+    font-weight: 400 700;
+    size-adjust: 100%;
+    ascent-override: 92%;
+    descent-override: 24%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: local('Courier New');
+    font-style: normal;
+    font-weight: 400 700;
+    size-adjust: 98%;
+    ascent-override: 90%;
+    descent-override: 23%;
+    line-gap-override: 0%;
+}
+
+:root {
+    --font-display: 'Exo 2', Arial, system-ui, sans-serif;
+    --font-body:    'DM Sans', Arial, system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+}

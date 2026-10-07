@@ -1,0 +1,75 @@
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn-primary {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 42%),
+        linear-gradient(135deg, var(--accent), var(--accent-dim));
+    color: var(--on-accent);
+    border: none;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    font-weight: 800;
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 160ms cubic-bezier(.22,1,.36,1), box-shadow 160ms ease-out, opacity 150ms ease-out, filter 160ms ease-out;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.22);
+    isolation: isolate;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 58%);
+    opacity: 0;
+    transition: opacity 160ms ease-out;
+    pointer-events: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    filter: saturate(1.08) brightness(1.03);
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 34%, transparent), inset 0 1px 0 rgba(255,255,255,0.28);
+}
+.btn-primary:hover::before { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-aa) 82%, transparent), 0 0 0 7px color-mix(in srgb, var(--focus-ring-aa) 18%, transparent), 0 14px 30px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.btn-ghost {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0)),
+        color-mix(in srgb, var(--solid-surface-float) 86%, var(--accent) 14%);
+    color: var(--text-primary-aa);
+    border: 1px solid transparent;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-family: var(--font-body);
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: var(--control-shadow-rest);
+    transition: transform 150ms cubic-bezier(.22,1,.36,1), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.btn-ghost:hover {
+    background: color-mix(in srgb, var(--solid-surface-hi) 80%, var(--accent) 20%);
+    color: var(--text-high);
+    box-shadow: var(--control-shadow-hover);
+}
+.btn-ghost:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-aa) 82%, transparent), 0 0 0 7px color-mix(in srgb, var(--focus-ring-aa) 18%, transparent), var(--control-shadow-hover);
+}
