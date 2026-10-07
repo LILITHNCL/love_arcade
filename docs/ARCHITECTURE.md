@@ -167,9 +167,23 @@ cuando el navegador la soporta.
 Expone una carga diferida del SDK de Supabase desde CDN con fallback, para que la sincronización
 cloud opcional pueda degradarse sin bloquear el runtime principal.
 
-### `js/streak-hub.js`
+### `js/ui/streak-hub.js`
 
-Es un adaptador visual para el estado diario y la retroalimentación interactiva de la racha. Su tarea principal es traducir el estado de negocio a UI, no sustituir la lógica del dominio.
+Es el adaptador visual del Daily Streak Hub. Usa Rive Web runtime **2.44.0**, self-hosted bajo `/assets/rive/runtime/2.44.0/`, y no introduce una segunda fuente de persistencia.
+
+Responsabilidades verificadas:
+
+- carga lazy del runtime/Rive cuando `IntersectionObserver` alcanza un ratio de 0.25;
+- pausa y reanudación coordinadas con `document.visibilitychange`;
+- redimensionado mediante `ResizeObserver` con DPR máximo de 2;
+- sincronización del ViewModel `UserStreakVM.streak` desde `window.GameCenter`;
+- representación visual estable limitada a `available` y `claimed`;
+- `repairAvailable` y la asequibilidad de la reparación permanecen como condiciones de negocio, no como un tercer estado gráfico;
+- celebración de claim mediante `Pop` y la transición de presentación definida por el HUD;
+- limpieza completa mediante `Rive.cleanup()` en el límite de vida de `HomeView`;
+- API pública `init()`, `refresh()`, `setState()`, `claim()`, `playClaimSequence()` y `destroy()`.
+
+La velocidad de la State Machine se mantiene en 0.75x mediante un driver interno del runtime cuando está disponible; el módulo falla cerrado si esa capacidad no existe, en lugar de aproximarla con 1x.
 
 ### `js/sync-worker.js`
 
