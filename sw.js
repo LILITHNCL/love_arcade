@@ -26,6 +26,7 @@ const APP_SHELL_FILES = [
   '/js/domain/game-center.js',
   '/js/ui/coin-display.js',
   '/js/ui/hud-render.js',
+  '/js/ui/streak-hub.js',
   '/js/ui/micro-interactions.js',
   '/js/pwa/sw-update-bridge.js',
   '/js/app.js',
