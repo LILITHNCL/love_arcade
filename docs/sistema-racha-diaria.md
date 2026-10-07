@@ -32,7 +32,7 @@ A nivel UX, el sistema aparece principalmente en el HUD de inicio con:
 | `js/domain/game-center.js` | Ensambla la API pública `window.GameCenter`, incluida la racha diaria. |
 | `js/ui/hud-render.js` | Actualiza el HUD diario, el mensaje de estado y el modal de reparación; se suscribe al store. |
 | `js/core/time-sync.js` | Inicializa y mantiene el caché de tiempo de red; expone `window.LoveArcadeTime` para cálculo de día, lectura de caché y próximo reset. `js/app.js` sólo invoca su arranque durante el bootstrap. |
-| `js/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
+| `js/ui/streak-hub.js` | Adaptador visual del Daily Streak Hub: sincroniza `data-state`, secuencia de reclamo, audio sintetizado, monedas efímeras y haptics opcionales. |
 | `index.html` | Estructura del HUD diario, barra de racha y panel de racha en configuración. |
 | `styles.css` | Estilos visuales, estados y animaciones del HUD diario. |
 | `docs/DOMAIN.md` | Contrato actual de economía, racha y sistema de recompensas. |
@@ -252,29 +252,36 @@ Expone `streak` como lectura pública para módulos externos.
 
 ### 9.1 Estructura del Daily Streak Hub
 
-En `index.html`, `#player-hud` conserva una fila de identidad compacta con `#hud-avatar-display`, `#display-nickname` y `#cloud-sync-indicator`. El único control de reclamo es el botón nativo `#btn-daily.streak-hub-cta`; contiene el fuego decorativo `#streak-flame`, el número grande `#streak-count-big`, la etiqueta `#hud-daily-label`, el copy `#streak-hub-copy` con `#hud-daily-cta-text` y el importe `#hud-reward-amount`.
+En `index.html`, `#player-hud` conserva el botón nativo `#btn-daily.streak-hub-cta`, el número de racha, el copy del CTA, el importe, `#streak-days`, `#streak-count`, `#daily-countdown`, `#daily-msg` y el estado accesible de la ilustración.
 
-Debajo del botón se mantienen `#streak-days` (siete segmentos) y `#streak-count` (respaldo visualmente oculto para `updateStreakBar()`), `#daily-countdown` con `#countdown-display`, `#daily-msg`, y el contenedor decorativo `#streak-coin-burst`. Esta estructura conserva los IDs que consume la lógica de negocio y permite que toda la zona de fuego, número y CTA sea táctil y operable por teclado.
+La ilustración vive en `#streak-rive-shell` y contiene exactamente un `<canvas>`: `#streak-rive-canvas`. El canvas declara `role="img"`, `aria-label` y se acompaña de `#streak-rive-status[role="status"][aria-live="polite"]`. La atribución visible es “Animación “Dynamic streak fire” por aristote · CC BY”.
+
+El botón sigue siendo el único control de reclamo y conserva la interacción nativa de teclado.
 
 ### 9.2 Estados visuales
 
-`window.StreakHub.refresh()` consulta `GameCenter.getStreakInfo()` y `GameCenter.canClaimDaily()` y escribe el resultado en `#streak-flame[data-state]`. El atributo es la única representación visual adicional del estado; no sustituye ni persiste el estado de `GameCenter`.
+`window.StreakHub.refresh()` consulta la información pública de `window.GameCenter` y representa únicamente dos estados visuales estables en `#streak-rive-shell[data-state]`.
 
 | Estado | Condición | Tratamiento |
 |---|---|---|
-| `locked` | Racha `0` y bono disponible | Fuego atenuado, sin chispas, listo para iniciar la racha. |
-| `available` | Bono disponible sin reparación | Fuego intenso, halo y chispas; CTA de reclamo activo. |
-| `repair` | `repairAvailable` es verdadero | Fuego ámbar sin chispas; el CTA se presenta como reparación. |
-| `claiming` | Reclamo exitoso durante 480 ms | Burst puntual; estado transitorio no persistido. |
-| `claimed` | Bono ya reclamado sin reparación | Fuego calmado y countdown visible. |
+| `available` | El bono puede reclamarse, o la reparación está disponible y es asequible | Canvas Rive a opacidad completa, glow .58 y pulso sutil de 2800 ms, con escala máxima 1.04. |
+| `claimed` | El bono ya fue reclamado o no existe un reclamo disponible | Canvas Rive a opacidad .90, glow .28 y sin pulso. |
 
-`updateDailyButton()` conserva la autoridad sobre `disabled`, `data-mode`, el nombre accesible del botón, el texto del CTA y el importe. En modo normal muestra `+total`, donde el total incluye los 90 de Bendición Lunar cuando está activa; tras reclamar muestra `×streak`; en reparación muestra el coste de reparación.
+`repairAvailable` y `canAffordRepair` son condiciones de negocio que pueden hacer que el CTA ofrezca reparación; no crean un tercer estado gráfico. `claiming` sólo existe como clase transitoria de celebración y nunca como estado estable.
+
+`updateDailyButton()` conserva la autoridad sobre `disabled`, `data-mode`, el nombre accesible del botón, el texto del CTA y el importe.
 
 ### 9.3 Sincronización y feedback de reclamo
 
-El módulo `js/streak-hub.js` se carga después de `js/domain/daily-streak.js`, `js/ui/hud-render.js` y el bootstrap `js/app.js`. No crea polling: se refresca al cargar el DOM, mediante `HomeView.refresh()` y después de los refrescos ya existentes del HUD. Tras un resultado exitoso, `playClaimSequence(result)` coloca el fuego en `claiming`, llama al audio sintetizado dentro del gesto de usuario y, 480 ms después, restaura el estado final, anima una vez `#streak-count-big` y genera ocho monedas en `#streak-coin-burst` que se eliminan al terminar su animación. Si el reclamo falla, no genera el burst y solo refresca el estado.
+`js/ui/streak-hub.js` se carga junto con el resto del shell y mantiene la representación derivada del estado de `window.GameCenter`. No crea polling ni persistencia propia. `refresh()` se ejecuta desde los puntos de actualización del HUD y sincroniza el ViewModel de Rive sin celebrar.
 
-El resultado textual continúa en `#daily-msg[role="status"][aria-live="polite"]`, visible durante 3.5 segundos. El fuego y las monedas son decorativos y no emiten anuncios adicionales.
+El reclamo normal pasa por `StreakHub.claim()`, que delega en `GameCenter.claimDaily()` y protege llamadas repetidas inmediatas dentro de la misma página. Un éxito activa `Pop` de forma concurrente con `State Machine 1`, mantiene la celebración durante aproximadamente 620 ms y termina en `claimed`. La secuencia usa como máximo 10 partículas WAAPI, todas efímeras; `prefers-reduced-motion` evita Pop y partículas.
+
+La velocidad posterior de `State Machine 1` es 0.75x mediante el driver interno disponible en Rive 2.44.0. Si el driver no existe, la implementación falla cerrada y no sustituye silenciosamente el requisito por 1x.
+
+El resultado textual continúa en `#daily-msg[role="status"][aria-live="polite"]` y el estado de degradación de Rive se anuncia mediante `#streak-rive-status`.
+
+
 
 ### 9.4 Cuenta regresiva y micro-progreso
 
@@ -330,15 +337,19 @@ El historial se limita a las últimas 50 entradas para no inflar `localStorage`.
 
 - `#btn-daily` es un `<button type="button">` nativo, por lo que conserva Tab, Enter y Espacio. `updateDailyButton()` alterna su nombre accesible entre «Reclamar bono diario» y «Reparar racha diaria».
 - El botón enlaza `#daily-msg`, `#daily-countdown` y `#streak-hub-copy` mediante `aria-describedby`. `.streak-hub-cta:focus-visible` usa un anillo de foco basado en `--focus-ring-aa`.
-- `#streak-flame` y `#streak-coin-burst` son decorativos y usan `aria-hidden="true"`; el fuego además declara `aria-live="off"`. `.streak-hub-number` usa `role="img"` y `StreakHub` actualiza su `aria-label` con la racha actual.
-- `#daily-msg` es el único canal de anuncio del resultado: `role="status"` y `aria-live="polite"`. No deben añadirse anuncios duplicados para el burst, chispas o audio.
-- El modal de reparación enfoca el botón de confirmación al abrirse y devuelve el foco a `#btn-daily` al cerrarse. El contraste de los números en gradiente debe verificarse visualmente frente al fondo al cambiar tokens de tema.
+- El canvas Rive declara `role="img"` y un `aria-label` descriptivo. `#streak-rive-status` usa `role="status"` y `aria-live="polite"` para anunciar degradación o cambios de presentación.
+- `#daily-msg` sigue siendo el canal textual del resultado del reclamo. Las partículas y `Pop` son decorativos y no generan anuncios paralelos.
+- El modal de reparación conserva su gestión de foco. La ilustración no depende de filtros CSS ni de semántica visual como sustituto del texto accesible.
 
 ## 16. Motion y rendimiento UX
 
-El fuego se compone de capas SVG, halo y chispas CSS. Las animaciones repetidas usan `transform` y `opacity`; el halo no anima su `filter: blur()`. `claiming` ejecuta un burst de 480 ms y el reclamo exitoso genera ocho monedas efímeras que se eliminan en `animationend`; el número recibe un bump único. El audio se sintetiza con Web Audio API y la vibración solo se solicita cuando el navegador la permite dentro de la activación de usuario.
+Rive se carga de forma lazy cuando la ilustración entra al viewport. El canvas usa un DPR máximo de 2 y `ResizeObserver` para mantener el drawing surface sincronizado con su tamaño CSS. `document.visibilitychange` detiene el trabajo de render cuando la página queda oculta y `HomeView.onLeave()` destruye la instancia; `HomeView.onEnter()` la vuelve a inicializar.
 
-Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce` desactiva las animaciones de fuego, halo, chispas y burst, y acorta la duración de las monedas a 260 ms; `pointer: coarse` reduce el blur del halo a 10 px. Al ocultar la pestaña, el listener existente añade `.motion-paused` a `.player-hud`, con lo que `styles.css` pausa las capas del fuego, el halo y las chispas. `StreakHub.refresh()` no crea timers y reutiliza los puntos de refresco del HUD; el countdown sigue bajo `AppScheduler` y evita escrituras redundantes dentro del mismo segundo.
+El estado `available` usa un pulso continuo de 2800 ms con escala máxima 1.04; `claimed` no pulsa. El claim usa una ventana de aproximadamente 620 ms: escala 1 → 1.14 → 1.04 → 1, con `Pop` concurrente y hasta 10 partículas WAAPI. Las partículas se eliminan al terminar y no sobreviven más de 800 ms.
+
+`prefers-reduced-motion: reduce` desactiva el pulso, la celebración, Pop y las partículas, y evita `will-change` innecesario. El nuevo canvas no recibe `filter`, `drop-shadow` ni grayscale.
+
+
 
 ## 17. Estados de UX cubiertos
 
@@ -365,11 +376,13 @@ Las salvaguardas son parte del contrato del hub: `prefers-reduced-motion: reduce
 | Usuario reclama y clickea varias veces | Botón se deshabilita antes de la mutación. |
 ## 19. Riesgos técnicos detectados
 
-1. **Dependencia de reloj local cuando no hay caché válido.** Es un trade-off UX/seguridad: permite uso offline o primera visita, pero reduce robustez anti-manipulación.
+1. **Driver interno de velocidad Rive.** Rive Web runtime 2.44.0 no expone una API pública de velocidad para una State Machine. El hub usa un driver interno para obtener exactamente 0.75x y lo valida en runtime; si no está disponible, falla cerrado en lugar de degradar a 1x. **RIESGO NO VERIFICADO.**
 2. **Comparación por `Math.round`.** Para días normalizados a medianoche normalmente funciona, pero cambios de horario de verano podrían producir diferencias de 23/25 horas. `Math.round` mitiga algunos casos, aunque conviene testear zonas con DST.
-3. **UI y validación usan fuentes distintas.** `canClaimDaily()` usa `Date.now()` local; `claimDaily()` usa caché de red si existe. Puede haber un caso donde la UI habilite el botón pero el reclamo lo bloquee por `desynced`.
-4. **Accesibilidad de anuncios.** Los mensajes dinámicos no están garantizados para screen readers.
-5. **Focus management del modal.** El modal declara semántica, pero no se observa focus trap/restauración explícita.
+3. **Separación de negocio y presentación.** `gamecenter_v6_promos.daily.lastClaim` y `daily.streak` siguen siendo la fuente de verdad; Sentinel puede rehidratar ese snapshot y el hub vuelve a derivar su presentación sin persistencia paralela.
+4. **Rendimiento manual pendiente de navegador.** El contrato exige revisar la secuencia bajo throttling y confirmar ausencia de Long Task >50 ms atribuible al hub.
+
+
+
 ## 20. Recomendaciones
 
 ### Alta prioridad
