@@ -45,7 +45,7 @@ class IntersectionObserverMock {
 class ResizeObserverMock {
     constructor(cb) { this.cb = cb; lastRO = this; }
     observe() {}
-    disconnect() {}
+    disconnect() { this.disconnected = true; }
 }
 
 const window = {
@@ -118,6 +118,8 @@ assert.equal(scripts.length, 0, '0.24 intersection must remain lazy');
 lastIO.cb([{ isIntersecting: true, intersectionRatio: 0.25 }]);
 assert.equal(scripts.length, 1, '0.25 intersection must load Rive exactly once');
 scripts[0].onload();
+await Promise.resolve();
+await Promise.resolve();
 
 assert.equal(resizeDpr, 2, 'DPR must be capped at 2');
 assert.equal(playCalls, 0, 'claimed state must not resume the State Machine');
@@ -145,5 +147,5 @@ assert.equal(rafs.size, 0, 'leaving viewport must stop the custom loop');
 window.StreakHub.destroy();
 assert.equal(cleanupCalls, 1, 'destroy() must call r.cleanup()');
 assert.equal(lastIO.observed, null);
-assert.equal(lastRO, lastRO);
+assert.equal(lastRO.disconnected, true);
 console.log('rive-streak-lifecycle: PASS');
