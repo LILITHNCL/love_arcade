@@ -254,7 +254,7 @@ Expone `streak` como lectura pública para módulos externos.
 
 En `index.html`, `#player-hud` conserva el botón nativo `#btn-daily.streak-hub-cta`, el número de racha, el copy del CTA, el importe, `#streak-days`, `#streak-count`, `#daily-countdown`, `#daily-msg` y el estado accesible de la ilustración.
 
-La ilustración vive en `#streak-rive-shell` y contiene exactamente un `<canvas>`: `#streak-rive-canvas`. El canvas declara `role="img"`, `aria-label` y se acompaña de `#streak-rive-status[role="status"][aria-live="polite"]`. La atribución visible es “Animación “Dynamic streak fire” por aristote · CC BY”.
+La ilustración vive en `#streak-rive-shell` y contiene exactamente un `<canvas>`: `#streak-rive-canvas`. El canvas declara `role="img"`, `aria-label` y se acompaña de `#streak-rive-status[role="status"][aria-live="polite"]`. La atribución de la obra se conserva únicamente en el archivo de licencia de `assets/rive/`; no se renderiza como texto dentro del Player Hub.
 
 El botón sigue siendo el único control de reclamo y conserva la interacción nativa de teclado.
 
