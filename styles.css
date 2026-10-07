@@ -1141,7 +1141,7 @@ body::before {
 .hud-countdown{display:inline-flex;align-items:center;gap:6px;margin:8px auto 0;padding:4px 12px;border:1px solid var(--border-subtle);border-radius:999px;background:var(--solid-surface-deep);font-size:.72rem;color:var(--text-low)}
 .hud-countdown::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
 #countdown-display{font-family:var(--font-mono);font-weight:700;color:var(--text-med);letter-spacing:.03em}
-@media (min-width:768px){:root{--streak-rive-width:132px;--streak-rive-height:176px}.streak-hub-number__value{font-size:clamp(2.6rem,6vw,3.6rem)}}
+@media (min-width:768px){:root{--streak-rive-width:132px;--streak-rive-height:176px}}
 @media (prefers-reduced-motion:reduce){.streak-rive-shell[data-state="available"] .streak-rive-canvas,.streak-rive-shell[data-state="available"]::before,.streak-rive-shell.is-claiming .streak-rive-canvas,.streak-rive-shell.is-claiming::before{animation:none!important}.streak-rive-shell.is-claiming{will-change:auto}}
 /* ================================================================
    GAME CARDS — Mobile-first 5:7 hub tiles
