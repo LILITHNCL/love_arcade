@@ -48,7 +48,7 @@ const legacyTerms = [
   ['flame', 'Core'].join(''),
   ['streak', 'Pulse'].join(''),
   ['streak-', 'coin-burst'].join(''),
-  ['streak', '.riv'].join(''),
+  /(?:^|\/)streak\\.riv(?:$|[^a-z-])/.source,
   ['https://unpkg.com/@rive-app/', 'canvas'].join(''),
 ];
 
