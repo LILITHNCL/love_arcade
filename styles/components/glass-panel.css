@@ -1,1 +1,13 @@
-/* styles/components/glass-panel.css — Glass panel component */
+/* ================================================================
+   SOLID SURFACE ELEVATION SYSTEM (Arcade Solid 3.0)
+   90% solid / 10% glass — backdrop-filter banned from panel classes.
+   Depth is achieved through hard-edge borders & layered box-shadows,
+   not transparency and blur. GPU overdraw eliminated.
+   ================================================================ */
+.glass-panel {
+    background: var(--solid-surface-base);
+    border: 1px solid transparent;
+    box-shadow: var(--surface-shadow-soft);
+    position: relative;
+    z-index: 1;
+}
