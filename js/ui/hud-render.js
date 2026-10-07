@@ -62,8 +62,6 @@
             const result=typeof originalRefresh==='function'?originalRefresh.apply(this,args):undefined;
             const shell=document.getElementById('streak-rive-shell'),status=document.getElementById('streak-rive-status'),after=shell?.dataset.state;
             if(status&&before&&after&&before!==after)status.textContent=after==='available'?'Bono diario disponible.':'Bono diario ya reclamado.';
-            const fallback=document.getElementById('streak-rive-fallback');
-            if(fallback&&shell?.dataset.riveError==='true'){fallback.hidden=false;if(status)status.textContent='La animación no está disponible; el reclamo diario sigue funcionando.';}
             return result;
         };
         return hub;
@@ -127,7 +125,9 @@
         btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
         const ctaTextEl = root.querySelector('#hud-daily-cta-text');
+        const copyEl = root.querySelector('#streak-hub-copy');
         if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
+        if (copyEl) copyEl.hidden = !(can || repairMode);
         const msg = root.querySelector('#daily-msg');
         if (msg && repairMode && !info.canAffordRepair) {
             msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
