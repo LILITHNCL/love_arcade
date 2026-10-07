@@ -1,1 +1,16 @@
-/* styles/components/economy-info.css — Economy information component */
+/* ================================================================
+   ECONOMY INFO
+   ================================================================ */
+.economy-info { display: flex; flex-direction: column; gap: 8px; }
+.economy-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--glass-base-border);
+    font-size: 0.85rem;
+}
+.economy-row:last-child { border-bottom: none; }
+.eco-badge {
+    padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+    background: var(--glass-base-bg);
+    border: 1px solid var(--glass-base-border);
+    color: var(--text-low);
+}
