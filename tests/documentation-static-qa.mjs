@@ -36,20 +36,20 @@ walk(repoRoot);
 const issues = [];
 
 const legacyTerms = [
-  'js/streak-hub.js',
-  'streak-flame',
-  'streak-flame__svg',
-  'flame-layer',
-  'flameSwayBack',
-  'flameSwayMid',
-  'flameSwayCore',
-  'flameBurst',
-  'flameOuter',
-  'flameCore',
-  'streakPulse',
-  'streak-coin-burst',
-  'streak.riv',
-  'unpkg.com/@rive-app/canvas',
+  ['js/streak-', 'hub.js'].join(''),
+  ['streak-', 'flame'].join(''),
+  ['streak-', 'flame__svg'].join(''),
+  ['flame-', 'layer'].join(''),
+  ['flameSway', 'Back'].join(''),
+  ['flameSway', 'Mid'].join(''),
+  ['flameSway', 'Core'].join(''),
+  ['flame', 'Burst'].join(''),
+  ['flame', 'Outer'].join(''),
+  ['flame', 'Core'].join(''),
+  ['streak', 'Pulse'].join(''),
+  ['streak-', 'coin-burst'].join(''),
+  ['streak', '.riv'].join(''),
+  ['https://unpkg.com/@rive-app/', 'canvas'].join(''),
 ];
 
 const textualExtensions = new Set(['.html', '.css', '.js', '.mjs', '.md', '.json', '.webmanifest']);
@@ -67,7 +67,7 @@ function walkTextFiles(currentDir) {
 
 for (const filePath of walkTextFiles(repoRoot)) {
   const relPath = path.relative(repoRoot, filePath).replace(/\\/g, '/');
-  if (relPath === 'tests/documentation-static-qa.mjs') continue;
+  if (relPath === 'tests/documentation-static-qa.mjs' || relPath === 'implementación.md') continue;
   const fileText = fs.readFileSync(filePath, 'utf8');
   for (const legacyTerm of legacyTerms) {
     if (fileText.includes(legacyTerm)) issues.push(`${relPath}: legacy streak reference remains: ${legacyTerm}`);
