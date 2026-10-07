@@ -19,6 +19,7 @@
     let runtimePromise = null;
     let runtimeFailed = false;
     let visible = false;
+    let inViewport = false;
     let destroyed = false;
     let state = 'claimed';
 
@@ -175,7 +176,8 @@
     }
 
     function setVisible(nextVisible) {
-        visible = Boolean(nextVisible) && !document.hidden && !destroyed;
+        inViewport = Boolean(nextVisible);
+        visible = inViewport && !document.hidden && !destroyed;
         if (!visible) {
             pauseRive();
             return;
@@ -193,7 +195,16 @@
     }
 
     function onVisibilityChange() {
-        setVisible(visible && !document.hidden);
+        visible = inViewport && !document.hidden && !destroyed;
+        if (!visible) {
+            pauseRive();
+            return;
+        }
+        if (!rive) {
+            createRive();
+            return;
+        }
+        resumeRive();
     }
 
     function init() {
@@ -241,6 +252,7 @@
     function destroy() {
         destroyed = true;
         visible = false;
+        inViewport = false;
         stopSlowLoop();
         if (resizeFrame !== null) {
             caf(resizeFrame);
