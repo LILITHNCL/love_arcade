@@ -1,0 +1,36 @@
+.avatar:hover { border-color: var(--accent); transform: scale(1.05); }
+.avatar-edit-icon {
+    position: absolute; bottom: -2px; right: -2px;
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 50%;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; pointer-events: none;
+    box-shadow: 0 0 6px var(--accent-glow);
+}
+
+BENDICIÓN LUNAR
+   ================================================================ */
+.moon-icon-wrap {
+    background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+    box-shadow: 0 4px 14px rgba(192, 132, 252, 0.3) !important;
+}
+.moon-btn {
+    background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+    box-shadow: 0 4px 16px rgba(192, 132, 252, 0.3) !important;
+}
+.moon-btn:hover {
+    box-shadow: 0 6px 24px rgba(192, 132, 252, 0.5) !important;
+    transform: translateY(-2px);
+}
+.eco-badge--moon {
+    background: rgba(192,132,252,0.12);
+    border-color: rgba(192,132,252,0.35);
+    color: var(--moon);
+}
+.eco-badge--gold {
+    background: var(--gold-soft);
+    border-color: rgba(251,191,36,0.3);
+    color: var(--gold);
+}
