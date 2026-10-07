@@ -1,9 +1,0 @@
-/* styles/tokens/06-z-index.css — Named stacking-order tokens */
-
-:root {
-    --z-base: 0;
-    --z-sticky-nav: 1000;
-    --z-toast: 9999;
-    --z-modal: 10000;
-    --z-modal-priority: 10500;
-}

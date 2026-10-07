@@ -1,8 +1,0 @@
-{
-  "name": "love-arcade",
-  "private": true,
-  "scripts": {
-    "build:css": "node scripts/build-css.mjs",
-    "build:css:shadow": "node scripts/build-css.mjs _build/styles.css.shadow"
-  }
-}
