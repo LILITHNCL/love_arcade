@@ -1,0 +1,75 @@
+/* ── Shop preview / purchase dialog ─────────────────────────────────────── */
+.preview-modal-box {
+    max-width: 520px;
+    padding: 20px;
+}
+
+.preview-content {
+    display: grid;
+    gap: 16px;
+}
+
+.preview-image {
+    display: block;
+    width: 100%;
+    max-height: min(62vh, 680px);
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+}
+
+.preview-name,
+.preview-confirmation-title {
+    margin: 0;
+    color: var(--text-high);
+}
+
+.preview-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preview-actions > button {
+    flex: 1;
+    justify-content: center;
+}
+
+.preview-status {
+    min-height: 1.25rem;
+    margin: 12px 0 0;
+    color: var(--danger, #d75a5a);
+}
+
+.purchase-breakdown {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 16px;
+    margin: 0;
+}
+
+.purchase-breakdown dt,
+.purchase-breakdown dd {
+    margin: 0;
+}
+
+.purchase-breakdown dd {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.purchase-breakdown-total {
+    color: var(--text-high);
+    font-weight: 800;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .preview-modal-box {
+        transition: transform 160ms ease-out, opacity 160ms ease-out;
+    }
+}
