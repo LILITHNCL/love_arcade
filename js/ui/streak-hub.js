@@ -33,6 +33,8 @@
     function setShellState(nextState) {
         state = nextState === 'available' ? 'available' : 'claimed';
         if (shell) shell.dataset.state = state;
+        const glowLayer = document.getElementById('player-hud-glow');
+        if (glowLayer) glowLayer.dataset.state = state;
     }
 
     function getSlowDriver() {
