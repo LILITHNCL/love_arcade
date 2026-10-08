@@ -1121,7 +1121,7 @@ body::before {
 :root{--streak-rive-width:min(380px,88vw);--streak-rive-height:auto;--streak-rive-available-opacity:1;--streak-rive-claimed-opacity:.90;--streak-rive-glow-available-opacity:.58;--streak-rive-glow-claimed-opacity:.28;--streak-rive-ready-duration:2800ms;--streak-rive-claim-duration:620ms;--streak-rive-particle-duration:560ms;--streak-rive-claim-ease:cubic-bezier(.34,1.56,.64,1)}
 .streak-hub-cta{appearance:none;-webkit-appearance:none;display:flex;flex-direction:column;align-items:center;width:100%;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;line-height:normal;text-align:center;box-shadow:none;outline:none;cursor:pointer}
 .streak-hub-cta:disabled{background:transparent}
-.streak-rive-stage{position:relative;width:var(--streak-rive-width);aspect-ratio:3 / 4;height:min(62dvh,400px);max-height:calc(100dvh - var(--nav-height) - var(--pill-nav-clearance) - 120px);margin:0 auto;align-self:center;display:grid;place-items:center;isolation:isolate}
+.streak-rive-stage{position:relative;width:auto;aspect-ratio:3 / 4;height:min(66dvh,420px,calc(100dvh - var(--nav-height) - var(--pill-nav-clearance) - 100px));margin:0 auto;align-self:center;display:grid;place-items:center;isolation:isolate}
 .streak-rive-shell{position:relative;width:100%;height:100%;overflow:visible;contain:layout;display:grid;place-items:center;isolation:isolate}
 .streak-rive-shell::before{content:'';position:absolute;inset:-18%;z-index:0;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(255,221,119,.34) 0%,rgba(255,123,28,.20) 38%,rgba(255,73,18,.06) 58%,rgba(255,73,18,0) 72%);opacity:var(--streak-rive-glow-claimed-opacity);transform:scale(.96)}
 .streak-rive-shell[data-state="available"]::before{opacity:var(--streak-rive-glow-available-opacity);animation:streakRiveReadyGlow var(--streak-rive-ready-duration) ease-in-out infinite}
@@ -1147,7 +1147,7 @@ body::before {
 .hud-countdown{display:inline-flex;align-items:center;gap:6px;margin:8px auto 0;padding:4px 12px;border:1px solid var(--border-subtle);border-radius:999px;background:var(--solid-surface-deep);font-size:.72rem;color:var(--text-low)}
 .hud-countdown::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
 #countdown-display{font-family:var(--font-mono);font-weight:700;color:var(--text-med);letter-spacing:.03em}
-@media (min-width:768px){:root{--streak-rive-width:min(380px,44vw);--streak-rive-height:auto}}
+@media (min-width:768px){:root{--streak-rive-width:min(380px,44vw);--streak-rive-height:auto}.streak-rive-stage{width:var(--streak-rive-width);height:auto}}
 @media (prefers-reduced-motion:reduce){.streak-rive-shell[data-state="available"] .streak-rive-canvas,.streak-rive-shell[data-state="available"]::before,.streak-rive-shell.is-claiming .streak-rive-canvas,.streak-rive-shell.is-claiming::before{animation:none!important}.streak-rive-shell.is-claiming{will-change:auto}}
 /* ================================================================
    GAME CARDS — Mobile-first 5:7 hub tiles
