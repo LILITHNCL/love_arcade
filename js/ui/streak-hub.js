@@ -89,13 +89,13 @@
 
     function pauseRive() {
         stopSlowLoop();
-        if (rive?.pause) rive.pause([STATE_MACHINE]);
+        if (rive?.pause) rive.pause(STATE_MACHINE);
     }
 
     function resumeRive() {
         if (!rive || !visible || destroyed) return;
         if (state === 'available') {
-            if (rive.play) rive.play([STATE_MACHINE]);
+            if (rive.play) rive.play(STATE_MACHINE);
             return;
         }
         if (rive.pause) rive.pause([STATE_MACHINE]);
