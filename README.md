@@ -65,7 +65,7 @@ en caso de conflicto:
 
 ## Player Hub — capas visuales y viewport móvil
 
-El Player Hub mantiene una arquitectura de capas explícita: la base y sus texturas pertenecen al contenedor `.player-hud`; `.player-hud__glow-layer` ocupa todo el contenedor, no recibe interacción y se coloca entre la base y el contenido; la identidad, Rive, partículas y controles quedan por encima. El glow usa un gradiente radial y una máscara radial para que su opacidad desaparezca progresivamente hacia los límites del propio HUD, evitando que el efecto dependa de la caja del canvas Rive.
+El Player Hub mantiene una arquitectura de capas explícita: la base visual del `.player-hud` (`::before` y `::after`) está fijada en z-index 0; `.player-hud__glow-layer` ocupa z-index 1 y contiene exclusivamente el glow/degradado dinámico de la racha, incluido su estado `available`; el contenido del HUD queda en z-index 2; y las partículas de la escena Rive conservan z-index 4 dentro de su propia escena. Esta jerarquía garantiza que el glow de disponibilidad se vea sobre el degradado fijo del HUD, pero nunca cubra la animación, textos o controles.
 
 La escena Rive móvil usa unidades `svh` para mantener estable su tamaño frente a la aparición/desaparición de las barras dinámicas del navegador. El runtime conserva su `ResizeObserver` para cambios reales de tamaño del elemento, pero el cambio de UI del navegador no altera el tamaño CSS de la escena, por lo que no provoca una resincronización visual del canvas.
 
