@@ -46,6 +46,7 @@ Después de editar:
   - el usuario la solicite directamente, o
   - el proyecto ya use ese stack y la dependencia sea coherente con la arquitectura existente.
 - Si una skill recomienda una librería que el proyecto no usa, adaptar la idea con el stack existente.
+- Las herramientas de testing se instalan solo como `devDependencies` y únicamente las que estén aprobadas en `/qa/02-estrategia.md` (ver "Testing automatizado"). No añadir otras sin pedirlo.
 
 ## Validación
 
@@ -57,6 +58,20 @@ Usar el gestor de paquetes y los scripts que ya existen en el repositorio. No in
 - Si aparecen errores, corregirlos y volver a ejecutar las comprobaciones.
 - No declarar la tarea terminada mientras existan errores conocidos.
 - Si alguna comprobación no se puede ejecutar, explicar por qué.
+- Excepción: un bug real de la aplicación descubierto por un test nuevo y documentado en `/qa/BUGS-ENCONTRADOS.md` (con el test marcado como fallo esperado y con motivo) no cuenta como error pendiente de la tarea de testing.
+
+## Testing automatizado
+
+Para cualquier tarea de diseño, planificación o implementación de tests, leer primero `/qa/ESTRATEGIA-AGENTE.md` y `/qa/00-plan-maestro.md` (si no existen, avisar antes de empezar). Esos archivos definen las fases, los tickets y los archivos de planificación en `/qa/`. Las reglas siguientes aplican siempre, además de las de Git, Implementación y Validación:
+
+- Trabajar por fases, en una branch por fase (por ejemplo, `pruebas-fase-2-riesgo-alto`), y no avanzar a la siguiente fase sin confirmación del usuario.
+- No modificar código de producción para que un test pase. Si hace falta testabilidad (por ejemplo, un `data-testid`), preferir primero roles, etiquetas y texto accesibles; añadir atributos de testabilidad solo cuando no haya alternativa, mínimos, y anotarlo en el ticket.
+- Si un test revela un bug real, no corregirlo dentro de la tarea de testing: documentarlo en `/qa/BUGS-ENCONTRADOS.md` y marcar el test como fallo esperado con el motivo, para que la suite siga en verde.
+- No dar por verificado lo que no se pudo ejecutar en este entorno (por ejemplo, navegadores para E2E). Indicarlo en `/qa/VERIFICACION-HUMANA-FASE-N.md` con los comandos exactos para que el usuario lo pruebe.
+- Los tests deben comprobar comportamiento, no implementación. No usar snapshots indiscriminados.
+- Al cerrar cada fase: ejecutar la suite completa y pegar el resultado real, hacer verificación por mutación en los tickets P0/P1, ejecutar tres veces los tests asíncronos o E2E para detectar flakiness y hacer una revisión adversarial.
+- Antes de implementar, el plan puede someterse a `grill-me` para detectar decisiones débiles.
+- Para tests de accesibilidad, leer `fixing-accessibility`; para investigar un fallo o bug, seguir `diagnose`.
 
 ## Skills de frontend del proyecto
 
@@ -147,6 +162,12 @@ Además, en tareas de frontend, incluir:
 - Qué cambió en movimiento o pulido de interacción.
 - Riesgos, comprobaciones omitidas o recomendaciones de seguimiento.
 
+Además, en tareas de testing (las secciones de frontend anteriores no aplican si no se tocó UI):
+- Fase y tickets completados, y tickets pendientes o bloqueados con su motivo.
+- Resultado real de la suite y de la verificación por mutación.
+- Bugs reales encontrados (referencia a `/qa/BUGS-ENCONTRADOS.md`).
+- Qué no se pudo verificar en este entorno y cómo probarlo (referencia a `/qa/VERIFICACION-HUMANA-FASE-N.md`).
+
 ## Ejemplos de prompts
 
 Se pueden invocar skills de forma explícita, por ejemplo:
@@ -156,3 +177,9 @@ Se pueden invocar skills de forma explícita, por ejemplo:
 - `Usa fixing-accessibility para revisar index.html.`
 - `Usa fixing-motion-performance y emil-design-eng para pulir esta animación.`
 - `Usa baseline-ui y fixing-accessibility para auditar este componente antes de publicarlo.`
+
+Para testing:
+
+- `Sesión 1 de testing: diagnóstico del repositorio según /qa/ESTRATEGIA-AGENTE.md.`
+- `Usa grill-me sobre /qa/00-plan-maestro.md antes de empezar la implementación.`
+- `Fase 2 de testing: genera los tickets, impleméntalos y cierra la fase según /qa/ESTRATEGIA-AGENTE.md.`
