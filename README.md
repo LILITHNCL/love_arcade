@@ -63,6 +63,12 @@ en caso de conflicto:
 - [docs/THUMBNAILS_OPTIMIZATION.md](docs/THUMBNAILS_OPTIMIZATION.md) — optimización AVIF de portadas
 - [docs/JSDOC_GUIDE.md](docs/JSDOC_GUIDE.md) — convención de comentarios JSDoc del proyecto
 
+## Player Hub — capas visuales y viewport móvil
+
+El Player Hub mantiene una arquitectura de capas explícita: la base y sus texturas pertenecen al contenedor `.player-hud`; `.player-hud__glow-layer` ocupa todo el contenedor, no recibe interacción y se coloca entre la base y el contenido; la identidad, Rive, partículas y controles quedan por encima. El glow usa un gradiente radial y una máscara radial para que su opacidad desaparezca progresivamente hacia los límites del propio HUD, evitando que el efecto dependa de la caja del canvas Rive.
+
+La escena Rive móvil usa unidades `svh` para mantener estable su tamaño frente a la aparición/desaparición de las barras dinámicas del navegador. El runtime conserva su `ResizeObserver` para cambios reales de tamaño del elemento, pero el cambio de UI del navegador no altera el tamaño CSS de la escena, por lo que no provoca una resincronización visual del canvas.
+
 ## Validación disponible en el repositorio
 
 Actualmente el repositorio no incluye `package.json` ni scripts npm. Las validaciones documentadas para catálogo y flujo principal se ejecutan como comprobaciones estáticas o scripts de prueba específicos cuando existen.
