@@ -854,7 +854,7 @@ body::before {
     transition: opacity 150ms ease;
 }
 
-.player-hud::before {
+ .player-hud::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -874,6 +874,7 @@ body::before {
     opacity: 0.72;
     pointer-events: none;
     border-radius: inherit;
+    z-index: 0;
 }
 
 .player-hud::after {
@@ -887,6 +888,7 @@ body::before {
     background-repeat: repeat, no-repeat;
     background-size: 200px 200px, cover;
     pointer-events: none;
+    z-index: 0;
 }
 /* Clase añadida por revealUI() en app.js tras el init síncrono completo */
 .player-hud.is-ready {
@@ -1149,7 +1151,7 @@ body::before {
 .hud-countdown::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
 #countdown-display{font-family:var(--font-mono);font-weight:700;color:var(--text-med);letter-spacing:.03em}
 @media (min-width:768px){:root{--streak-rive-width:min(380px,44vw);--streak-rive-height:auto}.streak-rive-stage{width:var(--streak-rive-width);height:auto}}
-@media (prefers-reduced-motion:reduce){.streak-rive-shell[data-state="available"] .streak-rive-canvas,.streak-rive-shell[data-state="available"]::before,.streak-rive-shell.is-claiming .streak-rive-canvas,.streak-rive-shell.is-claiming::before{animation:none!important}.streak-rive-shell.is-claiming{will-change:auto}}
+@media (prefers-reduced-motion:reduce){.player-hud__glow-layer[data-state="available"],.streak-rive-shell[data-state="available"] .streak-rive-canvas,.streak-rive-shell.is-claiming .streak-rive-canvas{animation:none!important}.streak-rive-shell.is-claiming{will-change:auto}}
 /* ================================================================
    GAME CARDS — Mobile-first 5:7 hub tiles
    ================================================================ */
