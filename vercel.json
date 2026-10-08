@@ -4,15 +4,6 @@
   "trailingSlash": true,
   "headers": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "text/html; charset=utf-8"
-        }
-      ]
-    },
-    {
       "source": "/(.*)\\.(js|mjs)",
       "headers": [
         {
@@ -79,7 +70,7 @@
       ]
     },
     {
-      "source": "/(.*)\\\\.riv",
+      "source": "/(.*)\\.riv",
       "headers": [
         {
           "key": "Content-Type",
@@ -92,7 +83,7 @@
       ]
     },
     {
-      "source": "/(.*)\\\\.wasm",
+      "source": "/(.*)\\.wasm",
       "headers": [
         {
           "key": "Content-Type",
