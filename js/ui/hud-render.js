@@ -9,6 +9,71 @@
     const GameCenterModule = window.LoveArcadeGameCenter;
     let displayedCoins = Store.getStore().coins;
     let deferredUIFrame = null;
+    let streakClaimInFlight = false;
+    let streakHubWrapped = false;
+    function reducedMotionPreferred() { return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches); }
+    function createStreakParticles() {
+        const container = document.getElementById('streak-rive-particles');
+        if (!container || reducedMotionPreferred()) return;
+        for (let i = 0; i < 10; i += 1) {
+            const particle = document.createElement('span');
+            particle.className = 'streak-rive-particle';
+            const angle = (Math.PI * 2 * i) / 10;
+            const distance = 34 + (i % 4) * 12;
+            particle.style.setProperty('--particle-x', `${Math.cos(angle) * distance}px`);
+            particle.style.setProperty('--particle-y', `${Math.sin(angle) * distance - 12}px`);
+            container.appendChild(particle);
+            const animation = particle.animate([
+                { opacity: 0, transform: 'translate(-50%, -50%) scale(.35)' },
+                { opacity: 1, transform: 'translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(1)' },
+                { opacity: 0, transform: 'translate(calc(-50% + var(--particle-x)), calc(var(--particle-y) - 24px)) scale(.2)' }
+            ], { duration: 560, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' });
+            animation.finished.then(() => particle.remove()).catch(() => particle.remove());
+        }
+    }
+    function decorateStreakHub(hub) {
+        if (!hub || streakHubWrapped) return hub;
+        streakHubWrapped = true;
+        const originalClaim = hub.claim, originalPlay = hub.playClaimSequence, originalRefresh = hub.refresh;
+        hub.claim = function guardedClaim(...args) {
+            if (streakClaimInFlight) return { success: false, message: 'El reclamo ya está en curso.', inFlight: true };
+            streakClaimInFlight = true;
+            let result;
+            try { result = typeof originalClaim === 'function' ? originalClaim.apply(this, args) : { success: false, message: 'El sistema de racha no está disponible.' }; }
+            catch (error) { streakClaimInFlight = false; throw error; }
+            const finish = () => { streakClaimInFlight = false; };
+            if (result?.then && typeof result.then === 'function') {
+                return result.then((resolved) => { if (resolved?.success && !reducedMotionPreferred()) hub.playClaimSequence?.(resolved); return resolved; }).finally(finish);
+            }
+            if (result?.success && !reducedMotionPreferred()) hub.playClaimSequence?.(result);
+            queueMicrotask(finish);
+            return result;
+        };
+        hub.playClaimSequence = function decoratedClaimSequence(result) {
+            if (!result?.success || reducedMotionPreferred()) return;
+            const shell=document.getElementById('streak-rive-shell'), status=document.getElementById('streak-rive-status');
+            shell?.classList.add('is-claiming'); createStreakParticles();
+            if (status) status.textContent='Racha reclamada.';
+            if (typeof originalPlay === 'function') originalPlay.call(hub,result);
+            window.setTimeout(()=>{shell?.classList.remove('is-claiming');if(status)status.textContent='';},620);
+        };
+        hub.refresh = function decoratedRefresh(...args) {
+            const before=document.getElementById('streak-rive-shell')?.dataset.state;
+            const result=typeof originalRefresh==='function'?originalRefresh.apply(this,args):undefined;
+            const shell=document.getElementById('streak-rive-shell'),status=document.getElementById('streak-rive-status'),after=shell?.dataset.state;
+            if(status&&before&&after&&before!==after)status.textContent=after==='available'?'Bono diario disponible.':'Bono diario ya reclamado.';
+            return result;
+        };
+        return hub;
+    }
+    function installStreakHubBridge() {
+        const descriptor=Object.getOwnPropertyDescriptor(window,'StreakHub');
+        if(descriptor&&descriptor.configurable===false)return;
+        let current=descriptor?.get?descriptor.get.call(window):window.StreakHub;
+        Object.defineProperty(window,'StreakHub',{configurable:true,enumerable:true,get:()=>current,set:(value)=>{current=decorateStreakHub(value);}});
+        if(current)current=decorateStreakHub(current);
+    }
+    installStreakHubBridge();
 
     function showStorageToast(message, type = 'warning') {
         const toast = document.createElement('div');
@@ -60,7 +125,9 @@
         btn.setAttribute('aria-label', repairMode ? 'Reparar racha diaria' : 'Reclamar bono diario');
 
         const ctaTextEl = root.querySelector('#hud-daily-cta-text');
+        const copyEl = root.querySelector('#streak-hub-copy');
         if (ctaTextEl) ctaTextEl.textContent = repairMode ? 'Reparar racha' : 'Toca para reclamar';
+        if (copyEl) copyEl.hidden = !(can || repairMode);
         const msg = root.querySelector('#daily-msg');
         if (msg && repairMode && !info.canAffordRepair) {
             msg.textContent = 'Consigue las monedas que faltan jugando en el Arcade.';
@@ -120,6 +187,7 @@
         applyAvatar(scope);
         updateDailyButton(scope);
         updateMoonBlessingUI(scope);
+        window.StreakHub?.refresh?.();
     }
 
     function setDailyMessage(message, success = false) {
@@ -157,6 +225,7 @@
             updateUI();
             updateDailyButton();
             window.updateStreakBar?.();
+            if (result.success) window.StreakHub?.playClaimSequence?.(result);
         };
     }
 
@@ -194,12 +263,14 @@
                 updateDailyButton();
                 return;
             }
-            const result = window.GameCenter.claimDaily();
+            const result = window.StreakHub?.claim?.() || {
+                success: false,
+                message: 'El sistema de racha no está disponible.'
+            };
             if (result.repairRequired) showDailyRepairModal();
             else setDailyMessage(result.message, result.success);
             updateDailyButton();
             updateMoonBlessingUI();
-            window.StreakHub?.playClaimSequence?.(result);
         });
     }
 

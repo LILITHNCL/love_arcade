@@ -302,6 +302,7 @@
 
             <!-- ── PLAYER HUD ── -->
             <div class="player-hud" id="player-hud">
+                <div id="player-hud-glow" class="player-hud__glow-layer" data-state="claimed" aria-hidden="true"></div>
 
                 <!-- Fila de identidad — compacta, secundaria -->
                 <div class="hub-identity-row">
@@ -309,7 +310,6 @@
                         <div class="hud-avatar" id="hud-avatar-display" style="background-image: url('https://res.cloudinary.com/dyspgn0sw/image/upload/default_avatar.avif');">
                             <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-user"></use></svg>
                         </div>
-                        <div class="hud-avatar-ring"></div>
                     </div>
                     <p class="hub-identity-row__name">
                         Hola, <span id="display-nickname"></span>
@@ -320,55 +320,22 @@
                     </span>
                 </div>
 
-                <!-- Daily Streak Hub — el fuego es el protagonista -->
-                <button type="button"
-                        id="btn-daily"
-                        class="streak-hub-cta"
-                        aria-describedby="daily-msg daily-countdown streak-hub-copy"
+                <!-- Daily Streak Hub — Rive -->
+                <button type="button" id="btn-daily" class="streak-hub-cta"
+                        aria-describedby="daily-msg daily-countdown streak-hub-copy streak-rive-status"
                         aria-label="Reclamar bono diario">
-
-                    <div class="streak-flame" id="streak-flame" data-state="locked" aria-hidden="true" aria-live="off">
-                        <svg class="streak-flame__svg" viewBox="0 0 120 160" width="120" height="160" aria-hidden="true">
-                            <defs>
-                                <linearGradient id="flameOuter" x1="0" y1="1" x2="0" y2="0">
-                                    <stop offset="0%" stop-color="#ffb238" stop-opacity="0.9"/>
-                                    <stop offset="60%" stop-color="#ff6a1a" stop-opacity="0.85"/>
-                                    <stop offset="100%" stop-color="#c81d1d" stop-opacity="0.7"/>
-                                </linearGradient>
-                                <linearGradient id="flameCore" x1="0" y1="1" x2="0" y2="0">
-                                    <stop offset="0%" stop-color="#fff6c8"/>
-                                    <stop offset="35%" stop-color="#ffd23f"/>
-                                    <stop offset="70%" stop-color="#ff7a1a"/>
-                                    <stop offset="100%" stop-color="#ff3d1a"/>
-                                </linearGradient>
-                            </defs>
-                            <path class="flame-layer flame-layer--back" fill="url(#flameOuter)"
-                                  d="M60,150 C20,130 15,90 35,55 C40,45 35,35 30,20 C55,30 70,15 65,0 C95,20 105,55 90,85 C110,75 105,55 100,45 C120,70 115,110 90,135 C100,120 95,105 85,100 C88,125 75,145 60,150 Z"/>
-                            <path class="flame-layer flame-layer--mid" fill="url(#flameCore)" opacity="0.92"
-                                  d="M60,148 C32,130 30,100 45,70 C48,62 45,52 40,40 C58,48 68,35 64,22 C86,38 92,62 82,84 C96,78 92,62 88,55 C102,72 100,100 82,120 C88,110 84,98 76,94 C78,114 70,128 60,148 Z"/>
-                            <path class="flame-layer flame-layer--core" fill="#fff3c4" opacity="0.95"
-                                  d="M60,145 C46,132 45,112 54,92 C56,86 54,78 51,70 C60,75 66,66 63,58 C74,68 78,84 71,98 C79,94 77,84 74,80 C82,90 81,106 71,120 C74,113 71,106 66,103 C67,116 63,126 60,145 Z"/>
-                        </svg>
-                        <div class="streak-flame__sparks">
-                            <span class="spark spark--1"></span>
-                            <span class="spark spark--2"></span>
-                            <span class="spark spark--3"></span>
-                            <span class="spark spark--4"></span>
-                            <span class="spark spark--5"></span>
-                            <span class="spark spark--6"></span>
+                    <div id="streak-rive-stage" class="streak-rive-stage">
+                        <div id="streak-rive-shell" class="streak-rive-shell" data-state="claimed">
+                            <canvas id="streak-rive-canvas" class="streak-rive-canvas" role="img" aria-label="Ilustración animada de la racha diaria"></canvas>
                         </div>
+                        <div id="streak-rive-particles" class="streak-rive-particles" aria-hidden="true"></div>
                     </div>
-
-                    <div class="streak-hub-number" role="img" aria-label="Racha actual">
-                        <span class="streak-hub-number__value" id="streak-count-big">0</span>
-                        <span class="streak-hub-number__label" id="hud-daily-label">DÍAS</span>
-                    </div>
-
-                    <p class="streak-hub-copy" id="streak-hub-copy">
+                    <p class="streak-hub-copy" id="streak-hub-copy" hidden>
                         <span id="hud-daily-cta-text">Toca para reclamar</span>
                         <span class="streak-hub-copy__amount" id="hud-reward-amount">+20</span>
                     </p>
                 </button>
+                <p id="streak-rive-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
                 <div class="streak-days" id="streak-days" role="img" aria-label="Racha actual: 0 días de 7 segmentos visibles">
                     <div class="streak-day"></div>
@@ -379,7 +346,7 @@
                     <div class="streak-day"></div>
                     <div class="streak-day"></div>
                 </div>
-                <!-- Conservado para updateStreakBar(); el valor principal será #streak-count-big. -->
+                <!-- Conservado para updateStreakBar(); permanece fuera de la presentación visual principal. -->
                 <span class="streak-count visually-hidden" id="streak-count">×0</span>
 
                 <div id="daily-countdown" class="hud-countdown hidden">
@@ -387,8 +354,6 @@
                 </div>
                 <p id="daily-msg" class="daily-msg" role="status" aria-live="polite"></p>
 
-                <!-- Contenedor del coin burst; se usa en Ticket-06. -->
-                <div class="streak-coin-burst" id="streak-coin-burst" aria-hidden="true"></div>
             </div>
 
             <!-- ── GAME CARDS ── -->
@@ -1155,7 +1120,7 @@
     <script src="js/app.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/shop-logic.js"></script>
-    <script src="js/streak-hub.js"></script>
+    <script src="js/ui/streak-hub.js"></script>
     <script src="js/spa-router.js"></script>
 
     <script>
@@ -1239,10 +1204,13 @@
              */
             onLeave() {
                 window.AppScheduler?.pauseGroup?.('countdown');
+                window.StreakHub?.destroy?.();
             },
             onEnter() {
                 window.AppScheduler?.resumeGroup?.('countdown');
                 updateCountdownDisplay();
+                window.StreakHub?.init?.();
+                window.StreakHub?.refresh?.();
             }
         };
 
@@ -1252,6 +1220,7 @@
         // primer frame sin parpadeo.
         updateStreakBar();
         updateCountdownDisplay();
+        window.StreakHub?.init?.();
 
 
         const modalA11yState = {
@@ -1781,23 +1750,6 @@
         initIdentityModalListeners();
         initProfileEditModalListeners();
 
-        // ── Post-claim UI refresh ────────────────────────────────────────────
-        // El handler principal de #btn-daily (reclamo, validación, mensaje)
-        // vive en app.js. Este listener solo refresca la UI del HUD
-        // (countdown y racha) con un pequeño delay para que el store ya esté
-        // actualizado cuando se lean los valores.
-        document.addEventListener('DOMContentLoaded', () => {
-            const dailyBtn = document.getElementById('btn-daily');
-            if (dailyBtn) {
-                dailyBtn.addEventListener('click', () => {
-                    setTimeout(() => {
-                        updateCountdownDisplay();
-                        updateStreakBar();
-                        window.StreakHub?.refresh?.();
-                    }, 80);
-                });
-            }
-        });
     </script>
 
 </body>

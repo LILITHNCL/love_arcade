@@ -29,12 +29,13 @@ http://localhost:8080
 - `localStorage` para persistencia principal
 - `js/core/` para configuración, tiempo, estado, utilidades y cliente del Web Worker
 - `js/domain/` para historial, economía, promociones, Bendición Lunar, racha, identidad, avatar, temas y el ensamblado de la API `window.GameCenter`
-- `js/ui/` para HUD, monedas, selector de temas y microinteracciones
+- `js/ui/` para HUD, monedas, selector de temas, microinteracciones y Streak Hub
+- Streak Hub usa Rive Web runtime 2.44.0 self-hosted y carga el runtime de forma lazy cuando la ilustración entra en viewport
 - `js/cloud/` para sincronización opcional con Supabase mediante Sentinel
 - `js/pwa/` para el aviso de actualización del Service Worker
 - `js/app.js` como orquestador clásico síncrono del bootstrap pre-paint, sin lógica de dominio ni cloud
 - `js/shop-logic.js` para catálogo y compra
-- `js/streak-hub.js` para feedback visual de la racha
+- `js/ui/streak-hub.js` para feedback visual de la racha
 - `js/sync-worker.js` para export/import con checksum y backup gzip
 - `sw.js` para cache offline del shell
 - `/api/*` como capa opcional de Vercel
@@ -61,6 +62,12 @@ en caso de conflicto:
 - [docs/lifecycle-timers.md](docs/lifecycle-timers.md) — contrato del scheduler central de timers
 - [docs/THUMBNAILS_OPTIMIZATION.md](docs/THUMBNAILS_OPTIMIZATION.md) — optimización AVIF de portadas
 - [docs/JSDOC_GUIDE.md](docs/JSDOC_GUIDE.md) — convención de comentarios JSDoc del proyecto
+
+## Player Hub — capas visuales y viewport móvil
+
+El Player Hub mantiene una arquitectura de capas explícita: la base visual del `.player-hud` (`::before` y `::after`) está fijada en z-index 0; `.player-hud__glow-layer` ocupa z-index 1 y contiene exclusivamente el glow/degradado dinámico de la racha, incluido su estado `available`; el contenido del HUD queda en z-index 2; y las partículas de la escena Rive conservan z-index 4 dentro de su propia escena. Esta jerarquía garantiza que el glow de disponibilidad se vea sobre el degradado fijo del HUD, pero nunca cubra la animación, textos o controles.
+
+La escena Rive móvil usa unidades `svh` para mantener estable su tamaño frente a la aparición/desaparición de las barras dinámicas del navegador. El runtime conserva su `ResizeObserver` para cambios reales de tamaño del elemento, pero el cambio de UI del navegador no altera el tamaño CSS de la escena, por lo que no provoca una resincronización visual del canvas.
 
 ## Validación disponible en el repositorio
 
