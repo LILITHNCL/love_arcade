@@ -854,7 +854,7 @@ body::before {
     transition: opacity 150ms ease;
 }
 
- .player-hud::before {
+.player-hud::before {
     content: '';
     position: absolute;
     inset: 0;
