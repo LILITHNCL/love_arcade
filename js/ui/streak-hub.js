@@ -98,7 +98,7 @@
             if (rive.play) rive.play(STATE_MACHINE);
             return;
         }
-        if (rive.pause) rive.pause([STATE_MACHINE]);
+        if (rive.pause) rive.pause(STATE_MACHINE);
         startSlowLoop();
     }
 
