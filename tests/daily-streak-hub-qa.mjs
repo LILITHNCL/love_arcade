@@ -22,6 +22,12 @@ assert.match(css,/\.streak-rive-stage\s*\{[\s\S]*?aspect-ratio:3 \/ 4;[\s\S]*?he
 assert.match(css,/\.player-hud::before\s*\{[\s\S]*?z-index:\s*0;/);
 assert.match(css,/\.player-hud::after\s*\{[\s\S]*?z-index:\s*0;/);
 assert.match(css,/\.player-hud__glow-layer\s*\{[\s\S]*?z-index:1;[\s\S]*?mask-image:radial-gradient/);
+assert.match(css,/\.player-hud__glow-layer::before[\s\S]*?will-change:transform,opacity/);
+assert.match(css,/\.player-hud__glow-layer::after[\s\S]*?animation:streakRiveFireEmber/);
+assert.match(css,/@keyframes streakRiveFireHaze[\s\S]*?translate3d/);
+assert.match(css,/@keyframes streakRiveFireEmber[\s\S]*?translate3d/);
+assert.match(css,/\.player-hud__glow-layer\[data-state="available"\][\s\S]*?opacity:var\(--streak-rive-glow-available-opacity\)/);
+
 assert.match(css,/\.player-hud > :not\(\.player-hud__glow-layer\)\{position:relative;z-index:2\}/);
 assert.match(css,/\.streak-rive-particles\{[\s\S]*?z-index:4;/);
 assert.match(css,/\.streak-rive-stage\s*\{[\s\S]*?height:min\(66vh,420px/);
