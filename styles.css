@@ -1123,9 +1123,14 @@ body::before {
 :root{--streak-rive-width:min(380px,88vw);--streak-rive-height:auto;--streak-rive-available-opacity:1;--streak-rive-claimed-opacity:.90;--streak-rive-glow-available-opacity:.58;--streak-rive-glow-claimed-opacity:.28;--streak-rive-ready-duration:2800ms;--streak-rive-claim-duration:620ms;--streak-rive-particle-duration:560ms;--streak-rive-claim-ease:cubic-bezier(.34,1.56,.64,1)}
 .streak-hub-cta{appearance:none;-webkit-appearance:none;display:flex;flex-direction:column;align-items:center;width:100%;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;line-height:normal;text-align:center;box-shadow:none;outline:none;cursor:pointer}
 .streak-hub-cta:disabled{background:transparent}
-.player-hud__glow-layer{position:absolute;inset:0;z-index:1;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse 72% 58% at 50% 48%,rgba(255,221,119,.18) 0%,rgba(255,123,28,.13) 34%,rgba(255,73,18,.05) 62%,transparent 100%);mask-image:radial-gradient(ellipse 86% 82% at 50% 48%,#000 38%,rgba(0,0,0,.82) 60%,transparent 100%);mask-repeat:no-repeat;mask-position:center;mask-size:100% 100%;isolation:isolate}
-.player-hud__glow-layer[data-state="available"]{opacity:var(--streak-rive-glow-available-opacity);animation:streakRiveReadyGlow var(--streak-rive-ready-duration) ease-in-out infinite}
-.player-hud__glow-layer[data-state="claimed"]{opacity:var(--streak-rive-glow-claimed-opacity);animation:none}
+.player-hud__glow-layer{position:absolute;inset:0;z-index:1;border-radius:inherit;pointer-events:none;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse 72% 58% at 50% 48%,rgba(255,221,119,.14) 0%,rgba(255,123,28,.10) 34%,rgba(255,73,18,.035) 62%,transparent 100%);mask-image:radial-gradient(ellipse 86% 82% at 50% 48%,#000 34%,rgba(0,0,0,.82) 58%,transparent 100%);mask-repeat:no-repeat;mask-position:center;mask-size:100% 100%}
+.player-hud__glow-layer::before,.player-hud__glow-layer::after{content:'';position:absolute;inset:-24%;pointer-events:none;border-radius:50%;will-change:transform,opacity;filter:blur(18px);transform-origin:50% 50%}
+.player-hud__glow-layer::before{background:radial-gradient(ellipse 40% 32% at 50% 43%,rgba(255,232,142,.52) 0%,rgba(255,151,45,.36) 24%,rgba(255,72,18,.18) 48%,transparent 74%);animation:streakRiveFireHaze var(--streak-rive-ready-duration) cubic-bezier(.45,0,.25,1) infinite}
+.player-hud__glow-layer::after{background:radial-gradient(ellipse 34% 26% at 56% 50%,rgba(255,198,78,.34) 0%,rgba(255,93,20,.22) 34%,transparent 72%);animation:streakRiveFireEmber var(--streak-rive-ready-duration) cubic-bezier(.55,.05,.25,.95) infinite reverse}
+.player-hud__glow-layer[data-state="available"]{opacity:var(--streak-rive-glow-available-opacity)}
+.player-hud__glow-layer[data-state="claimed"]{opacity:var(--streak-rive-glow-claimed-opacity)}
+.player-hud__glow-layer[data-state="claimed"]::before,.player-hud__glow-layer[data-state="claimed"]::after{animation:none}
+.player-hud > :not(.player-hud__glow-layer){position:relative;z-index:2}
 .player-hud > :not(.player-hud__glow-layer){position:relative;z-index:2}
 .streak-rive-stage{position:relative;width:auto;aspect-ratio:3 / 4;height:min(66vh,420px,calc(100vh - var(--nav-height) - var(--pill-nav-clearance) - 100px));margin:0 auto;align-self:center;display:grid;place-items:center;isolation:isolate}
 @supports (height:1svh){.streak-rive-stage{height:min(66svh,420px,calc(100svh - var(--nav-height) - var(--pill-nav-clearance) - 100px))}}
@@ -1137,6 +1142,8 @@ body::before {
 .streak-rive-particle{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff 0%,#ffd166 28%,#ff7a18 72%,transparent 73%);pointer-events:none}
 @keyframes streakRiveReadyPulse{0%,100%{opacity:1;transform:scale(.98)}50%{opacity:1;transform:scale(1.04)}}
 @keyframes streakRiveReadyGlow{0%,100%{opacity:.48;transform:scale(.96)}50%{opacity:.58;transform:scale(1.08)}}
+@keyframes streakRiveFireHaze{0%,100%{transform:translate3d(-7%,-2%,0) scale(.96) rotate(-2deg);opacity:.62}28%{transform:translate3d(4%,2%,0) scale(1.04) rotate(2deg);opacity:.9}55%{transform:translate3d(8%,-4%,0) scale(1.1) rotate(-1deg);opacity:.72}78%{transform:translate3d(-4%,4%,0) scale(1.02) rotate(3deg);opacity:.86}}
+@keyframes streakRiveFireEmber{0%,100%{transform:translate3d(8%,5%,0) scale(.9) rotate(2deg);opacity:.42}35%{transform:translate3d(-6%,-3%,0) scale(1.08) rotate(-3deg);opacity:.78}68%{transform:translate3d(3%,6%,0) scale(1.02) rotate(1deg);opacity:.58}}
 @keyframes streakRiveClaim{0%{opacity:1;transform:scale(1)}32%{opacity:1;transform:scale(1.14)}58%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
 @keyframes streakRiveGlowBurst{0%{opacity:.58;transform:scale(.96)}35%{opacity:.90;transform:scale(1.15)}100%{opacity:.28;transform:scale(1)}}
 .streak-rive-shell[data-state="claimed"] .streak-rive-canvas{opacity:.90;animation:none}
