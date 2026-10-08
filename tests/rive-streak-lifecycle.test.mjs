@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../js/ui/streak-hub.js', import.meta.url), 'utf8');
 assert.match(source, /stateMachine:\s*['"]State Machine 1['"]/);
 assert.doesNotMatch(source, /stateMachines:/);
+assert.doesNotMatch(source, /\.(?:play|pause)\(\[[^\]]+\]\)/);
 assert.match(source, /Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
 assert.match(source, /advanceAndApply\(dt \* SLOW_RATE\)/);
 assert.match(source, /rive\.cleanup\(\)/);
@@ -83,7 +84,9 @@ let resizeDpr = null;
 let advanceSeconds = null;
 let drawCalls = 0;
 let pauseCalls = 0;
+let pauseArg = null;
 let playCalls = 0;
+let playArg = null;
 
 const driver = {
     name: 'State Machine 1',
@@ -103,8 +106,8 @@ window.rive = {
             };
             this.animator = { stateMachines: [driver] };
             this.resizeDrawingSurfaceToCanvas = (dpr) => { resizeDpr = dpr; };
-            this.pause = () => { pauseCalls += 1; };
-            this.play = () => { playCalls += 1; };
+            this.pause = (names) => { pauseCalls += 1; pauseArg = names; };
+            this.play = (names) => { playCalls += 1; playArg = names; };
             this.drawFrame = () => { drawCalls += 1; };
             this.cleanup = () => { cleanupCalls += 1; };
             options.onLoad();
@@ -124,6 +127,8 @@ await Promise.resolve();
 assert.equal(resizeDpr, 2, 'DPR must be capped at 2');
 assert.equal(playCalls, 0, 'claimed state must not resume the State Machine');
 assert.equal(pauseCalls > 0, true);
+assert.equal(pauseArg, 'State Machine 1');
+assert.equal(playArg, null);
 assert.equal(lastRO != null, true);
 
 const firstFrame = [...rafs.values()][0];
