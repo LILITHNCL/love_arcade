@@ -1,138 +1,158 @@
-# Codex project instructions
+# Instrucciones del proyecto
 
-## Project-local frontend design skills
+Estas instrucciones aplican a cualquier agente de IA que trabaje en este repositorio.
 
-This repository includes project-local Agent Skills under `.agents/skills`.
+## Git
 
-Before making UI, layout, styling, accessibility, or animation changes, read the relevant `SKILL.md` files and use the smallest set of skills that fits the task.
+Siempre se parte de la versión más actualizada del repositorio en GitHub (`origin`), nunca de una copia local desactualizada.
 
-| Skill | Use when |
+- Nunca trabajar directamente sobre `main`.
+- Toda implementación debe realizarse en una nueva branch basada en `origin/main`.
+- Antes de crear una branch, ejecutar `git fetch origin`.
+- La branch debe comenzar desde el estado actualizado de `origin/main`, por ejemplo: `git switch -c nombre-de-la-branch origin/main`.
+- Usar nombres descriptivos en español para las branches.
+- Hacer commit únicamente cuando la implementación y las comprobaciones hayan terminado correctamente.
+- Hacer push de la branch al remoto `origin`.
+- Nunca hacer push directamente a `main`.
+- Nunca hacer force push.
+- No eliminar branches remotas.
+- No modificar commits existentes salvo que se solicite explícitamente.
+
+## Implementación
+
+Antes de editar:
+- Analizar primero el código existente antes de modificarlo.
+- Inspeccionar el componente, los estilos, el enrutamiento y los patrones de diseño existentes.
+- Reutilizar componentes, tokens, utilidades y convenciones existentes cuando sea posible.
+- Identificar el cambio más pequeño y seguro que logre el resultado pedido.
+
+Durante la edición:
+- Mantener las convenciones existentes del proyecto.
+- Evitar cambios no relacionados con la tarea.
+- Mantener estable el comportamiento del producto salvo que se pida lo contrario.
+- Evitar reescrituras amplias cuando bastan cambios puntuales.
+- Mantener los componentes legibles y mantenibles.
+- Eliminar código de interfaz muerto o duplicado cuando esté directamente relacionado con la tarea.
+
+Después de editar:
+- Revisar el diff en busca de regresiones visuales, regresiones de accesibilidad y cambios innecesarios.
+
+### Dependencias
+
+- No añadir dependencias sin evaluar primero si ya existe una solución en el proyecto.
+- No añadir dependencias de runtime solo para satisfacer la recomendación de una skill.
+- Preferir el HTML, CSS, JavaScript, TypeScript, framework, componentes, sistema de estilos y librerías de animación que el proyecto ya usa.
+- Añadir una dependencia de runtime solo cuando:
+  - el usuario la solicite directamente, o
+  - el proyecto ya use ese stack y la dependencia sea coherente con la arquitectura existente.
+- Si una skill recomienda una librería que el proyecto no usa, adaptar la idea con el stack existente.
+
+## Validación
+
+Usar el gestor de paquetes y los scripts que ya existen en el repositorio. No inventar scripts: revisar primero `package.json` o la documentación del repositorio.
+
+- Ejecutar los tests relevantes después de implementar.
+- Ejecutar el build correspondiente.
+- Ejecutar también, cuando existan, las comprobaciones de lint, typecheck y formato.
+- Si aparecen errores, corregirlos y volver a ejecutar las comprobaciones.
+- No declarar la tarea terminada mientras existan errores conocidos.
+- Si alguna comprobación no se puede ejecutar, explicar por qué.
+
+## Skills de frontend del proyecto
+
+Este repositorio incluye Agent Skills locales en `.agents/skills`.
+
+Antes de hacer cambios de UI, layout, estilos, accesibilidad o animación, leer los `SKILL.md` relevantes y usar el conjunto más pequeño de skills que se ajuste a la tarea.
+
+| Skill | Usar cuando |
 | --- | --- |
-| `frontend-design` | Building or substantially restyling a frontend page, component, layout, dashboard, landing page, or visual experience. |
-| `baseline-ui` | Building or reviewing UI for spacing, typography, responsive behavior, Tailwind/CSS quality, visual hierarchy, and general frontend polish. Preserve the project’s existing stack. |
-| `fixing-accessibility` | Reviewing or fixing semantic HTML, ARIA, labels, forms, dialogs, keyboard access, focus management, contrast, error states, or reduced-motion behavior. |
-| `fixing-motion-performance` | Adding or reviewing animations, transitions, scroll-linked effects, layout thrashing, rendering performance, or animation jank. |
-| `emil-design-eng` | Polishing microinteractions, motion taste, component details, interaction feel, and perceived product quality. |
-| `caveman` | Ultra-compressed communication mode for terse, token-efficient technical responses when explicitly requested. |
-| `grill-me` | Relentlessly stress-testing a plan or design by asking one question at a time and recommending an answer. |
-| `diagnose` | Disciplined bug/performance diagnosis using reproduce → minimise → hypothesise → instrument → fix → regression-test. |
+| `frontend-design` | Se construye o se rediseña de forma sustancial una página, componente, layout, dashboard, landing page o experiencia visual de frontend. |
+| `baseline-ui` | Se construye o revisa UI en cuanto a espaciado, tipografía, comportamiento responsive, calidad de Tailwind/CSS, jerarquía visual y acabado general. Preservar el stack existente del proyecto. |
+| `fixing-accessibility` | Se revisa o corrige HTML semántico, ARIA, etiquetas, formularios, diálogos, acceso por teclado, gestión del foco, contraste, estados de error o comportamiento con movimiento reducido. |
+| `fixing-motion-performance` | Se añaden o revisan animaciones, transiciones, efectos ligados al scroll, layout thrashing, rendimiento de renderizado o jank en animaciones. |
+| `emil-design-eng` | Se pulen microinteracciones, el criterio de movimiento, los detalles de componentes, la sensación de interacción y la calidad percibida del producto. |
+| `caveman` | Modo de comunicación ultracomprimido para respuestas técnicas breves y eficientes en tokens, solo cuando se solicite explícitamente. |
+| `grill-me` | Poner a prueba un plan o diseño de forma implacable, haciendo una pregunta a la vez y recomendando una respuesta. |
+| `diagnose` | Diagnóstico disciplinado de bugs o problemas de rendimiento: reproducir → minimizar → hipotetizar → instrumentar → corregir → test de regresión. |
 
-## Skill selection
+### Selección de skills
 
-Do not use every skill by default.
+No usar todas las skills por defecto.
 
-For new UI or major redesigns:
-- Use `frontend-design`
-- Use `baseline-ui`
-- Use `fixing-accessibility`
-- Add `emil-design-eng` when interaction polish matters
-- Add `fixing-motion-performance` when animation or transitions are involved
+Para UI nueva o rediseños importantes:
+- Usar `frontend-design`.
+- Usar `baseline-ui`.
+- Usar `fixing-accessibility`.
+- Añadir `emil-design-eng` cuando importe el pulido de la interacción.
+- Añadir `fixing-motion-performance` cuando haya animaciones o transiciones.
 
-For UI review:
-- Use `baseline-ui`
-- Use `fixing-accessibility`
-- Add `fixing-motion-performance` if the UI contains motion, transitions, scrolling effects, hover animations, or loading animations
+Para revisión de UI:
+- Usar `baseline-ui`.
+- Usar `fixing-accessibility`.
+- Añadir `fixing-motion-performance` si la UI contiene movimiento, transiciones, efectos de scroll, animaciones al pasar el cursor o animaciones de carga.
 
-For animation work:
-- Use `fixing-motion-performance`
-- Use `emil-design-eng`
-- Use `fixing-accessibility` to ensure reduced-motion behavior is handled
+Para trabajo de animación:
+- Usar `fixing-motion-performance`.
+- Usar `emil-design-eng`.
+- Usar `fixing-accessibility` para asegurar que se gestiona el movimiento reducido.
 
-## Frontend quality bar
+### Nivel de calidad en frontend
 
-Do not only make the feature work. Make it feel finished.
+No basta con que la funcionalidad opere: debe sentirse terminada.
 
-For frontend changes, check:
+Para cambios de frontend, comprobar que:
 
-- Visual hierarchy is clear
-- Primary action is obvious
-- Spacing and alignment are consistent
-- Typography is readable and intentional
-- Layout works on mobile, tablet, and desktop
-- Loading, empty, error, success, and disabled states are handled
-- Interactive elements have hover, focus, active, and keyboard states where appropriate
-- Accessibility is not degraded
-- Existing behavior is preserved unless the user requested a behavior change
+- La jerarquía visual es clara.
+- La acción principal es obvia.
+- El espaciado y la alineación son consistentes.
+- La tipografía es legible e intencional.
+- El layout funciona en móvil, tablet y escritorio.
+- Se manejan los estados de carga, vacío, error, éxito y deshabilitado.
+- Los elementos interactivos tienen estados hover, focus, active y de teclado cuando corresponda.
+- La accesibilidad no se degrada.
+- El comportamiento existente se preserva salvo que se haya pedido un cambio.
 
-## Motion quality bar
+### Nivel de calidad en movimiento
 
-Use motion only when it improves clarity, feedback, or perceived quality.
+Usar movimiento solo cuando mejore la claridad, el feedback o la calidad percibida.
 
-Prefer:
+Preferir:
 - `opacity`
 - `transform`
-- short, subtle transitions
-- reduced-motion support
+- transiciones cortas y sutiles
+- soporte para movimiento reducido
 
-Avoid:
+Evitar:
 - layout jank
-- excessive bounce
-- slow decorative animations
-- animating width, height, top, left, or other layout-heavy properties unless necessary
-- adding animation that blocks interaction
+- rebotes excesivos
+- animaciones decorativas lentas
+- animar width, height, top, left u otras propiedades que afecten al layout, salvo que sea necesario
+- añadir animaciones que bloqueen la interacción
 
-## Dependency guardrail
+## Finalización
 
-Do not add runtime dependencies solely to satisfy a skill recommendation.
+Al terminar, informar:
+1. Qué se implementó.
+2. Qué archivos cambiaron.
+3. Qué tests/build se ejecutaron.
+4. Resultado de las comprobaciones.
+5. Nombre de la branch.
+6. Commit creado.
+7. Si el push fue exitoso.
 
-Prefer the project’s existing HTML, CSS, JavaScript, TypeScript, framework, components, styling system, and animation libraries.
+Además, en tareas de frontend, incluir:
+- Qué skills se usaron.
+- Qué cambió visualmente.
+- Qué cambió en accesibilidad.
+- Qué cambió en movimiento o pulido de interacción.
+- Riesgos, comprobaciones omitidas o recomendaciones de seguimiento.
 
-Add a runtime dependency only when:
-- the user directly requests it, or
-- the project already uses that stack and the dependency is consistent with existing architecture
+## Ejemplos de prompts
 
-If a skill recommends a library that the project does not currently use, adapt the idea using the existing stack instead.
+Se pueden invocar skills de forma explícita, por ejemplo:
 
-## Implementation workflow
-
-Before editing:
-- Inspect the existing component, styling, routing, and design patterns
-- Reuse existing components, tokens, utilities, and conventions when possible
-- Identify the smallest safe change that achieves the requested result
-
-While editing:
-- Keep product behavior stable unless requested otherwise
-- Avoid broad rewrites when targeted changes are enough
-- Keep components readable and maintainable
-- Remove dead or duplicated UI code when directly related to the task
-
-After editing:
-- Review the diff for visual regressions, accessibility regressions, and unnecessary changes
-- Run the relevant project checks when available
-- If checks cannot be run, explain why
-
-## Validation
-
-Use the package manager and scripts already present in the repository.
-
-Prefer relevant checks such as:
-
-- lint
-- typecheck
-- test
-- build
-- formatting checks
-
-Do not invent scripts. Inspect `package.json` or the repo documentation first.
-
-## Completion summary
-
-When finishing a frontend task, summarize:
-
-- Which skills were used
-- What changed visually
-- What changed for accessibility
-- What changed for motion or interaction polish
-- What files were touched
-- What validation was run
-- Any risks, skipped checks, or follow-up recommendations
-
-## Example prompts
-
-Users can invoke skills explicitly, for example:
-
-- `Use frontend-design and baseline-ui to build this page.`
-- `Use frontend-design, baseline-ui, and fixing-accessibility to redesign this settings screen.`
-- `Use fixing-accessibility to review index.html.`
-- `Use fixing-motion-performance and emil-design-eng to polish this animation.`
-- `Use baseline-ui and fixing-accessibility to audit this component before I ship it.`
+- `Usa frontend-design y baseline-ui para construir esta página.`
+- `Usa frontend-design, baseline-ui y fixing-accessibility para rediseñar esta pantalla de ajustes.`
+- `Usa fixing-accessibility para revisar index.html.`
+- `Usa fixing-motion-performance y emil-design-eng para pulir esta animación.`
+- `Usa baseline-ui y fixing-accessibility para auditar este componente antes de publicarlo.`
