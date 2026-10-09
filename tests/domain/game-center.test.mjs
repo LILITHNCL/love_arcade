@@ -1,25 +1,23 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { createSandbox, loadFiles } = require('../helpers/vm-sandbox.cjs');
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
-const storage = new Map();
-const context = vm.createContext({
-    window: { LoveArcadeUtils: { sha256: async () => 'checksum' }, workerTask: async () => { throw new Error('offline'); } },
-    localStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)) },
-    console, JSON, Math, Object, Array, String, Number, Boolean, RegExp, Error, Date,
-    Uint8Array, TextEncoder, TextDecoder, btoa, atob, setTimeout, clearTimeout
-});
-context.window.window = context.window;
-for (const file of [
+const { context, storage } = createSandbox();
+context.window.LoveArcadeUtils = { sha256: async () => 'checksum' };
+context.window.workerTask = async () => { throw new Error('offline'); };
+context.Uint8Array = Uint8Array;
+context.TextEncoder = TextEncoder;
+context.TextDecoder = TextDecoder;
+context.btoa = btoa;
+context.atob = atob;
+
+loadFiles(context, [
     'js/core/config.js', 'js/core/state-store.js', 'js/core/time-sync.js',
     'js/domain/history.js', 'js/domain/economy.js', 'js/domain/promo-codes.js',
     'js/domain/moon-blessing.js', 'js/domain/identity.js', 'js/domain/daily-streak.js',
     'js/domain/avatar.js', 'js/domain/theming.js', 'js/domain/game-center.js'
-]) vm.runInContext(read(file), context, { filename: file });
+]);
 
 const expectedKeys = [
     'completeLevel', 'buyItem', 'spendCoins', 'getBoughtCount', 'getBalance', 'getInventory', 'addCoins',

@@ -3,32 +3,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { createSandbox, loadFiles, read } = require('../helpers/vm-sandbox.cjs');
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
-const storage = new Map();
-const document = { writes: [], write(value) { this.writes.push(value); } };
-const context = vm.createContext({
-    window: {}, document, localStorage: {
-        getItem: (key) => storage.get(key) ?? null,
-        setItem: (key, value) => storage.set(key, String(value))
-    },
-    console, JSON, Math, Object, Array, String, Number, Boolean, RegExp, Error, Date,
-    setTimeout, clearTimeout
-});
-context.window.window = context.window;
+const { context, storage, document } = createSandbox();
 
-vm.runInContext(read('js/game-bridge.js'), context, { filename: 'js/game-bridge.js' });
+loadFiles(context, ['js/game-bridge.js']);
 assert.equal(document.writes.length, 1, 'The bridge must synchronously request its classic dependencies.');
 for (const source of ['/js/core/config.js', '/js/core/state-store.js', '/js/domain/history.js', '/js/domain/economy.js', '/js/domain/identity.js', '/js/game-bridge-runtime.js']) {
     assert.match(document.writes[0], new RegExp(source.replace(/[./]/g, '\\$&')));
 }
 
-for (const file of [
+loadFiles(context, [
     'js/core/config.js', 'js/core/state-store.js', 'js/domain/history.js',
-    'js/domain/economy.js', 'js/domain/identity.js'
-]) vm.runInContext(read(file), context, { filename: file });
-vm.runInContext(read('js/game-bridge-runtime.js'), context, { filename: 'js/game-bridge-runtime.js' });
+    'js/domain/economy.js', 'js/domain/identity.js', 'js/game-bridge-runtime.js'
+]);
 
 const { GameCenter } = context.window;
 for (const method of ['completeLevel', 'getBalance', 'getHistory', 'addCoins', 'spendCoins', 'buyItem', 'getIdentity', 'hasIdentity']) {
