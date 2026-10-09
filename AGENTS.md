@@ -183,3 +183,10 @@ Para testing:
 - `Sesión 1 de testing: diagnóstico del repositorio según /qa/ESTRATEGIA-AGENTE.md.`
 - `Usa grill-me sobre /qa/00-plan-maestro.md antes de empezar la implementación.`
 - `Fase 2 de testing: genera los tickets, impleméntalos y cierra la fase según /qa/ESTRATEGIA-AGENTE.md.`
+
+## Credenciales y seguridad
+
+- Nunca leer, imprimir ni usar archivos `.env`, tokens, claves SSH ni otros secretos, salvo que el usuario lo pida de forma explícita en esa tarea.
+- Nunca configurar credenciales ni modificar `user.name`, `user.email` o la configuración de Git.
+- Si el push falla por autenticación, o el usuario indica que lo hará él, no hacer push: detenerse, informar y esperar. No buscar credenciales por cuenta propia. Esta regla prevalece sobre la de hacer push en la sección Git.
+- No modificar `.gitignore` salvo que sea parte directa de la tarea, y avisar siempre del cambio.
