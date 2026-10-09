@@ -27,4 +27,6 @@
 **Comando para ejecutarlo:**
 `npm test`
 
-**Estado:** pendiente
+**Estado:** hecho
+
+**Mutación verificada:** Scripts de package.json funcionales y sin "type": "module".

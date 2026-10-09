@@ -28,4 +28,6 @@
 **Comando para ejecutarlo:**
 `node --test tests/game-bridge.test.mjs tests/rive-streak-lifecycle.test.mjs tests/documentation-static-qa.mjs`
 
-**Estado:** pendiente
+**Estado:** hecho
+
+**Mutación verificada:** Se rompió temporalmente la lógica del código de producción y se confirmó que los tests fallan antes de revertir los cambios.

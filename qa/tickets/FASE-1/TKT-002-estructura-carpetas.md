@@ -24,4 +24,6 @@
 **Comando para ejecutarlo:**
 `node --test "tests/**/*.mjs"`
 
-**Estado:** pendiente
+**Estado:** hecho
+
+**Mutación verificada:** Helper vm-sandbox abstraído correctamente y probado rompiendo lógica de promo-codes que derivó en fallo correcto del test respectivo.
