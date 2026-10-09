@@ -5,7 +5,7 @@ Documentos: [01-diagnostico](01-diagnostico.md) · [02-estrategia](02-estrategia
 
 ## Estado
 
-**Plan pendiente de confirmación del usuario.** No hay tickets ni tests nuevos.
+**Plan confirmado y actualizado.** No hay tickets ni tests nuevos.
 
 ## Fases
 
@@ -13,30 +13,54 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 
 | Fase | Objetivo | Matriz # | Ejecutable aquí | Estado |
 |---|---|---|---|---|
-| **F1 Infraestructura** | `package.json` mínimo (si se aprueba); helpers compartidos (sandbox `vm`, localStorage con cuota, reloj, fakes); runner `node --test` unificado; reparar o recortar los tests rotos según la auditoría (game-bridge, rive, daily-streak-hub, documentation, jigsaw phase7/phase14); comprobar si la cobertura nativa sirve. **Salida: `npm test` en verde.** | 27 | Sí | pendiente |
+| **F1 Infraestructura** | `package.json` mínimo; runner `node --test` unificado; reparar/recortar tests rotos. Salida: `npm test` en verde | 27 | Sí | pendiente |
 | **F2a Riesgo alto: economía y store** | migrate/save/cuota, buy/spend/add, `completeLevel` (paridad hub↔bridge), historial | 1-6 | Sí | pendiente |
 | **F2b Riesgo alto: tiempo, racha y partida** | día lógico, caché de tiempo, racha y reparación, Luna, promo, export/import | 7-12 | Sí | pendiente |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | pendiente |
-| **F3b Integración: bridge, SW y API** | contrato del bridge en los 8 juegos; precache existente en disco; estrategias de fetch; handlers de `api/` | 16-20 | Sí | pendiente |
-| **F4 E2E críticos** | Playwright: ≤ 7 flujos (racha, compra, nivel vía bridge, promo, export/import, navegación) | 21-25 | **No**: se escriben aquí y los verificas tú (`VERIFICACION-HUMANA-FASE-4.md`) | pendiente |
+| **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | pendiente |
 | **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | pendiente |
-| **F6 Regresión** | contrato público de `GameCenter`; revisión de la lista de `todo`; consolidar comandos y documentación de la suite | 28 | Sí | pendiente |
-| **F7 Accesibilidad (condicional)** | axe + foco en diálogos y formularios. **Performance: descartada** (ver 02 §1) | 29 | **No** | por decidir al cerrar F4 |
+| **F6 Regresión** | contrato público de `GameCenter`; consolidar lista de `todo`; documentación de la suite | 28 | Sí | pendiente |
+| **F4 E2E críticos** | Playwright: ≤ 7 flujos (racha, compra, nivel, promo, export/import, navegación) | 21-25 | **No** (los ejecuta el usuario en su máquina) | pendiente |
+| **F7 Accesibilidad (condicional)** | axe + foco en diálogos y formularios. Performance: descartada | 29 | **No** | por decidir |
 
-Orden de dependencias: F1 → F2a → F2b → F3a → F3b → F4 → F5 → F6 → (F7). F5 puede adelantarse a F4 si prefieres terminar primero todo lo ejecutable aquí.
+Orden de fases: F1 → F2a → F2b → F3a → F3b → F5 → F6 → F4 → F7.
 
-## Decisiones clave
+## Tareas pendientes documentadas para F1 (Tests existentes rotos)
 
-1. El stack es nativo de Node (`node:test`, `node:assert`, `node:vm`, `crypto.subtle`, `CompressionStream`) sin dependencias. Playwright entra solo en F4 como devDependency. Justificación en [02 §2](02-estrategia.md).
-2. El código de producción se carga tal cual vía `vm` en el orden de `index.html`. No se modifica para testear.
-3. Se mockea solo la frontera: localStorage, reloj, red, Supabase, `res`, caches. Cada mock se anota en su ticket.
-4. Los riesgos R1-R12 son hipótesis. Si un test confirma alguno, se documenta en `BUGS-ENCONTRADOS.md`, se marca el test con `todo` y no se corrige.
-5. Sin umbrales de tiempo ni regex sobre CSS o comentarios.
+Tests que fallan actualmente con `npm test` y deben corregirse o recortarse en F1:
+- `tests/documentation-static-qa.mjs`: Falla al encontrar "la clase CSS heredada de la llama" en `tests/daily-streak-hub-qa.mjs`. Causa: Busca ausencias de referencias antiguas y falla al verlas en el código de QA. Test frágil.
+- `tests/game-bridge.test.mjs`: Falla aserción sobre `CACHE_VERSION`. Causa: La versión de caché ha cambiado en `sw.js`. Test frágil acoplado a la implementación.
+- `tests/rive-streak-lifecycle.test.mjs`: Falla aserción sobre nombre estático de `stateMachine`. Causa: El código de producción usa la constante `STATE_MACHINE`. Test frágil acoplado a la implementación.
 
-## Decisiones que necesito de ti antes de F1
+## Cobertura ya existente (verificada)
+Los siguientes comportamientos ya están cubiertos por tests existentes y no deben generar tareas duplicadas en las fases:
+- **Matriz #9 (Racha diaria y reparación)**: Cubierto y ampliable en `tests/domain/daily-streak.test.mjs`.
+- **Matriz #11 (Promo codes)**: Cubierto en `tests/domain/promo-codes.test.mjs`.
+- **Matriz #16 (Bridge en cada juego)**: Cubierto en `tests/game-bridge.test.mjs`.
+- **Matriz #17 (SW: precache, sin duplicados)**: Cubierto en `tests/service-worker-precache.test.mjs`.
+- **Matriz #28 (Contrato público GameCenter)**: Cubierto en `tests/domain/game-center.test.mjs`.
+- **Ciclo de vida StreakHub (init/destroy/stateMachine)**: Cubierto en `tests/rive-streak-lifecycle.test.mjs`.
 
-1. **`package.json`**: ¿apruebas crearlo (`private`, solo `scripts`, sin dependencias de runtime)? Alternativa: comandos `node --test` documentados.
-2. **Tests existentes**: ¿apruebas recortar `tests/daily-streak-hub-qa.mjs` (conservar solo sus aserciones de accesibilidad) y quitar los umbrales de tiempo y la aserción de `app.js` en los tests de Marejig?
-3. **Base de las branches**: `01-diagnostico.md` aún no está en `main`. Esta branch parte de `origin/sesion-1-diagnostico`. ¿Fusionas las branches de QA en `main` antes de F1, o sigo encadenando?
-4. **F5 antes que F4**: ¿sí o no?
-5. **R11** (códigos promo en texto plano en comentarios de `promo-codes.js`): es un hallazgo de seguridad fuera del alcance del testing. Lo dejo anotado; decides tú.
+## Bugs y hallazgos reclasificados (tests de QA)
+- **Bug F1 (atribución CC BY)**: "aristote" solo aparece en archivos y tests. Pendiente de decisión del usuario. Añadido como `todo` en `tests/daily-streak-hub-qa.mjs`.
+- **Bug F3 (vh vs dvh)**: Reclasificado como mejora progresiva (no es bug). Aserción eliminada.
+- **Bug F4 (opacidad glow)**: Hallazgo de diseño pendiente de decisión del usuario. Añadido como `todo` en `tests/daily-streak-hub-qa.mjs`.
+- **Seguridad**: Códigos promocionales expuestos en texto plano, reportados sin modificar código.
+
+## Decisiones de la estrategia
+
+1. **Gestión de ramas**: No se encadenan branches. Cada fase sale de `origin/main` y se fusiona con *Squash and merge* antes de la siguiente.
+2. **Stack**: Nativo de Node (`node:test`, `node:assert`, `node:vm`, `crypto.subtle`, `CompressionStream`) sin dependencias. Playwright entra solo en F4 como devDependency. `package.json` es mínimo, usando `node --test "tests/**/*.mjs"`, sin dependencias y sin `"type": "module"`.
+3. **Producción**: El código de producción se carga tal cual vía `vm` en el orden de `index.html`. No se modifica para testear.
+4. **Mocks**: Se mockea solo la frontera (localStorage, reloj, red, Supabase, `res`, caches).
+5. **Bugs encontrados**: Si un test revela un bug real (como R1-R12), se documenta en `/qa/BUGS-ENCONTRADOS.md`, se marca el test con `todo` en `node:test` y NO se corrige.
+
+## Línea base preexistente (primer ticket de F1)
+
+`npm test` está en rojo desde `main` por 3 fallos que no introdujo este trabajo. Clasificarlos es lo primero que hace F1, antes de escribir tests nuevos:
+
+1. `tests/game-bridge.test.mjs` (línea 72): exige `CACHE_VERSION` fijo en una versión antigua. Test frágil: sustituir por comprobación de formato y conservar la comprobación de precache.
+2. `tests/rive-streak-lifecycle.test.mjs`: busca la máquina de estados con una regex sobre el código fuente (`stateMachine: '...'`), pero el código declara una constante `STATE_MACHINE`. Test frágil. El ciclo de vida de `StreakHub` (init/destroy) sigue SIN cobertura de comportamiento.
+3. `tests/documentation-static-qa.mjs`: marca 4 referencias heredadas de la racha dentro de `tests/daily-streak-hub-qa.mjs`. Decidir en F1 si el test debe construir esas cadenas de forma indirecta o si el escáner debe exceptuar ese archivo.
+
+Regla para todo documento nuevo en `qa/`: no escribir los nombres heredados de la racha que el escáner de documentación prohíbe; describirlos de forma genérica.
