@@ -45,8 +45,8 @@ assert.match(hud,/window\.StreakHub\?\.claim\?\.\(\)/);
 assert.doesNotMatch(hud,/const result = window\.GameCenter\.claimDaily\(\)/);
 assert.match(hud,/streakClaimInFlight/);
 assert.match(hud,/particle\.animate\(/);
-// assert.match(hud,/for \(let i = 0; i < 10; i \+= 1\)/);
-// // Recortado: comprobación acoplada a umbral de tiempo hardcodeado
+// Eliminado: comprobación de implementación de partículas\n// assert.match(hud,/for \(let i = 0; i < 10; i \+= 1\)/);
+// Recortado: comprobación acoplada a umbral de tiempo hardcodeado
 // assert.match(hud,/620/);
 assert.match(hud,/window\.StreakHub\?\.refresh\?\.\(\)/);
 // Recortado: comprobación acoplada a detalle de implementación (destroy)
