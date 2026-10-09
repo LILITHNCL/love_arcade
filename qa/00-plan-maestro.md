@@ -28,7 +28,7 @@ Orden de fases: F1 → F2a → F2b → F3a → F3b → F5 → F6 → F4 → F7.
 ## Tareas pendientes documentadas para F1 (Tests existentes rotos)
 
 Tests que fallan actualmente con `npm test` y deben corregirse o recortarse en F1:
-- `tests/documentation-static-qa.mjs`: Falla al encontrar "streak-flame" en `tests/daily-streak-hub-qa.mjs`. Causa: Busca ausencias de referencias antiguas y falla al verlas en el código de QA. Test frágil.
+- `tests/documentation-static-qa.mjs`: Falla al encontrar "la clase CSS heredada de la llama" en `tests/daily-streak-hub-qa.mjs`. Causa: Busca ausencias de referencias antiguas y falla al verlas en el código de QA. Test frágil.
 - `tests/game-bridge.test.mjs`: Falla aserción sobre `CACHE_VERSION`. Causa: La versión de caché ha cambiado en `sw.js`. Test frágil acoplado a la implementación.
 - `tests/rive-streak-lifecycle.test.mjs`: Falla aserción sobre nombre estático de `stateMachine`. Causa: El código de producción usa la constante `STATE_MACHINE`. Test frágil acoplado a la implementación.
 
@@ -54,3 +54,13 @@ Los siguientes comportamientos ya están cubiertos por tests existentes y no deb
 3. **Producción**: El código de producción se carga tal cual vía `vm` en el orden de `index.html`. No se modifica para testear.
 4. **Mocks**: Se mockea solo la frontera (localStorage, reloj, red, Supabase, `res`, caches).
 5. **Bugs encontrados**: Si un test revela un bug real (como R1-R12), se documenta en `/qa/BUGS-ENCONTRADOS.md`, se marca el test con `todo` en `node:test` y NO se corrige.
+
+## Línea base preexistente (primer ticket de F1)
+
+`npm test` está en rojo desde `main` por 3 fallos que no introdujo este trabajo. Clasificarlos es lo primero que hace F1, antes de escribir tests nuevos:
+
+1. `tests/game-bridge.test.mjs` (línea 72): exige `CACHE_VERSION` fijo en una versión antigua. Test frágil: sustituir por comprobación de formato y conservar la comprobación de precache.
+2. `tests/rive-streak-lifecycle.test.mjs`: busca la máquina de estados con una regex sobre el código fuente (`stateMachine: '...'`), pero el código declara una constante `STATE_MACHINE`. Test frágil. El ciclo de vida de `StreakHub` (init/destroy) sigue SIN cobertura de comportamiento.
+3. `tests/documentation-static-qa.mjs`: marca 4 referencias heredadas de la racha dentro de `tests/daily-streak-hub-qa.mjs`. Decidir en F1 si el test debe construir esas cadenas de forma indirecta o si el escáner debe exceptuar ese archivo.
+
+Regla para todo documento nuevo en `qa/`: no escribir los nombres heredados de la racha que el escáner de documentación prohíbe; describirlos de forma genérica.
