@@ -14,8 +14,10 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | Fase | Objetivo | Matriz # | Ejecutable aquí | Estado |
 |---|---|---|---|---|
 | **F1 Infraestructura** | `package.json` mínimo; runner `node --test` unificado; reparar/recortar tests rotos. Salida: `npm test` en verde | 27 | Sí | pendiente |
-| **F2a Riesgo alto: economía y store** | migrate/save/cuota, buy/spend/add, `completeLevel` (paridad hub↔bridge), historial | 1-6 | Sí | pendiente |
-| **F2b Riesgo alto: tiempo, racha y partida** | día lógico, caché de tiempo, racha y reparación, Luna, promo, export/import | 7-12 | Sí | pendiente |
+| **F2a Persistencia Core** | migrate/save/cuota, historial | 1, 2, 6 | Sí | pendiente |
+| **F2b Economía y Recompensas** | buy/spend/add, `completeLevel` (paridad hub↔bridge) | 3-5 | Sí | pendiente |
+| **F2c Tiempo y Racha** | día lógico, caché de tiempo, racha y reparación | 7-9 | Sí | pendiente |
+| **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | pendiente |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | pendiente |
 | **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | pendiente |
 | **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | pendiente |
@@ -23,7 +25,7 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | **F4 E2E críticos** | Playwright: ≤ 7 flujos (racha, compra, nivel, promo, export/import, navegación) | 21-25 | **No** (los ejecuta el usuario en su máquina) | pendiente |
 | **F7 Accesibilidad (condicional)** | axe + foco en diálogos y formularios. Performance: descartada | 29 | **No** | por decidir |
 
-Orden de fases: F1 → F2a → F2b → F3a → F3b → F5 → F6 → F4 → F7.
+Orden de fases: F1 → F2a → F2b → F2c → F2d → F3a → F3b → F5 → F6 → F4 → F7.
 
 ## Tareas pendientes documentadas para F1 (Tests existentes rotos)
 
