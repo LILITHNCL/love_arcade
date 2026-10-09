@@ -13,7 +13,13 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 
 | Fase | Objetivo | Matriz # | Ejecutable aquí | Estado |
 |---|---|---|---|---|
-| **F1 Infraestructura** | `package.json` mínimo; helpers compartidos; runner `node --test` unificado; reparar o recortar los tests rotos según auditoría. **Salida: `npm test` en verde.** | 27 | Sí | pendiente |
+| **F1 Infraestructura** | `package.json` mínimo; helpers compartidos; runner `node --test` unificado; reparar o recortar los tests rotos según auditoría. **Salida: `npm test` en verde.**
+
+### Tests fallidos a reparar/recortar en F1:
+- `tests/documentation-static-qa.mjs`: Falla al encontrar "streak-flame" (etc.) en `tests/daily-streak-hub-qa.mjs`. Causa: Busca ausencias de referencias antiguas y falla al verlas en el código de QA que las testea. Test frágil.
+- `tests/game-bridge.test.mjs`: Falla aserción `assert.match(sw_js, /const CACHE_VERSION = 'v2\.04\.07\.58';/)`. Causa: La versión de caché ha cambiado en el código `sw.js`. Test frágil/acoplado a versión dura.
+- `tests/rive-streak-lifecycle.test.mjs`: Falla aserción `assert.match(..., /stateMachine:\s*['"]State Machine 1['"]/`. Causa: El código de producción usa una constante `stateMachine: STATE_MACHINE`. Test frágil/acoplado a implementación.
+ | 27 | Sí | pendiente |
 | **F2a Riesgo alto: economía y store** | migrate/save/cuota, buy/spend/add, `completeLevel` (paridad hub↔bridge), historial | 1-6 | Sí | pendiente |
 | **F2b Riesgo alto: tiempo, racha y partida** | día lógico, caché de tiempo, racha y reparación, Luna, promo, export/import | 7-12 | Sí | pendiente |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | pendiente |
