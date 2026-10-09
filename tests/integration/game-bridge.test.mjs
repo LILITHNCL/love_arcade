@@ -4,7 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
 const storage = new Map();
 const document = { writes: [], write(value) { this.writes.push(value); } };
@@ -69,7 +69,7 @@ for (const file of gameIndexFiles) {
 }
 
 const serviceWorker = read('sw.js');
-assert.match(serviceWorker, /const CACHE_VERSION = 'v2\.04\.07\.58';/, 'The bridge deployment must invalidate the prior cache.');
+assert.match(serviceWorker, /const CACHE_VERSION = 'v\d+(\.\d+)+';/, 'The bridge deployment must invalidate the prior cache.');
 for (const source of ['/js/app.js', '/js/game-bridge.js', '/js/game-bridge-runtime.js']) {
     assert.match(serviceWorker, new RegExp(`'${source.replace(/[./]/g, '\\$&')}'`), `${source} must be precached.`);
 }

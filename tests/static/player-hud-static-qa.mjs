@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
-const configSource = readFileSync(new URL('../js/core/config.js', import.meta.url), 'utf8');
-const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
+const configSource = readFileSync(new URL('../../js/core/config.js', import.meta.url), 'utf8');
+const indexHtml = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 
 function cssRule(selector) {
   const match = css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm'));

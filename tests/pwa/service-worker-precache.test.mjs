@@ -4,7 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const serviceWorker = fs.readFileSync(path.join(projectRoot, 'sw.js'), 'utf8');
 const listeners = new Map();
 const precacheCalls = [];

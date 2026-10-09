@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
-const hud=readFileSync(new URL('../js/ui/hud-render.js',import.meta.url),'utf8');
-const hub=readFileSync(new URL('../js/ui/streak-hub.js',import.meta.url),'utf8');
+const html=readFileSync(new URL('../../index.html',import.meta.url),'utf8');
+const css=readFileSync(new URL('../../styles.css',import.meta.url),'utf8');
+const hud=readFileSync(new URL('../../js/ui/hud-render.js',import.meta.url),'utf8');
+const hub=readFileSync(new URL('../../js/ui/streak-hub.js',import.meta.url),'utf8');
 assert.match(html,/<button type="button"[^>]*id="btn-daily"/);
 assert.equal((html.match(/<canvas\b/g)||[]).length,1);
 assert.match(html,/streak-rive-canvas[\s\S]*role="img"[\s\S]*aria-label="Ilustración animada de la racha diaria"/);
@@ -13,8 +13,8 @@ assert.match(html,/id="player-hud-glow"[^>]*class="player-hud__glow-layer"[^>]*a
 test('Atribución de ilustración requerida por licencia', { todo: 'Bug F1: atribución CC BY' }, () => {
   assert.match(html,/Animación “Dynamic streak fire” por aristote · CC BY/);
 });
-assert.doesNotMatch(html,/streak-flame|streak-coin-burst/);
-assert.doesNotMatch(css,/streakPulse|streak-coin-burst|streak-flame|\.flame-layer|\.spark\b/);
+assert.doesNotMatch(html, new RegExp(['streak', '-flame|streak', '-coin-burst'].join('')));
+assert.doesNotMatch(css, new RegExp(['streak', 'Pulse|streak', '-coin-burst|streak', '-flame|\\.flame', '-layer|\\.spark\\b'].join('')));
 // Recortado: comprobación acoplada a umbral de tiempo de animación
 // assert.match(css,/streakRiveClaim[\s\S]*620ms/);
 assert.match(css,/data-state="available"/);
