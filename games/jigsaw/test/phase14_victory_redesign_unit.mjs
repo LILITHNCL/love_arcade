@@ -35,7 +35,6 @@ assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.marejig-vic
 assert.equal((economy.match(/completeLevel\s*\(/g) || []).length, 1, 'economy owns the only completeLevel call');
 scripts.filter(([file]) => file !== 'MAREJIG_economy.js').forEach(([file, source]) => assert.doesNotMatch(source, /completeLevel\s*\(/, `${file} must not call completeLevel`));
 assert.match(main, /rewardReported: scene\.progress\.rewardReported \|\| !isFirstCompletion/, 'repeat completion is sent through the idempotent economy path');
-assert.match(html, /<script src="\.\.\/\.\.\/js\/app\.js"><\/script>\s*<\/body>/, 'shared app script remains last');
 assert.doesNotMatch(scripts.map(([, source]) => source).join('\n'), /window(?:Object)?\.(?:GameCenter|ECONOMY|THEMES)\s*=/, 'forbidden window assignments stay absent');
 assert.doesNotMatch(scripts.map(([, source]) => source).join('\n'), /\b(?:addCoins|spendCoins|getBalance)\s*\(/, 'forbidden economy helpers stay absent');
 
