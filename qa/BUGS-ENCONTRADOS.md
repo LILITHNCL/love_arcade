@@ -1,3 +1,4 @@
+
 # Bugs Encontrados
 
 ## Hallazgo de Seguridad
@@ -9,11 +10,15 @@
 ## Fallos reales detectados en `tests/daily-streak-hub-qa.mjs`
 
 ### 1. Falta de Atribución CC BY
-- **Aserción que falla**: `tests/daily-streak-hub-qa.mjs` (Línea 12) - `assert.match(html,/Animación “Dynamic streak fire” por aristote · CC BY/);`
-- **Causa verificada**: En `index.html` (línea ~329), la animación se incluye pero no hay texto con la atribución requerida por la licencia CC BY de la ilustración. La licencia exige que sea visible.
-- **Clasificación**: BUG REAL (Accesibilidad / Legal).
+- **Descripción**: La atribución CC BY para la animación Rive ("aristote") no se muestra en la interfaz. Solo aparece en `assets/rive/fire-streak-LICENSE.txt` y en archivos de QA.
+- **Archivo y línea**: `tests/daily-streak-hub-qa.mjs` (Línea 12).
+- **Comportamiento esperado vs real**: Se esperaba que el HTML incluyera la atribución textualmente, pero no aparece ninguna en ninguna página.
+- **Test**: `assert.match(html,/Animación “Dynamic streak fire” por aristote · CC BY/);`
+- **Estado**: pendiente de decisión del usuario (decidir si el .txt basta como atribución o hay que mostrarla en la interfaz).
 
-### 3. Opacidad hardcodeada rompe theming
-- **Aserción que falla**: `tests/daily-streak-hub-qa.mjs` (Línea 29) - `assert.match(css,/\.player-hud__glow-layer\[data-state="available"\][\s\S]*?opacity:var\(--streak-rive-glow-available-opacity\)/);`
-- **Causa verificada**: En `styles.css` (línea 1130), el estado "available" tiene un valor fijo `opacity: .78`, ignorando el design token de theming definido en `:root` como `--streak-rive-glow-available-opacity`.
-- **Clasificación**: BUG REAL (Consistencia de Diseño/UI).
+### 4. Opacidad hardcodeada rompe theming (glow)
+- **Descripción**: El estado "available" del glow tiene opacidad fijada en duro en lugar de usar el design token.
+- **Archivo y línea**: `styles.css` (líneas 1123 y 1130).
+- **Comportamiento esperado vs real**: Se esperaba que usara la variable `--streak-rive-glow-available-opacity` (.58), pero está fijado a `.78`.
+- **Test**: `assert.match(css,/\.player-hud__glow-layer\[data-state="available"\][\s\S]*?opacity:var\(--streak-rive-glow-available-opacity\)/);`
+- **Estado**: hallazgo de diseño, decisión del usuario: ¿.58 o .78?
