@@ -26,4 +26,4 @@
 - Comportamiento de cuota y retención cubierto.
 
 **Comando:** `npm test -- tests/core/state-store.test.mjs`
-**Estado:** pendiente
+**Estado:** hecho

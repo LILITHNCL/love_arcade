@@ -32,4 +32,4 @@
 - Mutación de la lógica falla el test.
 
 **Comando:** `npm test -- tests/core/state-store.test.mjs`
-**Estado:** pendiente
+**Estado:** hecho

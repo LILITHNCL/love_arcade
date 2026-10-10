@@ -25,4 +25,4 @@
 - Tope y orden correcto verificados.
 
 **Comando:** `npm test -- tests/domain/history.test.mjs`
-**Estado:** pendiente
+**Estado:** hecho
