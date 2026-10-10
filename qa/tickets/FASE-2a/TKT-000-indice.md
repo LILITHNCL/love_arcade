@@ -4,9 +4,6 @@
 - [TKT-002-store-save-cuota](TKT-002-store-save-cuota.md) (P0)
 - [TKT-003-historial](TKT-003-historial.md) (P1)
 
-## Revisión adversarial
-
-<llenaremos en el cierre>
 
 ## Revisión adversarial real
 1. **Puntos ciegos de TKT-001**: El test verifica que un JSON corrupto cargue defaults, pero asume que `JSON.parse` fallará y tirará catch. Si el payload es `null` o `"string"`, `JSON.parse` no falla, pero luego iterarlo como objeto puede fallar. En `state-store.js`, `merged = {...defaults, ...loadedStore}` fusiona. Si `loadedStore` es primitivo, es ignorado y se usa `defaults`. Funciona bien, pero no está explícitamente en el test.

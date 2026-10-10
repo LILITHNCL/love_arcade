@@ -17,7 +17,7 @@
 - **Dado** un JSON corrupto en localStorage, **cuando** carga la app, **entonces** usa los defaults sin lanzar excepción.
 - **Dado** un JSON vacío o sin los nuevos campos (ej. daily, buffs), **cuando** se migra, **entonces** añade la estructura completa.
 - **Dado** un legacy que guarda el tiempo de racha, **cuando** se migra, **entonces** lo convierte a `daily.lastClaim` y `daily.streak` = 1 (si no existía), y elimina el campo viejo.
-- **Dado** un tema legacy que no existe en `THEMES`, **cuando** se migra, **entonces** usa el fallback ('violet').
+- **Dado** un tema legacy que no existe en `THEMES`, **cuando** se migra, **entonces** usa el fallback ('magenta' si es 'pink', o 'violet' por defecto).
 - **Dado** un save válido y actual, **cuando** se migra dos veces, **entonces** da el mismo resultado (idempotencia).
 - **Dado** campos retirados (ej. códigos, misiones), **cuando** se migra, **entonces** se eliminan.
 - **Casos límite**: tipos inválidos saneados (género que no es válido → @, nickname que no es string → "", arrays mal formados → []).
@@ -29,7 +29,7 @@
 
 **Criterios de aceptación verificables:**
 - Los tests pasan sin error.
-- Mutación de la lógica falla el test.
+- Mutación de la lógica falla el test (Resultados: cambiar racha legacy de 1 a 99 falló `dado un legacy lastDaily`; cambiar fallback a 'ocean' falló `dado un tema legacy`; no eliminar campos falló `dado campos retirados`; no sanear arrays falló `dado casos límite con tipos inválidos`).
 
-**Comando:** `npm test -- tests/core/state-store.test.mjs`
+**Comando:** `node --test tests/core/state-store.test.mjs`
 **Estado:** hecho

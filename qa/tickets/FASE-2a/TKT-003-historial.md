@@ -23,6 +23,7 @@
 
 **Criterios de aceptación verificables:**
 - Tope y orden correcto verificados.
+- Mutación de la lógica falla el test (Resultados: mutar `slice(-50)` en `logTransaction` dentro de `js/domain/history.js` para que no recorte correctamente falló `dado más de 50 transacciones`).
 
-**Comando:** `npm test -- tests/domain/history.test.mjs`
+**Comando:** `node --test tests/domain/history.test.mjs`
 **Estado:** hecho

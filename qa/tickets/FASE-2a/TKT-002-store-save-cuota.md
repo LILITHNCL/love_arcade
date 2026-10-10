@@ -24,6 +24,7 @@
 
 **Criterios de aceptación verificables:**
 - Comportamiento de cuota y retención cubierto.
+- Mutación de la lógica falla el test (Resultados: quitar reintento tras cleanup falló `dado una llamada a save, cuando lanza QuotaExceeded`; quitar recorte de progreso a 50 falló `dado progreso de >50`; quitar recorte de historial dentro de emergencyCleanup falló `dado una llamada a save, cuando lanza QuotaExceeded`).
 
-**Comando:** `npm test -- tests/core/state-store.test.mjs`
+**Comando:** `node --test tests/core/state-store.test.mjs`
 **Estado:** hecho

@@ -23,6 +23,19 @@ describe('QA (F2a): Store - Carga y Migración (TKT-001)', () => {
         assert.equal(store.theme, 'violet');
     });
 
+    it('dado un JSON válido pero primitivo (null o "string"), cuando carga, entonces usa defaults sin lanzar excepción', () => {
+        const { context, storage } = createSandbox();
+        loadFiles(context, ['js/core/config.js']);
+        storage.set(context.window.CONFIG.stateKey, '"soy un string"');
+        
+        loadFiles(context, ['js/core/state-store.js']);
+        
+        const store = context.window.LoveArcadeStore.getStore();
+        assert.ok(store);
+        assert.equal(store.coins, context.window.CONFIG.initialCoins);
+        assert.equal(store.theme, 'violet');
+    });
+
     it('dado un JSON vacío o sin nuevos campos, cuando se migra, entonces añade la estructura completa', () => {
         const { context } = createSandbox();
         loadFiles(context, ['js/core/config.js']);
