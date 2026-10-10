@@ -11,3 +11,8 @@
 - **`localStorage` (Cuota):** En los tests de F2b falseamos el `localStorage` sin límites. En la vida real, una compra (`buyItem`) podría disparar un `QuotaExceededError` al guardar en localStorage (al límite de 5MB). El test actual no prueba qué pasa si `Store.save` lanza excepción dentro de `buyItem`.
 - **`Date.now()`:** Falseado en el test de paridad para igualar el historial. Esto oculta que las implementaciones de bridge y hub corren en contextos de tiempo y frames distintos, lo que en persistencia real a la misma clave podría generar colisiones de estado.
 - **Concurrencia:** Posible corrupción si el bridge envía recompensas y el Sentinel sincroniza simultáneamente con un update LWW (Last-Write-Wins).
+
+## F2c - Tiempo y Racha
+- **Confiabilidad de Date.now fallback (BUG-F2c-01):** Sin caché (o si es borrado por el usuario) se confía en `Date.now()` para el cálculo, lo cual facilita exploits modificando la hora local offline.
+- **Doble carga por latencia de UI:** `claimDaily` es síncrono sobre memoria/caché; si la UI llamara dos veces el evento click muy rápido en el mismo milisegundo antes de actualizar el DOM, solo se registraría un reclamo gracias a que muta sincrónicamente `Store.getStore().daily`. Sin embargo, si `claimDaily` o el guardado de `Store.save()` fuesen asíncronos y no hubiera debounce UI, se podría reclamar dos veces (actualmente seguro por sincronía, pero frágil a futuro).
+- **Fallos silenciosos en caché:** El `try/catch` de `_writeTimeCache` esconde excepciones de tipo `QuotaExceededError`. Faltan tests para asegurar que esto es seguro bajo límite de cuota sin corromper.

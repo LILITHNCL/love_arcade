@@ -57,3 +57,10 @@
 - **Comportamiento esperado vs real**: Debería rechazar valores negativos o menores o iguales a cero (salvo justificación). Realidad: el saldo disminuye en 10 monedas.
 - **Test**: `dado un monto negativo, cuando se completa, entonces permite restar del saldo (BUG R1)` en `tests/domain/complete-level.test.mjs`.
 - **Estado**: Pendiente. Marcado como `{ todo: 'BUG-F2b-04' }` en test.
+
+### Bug F2c-01: Sin caché de tiempo verificada, se permite el reclamo de racha usando `Date.now()` local
+- **Descripción**: Si no existe caché de tiempo (`_readTimeCache` devuelve `verified: false`), `claimDaily` permite el reclamo de racha usando el valor de `Date.now()` provisto por la lectura. Esto permite manipulación de reloj (viajar en el tiempo) borrando el caché y adelantando la hora del sistema operativo, obteniendo recompensas infinitas sin validación de red.
+- **Archivo y línea**: `js/domain/daily-streak.js` (Línea 47). No hay validación de `!verified` bloqueando.
+- **Comportamiento esperado vs real**: Se esperaba que un tiempo no verificado fuera rechazado o puesto en cola para prevenir la trampa de cambio de reloj sin red. Realidad: permite el avance de racha y recompensa.
+- **Test**: `dado un caché no verificado, cuando se reclama racha, entonces NO debería permitir el reclamo basándose en Date.now()` en `tests/domain/daily-streak.test.mjs`.
+- **Estado**: Pendiente. Marcado como `{ todo: 'BUG-F2c-01: ...' }` en test.
