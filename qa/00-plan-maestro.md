@@ -14,7 +14,7 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | Fase | Objetivo | Matriz # | Ejecutable aquí | Estado |
 |---|---|---|---|---|
 | **F1 Infraestructura** | `package.json` mínimo; runner `node --test` unificado; reparar/recortar tests rotos. Salida: `npm test` en verde | 27 | Sí | hecho |
-| **F2a Persistencia Core** | migrate/save/cuota, historial | 1, 2, 6 | Sí | pendiente |
+| **F2a Persistencia Core** | migrate/save/cuota, historial | 1, 2, 6 | Sí | hecho |
 | **F2b Economía y Recompensas** | buy/spend/add, `completeLevel` (paridad hub↔bridge) | 3-5 | Sí | pendiente |
 | **F2c Tiempo y Racha** | día lógico, caché de tiempo, racha y reparación | 7-9 | Sí | pendiente |
 | **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | pendiente |
