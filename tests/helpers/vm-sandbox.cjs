@@ -35,7 +35,7 @@ function createSandbox() {
             }
         }),
         setTimeout, clearTimeout,
-        Promise
+        Promise, crypto, TextEncoder, TextDecoder, Uint8Array
     });
     context.window.window = context.window;
     
