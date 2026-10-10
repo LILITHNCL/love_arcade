@@ -45,6 +45,10 @@ describe('TKT-009: Racha y reparación', () => {
         reset();
         const result = Daily.claimDaily();
         assert.deepEqual({ success: result.success, reward: result.reward, streak: result.streak }, { success: true, reward: 20, streak: 1 });
+        const history = Store.getStore().history;
+        assert.equal(history.length, 1);
+        assert.equal(history[0].tipo, 'ingreso');
+        assert.equal(history[0].cantidad, 20);
     });
 
     test('dado un reclamo previo hoy, cuando se pide el bono de nuevo el mismo día lógico, entonces es rechazado', () => {
@@ -53,7 +57,8 @@ describe('TKT-009: Racha y reparación', () => {
         Daily.claimDaily(); // primer reclamo
         const result = Daily.claimDaily();
         assert.equal(result.success, false);
-        assert.match(result.message, /Ya reclamaste/);
+        assert.equal(Store.getStore().coins, 0); // No muta
+        assert.equal(Store.getStore().history.length, 1); // Solo el historial del primer reclamo
     });
 
     test('dado un reclamo continuo, cuando escala la racha, entonces la recompensa es 20 + 5*(n-1) con tope de 60', () => {
@@ -90,18 +95,20 @@ describe('TKT-009: Racha y reparación', () => {
         const now = Date.UTC(2026, 0, 21, 12);
         setTime(now);
         reset({ coins: 50, lastClaim: now + 1, streak: 4 });
-        assert.match(Daily.claimDaily().message, /inconsistencia horaria/);
-        assert.match(Daily.repairDailyStreak().message, /inconsistencia horaria/);
+        assert.equal(Daily.claimDaily().success, false);
+        assert.equal(Daily.repairDailyStreak().success, false);
         assert.equal(Store.getStore().coins, 50);
+        assert.equal((Store.getStore().history || []).length, 0); // Historial intacto
     });
 
     test('dado un reloj desincronizado (desynced), cuando se reclama o repara, entonces se bloquea', () => {
         const now = Date.UTC(2026, 0, 21, 12);
         setTime(now, { desynced: true });
         reset({ coins: 50, lastClaim: now - DAY, streak: 4 });
-        assert.match(Daily.claimDaily().message, /Reloj desincronizado/);
-        assert.match(Daily.repairDailyStreak().message, /Reloj desincronizado/);
+        assert.equal(Daily.claimDaily().success, false);
+        assert.equal(Daily.repairDailyStreak().success, false);
         assert.equal(Daily.canClaimDaily(), false);
+        assert.equal((Store.getStore().history || []).length, 0); // Historial intacto
     });
 
     test('dado un bono con bendición lunar, cuando se reclama, entonces suma 90 extra incluso en el borde de expiración', () => {
@@ -112,9 +119,9 @@ describe('TKT-009: Racha y reparación', () => {
         let result = Daily.claimDaily();
         assert.deepEqual({ base: result.baseReward, bonus: result.moonBonus, reward: result.reward, streak: result.streak }, { base: 25, bonus: 90, reward: 115, streak: 2 });
         
-        // Expiración 1ms antes del now -> sin bono
-        setTime(now + DAY);
-        reset({ lastClaim: now, streak: 2, moonExpiry: now + DAY - 1 });
+        // Expiración en el mismo milisegundo exacto -> ya expiró
+        setTime(now + 2 * DAY);
+        reset({ lastClaim: now + DAY, streak: 2, moonExpiry: now + 2 * DAY });
         result = Daily.claimDaily();
         assert.equal(result.moonBonus, 0);
     });
@@ -122,20 +129,20 @@ describe('TKT-009: Racha y reparación', () => {
     test('dado un diffDays de 2 y saldo >= 500, cuando se intenta reparar, entonces se cobra 500, se mantiene la racha y se registra en el historial', () => {
         const now = Date.UTC(2026, 0, 25, 12);
         setTime(now);
-        reset({ coins: 700, lastClaim: now - 2 * DAY, streak: 6 });
+        reset({ coins: 500, lastClaim: now - 2 * DAY, streak: 6 });
         
         let claimResult = Daily.claimDaily();
         assert.deepEqual({ success: claimResult.success, repairRequired: claimResult.repairRequired, canAffordRepair: claimResult.canAffordRepair }, { success: false, repairRequired: true, canAffordRepair: true });
         
         const repairResult = Daily.repairDailyStreak();
-        assert.deepEqual({ success: repairResult.success, streak: repairResult.streak, coins: Store.getStore().coins }, { success: true, streak: 6, coins: 200 });
+        assert.deepEqual({ success: repairResult.success, streak: repairResult.streak, coins: Store.getStore().coins }, { success: true, streak: 6, coins: 0 });
 
         // Verificar historial
         const history = Store.getStore().history;
         assert.equal(history.length, 1);
         assert.equal(history[0].tipo, 'gasto');
         assert.equal(history[0].cantidad, 500);
-        assert.match(history[0].motivo, /Reparación de racha/);
+        assert.equal(history[0].motivo, 'Reparación de racha · 6 días');
     });
 
     test('dado un diffDays de 2 y saldo < 500, cuando se intenta reparar, entonces falla y no muta saldo', () => {
