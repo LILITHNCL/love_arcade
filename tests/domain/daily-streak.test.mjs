@@ -57,7 +57,7 @@ describe('TKT-009: Racha y reparación', () => {
         Daily.claimDaily(); // primer reclamo
         const result = Daily.claimDaily();
         assert.equal(result.success, false);
-        assert.equal(Store.getStore().coins, 0); // No muta
+        assert.equal(Store.getStore().coins, 20); // No muta
         assert.equal(Store.getStore().history.length, 1); // Solo el historial del primer reclamo
     });
 

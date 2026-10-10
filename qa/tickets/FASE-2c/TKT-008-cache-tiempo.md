@@ -37,11 +37,23 @@ hecho
 - Mutación: Cambiar el TTL de 4h a 8h en `js/core/time-sync.js` (`const TIME_CACHE_TTL = 8 * 60 * 60 * 1000;`).
 - Resultado:
 ```text
-✖ dado un caché de 4h y 1ms (caducado), cuando se lee el tiempo, entonces verified es false (34.157083ms)
+✖ dado un caché de 4h y 1ms (caducado), cuando se lee el tiempo, entonces verified es false (13.975625ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
   
   true !== false
   
       at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/core/time-sync.test.mjs:95:16)
+```
+- Mutación revertida: Sí. Diff en js/, sw.js, api/ comprobado vacío.
+
+- Mutación: Quitar el chequeo de `desynced` en `js/domain/daily-streak.js` (`if (false) {` en lugar de `if (desynced) {`).
+- Resultado:
+```text
+✖ dado un reloj desincronizado (desynced), cuando se reclama o repara, entonces se bloquea (21.365052ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/domain/daily-streak.test.mjs:108:16)
 ```
 - Mutación revertida: Sí. Diff en js/, sw.js, api/ comprobado vacío.
