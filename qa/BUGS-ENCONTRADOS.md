@@ -64,3 +64,10 @@
 - **Comportamiento esperado vs real**: Se esperaba que un tiempo no verificado fuera rechazado o puesto en cola para prevenir la trampa de cambio de reloj sin red. Realidad: permite el avance de racha y recompensa.
 - **Test**: `dado un caché no verificado, cuando se reclama racha, entonces NO debería permitir el reclamo basándose en Date.now()` en `tests/domain/daily-streak.test.mjs`.
 - **Estado**: Pendiente. Marcado como `{ todo: 'BUG-F2c-01: ...' }` en test.
+
+### Bug F2d-01: payload legacy sin checksum es importado permitiendo inyección (R3)
+- **Descripción**: La rama legacy de `importSave` en `js/domain/game-center.js` (L51-55) acepta importar códigos base64 que contienen un objeto JSON sin la propiedad `checksum`. Esto significa que cualquiera puede codificar en base64 `{"coins": 99999}` e inyectarlo, sobreescribiendo su saldo y progreso porque se salta la comprobación de integridad.
+- **Archivo y línea**: `js/domain/game-center.js` (Línea 51-55 aprox.).
+- **Comportamiento esperado vs real**: Idealmente solo deberían aceptarse payloads firmados, o se debería evaluar si esta compatibilidad es estrictamente necesaria. Actualmente muta el estado local permitiendo trampas.
+- **Test**: `dado payload sin checksum (rama legacy), cuando se importa, entonces se acepta (R3)` en `tests/domain/save-export-import.test.mjs`.
+- **Estado**: Pendiente de decisión humana (documentado con todo).

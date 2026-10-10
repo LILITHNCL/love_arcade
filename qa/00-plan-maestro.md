@@ -17,7 +17,7 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | **F2a Persistencia Core** | migrate/save/cuota, historial | 1, 2, 6 | Sí | hecho |
 | **F2b Economía y Recompensas** | buy/spend/add, `completeLevel` (paridad hub↔bridge) | 3-5 | Sí | hecho |
 | **F2c Tiempo y Racha** | día lógico, caché de tiempo, racha y reparación | 7-9 | Sí | hecho |
-| **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | pendiente |
+| **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | hecho |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | pendiente |
 | **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | pendiente |
 | **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | pendiente |
