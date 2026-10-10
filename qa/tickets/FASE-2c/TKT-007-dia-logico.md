@@ -42,3 +42,15 @@ hecho
           ^
 ```
 - Mutación revertida: Sí. Diff en js/, sw.js, api/ comprobado vacío.
+
+- Mutación: Cambiar `DAILY_DAY_OFFSET_MS` de 3h a 4h (`4 * 60 * 60 * 1000`).
+- Resultado:
+```text
+✖ dado un reclamo a las 02:59, cuando se consulta a las 03:00 del mismo día natural, entonces cuenta como un día de diferencia (37.58625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/core/time-sync.test.mjs:22:16)
+```
+- Mutación revertida: Sí. Diff en js/, sw.js, api/ comprobado vacío.

@@ -6,4 +6,4 @@
 
 - [TKT-007: Día lógico](TKT-007-dia-logico.md)
 - [TKT-008: Caché de tiempo](TKT-008-cache-tiempo.md)
-- [TKT-009: Racha y reparación](TKT-009-racha-diaria.md)
+- [TKT-009: Racha y reparación](TKT-009-racha-reparacion.md)
