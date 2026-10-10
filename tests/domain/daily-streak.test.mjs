@@ -1,35 +1,24 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { createSandbox, loadFiles } = require('../helpers/vm-sandbox.cjs');
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
 let currentNow = Date.UTC(2026, 0, 15, 12);
-
 class MockDate extends Date {
     static now() { return currentNow; }
 }
 
-const storage = new Map();
-const localStorage = {
-    getItem: (key) => storage.has(key) ? storage.get(key) : null,
-    setItem: (key, value) => storage.set(key, String(value)),
-    removeItem: (key) => storage.delete(key)
-};
-const context = vm.createContext({
-    window: {}, localStorage, Date: MockDate, console, JSON, Math, Object, Array,
-    String, Number, Boolean, RegExp, Error, Infinity, setTimeout, clearTimeout
-});
-context.window.window = context.window;
-for (const file of [
+const { context, storage } = createSandbox();
+const localStorage = context.localStorage;
+context.Date = MockDate;
+
+loadFiles(context, [
     'js/core/config.js',
     'js/core/state-store.js',
     'js/core/time-sync.js',
     'js/domain/history.js',
     'js/domain/daily-streak.js'
-]) vm.runInContext(read(file), context, { filename: file });
+]);
 
 const { LoveArcadeStore: Store, LoveArcadeDailyStreak: Daily } = context.window;
 const DAY = 86_400_000;

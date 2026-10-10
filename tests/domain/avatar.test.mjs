@@ -1,12 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { createSandbox, loadFiles } = require('../helpers/vm-sandbox.cjs');
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
-const storage = new Map();
 const telemetry = [];
 let uploadError = null;
 let hasAccessToken = true;
@@ -20,30 +16,26 @@ class MockImage {
 class MockFileReader {
     readAsDataURL() { this.result = 'data:image/jpeg;base64,AA=='; this.onload(); }
 }
-const document = {
+const { context, storage } = createSandbox();
+const localStorage = context.localStorage;
+context.window.GhostAnalytics = { track: (event, meta) => telemetry.push({ event, meta }) };
+context.document = {
     createElement: () => ({
         getContext: () => ({ drawImage: () => {} }),
         toBlob: (callback) => callback(new MockBlob())
     })
 };
-const context = vm.createContext({
-    window: { GhostAnalytics: { track: (event, meta) => telemetry.push({ event, meta }) } },
-    localStorage: {
-        getItem: (key) => storage.has(key) ? storage.get(key) : null,
-        setItem: (key, value) => storage.set(key, String(value))
-    },
-    document,
-    Blob: MockBlob,
-    Image: MockImage, FileReader: MockFileReader,
-    URL: { createObjectURL: () => 'blob:avatar', revokeObjectURL: () => {} },
-    fetch: async () => ({ ok: true, blob: async () => new MockBlob() }),
-    console, JSON, Math, Object, Array, String, Number, Boolean, RegExp, Error, Date,
-    Uint8Array, Buffer, atob: (value) => Buffer.from(value, 'base64').toString('binary'), setTimeout, clearTimeout
-});
-context.window.window = context.window;
-for (const file of ['js/core/config.js', 'js/core/state-store.js', 'js/domain/avatar.js']) {
-    vm.runInContext(read(file), context, { filename: file });
-}
+context.Blob = MockBlob;
+context.Image = MockImage;
+context.FileReader = MockFileReader;
+context.URL = { createObjectURL: () => 'blob:avatar', revokeObjectURL: () => {} };
+context.fetch = async () => ({ ok: true, blob: async () => new MockBlob() });
+context.Uint8Array = Uint8Array;
+context.Buffer = Buffer;
+context.atob = (value) => Buffer.from(value, 'base64').toString('binary');
+
+loadFiles(context, ['js/core/config.js', 'js/core/state-store.js', 'js/domain/avatar.js']);
+
 
 const { LoveArcadeStore: Store, LoveArcadeAvatar: Avatar } = context.window;
 Avatar.setUIRefreshHandler(() => { refreshCount += 1; });

@@ -2,6 +2,8 @@
   "name": "love-arcade",
   "private": true,
   "scripts": {
-    "test": "node --test \"tests/**/*.mjs\""
+    "test": "node --test \"tests/**/*.mjs\"",
+    "test:games": "node --test \"games/*/test/*_unit.*\" \"games/*/test/*_audit.*\"",
+    "test:coverage": "node --test --experimental-test-coverage \"tests/**/*.mjs\""
   }
 }

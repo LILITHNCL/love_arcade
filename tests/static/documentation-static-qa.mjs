@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = new URL('../', import.meta.url);
+const root = new URL('../../', import.meta.url);
 const repoRoot = path.resolve(root.pathname);
 
 const removedDocs = [
@@ -67,7 +67,7 @@ function walkTextFiles(currentDir) {
 
 for (const filePath of walkTextFiles(repoRoot)) {
   const relPath = path.relative(repoRoot, filePath).replace(/\\/g, '/');
-  if (relPath === 'tests/documentation-static-qa.mjs' || relPath === 'implementación.md') continue;
+  if (relPath === 'tests/static/documentation-static-qa.mjs' || relPath === 'implementación.md') continue;
   const fileText = fs.readFileSync(filePath, 'utf8');
   for (const legacyTerm of legacyTerms) {
     if (fileText.includes(legacyTerm)) issues.push(`${relPath}: legacy streak reference remains: ${legacyTerm}`);

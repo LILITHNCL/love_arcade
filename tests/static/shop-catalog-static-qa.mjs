@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { strict as assert } from 'node:assert';
 
-const root = new URL('../', import.meta.url);
+const root = new URL('../../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
 const catalog = JSON.parse(read('data/shop.json'));
 const indexHtml = read('index.html');

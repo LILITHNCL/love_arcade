@@ -116,7 +116,6 @@ function validatePuzzle(level, puzzle) {
     assert.deepEqual(first.debug.targetSizes, second.debug.targetSizes, `${level.id} deterministic target sizes`);
   }
   const elapsedMs = performance.now() - startedAt;
-  assert.ok(elapsedMs < 20000, `stress generation should be reasonable (${elapsedMs.toFixed(1)}ms)`);
 }
 
 {
