@@ -78,12 +78,11 @@ test('Promo Codes', async (t) => {
         }
     });
 
-    // Comportamiento real observado: con entradas que no son string, `inputCode.trim()` lanza TypeError
-    // (no devuelve success:false). Se documenta como hueco en qa/99-huecos.md; la UI solo pasa strings.
-    await t.test('dado null, undefined o número, cuando se canjea, entonces lanza TypeError sin mutar', async () => {
+    await t.test('dado null, undefined o número, cuando se canjea, entonces debería devolver success:false sin mutar', { todo: 'BUG-F2d-02: redeemPromoCode lanza TypeError con entradas no-string en vez de devolver success:false' }, async () => {
         for (const input of [null, undefined, 1234]) {
             const { Store, PromoCodes } = setup();
-            await assert.rejects(() => PromoCodes.redeemPromoCode(input), (e) => e && e.name === 'TypeError', `input: ${String(input)}`); // el TypeError viene del realm del vm: no sirve instanceof
+            const res = await PromoCodes.redeemPromoCode(input);
+            assert.equal(res?.success, false, `debe devolver success: false para ${String(input)}`);
             assertIntacto(Store);
         }
     });

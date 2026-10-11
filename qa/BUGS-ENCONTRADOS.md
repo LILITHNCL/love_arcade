@@ -66,8 +66,20 @@
 - **Estado**: Pendiente. Marcado como `{ todo: 'BUG-F2c-01: ...' }` en test.
 
 ### Bug F2d-01: payload legacy sin checksum es importado permitiendo inyección (R3)
-- **Descripción**: La rama legacy de `importSave` en `js/domain/game-center.js` (L51-55) acepta importar códigos base64 que contienen un objeto JSON sin la propiedad `checksum`. Esto significa que cualquiera puede codificar en base64 `{"coins": 99999}` e inyectarlo, sobreescribiendo su saldo y progreso porque se salta la comprobación de integridad.
-- **Archivo y línea**: `js/domain/game-center.js` (Línea 51-55 aprox.).
+- **Descripción**: La rama legacy de `importSave` en `js/domain/game-center.js` (L51-55) y en el Web Worker `js/sync-worker.js` (L85-92) acepta importar códigos base64 que contienen un objeto JSON sin la propiedad `checksum`. Esto significa que cualquiera puede codificar en base64 `{"coins": 99999}` e inyectarlo, sobreescribiendo su saldo y progreso porque se salta la comprobación de integridad.
+- **Archivo y línea**: `js/domain/game-center.js` (Línea 51-55 aprox., fallback) y `js/sync-worker.js` (Línea 85-92, Worker real).
+- **Alcance real y llamadores de UI**: No existe ningún llamador de `exportSave`/`importSave` en la UI (`index.html`, `js/ui/hud-render.js`, `js/shop-logic.js`). La interfaz de respaldo utiliza exclusivamente `BackupEngine` (`.labak`). Por tanto, la inyección solo es explotable mediante llamada manual desde la consola de desarrollo del navegador (`window.GameCenter.importSave(...)`).
 - **Comportamiento esperado vs real**: Idealmente solo deberían aceptarse payloads firmados, o se debería evaluar si esta compatibilidad es estrictamente necesaria. Actualmente muta el estado local permitiendo trampas.
 - **Test**: `dado payload sin checksum (rama legacy), cuando se importa, entonces debería rechazarse sin mutar (R3)` en `tests/domain/save-export-import.test.mjs:78` (marcado `todo`: asierta el comportamiento deseado `success === false` y store sin cambios; hoy falla con `9999 !== 150`, es decir, acepta y muta).
 - **Estado**: Pendiente de decisión humana (documentado con todo).
+
+### Bug F2d-02: `redeemPromoCode` lanza TypeError no capturado con entradas no-string
+- **Descripción**: La función `redeemPromoCode(inputCode)` en `js/domain/promo-codes.js` (L48) ejecuta `inputCode.trim().toUpperCase()` asumiendo que `inputCode` siempre es una cadena de texto. Si se le pasa `null`, `undefined` o un tipo primitivo como `number`, la llamada `.trim()` falla con `TypeError` no capturado en lugar de validar el tipo y devolver un resultado controlado `{ success: false, message: 'Código inválido' }`.
+- **Archivo y línea**: `js/domain/promo-codes.js` (Línea 48).
+- **Escenario**: Invocación programática de `redeemPromoCode` con entradas no-string (`null`, `undefined`, `1234`).
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Rechazar controladamente devolviendo `{ success: false, message: 'Código inválido' }` manteniendo intacto el estado (saldo, hashes e historial).
+  - *Real*: Lanza `TypeError` no controlado (`Cannot read properties of null (reading 'trim')`). No llega a mutar el estado, pero rompe el contrato de retorno `{ success, message }`.
+- **Test**: `dado null, undefined o número, cuando se canjea, entonces debería devolver success:false sin mutar` en `tests/domain/promo-codes.test.mjs:81` (marcado `{ todo: 'BUG-F2d-02: redeemPromoCode lanza TypeError con entradas no-string en vez de devolver success:false' }`).
+- **Severidad**: Baja. La UI de producción (`js/shop-logic.js:1408`) siempre envía el valor de un `<input>` HTML (`input.value.trim()`), por lo que en el flujo visual del usuario siempre es un string.
+- **Estado**: Pendiente (decisión del usuario si añadir guarda defensiva de tipo).

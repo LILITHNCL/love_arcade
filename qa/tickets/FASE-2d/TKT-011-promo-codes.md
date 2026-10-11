@@ -29,7 +29,7 @@ Test unitario/de dominio con `node:test` y `node:assert/strict`, ejecutado en el
 4. Código válido solo con espacios alrededor → canje → `success: true`, suma saldo (`:51`).
 5. Código válido solo en minúsculas → canje → `success: true`, suma saldo (`:58`).
 6. Cadena vacía o solo espacios (`''`, `'   '`) → canje → `{ success: false, message: 'Código inválido' }`, saldo e historial intactos (`:72`).
-7. Entradas no-string (`null`, `undefined`, `1234`) → canje → lanza `TypeError` por `inputCode.trim()` sin mutar saldo, hashes ni historial (`:83`).
+7. Entradas no-string (`null`, `undefined`, `1234`) → canje → debería devolver `success: false` sin mutar saldo, hashes ni historial; actualmente lanza `TypeError` no capturado (marcado `todo` BUG-F2d-02 en `promo-codes.test.mjs:81`).
 
 ## Qué NO se mockea
 - `sha256` real (`crypto.subtle` nativo mediante `js/core/utils.js`).
@@ -41,7 +41,7 @@ Test unitario/de dominio con `node:test` y `node:assert/strict`, ejecutado en el
 - [x] Normalización determinista: `trim()` y `toUpperCase()` probados de forma aislada.
 - [x] Bloqueo de reutilización: hash almacenado en `redeemedHashes` impide segundo canje.
 - [x] Entradas vacías devuelven `{ success: false }` sin mutar estado.
-- [x] Entradas no-string lanzan `TypeError` y garantizan que el estado queda intacto.
+- [x] Entradas no-string (`null`, `undefined`, números) deberían devolver `{ success: false }` sin mutar; actualmente lanzan `TypeError` no capturado documentado como BUG-F2d-02 (marcado `todo` en `:81`).
 - [x] Canje exitoso suma saldo y registra auditoría en `history`.
 - [x] SHA-256 criptográfico real ejecutado en todas las verificaciones.
 
@@ -57,4 +57,4 @@ Test unitario/de dominio con `node:test` y `node:assert/strict`, ejecutado en el
 `node --test tests/domain/promo-codes.test.mjs`
 
 ## Estado
-hecho
+hecho (con 1 `todo`: BUG-F2d-02, pendiente de decisión del usuario).

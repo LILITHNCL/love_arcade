@@ -58,6 +58,9 @@ Test unitario/de dominio con `node:test` y `node:assert/strict`, ejecutado en el
 | 5d. Días inválidos: permitir Infinity (`Number.isNaN(wholeDays)`) | `js/domain/moon-blessing.js:39` | `:68` | Sí |
 | 6a. Quitar historial en compra | `js/domain/moon-blessing.js:31` | `:10` | Sí |
 | 6b. Quitar historial en extensión | `js/domain/moon-blessing.js:45` | `:123` | Sí |
+| 7. En `extendMoonBlessingDays`, `baseTs = now` (no acumular sobre la vigente) | `js/domain/moon-blessing.js:43` | `:86` | Sí |
+| 8. `isActive` con `> 0` en lugar de `> now` en `buyMoonBlessing` | `js/domain/moon-blessing.js:28` | `:105` | Sí |
+| 9. `baseTs` con `> 0` en lugar de `> now` en `extendMoonBlessingDays` | `js/domain/moon-blessing.js:43` | `:105` | Sí |
 
 ## Comando
 `node --test tests/domain/moon-blessing.test.mjs`

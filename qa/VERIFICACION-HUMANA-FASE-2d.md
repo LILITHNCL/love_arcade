@@ -13,7 +13,7 @@ Ejecutar desde la raíz del repositorio:
    ```bash
    node --test tests/domain/promo-codes.test.mjs
    ```
-   *Resultado esperado*: `8 tests (8 pass, 0 fail, 0 todo)`.
+   *Resultado esperado*: `8 tests (7 pass, 0 fail, 1 todo: BUG-F2d-02)`.
 
 3. **TKT-012 (Exportar / Importar partida)**:
    ```bash
@@ -25,7 +25,7 @@ Ejecutar desde la raíz del repositorio:
    ```bash
    npm test
    ```
-   *Resultado esperado*: `97 tests, 13 suites (85 pass, 0 fail, 12 todo)`. Código de salida: `0`.
+   *Resultado esperado*: `97 tests, 13 suites (84 pass, 0 fail, 13 todo)`. Código de salida: `0`.
 
 ---
 
@@ -73,11 +73,39 @@ Ejecutar desde la raíz del repositorio:
    - La solicitud es rechazada con el mensaje `"Ya canjeaste este código"`.
    - El saldo y el historial no sufren modificaciones.
 
-### 3. Respaldo y Restauración de Partida
+### 3a. Exportar / Importar partida en base64 (`GameCenter.exportSave` / `importSave` vía DevTools)
+> **Nota de contexto**: Como se determinó en la auditoría de llamadores (C4) y en `qa/99-huecos.md`, no existe UI en la app para copiar/pegar un string base64 de partida; la UI utiliza archivos `.labak`. Por tanto, esta API de `window.GameCenter` debe verificarse desde la consola de desarrollador:
+
+1. Abre la aplicación en el navegador y presiona `F12` (Consola de DevTools).
+2. Exportar partida:
+   ```javascript
+   const code = await window.GameCenter.exportSave();
+   console.log('Código exportado:', code);
+   ```
+   **Comportamiento esperado**: Devuelve un string no vacío codificado en Base64.
+3. Modificar temporalmente el estado local (por ejemplo, gastar monedas o en consola cambiar `window.currentCoins = 0` y forzar guardado).
+4. Importar partida original:
+   ```javascript
+   const res = await window.GameCenter.importSave(code);
+   console.log('Resultado importación:', res);
+   ```
+   **Comportamiento esperado**: Devuelve `{ success: true, timestamp: ... }`, el saldo y el estado previo se restauran en el store local.
+5. Probar manipulación / corrupción de código:
+   ```javascript
+   const corruptCode = code.slice(0, 10) + 'XXXX' + code.slice(14);
+   const errRes = await window.GameCenter.importSave(corruptCode);
+   console.log('Resultado corrupto:', errRes);
+   ```
+   **Comportamiento esperado**: Devuelve `{ success: false, error: ... }` y los datos del usuario permanecen intactos sin corromperse.
+6. **Limitación observable**: Desde la consola de DevTools no se puede distinguir visualmente si la operación corrió en el Web Worker (`js/sync-worker.js`) o en el fallback de hilo principal, a menos que se inspeccionen los eventos de `postMessage` en la pestaña de Threads/Workers de DevTools.
+
+### 3b. Respaldo y Restauración de archivo `.labak` (UI Sincronización)
+> **Nota de cobertura**: Este flujo de interfaz gráfica utiliza el motor de archivos `BackupEngine` (`.labak` comprimido en gzip), cuya cobertura automatizada pertenece a la fase **F3a** y no a la fase **F2d** (TKT-012). Se documenta aquí para la verificación visual de la interfaz existente:
+
 1. Dirígete a la sección **Sincronización** (`#tab-sync`).
 2. Pulsa en **"Guardar respaldo"** (`#btn-export`).
 3. **Comportamiento esperado**: Se genera y descarga el archivo de respaldo (`.labak`).
 4. Abre una ventana de incógnito o un perfil nuevo de navegador.
-5. Ve a **Sincronización**, pulsa **"Elegir respaldo"**, selecciona el archivo `.labak` recién descargado y pulsa **"Restaurar progreso"**.
+5. Ve a **Sincronización**, pulsa **"Elegir respaldo"**, selecciona el archivo `.labak` recién descargado y pulsa **"Restaurar progreso"** (`#btn-import`).
 6. Confirma la acción en el modal de advertencia.
 7. **Comportamiento esperado**: La partida se restaura con el saldo, bendiciones e historial exactos de la sesión de origen.
