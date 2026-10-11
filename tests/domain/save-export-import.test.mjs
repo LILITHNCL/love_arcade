@@ -75,18 +75,31 @@ test('Game Center - Export/Import Save', async (t) => {
         assert.equal(JSON.stringify(Store.getStore()), originalStateJSON);
     });
 
-    await t.test('dado payload sin checksum (rama legacy), cuando se importa, entonces se acepta (R3)', async (t) => {
+    await t.test('dado payload sin checksum (rama legacy), cuando se importa, entonces debería rechazarse sin mutar (R3)', { todo: 'BUG-F2d-01: la rama legacy acepta JSON sin checksum y muta el store (inyección de coins)' }, async () => {
         const { GameCenter, Store } = setup();
+        const originalStateJSON = JSON.stringify(Store.getStore());
         const legacyPayload = { coins: 9999, progress: {}, buffs: {} };
         const legacyBase64 = Buffer.from(JSON.stringify(legacyPayload), 'utf-8').toString('base64');
-        
+
         const res = await GameCenter.importSave(legacyBase64);
-        
-        // BUG R3: Confirma si importa cualquier JSON con coins numérico
-        // Se anota con todo para reportar como BUG-F2d-01
-        t.todo('BUG-F2d-01: payload legacy sin checksum es importado permitiendo inyección');
-        assert.equal(res.success, true, res.message);
-        assert.equal(Store.getStore().coins, 9999);
+
+        // Comportamiento deseado: sin firma no se importa y el store queda intacto.
+        // Hoy falla (success === true y coins === 9999): por eso va como todo.
+        assert.equal(Store.getStore().coins, 150, 'el store no debe cambiar (coins inyectadas: 9999)');
+        assert.equal(res.success, false);
+        assert.equal(JSON.stringify(Store.getStore()), originalStateJSON);
+    });
+
+    await t.test('dado entrada no-string, vacía o base64 inválido, cuando se importa, entonces rechaza sin mutar', async () => {
+        const { GameCenter, Store } = setup();
+        Store.getStore().coins = 321;
+        const originalStateJSON = JSON.stringify(Store.getStore());
+        const entradas = [null, undefined, '', 123, 'no-base64!!'];
+        for (const entrada of entradas) {
+            const res = await GameCenter.importSave(entrada);
+            assert.equal(res.success, false, `debe rechazar ${String(entrada)}`);
+            assert.equal(JSON.stringify(Store.getStore()), originalStateJSON, `no debe mutar con ${String(entrada)}`);
+        }
     });
 
     await t.test('dado payload JSON válido sin monedas, cuando se importa, entonces rechaza (validación P0)', async () => {

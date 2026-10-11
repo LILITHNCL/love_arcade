@@ -69,5 +69,5 @@
 - **Descripción**: La rama legacy de `importSave` en `js/domain/game-center.js` (L51-55) acepta importar códigos base64 que contienen un objeto JSON sin la propiedad `checksum`. Esto significa que cualquiera puede codificar en base64 `{"coins": 99999}` e inyectarlo, sobreescribiendo su saldo y progreso porque se salta la comprobación de integridad.
 - **Archivo y línea**: `js/domain/game-center.js` (Línea 51-55 aprox.).
 - **Comportamiento esperado vs real**: Idealmente solo deberían aceptarse payloads firmados, o se debería evaluar si esta compatibilidad es estrictamente necesaria. Actualmente muta el estado local permitiendo trampas.
-- **Test**: `dado payload sin checksum (rama legacy), cuando se importa, entonces se acepta (R3)` en `tests/domain/save-export-import.test.mjs`.
+- **Test**: `dado payload sin checksum (rama legacy), cuando se importa, entonces debería rechazarse sin mutar (R3)` en `tests/domain/save-export-import.test.mjs:78` (marcado `todo`: asierta el comportamiento deseado `success === false` y store sin cambios; hoy falla con `9999 !== 150`, es decir, acepta y muta).
 - **Estado**: Pendiente de decisión humana (documentado con todo).
