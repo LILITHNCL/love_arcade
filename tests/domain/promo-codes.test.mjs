@@ -48,23 +48,43 @@ test('Promo Codes', async (t) => {
         assert.equal(Store.getStore().history.length, 1);
     });
 
-    await t.test('dado entradas inválidas (vacío, null, undefined, número), cuando se intentan canjear, entonces maneja o rechaza sin mutar', async () => {
+    await t.test('dado un código válido solo con espacios alrededor, cuando se canjea, entonces acepta (trim)', async () => {
         const { Store, PromoCodes } = setup();
-        const cases = ['', null, undefined, 1234];
-        
-        for (const input of cases) {
-            try {
-                const res = await PromoCodes.redeemPromoCode(input);
-                assert.equal(res.success, false, `falló para input: ${input}`);
-            } catch (e) {
-                // Si explota el input.trim().toUpperCase(), también lo contamos como no-canje (mejor atraparlo)
-                // Pero el test pasará porque comprobaremos que el store no mutó
-            }
-        }
-        
+        const result = await PromoCodes.redeemPromoCode(`   ${validCode}  `);
+        assert.equal(result.success, true);
+        assert.equal(Store.getStore().coins, 500);
+    });
+
+    await t.test('dado un código válido solo en minúsculas, cuando se canjea, entonces acepta (mayúsculas)', async () => {
+        const { Store, PromoCodes } = setup();
+        const result = await PromoCodes.redeemPromoCode(validCode.toLowerCase());
+        assert.equal(result.success, true);
+        assert.equal(Store.getStore().coins, 500);
+    });
+
+    function assertIntacto(Store) {
         const store = Store.getStore();
         assert.equal(store.coins, 0);
         assert.deepEqual([...store.redeemedHashes], []);
         assert.equal(store.history.length, 0);
+    }
+
+    await t.test('dado cadena vacía o solo espacios, cuando se canjea, entonces devuelve success:false sin mutar', async () => {
+        for (const input of ['', '   ']) {
+            const { Store, PromoCodes } = setup();
+            const result = await PromoCodes.redeemPromoCode(input);
+            assert.deepEqual({ ...result }, { success: false, message: 'Código inválido' });
+            assertIntacto(Store);
+        }
+    });
+
+    // Comportamiento real observado: con entradas que no son string, `inputCode.trim()` lanza TypeError
+    // (no devuelve success:false). Se documenta como hueco en qa/99-huecos.md; la UI solo pasa strings.
+    await t.test('dado null, undefined o número, cuando se canjea, entonces lanza TypeError sin mutar', async () => {
+        for (const input of [null, undefined, 1234]) {
+            const { Store, PromoCodes } = setup();
+            await assert.rejects(() => PromoCodes.redeemPromoCode(input), (e) => e && e.name === 'TypeError', `input: ${String(input)}`); // el TypeError viene del realm del vm: no sirve instanceof
+            assertIntacto(Store);
+        }
     });
 });
