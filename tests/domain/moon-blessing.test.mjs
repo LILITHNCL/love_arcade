@@ -101,4 +101,45 @@ test('Bendición Lunar', async (t) => {
         store = Store.getStore();
         assert.equal(store.buffs.moonBlessingExpiry, (fakeNow + 1000) + (10 * 86400000)); // It accumulated 5 (first) + 5 (second)
     });
+
+    await t.test('dado expiración caducada distinta de cero (en el pasado), cuando se compra o se extiende, entonces parte desde ahora', () => {
+        const sandbox = createSandbox();
+        sandbox.setMockNow(fakeNow);
+        loadFiles(sandbox.context, files);
+
+        const Store = sandbox.context.window.LoveArcadeStore;
+        const Moon = sandbox.context.window.LoveArcadeMoonBlessing;
+        const caducada = fakeNow - 5000;
+
+        Store.replaceStore({ coins: 200, buffs: { moonBlessingExpiry: caducada }, history: [] });
+        assert.equal(Moon.buyMoonBlessing().success, true);
+        assert.equal(Store.getStore().buffs.moonBlessingExpiry, fakeNow + DURATION_MS);
+
+        Store.replaceStore({ coins: 0, buffs: { moonBlessingExpiry: caducada }, history: [] });
+        assert.equal(Moon.extendMoonBlessingDays(3).success, true);
+        assert.equal(Store.getStore().buffs.moonBlessingExpiry, fakeNow + 3 * 86400000);
+    });
+
+    await t.test('dado extensión válida o inválida, cuando se extienden días, entonces registra historial solo si se aplica', () => {
+        const sandbox = createSandbox();
+        sandbox.setMockNow(fakeNow);
+        loadFiles(sandbox.context, files);
+
+        const Store = sandbox.context.window.LoveArcadeStore;
+        const Moon = sandbox.context.window.LoveArcadeMoonBlessing;
+        Store.replaceStore({ coins: 40, buffs: { moonBlessingExpiry: 0 }, history: [] });
+
+        Moon.extendMoonBlessingDays(0);
+        Moon.extendMoonBlessingDays(-2);
+        assert.equal(Store.getStore().history.length, 0);
+
+        Moon.extendMoonBlessingDays(3);
+        const store = Store.getStore();
+        assert.equal(store.history.length, 1);
+        assert.deepEqual(
+            { tipo: store.history[0].tipo, cantidad: store.history[0].cantidad, motivo: store.history[0].motivo },
+            { tipo: 'ingreso', cantidad: 0, motivo: 'Extensión de Bendición Lunar: +3 día(s)' }
+        );
+        assert.equal(store.coins, 40);
+    });
 });
