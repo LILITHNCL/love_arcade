@@ -160,7 +160,30 @@ function setupSentinelSandbox(options = {}) {
     context.document.addEventListener = (ev, fn) => addListener(docListeners, ev, fn);
     context.document.removeEventListener = (ev, fn) => removeListener(docListeners, ev, fn);
     context.document.dispatchEvent = (ev) => dispatch(docListeners, ev);
-    context.document.getElementById = () => null;
+    const domElements = new Map();
+    context.document.getElementById = (id) => {
+        if (!domElements.has(id)) {
+            domElements.set(id, {
+                id,
+                style: {},
+                classList: {
+                    add: () => {},
+                    remove: () => {},
+                    toggle: () => {},
+                    contains: () => false
+                },
+                textContent: '',
+                value: '',
+                setAttribute: () => {},
+                getAttribute: () => null,
+                addEventListener: () => {},
+                removeEventListener: () => {},
+                querySelectorAll: () => [],
+                querySelector: () => null
+            });
+        }
+        return domElements.get(id);
+    };
     context.document.querySelectorAll = () => [];
     context.document.hidden = false;
 
@@ -188,7 +211,18 @@ function setupSentinelSandbox(options = {}) {
         createClient: () => fakeSupabase
     };
 
+    if (options.initialStorage) {
+        for (const [key, value] of Object.entries(options.initialStorage)) {
+            storage.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+        }
+    }
+
     loadFiles(context, ['js/core/config.js', 'js/core/state-store.js', 'js/cloud/sentinel.js']);
+
+    context.LoveArcadeStore = context.window.LoveArcadeStore;
+    context.GameCenter = context.window.GameCenter;
+    context.Sentinel = context.window.Sentinel;
+    context.CONFIG = context.window.CONFIG;
 
     const dispatchDomLoaded = () => {
         context.document.dispatchEvent(new FakeEvent('DOMContentLoaded'));
@@ -199,9 +233,27 @@ function setupSentinelSandbox(options = {}) {
     };
 
     async function login(session = { user: { id: 'test-user-1', email: 'test@example.com' } }) {
+        let done = false;
+        const authPromise = new Promise((resolve) => {
+            const onAuth = () => {
+                if (!done) {
+                    done = true;
+                    removeListener(docListeners, 'la:cloud-authenticated', onAuth);
+                    resolve();
+                }
+            };
+            addListener(docListeners, 'la:cloud-authenticated', onAuth);
+            setTimeout(() => {
+                if (!done) {
+                    done = true;
+                    removeListener(docListeners, 'la:cloud-authenticated', onAuth);
+                    resolve();
+                }
+            }, 60);
+        });
         fakeSupabase.simulateSignIn(session);
-        // Esperar ciclo microtarea para que _handleAuthChange resuelva
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await authPromise;
+        await new Promise((resolve) => setTimeout(resolve, 15));
     }
 
     async function logout() {
@@ -216,6 +268,7 @@ function setupSentinelSandbox(options = {}) {
         fakeSupabase,
         login,
         logout,
+        LoveArcadeStore: context.LoveArcadeStore,
         dispatchDomLoaded,
         dispatchBeforeUnload,
         SENTINEL_TS_KEY: 'love_arcade_sentinel_ts'

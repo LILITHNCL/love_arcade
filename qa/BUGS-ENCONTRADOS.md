@@ -83,3 +83,27 @@
 - **Test**: `dado null, undefined o número, cuando se canjea, entonces debería devolver success:false sin mutar` en `tests/domain/promo-codes.test.mjs:81` (marcado `{ todo: 'BUG-F2d-02: redeemPromoCode lanza TypeError con entradas no-string en vez de devolver success:false' }`).
 - **Severidad**: Baja. La UI de producción (`js/shop-logic.js:1408`) siempre envía el valor de un `<input>` HTML (`input.value.trim()`), por lo que en el flujo visual del usuario siempre es un string.
 - **Estado**: Pendiente (decisión del usuario si añadir guarda defensiva de tipo).
+
+### Bug F3a-01: Pérdida de progreso local por LWW ante relojes desfasados (R7)
+- **Descripción**: La resolución de conflictos en `SentinelCloudSync._handleAuthChange` utiliza una estrategia Last-Write-Wins (LWW) basada exclusivamente en comparar el timestamp del cliente en la nube (`updated_at`, generado con `new Date().toISOString()`) contra el timestamp local (`love_arcade_sentinel_ts`). Si un dispositivo previo subió datos con un reloj adelantado (o el dispositivo actual tiene el reloj atrasado), al iniciar sesión la condición `cloudTime > localTime` se cumple ciegamente. Sentinel ejecuta `_applySnapshot` y sobreescribe destructivamente el progreso local (monedas, niveles y guardados de juegos) sin detectar que el estado local posee un progreso más avanzado ni realizar una unión/fusión de progreso.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 399-404 y L270).
+- **Escenario**: El usuario avanza partidas en el dispositivo B (ej. alcanza 1000 monedas), pero por desfase de reloj su marca local es anterior a la marca de la nube (ej. 50 monedas guardadas previamente por un dispositivo A con reloj adelantado). Al iniciar sesión en B, el snapshot de la nube destruye las 1000 monedas locales y las restablece a 50.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Ante conflicto de estados divergentes con progreso avanzado local, no destruir silenciosamente el avance (p. ej. mediante merge con preservación del mayor saldo/niveles desbloqueados o resolución interactiva de conflictos).
+  - *Real*: Sobreescribe ciegamente el almacenamiento local con los datos remotos obsoletos.
+- **Test**: `dado un desfase de reloj donde el estado local tiene mayor progreso pero menor timestamp que la nube, cuando se inicia sesión, entonces no debería sobreescribir destructivamente el progreso local (R7)` en `tests/integration/sentinel-lww-auth.test.mjs` (marcado `{ todo: 'BUG-F3a-01: LWW basado únicamente en timestamp de cliente sobreescribe progreso local más avanzado ante relojes desfasados' }`).
+- **Estado**: Pendiente de decisión humana (documentado con todo).
+
+### Bug F3a-02: `_sentinelSync` aborta silenciosamente la subida en `_handleAuthChange` por flag `_isRestoringSession`
+- **Descripción**: Al procesar la autenticación en `_handleAuthChange`, se activa la bandera interna `_isRestoringSession = true` (para evitar bucles del interceptor de almacenamiento mientras se restaura la sesión). Sin embargo, cuando el estado local es más reciente (`localTime > cloudTime`), cuando la nube está vacía (`!hasCloudSnapshot`), o ante un empate con diferencias (`localTime === cloudTime && snapshotsDiffer`), `_handleAuthChange` invoca `await _sentinelSync()`. Dentro de `_sentinelSync()`, la primera línea de guarda es `if (!_sbClient || !_sbSession || _isRestoringSession) return;`. Como `_isRestoringSession` permanece en `true` durante todo el flujo de autenticación, `_sentinelSync()` aborta de inmediato y nunca ejecuta el `upsert` a Supabase. Como resultado, las partidas locales más recientes o los progresos iniciales de cuentas nuevas jamás se suben a la nube durante el inicio de sesión.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 263, 360 y 406).
+- **Escenario**: Un usuario inicia sesión teniendo progreso local nuevo o más reciente que la nube; el sistema calcula correctamente que el estado local debe prevalecer y subirse, pero la subida es silenciosamente abortada por la guarda de `_isRestoringSession`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Ejecutar la subida del snapshot local a Supabase (`upsert`) cuando el estado local es más reciente, cuando la nube está vacía o ante un empate con diferencias.
+  - *Real*: `_sentinelSync()` retorna inmediatamente (`return`), dejando la nube desactualizada sin notificar error.
+- **Test**: Tres tests cubren este fallo en `tests/integration/sentinel-lww-auth.test.mjs` (marcados con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange porque _isRestoringSession está activo' }`):
+  1. `dado un estado local más reciente que la nube, cuando se inicia sesión, entonces debería subir el snapshot local a la nube y conservar el estado local intacto`
+  2. `dado un empate de marcas de tiempo pero con snapshots divergentes, cuando se inicia sesión, entonces debería resolver a favor del estado local y subir a la nube`
+  3. `dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube`
+- **Estado**: Pendiente de corrección de producto (documentado con todo).
+
