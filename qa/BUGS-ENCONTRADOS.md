@@ -107,3 +107,20 @@
   3. `dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube`
 - **Estado**: Pendiente de corrección de producto (documentado con todo).
 
+### Bug F3a-03: `importBackupFromFile` restaura cualquier clave sin lista blanca (R4)
+- **Descripción**: La función `importBackupFromFile` en `js/backup-engine.js` (L213-218) itera sobre todas las entradas presentes en el objeto `payload.keys` y las persiste directamente en `localStorage` con `localStorage.setItem(key, value)`. No existe ninguna validación ni filtrado contra una lista blanca de claves autorizadas (como `KNOWN_KEYS` o los patrones en `DYNAMIC_PATTERNS`). Como consecuencia, un archivo de respaldo con un checksum válido puede inyectar o sobreescribir cualquier clave arbitraria en el almacenamiento local del navegador.
+- **Archivo y línea**: `js/backup-engine.js` (Líneas 213-218).
+- **Escenario**: Un archivo `.labak` válido que contenga claves arbitrarias ajenas a Love Arcade (ej. `malicious_arbitrary_key`, tokens o preferencias no vigiladas). Al importarlo, todas las claves arbitrarias son persistidas en `localStorage`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Filtrar las claves importadas permitiendo únicamente aquellas reconocidas como legítimas del catálogo del juego (`KNOWN_KEYS`, patrones dinámicos `puz_arcade_save_*`, `la_milestone_progress_*`), descartando claves arbitrarias no vigiladas.
+  - *Real*: Escribe sin restricción todas las claves presentes en `payload.keys`.
+- **Test**: `dado un archivo .labak con claves arbitrarias no vigiladas (R4), cuando se importa, entonces solo debería escribir claves autorizadas (lista blanca) y omitir claves arbitrarias` en `tests/integration/backup-engine.test.mjs` (marcado `{ todo: 'BUG-F3a-03: importBackupFromFile restaura cualquier clave sin lista blanca (R4)' }`).
+- **Estado**: Pendiente de decisión humana (documentado con todo).
+
+## Hallazgos de diseño y arquitectura
+
+### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)
+- **Ruta**: `js/backup-engine.js` (L90-95, L200-211) y `js/sync-worker.js` (L115).
+- **Detalle**: El checksum generado y validado en los archivos `.labak` es un hash SHA-256 plano del string canónico del objeto de respaldo, sin incorporar ningún secreto o sal (`salt`). Por diseño, este mecanismo garantiza exclusivamente detección de corrupción accidental durante la transferencia o almacenamiento; no ofrece garantías contra manipulación maliciosa de datos (tampering), ya que cualquier usuario o herramienta externa puede alterar los datos y recalcular legítimamente el hash SHA-256 esperado sin requerir claves secretas.
+- **Nota**: Siguiendo las directrices del proyecto, no se inventa un test de regresión para esta condición por ser la especificación y diseño actual del formato `.labak`.
+
