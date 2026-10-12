@@ -83,3 +83,47 @@
 - **Test**: `dado null, undefined o número, cuando se canjea, entonces debería devolver success:false sin mutar` en `tests/domain/promo-codes.test.mjs:81` (marcado `{ todo: 'BUG-F2d-02: redeemPromoCode lanza TypeError con entradas no-string en vez de devolver success:false' }`).
 - **Severidad**: Baja. La UI de producción (`js/shop-logic.js:1408`) siempre envía el valor de un `<input>` HTML (`input.value.trim()`), por lo que en el flujo visual del usuario siempre es un string.
 - **Estado**: Pendiente (decisión del usuario si añadir guarda defensiva de tipo).
+
+### Bug F3a-01: Pérdida de progreso local por LWW ante relojes desfasados (R7)
+- **Descripción**: La resolución de conflictos en `SentinelCloudSync._handleAuthChange` utiliza una estrategia Last-Write-Wins (LWW) basada exclusivamente en comparar el timestamp del cliente en la nube (`updated_at`, generado con `new Date().toISOString()`) contra el timestamp local (`love_arcade_sentinel_ts`). Si un dispositivo previo subió datos con un reloj adelantado (o el dispositivo actual tiene el reloj atrasado), al iniciar sesión la condición `cloudTime > localTime` se cumple ciegamente. Sentinel ejecuta `_applySnapshot` y sobreescribe destructivamente el progreso local (monedas, niveles y guardados de juegos) sin detectar que el estado local posee un progreso más avanzado ni realizar una unión/fusión de progreso.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 399-404 y L270).
+- **Escenario**: El usuario avanza partidas en el dispositivo B (ej. alcanza 1000 monedas), pero por desfase de reloj su marca local es anterior a la marca de la nube (ej. 50 monedas guardadas previamente por un dispositivo A con reloj adelantado). Al iniciar sesión en B, el snapshot de la nube destruye las 1000 monedas locales y las restablece a 50.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Ante conflicto de estados divergentes con progreso avanzado local, no destruir silenciosamente el avance (p. ej. mediante merge con preservación del mayor saldo/niveles desbloqueados o resolución interactiva de conflictos).
+  - *Real*: Sobreescribe ciegamente el almacenamiento local con los datos remotos obsoletos.
+- **Test**: `dado un desfase de reloj donde el estado local tiene mayor progreso pero menor timestamp que la nube, cuando se inicia sesión, entonces no debería sobreescribir destructivamente el progreso local (R7)` en `tests/integration/sentinel-lww-auth.test.mjs` (marcado `{ todo: 'BUG-F3a-01: LWW basado únicamente en timestamp de cliente sobreescribe progreso local más avanzado ante relojes desfasados' }`).
+- **Estado**: Pendiente de decisión humana (documentado con todo).
+
+### Bug F3a-02: `_sentinelSync` aborta silenciosamente la subida en `_handleAuthChange` por flag `_isRestoringSession`
+- **Descripción**: Al procesar la autenticación en `_handleAuthChange`, se activa la bandera interna `_isRestoringSession = true` (para evitar bucles del interceptor de almacenamiento mientras se restaura la sesión). Sin embargo, cuando el estado local es más reciente (`localTime > cloudTime`), cuando la nube está vacía (`!hasCloudSnapshot`), o ante un empate con diferencias (`localTime === cloudTime && snapshotsDiffer`), `_handleAuthChange` invoca `await _sentinelSync()`. Dentro de `_sentinelSync()`, la primera línea de guarda es `if (!_sbClient || !_sbSession || _isRestoringSession) return;`. Como `_isRestoringSession` permanece en `true` durante todo el flujo de autenticación, `_sentinelSync()` aborta de inmediato y nunca ejecuta el `upsert` a Supabase. Como resultado, las partidas locales más recientes o los progresos iniciales de cuentas nuevas no se suben a la nube durante el flujo de inicio de sesión.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 263, 360, 406, 413 y 763-765).
+- **Escenario**: Un usuario inicia sesión teniendo progreso local nuevo o más reciente que la nube (o habiendo acumulado acciones con `immediateCloudSync: true` offline); el sistema calcula correctamente que el estado local debe prevalecer o reintentarse, pero la subida es silenciosamente abortada por la guarda de `_isRestoringSession`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Ejecutar la subida del snapshot local a Supabase (`upsert`) cuando el estado local es más reciente, cuando la nube está vacía, ante un empate con diferencias, o al despachar la cola de sincronización inmediata pendiente tras autenticarse (`la:cloud-authenticated`).
+  - *Real*: `_sentinelSync()` retorna inmediatamente (`return`), dejando la nube desactualizada y consumiendo el reintento sin notificar error.
+- **Test**: Cuatro tests cubren este fallo:
+  - Tres tests en `tests/integration/sentinel-lww-auth.test.mjs` (marcados con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange porque _isRestoringSession está activo' }`):
+    1. `dado un estado local más reciente que la nube, cuando se inicia sesión, entonces debería subir el snapshot local a la nube y conservar el estado local intacto`
+    2. `dado un empate de marcas de tiempo pero con snapshots divergentes, cuando se inicia sesión, entonces debería resolver a favor del estado local y subir a la nube`
+    3. `dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube`
+  - Un test en `tests/integration/immediate-cloud-sync.test.mjs` (marcado con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange / la:cloud-authenticated porque _isRestoringSession está activo' }`):
+    4. `dado usuario sin sesión, cuando ocurre una acción con immediateCloudSync, entonces encola reintento y sube al iniciar sesión`
+- **Estado**: Pendiente de corrección de producto (documentado con todo).
+
+### Bug F3a-03: `importBackupFromFile` restaura cualquier clave sin lista blanca (R4)
+- **Descripción**: La función `importBackupFromFile` en `js/backup-engine.js` (L213-218) itera sobre todas las entradas presentes en el objeto `payload.keys` y las persiste directamente en `localStorage` con `localStorage.setItem(key, value)`. No existe ninguna validación ni filtrado contra una lista blanca de claves autorizadas (como `KNOWN_KEYS` o los patrones en `DYNAMIC_PATTERNS`). Como consecuencia, un archivo de respaldo con un checksum válido puede inyectar o sobreescribir cualquier clave arbitraria en el almacenamiento local del navegador.
+- **Archivo y línea**: `js/backup-engine.js` (Líneas 213-218).
+- **Escenario**: Un archivo `.labak` válido que contenga claves arbitrarias ajenas a Love Arcade (ej. `malicious_arbitrary_key`, tokens o preferencias no vigiladas). Al importarlo, todas las claves arbitrarias son persistidas en `localStorage`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Filtrar las claves importadas permitiendo únicamente aquellas reconocidas como legítimas del catálogo del juego (`KNOWN_KEYS`, patrones dinámicos `puz_arcade_save_*`, `la_milestone_progress_*`), descartando claves arbitrarias no vigiladas.
+  - *Real*: Escribe sin restricción todas las claves presentes en `payload.keys`.
+- **Test**: `dado un archivo .labak con claves arbitrarias no vigiladas (R4), cuando se importa, entonces solo debería escribir claves autorizadas (lista blanca) y omitir claves arbitrarias` en `tests/integration/backup-engine.test.mjs` (marcado `{ todo: 'BUG-F3a-03: importBackupFromFile restaura cualquier clave sin lista blanca (R4)' }`).
+- **Estado**: Pendiente de decisión humana (documentado con todo).
+
+## Hallazgos de diseño y arquitectura
+
+### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)
+- **Ruta**: `js/backup-engine.js` (L90-95, L200-211) y `js/sync-worker.js` (L115).
+- **Detalle**: El checksum generado y validado en los archivos `.labak` es un hash SHA-256 plano del string canónico del objeto de respaldo, sin incorporar ningún secreto o sal (`salt`). Por diseño, este mecanismo garantiza exclusivamente detección de corrupción accidental durante la transferencia o almacenamiento; no ofrece garantías contra manipulación maliciosa de datos (tampering), ya que cualquier usuario o herramienta externa puede alterar los datos y recalcular legítimamente el hash SHA-256 esperado sin requerir claves secretas.
+- **Nota**: Siguiendo las directrices del proyecto, no se inventa un test de regresión para esta condición por ser la especificación y diseño actual del formato `.labak`.
+
