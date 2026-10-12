@@ -192,6 +192,12 @@ function setupSentinelSandbox(options = {}) {
     context.window.dispatchEvent = (ev) => dispatch(winListeners, ev);
     context.window.requestIdleCallback = (cb) => { cb(); return 1; };
     context.window.cancelIdleCallback = () => {};
+    context.requestIdleCallback = context.window.requestIdleCallback;
+    context.cancelIdleCallback = context.window.cancelIdleCallback;
+    context.btoa = globalThis.btoa;
+    context.atob = globalThis.atob;
+    context.window.btoa = globalThis.btoa;
+    context.window.atob = globalThis.atob;
 
     context.fetch = async (url) => {
         if (url === '/api/client-config') {
@@ -218,6 +224,25 @@ function setupSentinelSandbox(options = {}) {
     }
 
     loadFiles(context, ['js/core/config.js', 'js/core/state-store.js', 'js/cloud/sentinel.js']);
+
+    if (options.loadDomainModules) {
+        loadFiles(context, [
+            'js/core/utils.js',
+            'js/domain/history.js',
+            'js/domain/economy.js',
+            'js/domain/promo-codes.js',
+            'js/domain/moon-blessing.js',
+            'js/domain/identity.js',
+            'js/domain/daily-streak.js',
+            'js/domain/avatar.js',
+            'js/domain/theming.js',
+            'js/domain/game-center.js'
+        ]);
+        context.LoveArcadeEconomy = context.window.LoveArcadeEconomy;
+        context.LoveArcadeMoonBlessing = context.window.LoveArcadeMoonBlessing;
+        context.LoveArcadePromoCodes = context.window.LoveArcadePromoCodes;
+        context.GameCenter = context.window.GameCenter;
+    }
 
     context.LoveArcadeStore = context.window.LoveArcadeStore;
     context.GameCenter = context.window.GameCenter;
@@ -269,6 +294,10 @@ function setupSentinelSandbox(options = {}) {
         login,
         logout,
         LoveArcadeStore: context.LoveArcadeStore,
+        LoveArcadeEconomy: context.LoveArcadeEconomy,
+        LoveArcadeMoonBlessing: context.LoveArcadeMoonBlessing,
+        LoveArcadePromoCodes: context.LoveArcadePromoCodes,
+        GameCenter: context.GameCenter,
         dispatchDomLoaded,
         dispatchBeforeUnload,
         SENTINEL_TS_KEY: 'love_arcade_sentinel_ts'

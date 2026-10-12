@@ -96,15 +96,18 @@
 
 ### Bug F3a-02: `_sentinelSync` aborta silenciosamente la subida en `_handleAuthChange` por flag `_isRestoringSession`
 - **Descripción**: Al procesar la autenticación en `_handleAuthChange`, se activa la bandera interna `_isRestoringSession = true` (para evitar bucles del interceptor de almacenamiento mientras se restaura la sesión). Sin embargo, cuando el estado local es más reciente (`localTime > cloudTime`), cuando la nube está vacía (`!hasCloudSnapshot`), o ante un empate con diferencias (`localTime === cloudTime && snapshotsDiffer`), `_handleAuthChange` invoca `await _sentinelSync()`. Dentro de `_sentinelSync()`, la primera línea de guarda es `if (!_sbClient || !_sbSession || _isRestoringSession) return;`. Como `_isRestoringSession` permanece en `true` durante todo el flujo de autenticación, `_sentinelSync()` aborta de inmediato y nunca ejecuta el `upsert` a Supabase. Como resultado, las partidas locales más recientes o los progresos iniciales de cuentas nuevas jamás se suben a la nube durante el inicio de sesión.
-- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 263, 360 y 406).
-- **Escenario**: Un usuario inicia sesión teniendo progreso local nuevo o más reciente que la nube; el sistema calcula correctamente que el estado local debe prevalecer y subirse, pero la subida es silenciosamente abortada por la guarda de `_isRestoringSession`.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 263, 360, 406, 413 y 763-765).
+- **Escenario**: Un usuario inicia sesión teniendo progreso local nuevo o más reciente que la nube (o habiendo acumulado acciones con `immediateCloudSync: true` offline); el sistema calcula correctamente que el estado local debe prevalecer o reintentarse, pero la subida es silenciosamente abortada por la guarda de `_isRestoringSession`.
 - **Comportamiento esperado vs real**:
-  - *Esperado*: Ejecutar la subida del snapshot local a Supabase (`upsert`) cuando el estado local es más reciente, cuando la nube está vacía o ante un empate con diferencias.
-  - *Real*: `_sentinelSync()` retorna inmediatamente (`return`), dejando la nube desactualizada sin notificar error.
-- **Test**: Tres tests cubren este fallo en `tests/integration/sentinel-lww-auth.test.mjs` (marcados con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange porque _isRestoringSession está activo' }`):
-  1. `dado un estado local más reciente que la nube, cuando se inicia sesión, entonces debería subir el snapshot local a la nube y conservar el estado local intacto`
-  2. `dado un empate de marcas de tiempo pero con snapshots divergentes, cuando se inicia sesión, entonces debería resolver a favor del estado local y subir a la nube`
-  3. `dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube`
+  - *Esperado*: Ejecutar la subida del snapshot local a Supabase (`upsert`) cuando el estado local es más reciente, cuando la nube está vacía, ante un empate con diferencias, o al despachar la cola de sincronización inmediata pendiente tras autenticarse (`la:cloud-authenticated`).
+  - *Real*: `_sentinelSync()` retorna inmediatamente (`return`), dejando la nube desactualizada y consumiendo el reintento sin notificar error.
+- **Test**: Cuatro tests cubren este fallo:
+  - Tres tests en `tests/integration/sentinel-lww-auth.test.mjs` (marcados con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange porque _isRestoringSession está activo' }`):
+    1. `dado un estado local más reciente que la nube, cuando se inicia sesión, entonces debería subir el snapshot local a la nube y conservar el estado local intacto`
+    2. `dado un empate de marcas de tiempo pero con snapshots divergentes, cuando se inicia sesión, entonces debería resolver a favor del estado local y subir a la nube`
+    3. `dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube`
+  - Un test en `tests/integration/immediate-cloud-sync.test.mjs` (marcado con `{ todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange / la:cloud-authenticated porque _isRestoringSession está activo' }`):
+    4. `dado usuario sin sesión, cuando ocurre una acción con immediateCloudSync, entonces encola reintento y sube al iniciar sesión`
 - **Estado**: Pendiente de corrección de producto (documentado con todo).
 
 ### Bug F3a-03: `importBackupFromFile` restaura cualquier clave sin lista blanca (R4)
