@@ -309,9 +309,45 @@ window.LoveArcadeStore.save();
    - Inmediatamente tras autenticarse, antes de que el badge pase a reportar sincronización o se realicen mutaciones adicionales:
    - Comprueba en la tabla `user_profiles` de Supabase (desde el panel web de Supabase SQL Editor / Table Editor o mediante consulta desde consola) si existe la fila del usuario recién autenticado con su progreso local en `game_data`:
      ```javascript
-     const user = (await window._supabaseClient?.auth.getUser())?.data?.user;
-     const { data: profile } = await window._supabaseClient?.from('user_profiles').select('*').eq('id', user?.id).maybeSingle();
-     console.log('Fila de user_profiles tras login:', profile);
+     const status = window.Sentinel?.getStatus();
+     console.log('Estado de Sentinel:', status);
+
+     const client = window.Sentinel?.getClient();
+
+     if (!client) {
+       console.error(
+         'Supabase no está inicializado. Comprueba el estado de Sentinel.'
+       );
+     } else {
+       const {
+         data: { user },
+         error: userError
+       } = await client.auth.getUser();
+
+       if (userError) {
+         console.error('Error al obtener el usuario:', userError);
+       } else if (!user) {
+         console.warn('No hay un usuario autenticado.');
+       } else {
+         const {
+           data: profile,
+           error: profileError
+         } = await client
+           .from('user_profiles')
+           .select('*')
+           .eq('id', user.id)
+           .maybeSingle();
+
+         if (profileError) {
+           console.error('Error al consultar user_profiles:', profileError);
+         } else {
+           console.log(
+             'Fila de user_profiles tras login:',
+             profile
+           );
+         }
+       }
+     }
      ```
    - **Anotación BUG-F3a-02**: El bug documentado **BUG-F3a-02** predice que la fila **NO** se crea en Supabase tras iniciar sesión (`SIGNED_IN`), debido a que la guarda `_isRestoringSession` en `_sentinelSync` aborta silenciosamente la subida inicial. La fila en `user_profiles` no se creará hasta que se produzca la siguiente escritura de una clave vigilada (por ejemplo, al ganar monedas o cambiar ajustes locales, lo que dispara el interceptor con debounce).
 5. **Comportamiento visual de la interfaz tras inicio de sesión**:
