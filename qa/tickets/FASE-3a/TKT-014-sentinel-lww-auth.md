@@ -47,13 +47,128 @@ Test de integración con `node:test` y `node:assert/strict`, ejecutado en el san
 - [x] Escenarios de subida bloqueados por `_isRestoringSession` identificados y documentados en BUG-F3a-02 con tests `todo`.
 - [x] Riesgo R7 (pérdida de progreso por LWW ante relojes desfasados) verificado y documentado en BUG-F3a-01 con test `todo`.
 
-## Mutaciones planeadas por rama (verificación en sesión 5)
-1. **Rama de comparación de timestamps** (`sentinel.js:399`): invertir condición `cloudTime > localTime` a `cloudTime < localTime`. Falla escenario 1 (nube más reciente no se aplicaría).
-2. **Rama de empate con diferencias** (`sentinel.js:399` o `405`): cambiar `cloudTime > localTime` por `cloudTime >= localTime`. En escenario 3 aplicaría la nube en vez de priorizar local.
-3. **Rama de rehidratación en memoria** (`sentinel.js:240`, `_rehydrateHubStoreFromDisk`): omitir la llamada tras `_applySnapshot`. Falla escenario 1 (el store en memoria mantendría los datos antiguos).
-4. **Rama de claves ausentes** (`sentinel.js:236`): borrar las claves ausentes mediante `localStorage.removeItem(key)`. Falla escenario 6 (destruiría claves locales ausentes en el snapshot).
-5. **Rama de captura de errores** (`sentinel.js:415`): eliminar el bloque `catch` o re-lanzar error. Falla escenario 7 (rompería el flujo ante caída de red).
-6. **Rama de condición de nube vacía** (`sentinel.js:405`): eliminar `!hasCloudSnapshot`. Afecta escenario 5 (no contemplaría cuentas nuevas).
+## Verificación por mutación (ejecutada en sesión 5)
+
+Todas las mutaciones por rama fueron probadas de forma reproducible, verificando que los tests de `sentinel-lww-auth.test.mjs` detectan y hacen fallar cada mutante. En la mutación 2 se detectó inicialmente un hueco (la mutación sobrevivía porque el test de empate idéntico no comprobaba la ausencia del evento de descarga); se corrigió el test en commit independiente (`3cb1cac`) añadiendo la aserción correspondiente y se re-ejecutó la mutación haciéndola fallar limpiamente.
+
+### Mutación 1: Rama de comparación de timestamps (`sentinel.js:399`)
+- **Descripción**: Invertir la condición `cloudTime > localTime` por `cloudTime < localTime`. Un snapshot de nube más reciente no se aplicaría localmente.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/cloudTime > localTime/cloudTime < localTime/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una nube más reciente, cuando se inicia sesión, entonces aplica el snapshot remoto, rehidrata el store en memoria y actualiza la marca de tiempo local
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    100 !== 650
+        actual: 100, expected: 650, operator: 'strictEqual'
+  ✖ dado un snapshot de la nube más reciente con claves vigiladas ausentes, cuando se aplica, entonces actualiza las claves presentes pero conserva las claves locales ausentes (comportamiento observado)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    50 !== 500
+        actual: 50, expected: 500, operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 2: Rama de comparación estricta vs empate (`sentinel.js:399`)
+- **Descripción**: Cambiar `cloudTime > localTime` por `cloudTime >= localTime`. En caso de empate idéntico dispararía indebidamente `_applySnapshot` y emitiría `la:cloudsynced`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/cloudTime > localTime/cloudTime >= localTime/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un empate de marcas de tiempo con snapshots idénticos, cuando se inicia sesión, entonces no realiza sincronizaciones redundantes
+    AssertionError [ERR_ASSERTION]: No debe emitir la:cloudsynced en empate idéntico
+    true !== false
+        actual: true, expected: false, operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 3: Rama de rehidratación en memoria del Hub (`sentinel.js:240`)
+- **Descripción**: Omitir `_rehydrateHubStoreFromDisk()` tras aplicar un snapshot de la nube en `_applySnapshot`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_rehydrateHubStoreFromDisk();/\/\/ _rehydrateHubStoreFromDisk();/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una nube más reciente, cuando se inicia sesión, entonces aplica el snapshot remoto, rehidrata el store en memoria y actualiza la marca de tiempo local
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    100 !== 650
+        actual: 100, expected: 650, operator: 'strictEqual'
+  ✖ dado un snapshot de la nube más reciente con claves vigiladas ausentes, cuando se aplica, entonces actualiza las claves presentes pero conserva las claves locales ausentes (comportamiento observado)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    50 !== 500
+        actual: 50, expected: 500, operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 4: Rama de preservación de claves ausentes (`sentinel.js:237-238`)
+- **Descripción**: Eliminar claves locales ausentes en el snapshot remoto en lugar de realizar fusión conservadora (`else { _originalRemoveItem(key); }`).
+- **Comando reproducible**:
+  ```bash
+  sed -i '/_originalSetItem(key, snap\[key\]);/{n;s/}/} else { _originalRemoveItem(key); }/}' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un snapshot de la nube más reciente con claves vigiladas ausentes, cuando se aplica, entonces actualiza las claves presentes pero conserva las claves locales ausentes (comportamiento observado)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    null !== '[1, 2]'
+        actual: null, expected: '[1, 2]', operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 5: Rama de manejo de errores en inicio de sesión (`sentinel.js:415-416`)
+- **Descripción**: Re-lanzar error en `_handleAuthChange` en vez de degradar elegantemente y marcar badge de `'error'`.
+- **Comando reproducible**:
+  ```bash
+  sed -i "s/_setStatusBadge('error');/throw err; _setStatusBadge('error');/" js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un fallo de red o error de Supabase al consultar el perfil durante el inicio de sesión, cuando ocurre, entonces no corrompe el estado local y marca estado de error
+    Error: Network request failed
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/sentinel-lww-auth.test.mjs:250:41)
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 6: Rama de actualización de timestamp local tras restaurar (`sentinel.js:401`)
+- **Descripción**: Omitir `_originalSetItem(SENTINEL_TS_KEY, data.updated_at)` tras aplicar el snapshot remoto.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_originalSetItem(SENTINEL_TS_KEY, data.updated_at);/\/\/ _originalSetItem(SENTINEL_TS_KEY, data.updated_at);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una nube más reciente, cuando se inicia sesión, entonces aplica el snapshot remoto, rehidrata el store en memoria y actualiza la marca de tiempo local
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual: '2026-10-12T10:00:00.000Z'
+    - expected: '2026-10-12T12:00:00.000Z'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 7: Rama de emisión de evento la:cloudsynced (`sentinel.js:242`)
+- **Descripción**: Omitir `document.dispatchEvent(new CustomEvent('la:cloudsynced' ...))` tras aplicar el snapshot remoto.
+- **Comando reproducible**:
+  ```bash
+  sed -i "s/document.dispatchEvent(new CustomEvent('la:cloudsynced'/\/\/ document.dispatchEvent(new CustomEvent('la:cloudsynced'/" js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una nube más reciente, cuando se inicia sesión, entonces aplica el snapshot remoto, rehidrata el store en memoria y actualiza la marca de tiempo local
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    false !== true
+        actual: false, expected: true, operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
 
 ## Comando para ejecutarlo
 ```bash
@@ -61,4 +176,4 @@ node --test tests/integration/sentinel-lww-auth.test.mjs
 ```
 
 ## Estado
-hecho
+hecho (verificado por mutación)
