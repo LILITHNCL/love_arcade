@@ -175,5 +175,10 @@ Todas las mutaciones por rama fueron probadas de forma reproducible, verificando
 node --test tests/integration/sentinel-lww-auth.test.mjs
 ```
 
+## Revisión adversarial y flakiness (sesión 7)
+- **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación detectó y eliminó 7/7 mutantes. El hueco adversarial detectado inicialmente en sesión 5 (empate idéntico sobrevivía si no se asertaba la no emisión de `la:cloudsynced`) fue corregido con el commit `3cb1cac`, eliminando la mutación por comparación laxo `>=`.
+- **Mocks que ocultan problemas**: Se falsea el cliente de Supabase (`fakeSupabase`), la red (`/api/client-config`) y los eventos del navegador. No se falsea la comparación ISO de fechas, la serialización JSON ni la rehidratación del Store en memoria. Se asumen respuestas inmediatas de Supabase; condiciones de carrera con concurrencia real entre pestañas quedan diferidas a Fase 5 (Edge cases).
+
 ## Estado
-hecho (verificado por mutación)
+hecho (verificado por mutación y revisión adversarial)

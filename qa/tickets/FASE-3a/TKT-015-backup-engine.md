@@ -218,5 +218,10 @@ Se ejecutaron 5 mutaciones reproducibles cubriendo las ramas críticas de valida
 node --test tests/integration/backup-engine.test.mjs
 ```
 
+## Revisión adversarial y flakiness (sesión 7)
+- **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (5/5 mutantes detectados) probó inversión de validación de checksum, descompresión errónea, escritura prematura antes de validar y filtros de extensión. Las aserciones combinan `assert.match`, `assert.strictEqual` y verificación de espías sobre llamadas a `setItem`.
+- **Mocks que ocultan problemas**: Se falsean los elementos del DOM (`<a>` y `<input type="file">`) y `URL.createObjectURL`. NO se falsea la compresión (`CompressionStream`/`DecompressionStream` gzip real de Node), NO se falsea el hash criptográfico (`crypto.subtle.digest` SHA-256 real de Node), NO se falsean las instancias nativas de `File`/`Blob` ni la codificación UTF-8 multiocteto.
+
 ## Estado
-hecho
+hecho (verificado por mutación y revisión adversarial)

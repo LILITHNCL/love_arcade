@@ -171,5 +171,10 @@ Todas las mutaciones por rama fueron probadas de forma reproducible, verificando
 node --test tests/integration/sentinel-interceptor.test.mjs
 ```
 
+## Revisión adversarial y flakiness (sesión 7)
+- **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (7/7 mutantes detectados) y la aserción de estados intermedios y finales garantizan que ninguna rama del interceptor pasa de forma vacía o falsa.
+- **Mocks que ocultan problemas**: Se falsea `localStorage` (Map en memoria con contrato síncrono estándar y control de cuota), eventos del DOM (`beforeunload`, `DOMContentLoaded`) y Supabase en memoria (`fakeSupabase`). No se falsea la configuración ni el interceptor real de `sentinel.js`. El almacenamiento en memoria respeta la sincronía estricta de Web Storage.
+
 ## Estado
-hecho (verificado por mutación)
+hecho (verificado por mutación y revisión adversarial)

@@ -189,5 +189,10 @@ Se ejecutaron 7 mutaciones reproducibles cubriendo todas las ramas de propagaci�
 node --test tests/integration/immediate-cloud-sync.test.mjs
 ```
 
+## Revisión adversarial y flakiness (sesión 7)
+- **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (7/7 mutantes detectados) probó la eliminación de flags inmediatos en economía, bendición lunar, compleción de niveles, suscripción en Sentinel y despacho en Store. Cada test verifica el contador de upserts hacia Supabase (`upsertLog.length`), los timestamps y el contenido específico del snapshot remoto.
+- **Mocks que ocultan problemas**: Se falsean los servicios remotos de Supabase en memoria (`fakeSupabase`), la red y los eventos de ciclo de vida (`beforeunload`). NO se falsean los módulos de dominio (`state-store.js`, `economy.js`, `moon-blessing.js`, `promo-codes.js`, `game-center.js`), el cálculo matemático de saldo, cashback ni inventario, ni los algoritmos criptográficos reales de `crypto.subtle`.
+
 ## Estado
-hecho
+hecho (verificado por mutación y revisión adversarial)
