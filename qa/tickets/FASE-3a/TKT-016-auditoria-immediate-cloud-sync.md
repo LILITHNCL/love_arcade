@@ -181,8 +181,35 @@ Se ejecutaron 7 mutaciones reproducibles cubriendo todas las ramas de propagaci�
 - **Reversión**: `git checkout -- js/domain/game-center.js`
 - **Confirmación diff producción**: `git diff -- js/domain/game-center.js` → vacío.
 
+### Mutación 8: Rama de suscripción forzando sincronización inmediata sin flag (`sentinel.js:768`)
+- **Descripción**: Forzar `immediateCloudSync = true` incondicionalmente en la suscripción del Store (`_scheduleCloudSync(true)`), provocando que un `Store.save()` estándar sin flag sincronice de inmediato en lugar de respetar el debounce (escenario 2).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_scheduleCloudSync(immediateCloudSync);/_scheduleCloudSync(true);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se guarda sin flag (Store.save()), entonces NO ejecuta subida inmediata antes del debounce (57.2025ms)
+    AssertionError [ERR_ASSERTION]: Un save() estándar no debe subir de inmediato a Supabase (debe esperar debounce)
+    
+    1 !== 0
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:88:20)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 1,
+      expected: 0,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
 ### Resumen de mutación
-7 mutantes ejecutados, 7 detectados y eliminados por la suite, 0 supervivientes.
+8 mutantes ejecutados, 8 detectados y eliminados por la suite, 0 supervivientes.
 
 ## Comando para ejecutarlo
 ```bash
@@ -191,7 +218,7 @@ node --test tests/integration/immediate-cloud-sync.test.mjs
 
 ## Revisión adversarial y flakiness (sesión 7)
 - **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
-- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (7/7 mutantes detectados) probó la eliminación de flags inmediatos en economía, bendición lunar, compleción de niveles, suscripción en Sentinel y despacho en Store. Cada test verifica el contador de upserts hacia Supabase (`upsertLog.length`), los timestamps y el contenido específico del snapshot remoto.
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (8/8 mutantes detectados) probó la eliminación de flags inmediatos en economía, bendición lunar, compleción de niveles, suscripción en Sentinel y despacho en Store. Cada test verifica el contador de upserts hacia Supabase (`upsertLog.length`), los timestamps y el contenido específico del snapshot remoto.
 - **Mocks que ocultan problemas**: Se falsean los servicios remotos de Supabase en memoria (`fakeSupabase`), la red y los eventos de ciclo de vida (`beforeunload`). NO se falsean los módulos de dominio (`state-store.js`, `economy.js`, `moon-blessing.js`, `promo-codes.js`, `game-center.js`), el cálculo matemático de saldo, cashback ni inventario, ni los algoritmos criptográficos reales de `crypto.subtle`.
 
 ## Estado

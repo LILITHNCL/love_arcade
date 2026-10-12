@@ -166,6 +166,32 @@ Todas las mutaciones por rama fueron probadas de forma reproducible, verificando
 - **Reversión**: `git checkout -- js/cloud/sentinel.js`
 - **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
 
+### Mutación 8: Rama de propagación de excepciones de cuota en setItem (`sentinel.js:448`)
+- **Descripción**: Capturar y silenciar `QuotaExceededError` dentro de `interceptedSetItem` en lugar de propagar la excepción intacta al llamador (escenario 8).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_originalSetItem(key, value);/try { _originalSetItem(key, value); } catch (e) { return; }/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un fallo de cuota (QuotaExceededError) en setItem, cuando se invoca, entonces propaga el error al llamador sin romper el interceptor ni actualizar el timestamp indebidamente (44.853386ms)
+    AssertionError [ERR_ASSERTION]: Missing expected exception.
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/sentinel-interceptor.test.mjs:211:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: undefined,
+      operator: 'throws',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Resumen de mutación
+8 mutantes ejecutados, 8 detectados y eliminados por la suite, 0 supervivientes.
+
 ## Comando para ejecutarlo
 ```bash
 node --test tests/integration/sentinel-interceptor.test.mjs
@@ -173,7 +199,7 @@ node --test tests/integration/sentinel-interceptor.test.mjs
 
 ## Revisión adversarial y flakiness (sesión 7)
 - **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
-- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (7/7 mutantes detectados) y la aserción de estados intermedios y finales garantizan que ninguna rama del interceptor pasa de forma vacía o falsa.
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (8/8 mutantes detectados) y la aserción de estados intermedios y finales garantizan que ninguna rama del interceptor pasa de forma vacía o falsa.
 - **Mocks que ocultan problemas**: Se falsea `localStorage` (Map en memoria con contrato síncrono estándar y control de cuota), eventos del DOM (`beforeunload`, `DOMContentLoaded`) y Supabase en memoria (`fakeSupabase`). No se falsea la configuración ni el interceptor real de `sentinel.js`. El almacenamiento en memoria respeta la sincronía estricta de Web Storage.
 
 ## Estado

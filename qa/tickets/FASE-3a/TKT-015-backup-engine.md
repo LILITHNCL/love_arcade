@@ -210,8 +210,204 @@ Se ejecutaron 5 mutaciones reproducibles cubriendo las ramas críticas de valida
 - **Reversión**: `git checkout -- js/backup-engine.js`
 - **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
 
+### Mutación 6: Rama de delegación a Web Worker (`backup-engine.js:123-125`)
+- **Descripción**: Forzar error en `_workerBackupTask`, simulando que el helper del worker no está disponible o falla incondicionalmente (escenario 2).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/if (typeof window.workerTask !== '\''function'\'')/if (true)/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado soporte de Web Worker activo (workerTask), cuando se exporta y reimporta, entonces ejecuta las tareas en el worker con paridad de formato (96.561042ms)
+    AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+    
+      assert.ok(workerInvocations.includes('backup-export'))
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:124:16)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: '==',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 7: Rama de codificación multiocteto Unicode >0xFF (`backup-engine.js:101`)
+- **Descripción**: Truncar o eliminar caracteres fuera de ASCII estándar en `_toGzipBlob` (`text.replace(/[^\x00-\x7F]/g, '')`), simulando corrupción de emojis, kanjis y diacríticos (escenario 3).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/const stream = new Blob(\[text\],/const stream = new Blob([text.replace(\/[^\\x00-\\x7F]\/g, "")],/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado texto con caracteres Unicode (>0xFF), cuando se hace el ida y vuelta, entonces preserva exactamente emojis, caracteres multiocteto y acentos (32.684532ms)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    false !== true
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:156:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 8: Rama de validación de archivo nulo o indefinido (`backup-engine.js:183`)
+- **Descripción**: Desactivar la guarda inicial `if (!file)` en `importBackupFromFile` (escenario 6).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/if (!file) throw new Error/if (false) throw new Error/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado entrada nula o indefinida, cuando se importa, entonces rechaza con mensaje guiado (16.625052ms)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + "Cannot read properties of null (reading 'name')"
+    - 'Selecciona un archivo .labak o .labak.gz.'
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:251:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: "Cannot read properties of null (reading 'name')",
+      expected: 'Selecciona un archivo .labak o .labak.gz.',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 9: Rama de archivo vacío o no gzip (`backup-engine.js:188`)
+- **Descripción**: Retornar éxito prematuro si `file.size === 0` en `importBackupFromFile` en lugar de procesar y validar el flujo gzip (escenario 7).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/let jsonText = '\'''\'';/let jsonText = '\'''\''; if (file.size === 0) return { success: true, restored: 0 };/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un archivo vacío o no comprimido con gzip, cuando se importa, entonces rechaza controladamente sin lanzar excepción no capturada (19.393021ms)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    true !== false
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:265:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: true,
+      expected: false,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 10: Rama de validación de estructura de envoltorio / keys (`backup-engine.js:117`)
+- **Descripción**: Omitir la validación del campo `payload.keys` en `_validateEnvelope` (`!payload.checksum || !payload.keys ...` cambiado a `!payload.checksum`) (escenario 8).
+  *(Nota de proceso: el mutante inicial sobrevivió debido a que el subtest original no incluía `checksum` en el payload incompleto; el test fue reforzado en commit independiente y la mutación repetida confirmó la detección).*
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/!payload.checksum || !payload.keys || typeof payload.keys !== '\''object'\''/!payload.checksum/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un archivo gzip con contenido JSON malformado o envoltorio incompleto, cuando se valida, entonces rechaza sin mutar (38.129427ms)
+    AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Estructura de respaldo incompleta/. Input:
+    
+    'Integridad inválida: checksum SHA-256 no coincide.'
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:296:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: 'Integridad inválida: checksum SHA-256 no coincide.',
+      expected: /Estructura de respaldo incompleta/,
+      operator: 'match',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 11: Rama de fallo de cuota de disco QuotaExceededError en setItem (`backup-engine.js:217`)
+- **Descripción**: Capturar silenciosamente el error de `localStorage.setItem` y retornar éxito falso en lugar de propagar la excepción hacia el catch general (escenario 9).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/localStorage.setItem(key, value);/try { localStorage.setItem(key, value); } catch (_) { return { success: true, restored: entries.length }; }/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un error de cuota (QuotaExceededError) al escribir en storage durante importación, cuando ocurre, entonces captura el error y reporta fallo (29.312553ms)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    true !== false
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:326:16)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: true,
+      expected: false,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
+### Mutación 12: Rama de reseteo de valor en triggerImportPicker (`backup-engine.js:230`)
+- **Descripción**: Omitir `inputEl.value = ''` antes del clic nativo en `triggerImportPicker` (escenario 10).
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/inputEl.value = '\'''\'';/\/\/ inputEl.value = '\'''\'';/' js/backup-engine.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un input file, cuando se invoca triggerImportPicker, entonces resetea el valor y dispara el click nativo (14.634844ms)
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'previous_path.labak'
+    - ''
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/backup-engine.test.mjs:344:16)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1382:25)
+        at Suite.processPendingSubtests (node:internal/test_runner/test:960:18) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: 'previous_path.labak',
+      expected: '',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ```
+- **Reversión**: `git checkout -- js/backup-engine.js`
+- **Confirmación diff producción**: `git diff -- js/backup-engine.js` → vacío.
+
 ### Resumen de mutación
-5 mutantes ejecutados, 5 detectados y eliminados por la suite, 0 supervivientes.
+12 mutantes ejecutados, 12 detectados y eliminados por la suite, 0 supervivientes.
 
 ## Comando para ejecutarlo
 ```bash
@@ -220,7 +416,7 @@ node --test tests/integration/backup-engine.test.mjs
 
 ## Revisión adversarial y flakiness (sesión 7)
 - **Flakiness**: 3 ejecuciones consecutivas idénticas de `npm test` produjeron exactamente 135 tests, 116 pass, 0 fail, 19 todo (0 fallos intermitentes).
-- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (5/5 mutantes detectados) probó inversión de validación de checksum, descompresión errónea, escritura prematura antes de validar y filtros de extensión. Las aserciones combinan `assert.match`, `assert.strictEqual` y verificación de espías sobre llamadas a `setItem`.
+- **Riesgo de tests que pasarían con funcionalidad rota**: La verificación por mutación (12/12 mutantes detectados) probó inversión de validación de checksum, descompresión errónea, escritura prematura antes de validar, filtros de extensión, delegación a worker, caracteres multiocteto Unicode, inputs nulos, archivos vacíos, estructuras de envoltorio incompletas, fallos de cuota de disco y reseteo de pickers DOM. Las aserciones combinan `assert.match`, `assert.strictEqual` y verificación de espías sobre llamadas a `setItem`.
 - **Mocks que ocultan problemas**: Se falsean los elementos del DOM (`<a>` y `<input type="file">`) y `URL.createObjectURL`. NO se falsea la compresión (`CompressionStream`/`DecompressionStream` gzip real de Node), NO se falsea el hash criptográfico (`crypto.subtle.digest` SHA-256 real de Node), NO se falsean las instancias nativas de `File`/`Blob` ni la codificación UTF-8 multiocteto.
 
 ## Estado
