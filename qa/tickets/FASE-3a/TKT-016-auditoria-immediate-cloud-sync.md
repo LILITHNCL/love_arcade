@@ -52,12 +52,137 @@ Test de integración con `node:test` y `node:assert/strict`, ejecutado en el san
 - [x] Inconsistencia comprobada por comportamiento: `buyMoonBlessing`, `redeemPromoCode` e `importSave` guardan sin flag y no sincronizan de inmediato (sincronizan diferidamente tras debounce / beforeunload).
 - [x] Cola de reintento offline al iniciar sesión documentada bajo BUG-F3a-02 con test `todo`.
 
-## Mutaciones planeadas por rama (verificación en sesión 5)
-1. **Rama de propagación de flag en `state-store.js:140`**: cambiar `{ immediateCloudSync = false }` para forzar siempre `false`. Fallarán los tests de sincronización inmediata de economía y bendición lunar al no notificar el flag a Sentinel.
-2. **Rama de suscripción en `sentinel.js:768`**: omitir la llamada `_scheduleCloudSync(immediateCloudSync)` en `LoveArcadeStore.subscribe`. Fallará la subida inmediata hacia Supabase en todas las operaciones.
-3. **Rama de condición inmediata en `sentinel.js:756`**: cambiar `if (immediate && sentinel.syncNow)` por `if (false)`. Fallará la subida inmediata en idle/macrotask, postergando todas las escrituras al debounce.
-4. **Rama de guardado en `economy.js:32`**: cambiar `Store.save({ immediateCloudSync: true })` por `Store.save()`. Fallará el test de subida inmediata de `buyItem`.
-5. **Rama de guardado en `moon-blessing.js:46`**: cambiar `Store.save({ immediateCloudSync: true })` por `Store.save()`. Fallará el test de `extendMoonBlessingDays`.
+## Verificación por mutación (P1)
+Se ejecutaron 7 mutaciones reproducibles cubriendo todas las ramas de propagación del flag, suscripción en Sentinel, despacho inmediato y módulos de dominio en producción.
+
+### Mutación 1: Rama de propagación de flag en `state-store.js:140`
+- **Descripción**: Forzar `immediateCloudSync = false` en `LoveArcadeStore.save`, anulando la propagación del flag hacia los suscriptores.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/const { immediateCloudSync = false } = options;/const immediateCloudSync = false;/' js/core/state-store.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se guarda con immediateCloudSync: true, entonces sube a Supabase inmediatamente y emite la:synced (118.643177ms)
+    AssertionError [ERR_ASSERTION]: Debe ejecutar un upsert inmediato en Supabase
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:45:20)
+  ```
+- **Reversión**: `git checkout -- js/core/state-store.js`
+- **Confirmación diff producción**: `git diff -- js/core/state-store.js` → vacío.
+
+### Mutación 2: Rama de suscripción al Store en Sentinel (`sentinel.js:768`)
+- **Descripción**: Omitir la invocación de `_scheduleCloudSync(immediateCloudSync)` dentro del callback de suscripción a `window.LoveArcadeStore`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/if (source === '\''save'\'' && notifyCloud) _scheduleCloudSync(immediateCloudSync);/\/\/ if (source === '\''save'\'' && notifyCloud) _scheduleCloudSync(immediateCloudSync);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se guarda con immediateCloudSync: true, entonces sube a Supabase inmediatamente y emite la:synced (116.520573ms)
+    AssertionError [ERR_ASSERTION]: Debe ejecutar un upsert inmediato en Supabase
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:45:20)
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 3: Rama de sincronización inmediata en Sentinel (`sentinel.js:756`)
+- **Descripción**: Desactivar la rama inmediata en `_syncCloudIfNeeded`, forzando que todas las sincronizaciones esperen el debounce estándar.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/if (immediate && sentinel.syncNow) sentinel.syncNow();/if (false) sentinel.syncNow();/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se guarda con immediateCloudSync: true, entonces sube a Supabase inmediatamente y emite la:synced (126.201771ms)
+    AssertionError [ERR_ASSERTION]: Debe ejecutar un upsert inmediato en Supabase
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:45:20)
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 4: Rama de guardado inmediato en compra de artículo (`economy.js:32`)
+- **Descripción**: Quitar el flag `{ immediateCloudSync: true }` en `buyItem`, guardando con `Store.save()`.
+- **Comando reproducible**:
+  ```bash
+  sed -i '32s/{ immediateCloudSync: true }/{}/' js/domain/economy.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado compra en tienda (buyItem), cuando se ejecuta, entonces deduce monedas, agrega item y sincroniza inmediatamente (95.401458ms)
+    AssertionError [ERR_ASSERTION]: buyItem debe disparar sincronización inmediata
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:139:20)
+  ```
+- **Reversión**: `git checkout -- js/domain/economy.js`
+- **Confirmación diff producción**: `git diff -- js/domain/economy.js` → vacío.
+
+### Mutación 5: Rama de guardado inmediato en gasto de monedas (`economy.js:43`)
+- **Descripción**: Quitar el flag `{ immediateCloudSync: true }` en `spendCoins`, guardando con `Store.save()`.
+- **Comando reproducible**:
+  ```bash
+  sed -i '43s/{ immediateCloudSync: true }/{}/' js/domain/economy.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado gasto de monedas (spendCoins), cuando se ejecuta, entonces deduce saldo y sincroniza inmediatamente (64.403541ms)
+    AssertionError [ERR_ASSERTION]: spendCoins debe disparar sincronización inmediata
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:172:20)
+  ```
+- **Reversión**: `git checkout -- js/domain/economy.js`
+- **Confirmación diff producción**: `git diff -- js/domain/economy.js` → vacío.
+
+### Mutación 6: Rama de guardado inmediato en extensión de Bendición Lunar (`moon-blessing.js:46`)
+- **Descripción**: Quitar el flag `{ immediateCloudSync: true }` en `extendMoonBlessingDays`, guardando con `Store.save()`.
+- **Comando reproducible**:
+  ```bash
+  sed -i '46s/{ immediateCloudSync: true }/{}/' js/domain/moon-blessing.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado extendMoonBlessingDays, cuando se invoca, entonces extiende la expiración y sincroniza inmediatamente (84.3275ms)
+    AssertionError [ERR_ASSERTION]: extendMoonBlessingDays debe disparar sincronización inmediata
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:236:20)
+  ```
+- **Reversión**: `git checkout -- js/domain/moon-blessing.js`
+- **Confirmación diff producción**: `git diff -- js/domain/moon-blessing.js` → vacío.
+
+### Mutación 7: Rama de guardado inmediato en compleción de nivel (`game-center.js:22`)
+- **Descripción**: Quitar el flag `{ immediateCloudSync: true }` en `completeLevel`, guardando con `Store.save()`.
+- **Comando reproducible**:
+  ```bash
+  sed -i '22s/{ immediateCloudSync: true }/{}/' js/domain/game-center.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado completeLevel en GameCenter, cuando se completa nivel nuevo, entonces acredita recompensa y sincroniza inmediatamente (83.973437ms)
+    AssertionError [ERR_ASSERTION]: completeLevel debe disparar sincronización inmediata
+    
+    0 !== 1
+    
+        at TestContext.<anonymous> (file:///data/data/com.termux/files/home/proyectos/love_arcade/tests/integration/immediate-cloud-sync.test.mjs:405:20)
+  ```
+- **Reversión**: `git checkout -- js/domain/game-center.js`
+- **Confirmación diff producción**: `git diff -- js/domain/game-center.js` → vacío.
+
+### Resumen de mutación
+7 mutantes ejecutados, 7 detectados y eliminados por la suite, 0 supervivientes.
 
 ## Comando para ejecutarlo
 ```bash
