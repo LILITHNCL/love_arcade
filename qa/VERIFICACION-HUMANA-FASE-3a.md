@@ -53,7 +53,7 @@ Ejecutar desde la raíz del repositorio (`/data/data/com.termux/files/home/proye
    ```bash
    node tests/static/documentation-static-qa.mjs
    ```
-   *Resultado esperado*: `Documentation static QA passed: 77 Markdown files checked, no broken links or references to removed historical docs.` Código `0`.
+   *Resultado esperado*: `Documentation static QA passed: 78 Markdown files checked, no broken links or references to removed historical docs.` Código `0`.
 
 ---
 
@@ -86,8 +86,8 @@ Auditoría contra `index.html`, `js/shop-logic.js` y `js/backup-engine.js`:
 - **"Restaurar partida"**:
   - `[verificado]` como encabezado de tarjeta: `<h3 class="memory-card__title">Restaurar partida</h3>` (`index.html:686`).
   - `[verificado]` como descripción de tarjeta: `<p class="memory-card__sub">Elige un respaldo guardado para recuperar tu progreso.</p>` (`index.html:687`).
-- **"Importar respaldo"**:
-  - `[texto no verificado]` en la UI visible como botón — No existe ningún botón con este texto exacto. El botón de importación dice textualmente **"Restaurar progreso"** (`index.html:700`). Sin embargo, el mensaje dinámico tras elegir archivo indica: `"Archivo \"<nombre>\" listo. Haz clic en Importar."` (`js/shop-logic.js:1819`).
+- **"Importar respaldo" vs "Restaurar progreso" (Inconsistencia de copy en UI)**:
+  - `[inconsistencia registrada]`: No existe ningún botón con el texto exacto "Importar respaldo". El botón de importación dice textualmente **"Restaurar progreso"** (`index.html:700`). Sin embargo, tras elegir un archivo `.labak`, el mensaje de feedback dinámico indica: `"Archivo \"<nombre>\" listo. Haz clic en Importar."` (`js/shop-logic.js:1819`), instruyendo al usuario a hacer clic en un botón "Importar" que no coincide con la etiqueta real `"Restaurar progreso"` de la interfaz. Se documenta como inconsistencia de redacción entre lógica (`js/shop-logic.js`) y plantilla (`index.html`).
 - **Modal de advertencia de restauración**:
   - `[verificado]` título del modal: `'Importar partida'` (`js/shop-logic.js:1504`).
   - `[verificado]` advertencia de sustitución: `"Esto reemplazará tu progreso actual (monedas, wallpapers, racha y ajustes)... Esta acción no se puede deshacer."` (`js/shop-logic.js:1506-1509`).
@@ -221,6 +221,30 @@ await window.Sentinel.syncNow();
   }
   ```
 
+### 4.3 GameCenter y LoveArcadeStore (Manipulación y consulta en consola)
+
+#### Consultar saldo (`window.GameCenter.getBalance`)
+```javascript
+const balance = window.GameCenter.getBalance();
+console.log(balance);
+```
+- **Disponibilidad**: `[verificado]` en `js/domain/game-center.js:71` -> `js/domain/economy.js:61-63`.
+- **Forma de respuesta**: Retorna un número primitivo (`number`), por ejemplo `150` o `0` (`Store.getStore().coins`).
+
+#### Sincronizar elementos visuales del HUD (`window.GameCenter.syncUI`)
+```javascript
+window.GameCenter.syncUI();
+```
+- **Disponibilidad**: `[verificado]` en `js/domain/game-center.js:104` (invoca el handler registrado por `js/ui/hud-render.js:289` mediante `window.LoveArcadeGameCenter.setUIRefreshHandler`).
+- **Forma de respuesta**: Retorna `undefined`. Actualiza de inmediato el contador de monedas, racha y elementos visuales del HUD en pantalla.
+
+#### Modificar y guardar estado local (`window.LoveArcadeStore`)
+```javascript
+window.LoveArcadeStore.getStore().coins = 0;
+window.LoveArcadeStore.save();
+```
+- **Disponibilidad**: `[verificado]` en `js/core/state-store.js:169-174`.
+
 ---
 
 ## 5. Instrucciones de verificación manual para el usuario
@@ -241,11 +265,11 @@ await window.Sentinel.syncNow();
      - El botón vuelve a habilitarse.
 4. **Paso 2: Modificar el estado local (alterar monedas)**:
    - Abre la consola de desarrollo del navegador (`F12`).
-   - Consulta el saldo actual:
+   - Consulta el saldo actual (`[verificado]` `window.GameCenter.getBalance()` retorna `number`):
      ```javascript
      console.log('Saldo antes:', window.GameCenter.getBalance());
      ```
-   - Altera el saldo local a 0 para simular pérdida de progreso:
+   - Altera el saldo local a 0 para simular pérdida de progreso (`[verificado]` `window.GameCenter.syncUI()` actualiza el HUD y retorna `undefined`):
      ```javascript
      window.LoveArcadeStore.getStore().coins = 0;
      window.LoveArcadeStore.save();
@@ -280,16 +304,29 @@ await window.Sentinel.syncNow();
    - La etiqueta de cuenta debe indicar `Estado: Invitado` o `Estado: Sin sesión`.
 3. Haz clic en **"Gestionar cuenta"** (`#btn-cloud-open-gatekeeper`, `index.html:728`).
    - Se despliega el modal del Gatekeeper (`#cloud-gatekeeper-modal`).
-   - Ingresa credenciales de prueba y pulsa iniciar sesión.
-4. **Comportamiento esperado tras inicio de sesión exitoso**:
-   - El modal se cierra automáticamente.
-   - El badge de estado pasa a `Sincronizado` (verde `#68d391`).
-   - El estado de cuenta pasa a `Estado: En línea`.
+   - Ingresa credenciales de prueba de una cuenta nueva (o sin registro previo en la nube) que posea progreso acumulado localmente (ej. monedas o niveles jugados como invitado) y pulsa iniciar sesión.
+4. **Comprobación en la tabla `user_profiles` de Supabase (Predicción BUG-F3a-02)**:
+   - Inmediatamente tras autenticarse, antes de que el badge pase a reportar sincronización o se realicen mutaciones adicionales:
+   - Comprueba en la tabla `user_profiles` de Supabase (desde el panel web de Supabase SQL Editor / Table Editor o mediante consulta desde consola) si existe la fila del usuario recién autenticado con su progreso local en `game_data`:
+     ```javascript
+     const user = (await window._supabaseClient?.auth.getUser())?.data?.user;
+     const { data: profile } = await window._supabaseClient?.from('user_profiles').select('*').eq('id', user?.id).maybeSingle();
+     console.log('Fila de user_profiles tras login:', profile);
+     ```
+   - **Anotación BUG-F3a-02**: El bug documentado **BUG-F3a-02** predice que la fila **NO** se crea en Supabase tras iniciar sesión (`SIGNED_IN`), debido a que la guarda `_isRestoringSession` en `_sentinelSync` aborta silenciosamente la subida inicial. La fila en `user_profiles` no se creará hasta que se produzca la siguiente escritura de una clave vigilada (por ejemplo, al ganar monedas o cambiar ajustes locales, lo que dispara el interceptor con debounce).
+5. **Comportamiento visual de la interfaz tras inicio de sesión**:
+   - El modal del Gatekeeper se cierra automáticamente.
+   - El badge de estado pasa a `Sincronizado` (verde `#68d391`) y el estado de cuenta pasa a `Estado: En línea` (nótese la discrepancia: la UI reporta "Sincronizado" pese a que la subida inicial fue abortada por BUG-F3a-02).
    - Se muestra la fecha y hora de la última sincronización en `Última sincronización: <fecha>`.
-5. **Comprobación de sincronización reactiva (interceptor de localStorage)**:
-   - Realiza una acción de juego o compra en la tienda (p. ej. comprar un wallpaper).
+6. **Comprobación de sincronización reactiva (interceptor de localStorage)**:
+   - Realiza una acción de juego o compra en la tienda (p. ej. comprar un wallpaper o ganar monedas).
    - Abre DevTools y observa los eventos de red o escucha el evento `la:synced`:
      ```javascript
      document.addEventListener('la:synced', (e) => console.log('Sincronizado a Supabase:', e.detail));
      ```
-   - Tras 1 segundo de inactividad (debounce), el Sentinel ejecuta `upsert` a `user_profiles` y se dispara el evento `la:synced`.
+   - Tras 1 segundo de inactividad (debounce), el Sentinel ejecuta `upsert` a `user_profiles`, se crea la fila en la tabla y se dispara el evento `la:synced`.
+7. **Comprobación opcional de R7 (reloj desfasado entre dos dispositivos — BUG-F3a-01)**:
+   - Simula dos dispositivos: en el Dispositivo A guarda un progreso bajo (ej. 50 monedas) pero con reloj adelantado en el sistema operativo (o marca temporal futura en Supabase).
+   - En el Dispositivo B (con reloj en hora normal o atrasado), acumula un progreso legítimo superior (ej. 1000 monedas).
+   - Inicia sesión en el Dispositivo B con la cuenta de Supabase.
+   - **Resultado esperado vs fallo documentado (BUG-F3a-01 / R7)**: Al resolver LWW (`_resolveLwwSync`), el sistema compara únicamente las marcas de tiempo (`cloudTime > localTime`). Debido al desfase del reloj, el snapshot obsoleto de la nube (50 monedas) sobreescribe destructivamente las 1000 monedas locales más avanzadas, confirmando la vulnerabilidad R7.
