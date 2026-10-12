@@ -47,13 +47,124 @@ Test de integración con `node:test` y `node:assert/strict`, ejecutado en el san
 - [x] Múltiples escrituras y borrados en secuencia mantienen consistencia de timestamps y valores.
 - [x] Fallos de cuota se propagan limpiamente sin romper el interceptor ni dejar marcas falsas.
 
-## Mutaciones planeadas por rama (verificación en sesión 5)
-1. **Rama de verificación de claves vigiladas** (`sentinel.js:434`): invertir condición `!SENTINEL_WATCHED_KEYS.has(key)`. Falla escenario 2 (marcaría dirty para claves no vigiladas).
-2. **Rama de marca de tiempo** (`sentinel.js:436`): comentar `_originalSetItem(SENTINEL_TS_KEY, ...)`. Falla escenario 1, 3 y 7 (no actualizaría timestamp).
-3. **Rama de interceptor setItem** (`sentinel.js:449`): comentar `_markWatchedKeyDirty(key, ...)`. Falla escenario 1 (no registraría escrituras vigiladas).
-4. **Rama de interceptor removeItem** (`sentinel.js:461`): comentar `_markWatchedKeyDirty(key, ...)`. Falla escenario 3 (no registraría borrados de vigiladas).
-5. **Rama de sesión activa** (`sentinel.js:434`): omitir la comprobación `!_sbSession`. Falla escenario 5 (marcaría dirty en modo invitado).
-6. **Rama de persistencia original** (`sentinel.js:448`): omitir `_originalSetItem(key, value)`. Falla escenario 1, 2 y 6 (no guardaría en local).
+## Verificación por mutación (ejecutada en sesión 5)
+
+Todas las mutaciones por rama fueron probadas de forma reproducible, verificando que los tests de `sentinel-interceptor.test.mjs` detectan y hacen fallar cada mutante. Ningún mutante sobrevivió.
+
+### Mutación 1: Rama de verificación de claves vigiladas (`sentinel.js:434`)
+- **Descripción**: Invertir la condición `!SENTINEL_WATCHED_KEYS.has(key)` por `SENTINEL_WATCHED_KEYS.has(key)`. Claves no vigiladas marcarían dirty y claves vigiladas se ignorarían.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/!SENTINEL_WATCHED_KEYS.has(key)/SENTINEL_WATCHED_KEYS.has(key)/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se escribe una clave vigilada, entonces marca dirty y actualiza el timestamp en localStorage
+    AssertionError [ERR_ASSERTION]: Debe registrar la marca de tiempo de sincronización en Sentinel
+        actual: null, expected: true, operator: '=='
+  ✖ dado una sesión activa, cuando se escribe una clave no vigilada, entonces persiste el valor pero NO actualiza timestamp ni marca dirty
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual: '2026-10-12T13:09:41.018Z'
+    - expected: null
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 2: Rama de actualización de marca de tiempo (`sentinel.js:436`)
+- **Descripción**: Omitir la escritura del timestamp `love_arcade_sentinel_ts` en `_markWatchedKeyDirty`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_originalSetItem(SENTINEL_TS_KEY, new Date().toISOString());/\/\/ _originalSetItem(SENTINEL_TS_KEY, new Date().toISOString());/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se escribe una clave vigilada, entonces marca dirty y actualiza el timestamp en localStorage
+    AssertionError [ERR_ASSERTION]: Debe registrar la marca de tiempo de sincronización en Sentinel
+        actual: null, expected: true, operator: '=='
+  ✖ dado una sesión activa, cuando se ejecuta removeItem de una clave vigilada, entonces la elimina, marca dirty y actualiza el timestamp
+    AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value: assert.ok(tsAfterSet)
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 3: Rama de interceptor setItem marca dirty (`sentinel.js:449`)
+- **Descripción**: Omitir `_markWatchedKeyDirty(key, prevValue, value)` dentro de `interceptedSetItem`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_markWatchedKeyDirty(key, prevValue, value);/\/\/ _markWatchedKeyDirty(key, prevValue, value);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se escribe una clave vigilada, entonces marca dirty y actualiza el timestamp en localStorage
+    AssertionError [ERR_ASSERTION]: Debe registrar la marca de tiempo de sincronización en Sentinel
+        actual: null, expected: true, operator: '=='
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 4: Rama de interceptor removeItem marca dirty (`sentinel.js:461`)
+- **Descripción**: Omitir `_markWatchedKeyDirty(key, prevValue, null)` dentro de `interceptedRemoveItem`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_markWatchedKeyDirty(key, prevValue, null);/\/\/ _markWatchedKeyDirty(key, prevValue, null);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se ejecuta removeItem de una clave vigilada, entonces la elimina, marca dirty y actualiza el timestamp
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    1 !== 2
+        actual: 1, expected: 2, operator: 'strictEqual'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 5: Rama de verificación de sesión activa (`sentinel.js:434`)
+- **Descripción**: Omitir la comprobación `!_sbSession` en `_markWatchedKeyDirty`, permitiendo marcas dirty en modo invitado.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/|| !_sbSession/|| false/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado un usuario invitado (sin sesión activa), cuando escribe o borra claves vigiladas, entonces NO actualiza timestamp ni programa sincronización
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual: '2026-10-12T13:13:32.984Z'
+    - expected: null
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 6: Rama de persistencia original en setItem (`sentinel.js:448`)
+- **Descripción**: Omitir `_originalSetItem(key, value)` en `interceptedSetItem`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_originalSetItem(key, value);/\/\/ _originalSetItem(key, value);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se escribe una clave vigilada, entonces marca dirty y actualiza el timestamp en localStorage
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual: undefined
+    - expected: '{"coins":350}'
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
+
+### Mutación 7: Rama de persistencia original en removeItem (`sentinel.js:460`)
+- **Descripción**: Omitir `_originalRemoveItem(key)` en `interceptedRemoveItem`.
+- **Comando reproducible**:
+  ```bash
+  sed -i 's/_originalRemoveItem(key);/\/\/ _originalRemoveItem(key);/' js/cloud/sentinel.js
+  ```
+- **Salida real del test que falla**:
+  ```
+  ✖ dado una sesión activa, cuando se ejecuta removeItem de una clave vigilada, entonces la elimina, marca dirty y actualiza el timestamp
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual: '{"puzzleId":"p1","placed":[1,2]}'
+    - expected: undefined
+  ```
+- **Reversión**: `git checkout -- js/cloud/sentinel.js`
+- **Confirmación diff producción**: `git diff -- js/cloud/sentinel.js` → vacío.
 
 ## Comando para ejecutarlo
 ```bash
@@ -61,4 +172,4 @@ node --test tests/integration/sentinel-interceptor.test.mjs
 ```
 
 ## Estado
-hecho
+hecho (verificado por mutación)
