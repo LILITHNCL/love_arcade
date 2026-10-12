@@ -288,6 +288,18 @@ describe('QA (F3a): BackupEngine - Exportación e importación .labak (TKT-015)'
         assert.equal(resMissing.success, false);
         assert.match(resMissing.message, /Estructura de respaldo incompleta/);
         assert.equal(env.storage.get('initial'), '1');
+
+        // 3. Envoltorio con checksum pero con keys ausente o inválido (no objeto)
+        const missingKeysFile = await env.createBackupFile({ version: 1, checksum: 'dummy_checksum', keys: null }, 'no-keys.labak');
+        const resNoKeys = await BackupEngine.importBackupFromFile(missingKeysFile);
+        assert.equal(resNoKeys.success, false);
+        assert.match(resNoKeys.message, /Estructura de respaldo incompleta/);
+
+        // 4. Envoltorio con keys válidas pero sin checksum
+        const missingChecksumFile = await env.createBackupFile({ version: 1, keys: { safe: 'true' } }, 'no-checksum.labak');
+        const resNoChecksum = await BackupEngine.importBackupFromFile(missingChecksumFile);
+        assert.equal(resNoChecksum.success, false);
+        assert.match(resNoChecksum.message, /Estructura de respaldo incompleta/);
     });
 
     it('dado un error de cuota (QuotaExceededError) al escribir en storage durante importación, cuando ocurre, entonces captura el error y reporta fallo', async () => {
