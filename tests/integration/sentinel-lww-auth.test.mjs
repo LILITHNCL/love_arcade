@@ -163,12 +163,18 @@ describe('QA (F3a): Sentinel - Last-Write-Wins al iniciar sesión (TKT-014)', ()
             }
         });
 
+        let cloudSyncedFired = false;
+        env.context.document.addEventListener('la:cloudsynced', () => {
+            cloudSyncedFired = true;
+        });
+
         await env.login({ user: { id: 'user-tie-same', email: 'gamer4@example.com' } });
 
         // No hay subida ni descarga reactiva
         assert.equal(env.fakeSupabase.upsertLog.length, 0);
         assert.equal(env.LoveArcadeStore.getStore().coins, 300);
         assert.equal(env.context.localStorage.getItem(env.SENTINEL_TS_KEY), sameTs);
+        assert.equal(cloudSyncedFired, false, 'No debe emitir la:cloudsynced en empate idéntico');
     });
 
     it('dado un usuario nuevo sin datos en la nube (nube vacía), cuando se inicia sesión, entonces debería subir el snapshot local inicial a la nube', { todo: 'BUG-F3a-02: _sentinelSync es abortado en _handleAuthChange porque _isRestoringSession está activo' }, async () => {
