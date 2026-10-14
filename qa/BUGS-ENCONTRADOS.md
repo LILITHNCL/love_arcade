@@ -14,14 +14,14 @@
 - **Archivo y línea**: `tests/daily-streak-hub-qa.mjs` (Línea 12).
 - **Comportamiento esperado vs real**: Se esperaba que el HTML incluyera la atribución textualmente, pero no aparece ninguna en ninguna página.
 - **Test**: `assert.match(html,/Animación “Dynamic streak fire” por aristote · CC BY/);`
-- **Estado**: pendiente de decisión del usuario (decidir si el .txt basta como atribución o hay que mostrarla en la interfaz).
+- **Estado**: Decisión del usuario: la atribución queda solo en documentación, no en la app. El todo actual contradice la decisión y se resuelve en F6.
 
 ### 4. Opacidad hardcodeada rompe theming (glow)
 - **Descripción**: El estado "available" del glow tiene opacidad fijada en duro en lugar de usar el design token.
 - **Archivo y línea**: `styles.css` (líneas 1123 y 1130).
 - **Comportamiento esperado vs real**: Se esperaba que usara la variable `--streak-rive-glow-available-opacity` (.58), pero está fijado a `.78`.
 - **Test**: `assert.match(css,/\.player-hud__glow-layer\[data-state="available"\][\s\S]*?opacity:var\(--streak-rive-glow-available-opacity\)/);`
-- **Estado**: hallazgo de diseño, decisión del usuario: ¿.58 o .78?
+- **Estado**: Decisión del usuario: la opacidad correcta del estado available es .78. El todo actual contradice la decisión y se resuelve en F6.
 
 ### Bug F2a-01: Pérdida de historial en memoria tras doble fallo de cuota
 - **Descripción**: Si falla el reintento de guardado en `emergencyCleanup` (debido a cuota de disco exhausta), se borra el historial con `store.history = []` en memoria. Existe una notificación (toast) indicando que no se pudo guardar, pero el estado en memoria queda corrupto sin el historial. Esto se convierte en una pérdida de datos real cuando ocurre el siguiente guardado exitoso, que persistirá el vacío.
