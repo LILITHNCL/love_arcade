@@ -19,7 +19,7 @@
 | Interferencia de SW en peticiones mutables | El frontend realiza una petición POST (ej. telemetría en `/api/report`) | SW intercepta o corrompe peticiones con métodos distintos a GET rompiendo el flujo de red nativo | `sw.js:114` |
 | Almacenamiento indiscriminado de errores y API en caché (R8) | El cliente solicita `/api/client-config` o un recurso inexistente (404/500) del mismo origen | SW guarda en caché respuestas no exitosas (`!response.ok`) o endpoints dinámicos no-store perpetuando el error | `sw.js:132-142` |
 | Cachés obsoletas acumuladas en cliente | Despliegue de nueva versión de la app con nombre de caché actualizado | El evento `activate` no purga las claves antiguas de `caches` consumiendo cuota de disco innecesaria | `sw.js:105-111` |
-| Precache atómico con 404 (R9) | Un archivo listado en `PRECACHE_FILES` no existe en el servidor | En navegadores reales `cache.addAll()` aborta atómicamente; no testeable mediante mock sintético | `sw.js:95-102` |
+| Precache en disco vs atomicidad con addAll (R9) | Un archivo listado en `PRECACHE_FILES` no existe en el servidor | En disco se comprueba la existencia de cada ruta; en navegadores reales `cache.addAll()` aborta atómicamente si una falla (hueco de entorno) | `sw.js:4-103` |
 
 ## Tipo y herramienta
 Test de integración en sandbox `node:vm` con `node:test` y `node:assert/strict`.
@@ -74,7 +74,7 @@ Test de integración en sandbox `node:vm` con `node:test` y `node:assert/strict`
   - `fetch` de red (simulado para responder con objetos `Response` o rechazar por error de red).
 - **Problema que podría ocultar el mock**:
   - Un mock en memoria de Cache API no reproduce las cuotas de almacenamiento de disco de los navegadores móviles, ni el manejo de streaming de cuerpos grandes.
-  - **R9 (Precache atómico con addAll)**: Un fake de `cache.addAll` en JS solo probaría la lógica del propio fake, no la atomicidad del navegador real (donde si un solo archivo falla con 404, toda la transacción de instalación se cancela). Por tanto, la atomicidad de `addAll` NO se prueba con un mock y queda documentada explícitamente como hueco de entorno en `qa/99-huecos.md`.
+  - **R9 (Precache en disco vs atomicidad de addAll)**: La existencia de cada archivo de `PRECACHE_FILES` en disco sí se verifica y queda cubierta mediante el test `dado el precache, cuando se resuelve cada ruta, entonces existe en disco`. Por el contrario, un fake de `cache.addAll` en JS no puede simular fielmente la atomicidad del navegador real (donde si un solo archivo falla con 404, toda la transacción de instalación se cancela sin persistir nada). Por tanto, la atomicidad transaccional de `addAll` NO se prueba con un mock y queda documentada como hueco de entorno en `qa/99-huecos.md`.
 
 ## Criterios de aceptación
 - [x] Peticiones no-GET (POST, PUT, DELETE) son ignoradas y no llaman a `event.respondWith`.
@@ -82,7 +82,7 @@ Test de integración en sandbox `node:vm` con `node:test` y `node:assert/strict`
 - [x] Peticiones del mismo origen aplican cache-first (hit devuelve caché sin red; miss consulta red y cachea).
 - [x] Se verifica por comportamiento el tratamiento de respuestas 404/500 y rutas `/api/*` (R8).
 - [x] El evento `activate` purga cualquier clave de caché distinta a la activa sin depender de versiones literales fijas.
-- [x] No se incluye un mock artificial de la atomicidad de `addAll` (R9), registrándolo como hueco.
+- [x] Se verifica la existencia en disco de cada ruta del precache; la atomicidad transaccional de `addAll` se registra como hueco de entorno (R9).
 
 ## Comando
 ```bash

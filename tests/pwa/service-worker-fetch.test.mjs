@@ -25,6 +25,8 @@ function createSwEnvironment() {
         return String(req);
     }
 
+    let addAllCalls = [];
+
     class FakeCache {
         constructor(name) {
             this.name = name;
@@ -41,6 +43,7 @@ function createSwEnvironment() {
         }
 
         async addAll(items) {
+            addAllCalls.push([...items]);
             for (const item of items) {
                 await this.put(item, new Response('Precached resource', { status: 200 }));
             }
@@ -168,6 +171,7 @@ function createSwEnvironment() {
         getFetchCallLog: () => fetchCallLog,
         clearFetchCallLog: () => { fetchCallLog = []; },
         setFetchHandler: (fn) => { fetchHandler = fn; },
+        getAddAllCalls: () => addAllCalls,
         triggerInstall,
         triggerActivate,
         triggerFetch,
@@ -341,6 +345,20 @@ describe('QA (F3b): Service Worker - Estrategias de fetch y ciclo de vida (TKT-0
             200,
             'Una petición no debe devolver un error 500 previamente cacheado cuando el servidor ya responde 200'
         );
+    });
+
+    it('dado el precache, cuando se resuelve cada ruta, entonces existe en disco', async () => {
+        const env = createSwEnvironment();
+        await env.triggerInstall();
+        const calls = env.getAddAllCalls();
+        assert.ok(calls.length > 0, 'cache.addAll debe ser invocado durante install');
+        const precacheList = calls[0];
+        const missingRoutes = precacheList.filter((route) => {
+            const relativePath = route === '/' ? 'index.html' : (route.startsWith('/') ? route.slice(1) : route);
+            const diskPath = path.join(projectRoot, relativePath);
+            return !fs.existsSync(diskPath);
+        });
+        assert.deepEqual(missingRoutes, []);
     });
 
     it('Activate · purga cachés obsoletas y retiene la caché activa sin depender de versiones literales', async () => {
