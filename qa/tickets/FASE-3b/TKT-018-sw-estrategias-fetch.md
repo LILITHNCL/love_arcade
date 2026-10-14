@@ -94,8 +94,9 @@ node --test tests/pwa/service-worker-fetch.test.mjs
 Hecho
 
 ## Resultados
-- **Ejecución de tests**: 3 ejecuciones consecutivas (run 1, 2, 3) con salida limpia: 9 tests, 1 suite, 8 pass, 0 fail, 1 todo (duración ~1.3s).
-- **Hallazgo registrado (R8)**: Se confirmó por comportamiento real que el SW almacena incondicionalmente en `CACHE_NAME` respuestas no exitosas (`!response.ok`, ej. 500) y endpoints bajo `/api/*`. Documentado como Bug F3b-01 en `qa/BUGS-ENCONTRADOS.md` y verificado con test `todo` asertando comportamiento deseado (devolución de HTTP 200 tras recuperación de red; actualmente arroja `500 !== 200` y muestra `⚠`).
+- **Ejecución de tests**: 3 ejecuciones consecutivas (run 1, 2, 3) con salida limpia en `tests/pwa/service-worker-fetch.test.mjs`: 11 tests, 1 suite, 9 pass, 0 fail, 2 todo (duración ~1.5s).
+- **Hallazgo registrado (R8)**: Se confirmó por comportamiento real que el SW almacena incondicionalmente en `CACHE_NAME` respuestas no exitosas (`!response.ok`, ej. 500) y endpoints bajo `/api/*`. Documentado como Bug F3b-01 en `qa/BUGS-ENCONTRADOS.md` y verificado con dos tests `todo` asertando comportamiento deseado (devolución de HTTP 200 tras recuperación de red y consulta fresca a la red para `/api/*`; actualmente arrojan fallos y muestran `⚠`).
+- **Verificación de rutas en disco (R9)**: Test `dado el precache, cuando se resuelve cada ruta, entonces existe en disco` comprueba en `sw.js` que las 205 rutas del precache existen en disco en el repositorio.
 - **Verificación por mutación**:
   - Mutación 1 (`sw.js:114`): `!== 'GET'` invertido a `=== 'GET'`. Matada (6 fallos: POST ignorado y estrategias GET).
   - Mutación 2 (`sw.js:116`): Hostname `'res.cloudinary.com'` sustituido por `'other.com'`. Matada (3 fallos: tests de Cloudinary).

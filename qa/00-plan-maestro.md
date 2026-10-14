@@ -41,11 +41,15 @@ Los siguientes comportamientos ya están cubiertos por tests existentes y no deb
 - **Matriz #16 (Bridge en cada juego)**: Cubierto en `tests/game-bridge.test.mjs`.
 - **Matriz #17 (SW: precache, sin duplicados)**: Cubierto en `tests/service-worker-precache.test.mjs`.
 - **Matriz #28 (Contrato público GameCenter)**: Cubierto en `tests/domain/game-center.test.mjs`.
-- **Ciclo de vida StreakHub (init/destroy/stateMachine)**: Cubierto en `tests/rive-streak-lifecycle.test.mjs`.
 - **Matriz #13 (Sentinel: interceptor de localStorage)**: Cubierto en `tests/integration/sentinel-interceptor.test.mjs` (TKT-013).
 - **Matriz #14 (Sentinel: LWW al iniciar sesión)**: Cubierto en `tests/integration/sentinel-lww-auth.test.mjs` (TKT-014).
 - **Matriz #15 (BackupEngine: exportación e importación .labak)**: Cubierto en `tests/integration/backup-engine.test.mjs` (TKT-015).
 - **Auditoría immediateCloudSync**: Cubierto en `tests/integration/immediate-cloud-sync.test.mjs` (TKT-016).
+- **Matriz #16 (Bridge en cada juego)**: Cubierto en `tests/integration/game-bridge-contract.test.mjs` (TKT-017).
+- **Matriz #17 (SW: precache en disco)**: Cubierto en `tests/pwa/service-worker-fetch.test.mjs` (TKT-018) y `tests/pwa/service-worker-precache.test.mjs`.
+- **Matriz #18 (SW: estrategias de fetch)**: Cubierto en `tests/pwa/service-worker-fetch.test.mjs` (TKT-018).
+- **Matriz #19 (`api/report.js`)**: Cubierto en `tests/api/report.test.mjs` (TKT-019).
+- **Matriz #20 (`api/client-config.js`)**: Cubierto en `tests/api/client-config.test.mjs` (TKT-020).
 
 ## Bugs y hallazgos reclasificados (tests de QA)
 - **Bug F1 (atribución CC BY)**: "aristote" solo aparece en archivos y tests. Pendiente de decisión del usuario. Añadido como `todo` en `tests/daily-streak-hub-qa.mjs`.

@@ -91,5 +91,5 @@ Hecho
   - Mutación 1 (quitar `no-store` en `Cache-Control` de `api/client-config.js`): detectada inmediatamente por el test de prevención de caché (código 1, 1 fallo: `Debe emitir Cache-Control con no-store`). Revertido limpiamente.
   - Mutación 2 (hacer que `api/client-config.js` filtre una clave extra `internalSecret`): detectada inmediatamente por el test de contrato de claves (código 1, 1 fallo: `El cuerpo debe contener únicamente las dos claves pactadas`). Revertido limpiamente.
 - **Impacto en suite completa (`npm test`)**:
-  - Salida baseline (Sesión 2): 151 tests, 25 suites, 131 pass, 0 fail, 20 todo.
-  - Salida tras F3b-3/4 (TKT-019 + TKT-020): 186 tests (+35 total), 40 suites (+15 total), 166 pass (+35 total), 0 fail, 20 todo. Suite en verde.
+  - Salida baseline previa (F3a): 135 tests, 23 suites, 116 pass, 0 fail, 19 todo.
+  - Salida tras finalización de F3b: 192 tests (+57 total), 40 suites (+17 total), 170 pass (+54 total), 0 fail, 22 todo (+3 todo). Suite en verde.

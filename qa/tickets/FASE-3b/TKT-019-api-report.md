@@ -103,9 +103,9 @@ Hecho
 ## Resultados de verificación
 
 - **Ejecución aislada (3 ejecuciones de estabilidad)**:
-  - Run 1: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
-  - Run 2: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
-  - Run 3: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
+  - Run 1: 28 tests, 8 suites, 27 pass, 0 fail, 1 todo (código 0).
+  - Run 2: 28 tests, 8 suites, 27 pass, 0 fail, 1 todo (código 0).
+  - Run 3: 28 tests, 8 suites, 27 pass, 0 fail, 1 todo (código 0).
   - 0% flakiness observado.
 - **Verificación por mutación**:
   - Mutación 1 (deshabilitar comprobación de origen en `api/report.js`): detectada inmediatamente por 3 tests de origen (código 1, 3 fallos). Revertido limpiamente.
@@ -114,5 +114,5 @@ Hecho
   - Mutación 4 (`api/report.js:287`, nickname `slice(0, 50)` → `slice(0, 500)`): detectada exclusivamente por el test `trunca el nickname de usuario a 50 caracteres para prevenir saturación` (código 1, 1 fallo: `assert.ok(!outgoingText.includes('U'.repeat(51)))`). Revertido limpiamente (git diff --stat vacío).
   - Mutación 5 (`api/report.js:288`, evento `slice(0, 80)` → `slice(0, 800)`): detectada exclusivamente por el test `trunca el identificador de evento a 80 caracteres para prevenir saturación` (código 1, 1 fallo: `assert.ok(!outgoingText.includes('E'.repeat(81)))`). Revertido limpiamente (git diff --stat vacío).
 - **Impacto en suite completa (`npm test`)**:
-  - Salida baseline (Sesión 2): 151 tests, 25 suites, 131 pass, 0 fail, 20 todo.
-  - Salida tras TKT-019: 175 tests (+24), 33 suites (+8), 155 pass (+24), 0 fail, 20 todo. Suite en verde.
+  - Salida baseline previa (F3a): 135 tests, 23 suites, 116 pass, 0 fail, 19 todo.
+  - Salida final F3b: 192 tests (+57 total), 40 suites (+17 total), 170 pass (+54 total), 0 fail, 22 todo (+3 todo). Suite en verde.
