@@ -110,6 +110,9 @@ Hecho
 - **Verificación por mutación**:
   - Mutación 1 (deshabilitar comprobación de origen en `api/report.js`): detectada inmediatamente por 3 tests de origen (código 1, 3 fallos). Revertido limpiamente.
   - Mutación 2 (omitir reemplazo de caracteres HTML en `sanitize()`): detectada inmediatamente por el test de sanitización (código 1, 1 fallo: `No debe contener <tag> crudo`). Revertido limpiamente.
+  - Mutación 3 (`api/report.js:234`, `achievement: 3` → `99`): detectada exclusivamente por el test `asigna el Topic 3 y emoji 🏆 a reportes de tipo achievement` (código 1, 1 fallo: `99 !== 3`). Revertido limpiamente (git diff --stat vacío).
+  - Mutación 4 (`api/report.js:287`, nickname `slice(0, 50)` → `slice(0, 500)`): detectada exclusivamente por el test `trunca el nickname de usuario a 50 caracteres para prevenir saturación` (código 1, 1 fallo: `assert.ok(!outgoingText.includes('U'.repeat(51)))`). Revertido limpiamente (git diff --stat vacío).
+  - Mutación 5 (`api/report.js:288`, evento `slice(0, 80)` → `slice(0, 800)`): detectada exclusivamente por el test `trunca el identificador de evento a 80 caracteres para prevenir saturación` (código 1, 1 fallo: `assert.ok(!outgoingText.includes('E'.repeat(81)))`). Revertido limpiamente (git diff --stat vacío).
 - **Impacto en suite completa (`npm test`)**:
   - Salida baseline (Sesión 2): 151 tests, 25 suites, 131 pass, 0 fail, 20 todo.
   - Salida tras TKT-019: 175 tests (+24), 33 suites (+8), 155 pass (+24), 0 fail, 20 todo. Suite en verde.

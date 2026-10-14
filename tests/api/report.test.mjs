@@ -227,10 +227,38 @@ describe('QA (F3b): api/report.js - Proxy Serverless de Telemetría (TKT-019)', 
             assert.ok(outgoingText.includes('&lt;injected_key&gt;'));
             assert.ok(outgoingText.includes('&lt;b&gt;script'));
             assert.ok(outgoingText.includes('&#39;val&#39;'));
+        });
 
-            // Verificar Topic correcto para bug (4) y emoji de bug (🚨)
+        it('asigna el Topic 4 y emoji 🚨 a reportes de tipo bug', async () => {
+            const req = createFakeReq({
+                method: 'POST',
+                headers: { origin: 'https://love-arcade.vercel.app' },
+                body: { type: 'bug', user: 'player1', event: 'crash_event' },
+            });
+            const res = createFakeRes();
+
+            await handler(req, res);
+
+            assert.strictEqual(res.statusCode, 200);
+            const outgoingPayload = JSON.parse(fetchCalls[0].options.body);
             assert.strictEqual(outgoingPayload.message_thread_id, 4);
-            assert.ok(outgoingText.includes('🚨'));
+            assert.ok(outgoingPayload.text.includes('🚨'));
+        });
+
+        it('asigna el Topic 3 y emoji 🏆 a reportes de tipo achievement', async () => {
+            const req = createFakeReq({
+                method: 'POST',
+                headers: { origin: 'https://love-arcade.vercel.app' },
+                body: { type: 'achievement', user: 'player1', event: 'level_clear' },
+            });
+            const res = createFakeRes();
+
+            await handler(req, res);
+
+            assert.strictEqual(res.statusCode, 200);
+            const outgoingPayload = JSON.parse(fetchCalls[0].options.body);
+            assert.strictEqual(outgoingPayload.message_thread_id, 3);
+            assert.ok(outgoingPayload.text.includes('🏆'));
         });
 
         it('eventLabel en mayúsculas conserva las entidades HTML en minúsculas en el mensaje a Telegram', {
@@ -262,16 +290,15 @@ describe('QA (F3b): api/report.js - Proxy Serverless de Telemetría (TKT-019)', 
             );
         });
 
-        it('trunca nickname a 50 caracteres y evento a 80 caracteres para prevenir saturación', async () => {
+        it('trunca el nickname de usuario a 50 caracteres para prevenir saturación', async () => {
             const longUser = 'U'.repeat(120);
-            const longEvent = 'E'.repeat(200);
             const req = createFakeReq({
                 method: 'POST',
                 headers: { origin: 'https://love-arcade.vercel.app' },
                 body: {
-                    type: 'achievement',
+                    type: 'analytics',
                     user: longUser,
-                    event: longEvent,
+                    event: 'normal_event',
                 },
             });
             const res = createFakeRes();
@@ -285,14 +312,30 @@ describe('QA (F3b): api/report.js - Proxy Serverless de Telemetría (TKT-019)', 
             // Longitud máxima de user sanitizado es 50
             assert.ok(outgoingText.includes('U'.repeat(50)));
             assert.ok(!outgoingText.includes('U'.repeat(51)));
+        });
+
+        it('trunca el identificador de evento a 80 caracteres para prevenir saturación', async () => {
+            const longEvent = 'E'.repeat(200);
+            const req = createFakeReq({
+                method: 'POST',
+                headers: { origin: 'https://love-arcade.vercel.app' },
+                body: {
+                    type: 'analytics',
+                    user: 'normal_user',
+                    event: longEvent,
+                },
+            });
+            const res = createFakeRes();
+
+            await handler(req, res);
+
+            assert.strictEqual(res.statusCode, 200);
+            const outgoingPayload = JSON.parse(fetchCalls[0].options.body);
+            const outgoingText = outgoingPayload.text;
 
             // Longitud máxima de event sanitizado es 80
             assert.ok(outgoingText.includes('E'.repeat(80)));
             assert.ok(!outgoingText.includes('E'.repeat(81)));
-
-            // Topic de achievement es 3 y emoji 🏆
-            assert.strictEqual(outgoingPayload.message_thread_id, 3);
-            assert.ok(outgoingText.includes('🏆'));
         });
     });
 
