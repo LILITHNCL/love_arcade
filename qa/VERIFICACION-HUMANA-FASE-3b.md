@@ -21,14 +21,15 @@ Ejecutar desde la raíz del repositorio (`/data/data/com.termux/files/home/proye
    ```bash
    node --test tests/pwa/service-worker-fetch.test.mjs tests/pwa/service-worker-precache.test.mjs
    ```
-   *Resultado esperado*: `12 tests, 1 suite (11 pass, 0 fail, 1 todo: BUG-F3b-01)`. Salida limpia con código `0`.
-   *(Desglose: `service-worker-fetch.test.mjs` con 8 pass y 1 todo `⚠`; `service-worker-precache.test.mjs` con 3 pass).*
+   *Resultado esperado*: `12 tests, 1 suite (10 pass, 0 fail, 2 todo: BUG-F3b-01)`. Salida limpia con código `0`.
+   *(Desglose: `service-worker-fetch.test.mjs` con 9 pass y 2 todo `⚠` correspondientes a error 500 y rutas `/api/*` cacheadas; `service-worker-precache.test.mjs` con 1 pass).*
 
 3. **TKT-019 (api/report.js: validación, sanitización y proxy de telemetría a Telegram)**:
    ```bash
    node --test tests/api/report.test.mjs
    ```
-   *Resultado esperado*: `24 tests, 8 suites (24 pass, 0 fail, 0 todo)`. Salida limpia con código `0`.
+   *Resultado esperado*: `28 tests, 8 suites (27 pass, 0 fail, 1 todo: BUG-F3b-02)`. Salida limpia con código `0`.
+   *(Desglose: 27 pass y 1 todo `⚠` en `eventLabel` pasando a mayúsculas entidades HTML).*
 
 4. **TKT-020 (api/client-config.js y alias api/telemetry.js)**:
    ```bash
@@ -42,8 +43,8 @@ Ejecutar desde la raíz del repositorio (`/data/data/com.termux/files/home/proye
    ```bash
    npm test
    ```
-   *Resultado esperado*: `186 tests, 40 suites (166 pass, 0 fail, 20 todo)`. Código de salida: `0`.
-   *(Línea base previa de F3a: 151 tests, 25 suites, 131 pass, 0 fail, 20 todo. Incremento neto: +35 tests, +15 suites, +35 pass, 0 fail, 0 nuevos todo).*
+   *Resultado esperado*: `192 tests, 40 suites (170 pass, 0 fail, 22 todo)`. Código de salida: `0`.
+   *(Línea base previa de F3a: 135 tests, 23 suites, 116 pass, 0 fail, 19 todo. Incremento neto: +57 tests, +17 suites, +54 pass, 0 fail, +3 todo).*
 
 6. **Suite de minijuegos independientes**:
    ```bash
@@ -61,10 +62,11 @@ Ejecutar desde la raíz del repositorio (`/data/data/com.termux/files/home/proye
 
 ## 2. Qué NO se pudo verificar en este entorno (Termux / Node.js)
 
-- **Service Worker real en navegador**: En Node.js no existe el motor de Service Workers ni la Cache API nativa del navegador. Las pruebas de ciclo de vida e interceptación se ejecutan sobre un entorno sintético en memoria (`FakeCache` y sandbox en `tests/pwa/service-worker-fetch.test.mjs`). El registro de `sw.js` mediante `navigator.serviceWorker.register('/sw.js')`, la activación asíncrona en segundo plano, el evento `controllerchange` que recarga la página ante actualización, y el control real de clientes mediante `self.clients.claim()` quedan **NO VERIFICADAS** en este entorno y requieren comprobación en un navegador real.
-- **Atomicidad de `cache.addAll(PRECACHE_FILES)`**: En la especificación W3C de Cache API, si una sola petición de la lista de precarga falla (HTTP 404 o error de red), toda la transacción aborta y el SW no se instala. En el fake en memoria se almacena secuencialmente; la atomicidad transaccional nativa del navegador ante fallos parciales debe validarse en navegador real (Fase F4).
-- **Vercel Serverless / Edge Runtime real**: Las funciones en `api/` (`report.js`, `client-config.js`, `telemetry.js`) se diseñaron para el entorno serverless de Vercel. En Node.js se probaron simulando los objetos `req` y `res` mediante `tests/helpers/fake-http.cjs`. No se verificaron aquí las cabeceras inyectadas por los balanceadores de Vercel (`x-vercel-id`, `x-forwarded-for`), el límite de cómputo (10 segundos en plan Hobby) ni el comportamiento real de streaming con `keepalive: true`.
-- **API real de Telegram Bot (`https://api.telegram.org/bot<token>/sendMessage`)**: Siguiendo estrictamente las directrices de seguridad, no se leen tokens secretos de archivos `.env` ni se realizan peticiones hacia internet. Las llamadas HTTP hacia Telegram se interceptaron mediante un mock de `globalThis.fetch`. Por tanto, la entrega física de mensajes en los Topics 2 (Analíticas), 3 (Logros) y 4 (Bugs) de un grupo real de Telegram queda **NO VERIFICADA** aquí.
+- **Service Worker real en navegador**: En Node.js no existe el motor de Service Workers ni la Cache API nativa del navegador. Las pruebas de ciclo de vida e interceptación se ejecutan sobre un entorno sintético en memoria (`FakeCache` y sandbox en `tests/pwa/service-worker-fetch.test.mjs`). El registro de `sw.js` mediante `navigator.serviceWorker.register('/sw.js')`, la activación asíncrona en segundo plano, el evento `controllerchange` que recarga la página ante actualización, y el control real de clientes mediante `self.clients.claim()` quedan **[no verificado]** en este entorno y requieren comprobación en un navegador real.
+- **Atomicidad de `cache.addAll(PRECACHE_FILES)`**: En la especificación W3C de Cache API, si una sola petición de la lista de precarga falla (HTTP 404 o error de red), toda la transacción aborta y el SW no se instala. En el test de Node se verifica que cada ruta exista en disco (`tests/pwa/service-worker-fetch.test.mjs`); la atomicidad transaccional nativa del navegador ante caídas parciales de red queda **[no verificado]** y debe validarse en navegador real (Fase F4).
+- **Vercel Serverless / Edge Runtime real**: Las funciones en `api/` (`report.js`, `client-config.js`, `telemetry.js`) se diseñaron para el entorno serverless de Vercel. En Node.js se probaron simulando los objetos `req` y `res` mediante `tests/helpers/fake-http.cjs`. Se catalogan como **[no verificado]** en este entorno: el comportamiento de streaming con `keepalive: true`, y cualquier comportamiento o cabecera externa de infraestructura de alojamiento no declarada en el código local (como `x-vercel-id`, `x-forwarded-for` o límites de tiempo de cómputo externos no configurados en el repositorio).
+- **Módulos ES en `api/*.js`**: Los archivos `api/*.js` se importan como ES Modules (ESM) por detección automática de sintaxis (declaración de `export const config` y `export default`) al no existir `"type": "module"` en `package.json`, lo cual requiere Node.js >= 22.7.0.
+- **API real de Telegram Bot (`https://api.telegram.org/bot<token>/sendMessage`)**: Siguiendo estrictamente las directrices de seguridad, no se leen tokens secretos de archivos `.env` ni se realizan peticiones hacia internet. Las llamadas HTTP hacia Telegram se interceptaron mediante un mock de `globalThis.fetch`. Por tanto, la entrega física de mensajes en los Topics 2 (Analíticas), 3 (Logros) y 4 (Bugs) de un grupo real de Telegram queda **[no verificado]** aquí.
 - **Cuota de almacenamiento y desalojo de caché bajo presión de disco**: Las políticas de desalojo automático de caché por falta de espacio en dispositivos móviles físicos no se reproducen en la memoria RAM de Node.js.
 - **Renderizado e interacción de minijuegos en iframes**: Los 8 minijuegos se probaron estáticamente y a nivel de contratos de scripts en `node:vm`. La carga gráfica, bucle de frames, audio y consumo de `window.GameCenter` dentro de un elemento `<iframe>` en el navegador real se delegan a las pruebas de Fase F4 (E2E).
 
@@ -95,7 +97,7 @@ Auditoría contra `index.html`, `js/pwa/sw-update-bridge.js` y `js/game-bridge-r
 
 ### 4.1 Protocolo de seguridad previo
 
-1. **Exportar copia de seguridad**: Antes de iniciar las pruebas manuales, ir a la sección "Guardado y sincronización" (`#tab-sync`) y hacer clic en **"Guardar respaldo"** para descargar el archivo `.labak` actual.
+1. **Exportar copia de seguridad**: Antes de iniciar las pruebas manuales, ir a la sección "Sincronización" (`#tab-sync`, `index.html:652` y `:658`) y hacer clic en **"Guardar respaldo"** para descargar el archivo `.labak` actual.
 2. **Perfil limpio**: Abrir una ventana de navegación en modo incógnito o crear un perfil de usuario limpio en Chrome, Chromium, Firefox o Safari para no sobreescribir datos de juego existentes.
 3. **Privacidad de secretos**: NUNCA ingresar ni compartir códigos promocionales reales, tokens de Telegram ni credenciales de Supabase en capturas de pantalla o reportes de prueba.
 
@@ -112,8 +114,8 @@ Auditoría contra `index.html`, `js/pwa/sw-update-bridge.js` y `js/game-bridge-r
    - *Resultado esperado*: Se visualiza el Service Worker `sw.js` con Scope `/` y estado `Activated and is running`.
 3. **Inspección de la Cache Storage**:
    - En DevTools → **Application** → **Storage** → **Cache Storage**.
-   - Desplegar la caché `lovearcade-v12.2`.
-   - *Resultado esperado*: Contiene la totalidad de los recursos estáticos del hub (`index.html`, `styles.css`, `js/app.js`, `manifest.json`, iconos) y los assets de los minijuegos listados en `APP_SHELL_FILES` y `GAMES_FILES`.
+   - Desplegar la caché cuyo nombre empieza por `love-arcade-` (generada dinámicamente como `love-arcade-${CACHE_VERSION}` según `sw.js:2`).
+   - *Resultado esperado*: Contiene los recursos estáticos declarados en `APP_SHELL_FILES` (`sw.js:4-82`, que incluye `'/'`, `'/index.html'`, `'/styles.css'`, `'/manifest.webmanifest'`, `'/js/app.js'` en `sw.js:32`, módulos en `/js/*`, catálogo y carátulas) y en `GAMES_FILES` (`sw.js:84-93`, con los HTML y assets de los 8 minijuegos). No se afirman archivos que no figuren en dichas listas.
 4. **Prueba de Modo Sin Conexión (Offline)**:
    - En DevTools, ir a la pestaña **Network** (Red) y marcar la casilla **Offline** (o en **Application** → **Service Workers** → marcar **Offline**).
    - Recargar la página (`F5` o `Ctrl+R`).
@@ -124,7 +126,7 @@ Auditoría contra `index.html`, `js/pwa/sw-update-bridge.js` y `js/game-bridge-r
 6. **Comportamiento de imágenes de Cloudinary**:
    - Desmarcar la casilla **Offline** en DevTools para reactivar la red.
    - Abrir el catálogo de minijuegos con carátulas servidas desde `res.cloudinary.com`.
-   - En la pestaña **Network**, confirmar que las imágenes se descargan con código HTTP 200 y se guardan en la caché `lovearcade-v12.2`.
+   - En la pestaña **Network**, confirmar que las imágenes se descargan con código HTTP 200 y se guardan en la caché cuyo nombre empieza por `love-arcade-` (`sw.js:2`).
    - Volver a marcar **Offline** y navegar a otra carátula de Cloudinary no descargada previamente.
    - *Resultado esperado*: El Service Worker intercepta la petición fallida y devuelve como sustituto el icono de fallback `/assets/icon/icon-192-any.png`.
 7. **Impacto del Bug documentado BUG-F3b-01**:
@@ -135,11 +137,14 @@ Auditoría contra `index.html`, `js/pwa/sw-update-bridge.js` y `js/game-bridge-r
 
 ### 4.3 Paso a paso: Handlers Serverless (`api/report.js` y `api/client-config.js`) con `vercel dev`
 
-Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handlers de backend en un entorno de desarrollo local:
+Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handlers de backend en un entorno de desarrollo local.
 
-1. **Iniciar el runtime local**:
+> [!WARNING]
+> **Seguridad y privacidad**: NUNCA crear un archivo `.env.local` con credenciales reales ni introducir tokens verdaderos en la línea de comandos. No se debe enviar tráfico de prueba a Telegram real bajo ninguna circunstancia. Todas las comprobaciones manuales deben realizarse exclusivamente con variables ficticias/falsas pasadas por línea de comandos.
+
+1. **Iniciar el runtime local con variables de prueba ficticias**:
    ```bash
-   vercel dev
+   TELEGRAM_BOT_TOKEN=fake TELEGRAM_CHAT_ID=0 NEXT_PUBLIC_LA_CLOUD_URL=https://fake.supabase.co NEXT_PUBLIC_LA_CLOUD_ANON_KEY=fake-anon-key vercel dev
    ```
    (El servidor local arrancará por defecto en `http://localhost:3000`).
 
@@ -156,14 +161,10 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
      Pragma: no-cache
      ```
    - Cuerpo JSON:
-     - Si `NEXT_PUBLIC_LA_CLOUD_URL` y `NEXT_PUBLIC_LA_CLOUD_ANON_KEY` están configuradas en `.env.local`:
-       ```json
-       {"supabaseUrl":"https://...","supabaseKey":"..."}
-       ```
-     - Si no están configuradas:
-       ```json
-       {"supabaseUrl":"","supabaseKey":""}
-       ```
+     ```json
+     {"supabaseUrl":"https://fake.supabase.co","supabaseKey":"fake-anon-key"}
+     ```
+     *(En caso de ejecutarse sin pasar variables de entorno, responde con strings vacíos: `{"supabaseUrl":"","supabaseKey":""}`).*
 
 3. **Probar métodos inválidos en `/api/client-config` (HTTP 405)**:
    ```bash
@@ -172,7 +173,7 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
    *Resultado esperado*:
    - Código HTTP `405 Method Not Allowed`.
    - Cabecera: `Allow: GET`.
-   - Cuerpo JSON:
+   - Cuerpo JSON (`client-config.js:30-31`):
      ```json
      {"error":"Method Not Allowed"}
      ```
@@ -182,7 +183,20 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
    curl -i http://localhost:3000/api/telemetry
    ```
    *Resultado esperado*:
-   - Responde idénticamente a `api/report.js` (devuelve HTTP 405 en GET ya que solo acepta POST).
+   - Responde idénticamente a `api/report.js` vía `_errorJson`: devuelve HTTP `405 Method Not Allowed` (`:181`) ya que solo acepta peticiones POST.
+   - Cuerpo JSON:
+     ```json
+     {
+       "ok": false,
+       "error": {
+         "code": "method_not_allowed",
+         "message": "Method Not Allowed",
+         "trace_id": "rep_...",
+         "timestamp": "..."
+       }
+     }
+     ```
+     *(donde `trace_id` y `timestamp` son valores dinámicos generados en cada llamada).*
 
 5. **Probar `/api/report` con origen autorizado (POST)**:
    ```bash
@@ -191,9 +205,34 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
      -H "Origin: http://localhost:3000" \
      -d '{"type":"analytics","user":"JugadorManual","event":"test_ping","data":{"dispositivo":"desktop"}}'
    ```
-   *Resultado esperado*:
-   - Si las variables de entorno de Telegram (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) están configuradas: responde `200 OK` con `{"ok":true}` y el mensaje se publica en el Topic 2 (📈 Analíticas) del grupo de Telegram con el usuario sanitizado.
-   - Si las variables no están configuradas: responde `500 Internal Server Error` con `{"ok":false,"error":{"code":"server_misconfiguration"}}`.
+   *Resultado esperado con las variables de prueba ficticias (`TELEGRAM_BOT_TOKEN=fake`, `TELEGRAM_CHAT_ID=0`)*:
+   - Al usar un token ficticio, el intento de envío hacia Telegram upstream fallará de forma segura sin emitir ningún mensaje real:
+     - Si la petición alcanza Telegram, este responde con error upstream (p. ej. HTTP 401 Unauthorized o 404), y el handler devuelve HTTP `502 Bad Gateway` con estructura:
+       ```json
+       {
+         "ok": false,
+         "error": {
+           "code": "telegram_upstream_error",
+           "message": "Telegram API error: ...",
+           "trace_id": "rep_...",
+           "timestamp": "..."
+         }
+       }
+       ```
+     - Si la máquina no tiene acceso a internet o la conexión es rechazada/agota tiempo, devuelve HTTP `504 Gateway Timeout` con `code: "telegram_network_error"` o `"telegram_timeout"`.
+     - Si se ejecutara sin definir `TELEGRAM_BOT_TOKEN` ni `TELEGRAM_CHAT_ID`, devuelve HTTP `500 Server misconfiguration` (`api/report.js:346`):
+       ```json
+       {
+         "ok": false,
+         "error": {
+           "code": "server_misconfiguration",
+           "message": "Server misconfiguration",
+           "trace_id": "rep_...",
+           "timestamp": "..."
+         }
+       }
+       ```
+     *(en todos los casos `trace_id` y `timestamp` son valores dinámicos variables generados por `_errorJson`).*
 
 6. **Probar rechazo de origen no autorizado en `/api/report` (HTTP 403)**:
    ```bash
@@ -203,8 +242,20 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
      -d '{"type":"analytics","user":"Attacker","event":"exploit"}'
    ```
    *Resultado esperado*:
-   - Código HTTP `403 Forbidden`.
+   - Código HTTP `403 Forbidden` con `code: "forbidden_origin"` y `message: "Forbidden"` (`api/report.js:221`).
    - Cuerpo JSON:
      ```json
-     {"ok":false,"error":{"code":"forbidden_origin","message":"Petición rechazada: origen no autorizado"}}
+     {
+       "ok": false,
+       "error": {
+         "code": "forbidden_origin",
+         "message": "Forbidden",
+         "trace_id": "rep_...",
+         "timestamp": "...",
+         "details": {
+           "origin": "https://sitio-malicioso-externo.com"
+         }
+       }
+     }
      ```
+     *(con `trace_id` y `timestamp` variables).*
