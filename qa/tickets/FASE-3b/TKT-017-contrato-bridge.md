@@ -85,10 +85,10 @@ Test de integración y contrato con `node:test` y `node:assert/strict`, ejecutad
   - Un array de captura en `document.write` no simula el bloqueo de red real que experimenta el navegador al cargar recursos externos durante el parseo, ni los errores de red en la descarga de scripts.
 
 ## Criterios de aceptación
-- [ ] Los 8 `games/*/index.html` declaran la carga de `game-bridge.js` sin `async`, sin `defer` y sin `type="module"`.
-- [ ] `game-bridge.js` lanza el error descriptivo de contrato si `document` o `document.write` faltan.
-- [ ] No se duplica la inyección de scripts si las dependencias core ya están presentes en el objeto global.
-- [ ] Las operaciones de economía (`addCoins`, `spendCoins`, `buyItem`) invocadas desde `GameCenter` del bridge persisten coherentemente en `gamecenter_v6_promos`.
+- [x] Los 8 `games/*/index.html` declaran la carga de `game-bridge.js` sin `async`, sin `defer` y sin `type="module"`.
+- [x] `game-bridge.js` lanza el error descriptivo de contrato si `document` o `document.write` faltan.
+- [x] No se duplica la inyección de scripts si las dependencias core ya están presentes en el objeto global.
+- [x] Las operaciones de economía (`addCoins`, `spendCoins`, `buyItem`) invocadas desde `GameCenter` del bridge persisten coherentemente en `gamecenter_v6_promos`.
 
 ## Comando
 ```bash
@@ -96,4 +96,12 @@ node --test tests/integration/game-bridge-contract.test.mjs
 ```
 
 ## Estado
-Pendiente
+Hecho
+
+## Resultados
+- **Ejecución de tests**: 3 ejecuciones consecutivas (run 1, 2, 3) con salida limpia: 7 tests, 1 suite, 7 pass, 0 fail, 0 todo (duración ~850ms).
+- **Verificación por mutación**:
+  - Mutación 1 (`js/game-bridge.js:31`): `||` sustituido por `&&` en la comprobación de `document` y `document.write`. Matada (2 fallos: tests de guarda R10).
+  - Mutación 2 (`js/game-bridge.js:27`): `window.GameCenter ? [] : [runtimeSource]` invertido a `[runtimeSource] : []`. Matada (2 fallos: tests de idempotencia).
+  - Mutación 3 (`js/game-bridge-runtime.js:29`): `addCoins: Economy.addCoins` sustituido por `undefined`. Matada (2 fallos: tests de persistencia cruzada).
+
