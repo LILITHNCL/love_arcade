@@ -77,12 +77,12 @@ Test de integración en sandbox `node:vm` con `node:test` y `node:assert/strict`
   - **R9 (Precache atómico con addAll)**: Un fake de `cache.addAll` en JS solo probaría la lógica del propio fake, no la atomicidad del navegador real (donde si un solo archivo falla con 404, toda la transacción de instalación se cancela). Por tanto, la atomicidad de `addAll` NO se prueba con un mock y queda documentada explícitamente como hueco de entorno en `qa/99-huecos.md`.
 
 ## Criterios de aceptación
-- [ ] Peticiones no-GET (POST, PUT, DELETE) son ignoradas y no llaman a `event.respondWith`.
-- [ ] Peticiones a Cloudinary aplican network-first, recuperando de caché o icono de fallback ante desconexión.
-- [ ] Peticiones del mismo origen aplican cache-first (hit devuelve caché sin red; miss consulta red y cachea).
-- [ ] Se verifica por comportamiento el tratamiento de respuestas 404/500 y rutas `/api/*` (R8).
-- [ ] El evento `activate` purga cualquier clave de caché distinta a la activa sin depender de versiones literales fijas.
-- [ ] No se incluye un mock artificial de la atomicidad de `addAll` (R9), registrándolo como hueco.
+- [x] Peticiones no-GET (POST, PUT, DELETE) son ignoradas y no llaman a `event.respondWith`.
+- [x] Peticiones a Cloudinary aplican network-first, recuperando de caché o icono de fallback ante desconexión.
+- [x] Peticiones del mismo origen aplican cache-first (hit devuelve caché sin red; miss consulta red y cachea).
+- [x] Se verifica por comportamiento el tratamiento de respuestas 404/500 y rutas `/api/*` (R8).
+- [x] El evento `activate` purga cualquier clave de caché distinta a la activa sin depender de versiones literales fijas.
+- [x] No se incluye un mock artificial de la atomicidad de `addAll` (R9), registrándolo como hueco.
 
 ## Comando
 ```bash
@@ -90,4 +90,14 @@ node --test tests/pwa/service-worker-fetch.test.mjs
 ```
 
 ## Estado
-Pendiente
+Hecho
+
+## Resultados
+- **Ejecución de tests**: 3 ejecuciones consecutivas (run 1, 2, 3) con salida limpia: 9 tests, 1 suite, 8 pass, 0 fail, 1 todo (duración ~1.3s).
+- **Hallazgo registrado (R8)**: Se confirmó por comportamiento real que el SW almacena incondicionalmente en `CACHE_NAME` respuestas no exitosas (`!response.ok`, ej. 500) y endpoints bajo `/api/*`. Documentado como Bug F3b-01 en `qa/BUGS-ENCONTRADOS.md` y verificado con test `todo` asertando comportamiento deseado (devolución de HTTP 200 tras recuperación de red; actualmente arroja `500 !== 200` y muestra `⚠`).
+- **Verificación por mutación**:
+  - Mutación 1 (`sw.js:114`): `!== 'GET'` invertido a `=== 'GET'`. Matada (6 fallos: POST ignorado y estrategias GET).
+  - Mutación 2 (`sw.js:116`): Hostname `'res.cloudinary.com'` sustituido por `'other.com'`. Matada (3 fallos: tests de Cloudinary).
+  - Mutación 3 (`sw.js:136`): Guarda de caché de mismo origen `if (cached) return cached;` invertida a `if (!cached) return cached;`. Matada (2 fallos: hit y miss de mismo origen).
+  - Mutación 4 (`sw.js:108`): Filtro de purga de caché `key !== CACHE_NAME` invertido a `key === CACHE_NAME`. Matada (1 fallo: purga en activate).
+

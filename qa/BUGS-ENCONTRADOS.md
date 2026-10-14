@@ -120,6 +120,20 @@
 - **Test**: `dado un archivo .labak con claves arbitrarias no vigiladas (R4), cuando se importa, entonces solo debería escribir claves autorizadas (lista blanca) y omitir claves arbitrarias` en `tests/integration/backup-engine.test.mjs` (marcado `{ todo: 'BUG-F3a-03: importBackupFromFile restaura cualquier clave sin lista blanca (R4)' }`).
 - **Estado**: Pendiente de decisión humana (documentado con todo).
 
+### Bug F3b-01: Almacenamiento indiscriminado en caché de respuestas no-OK (500/404) y endpoints `/api/*` en Service Worker (R8)
+- **Descripción**: El listener del evento `fetch` en `sw.js` (L134-142) aplica una estrategia cache-first a todas las solicitudes dirigidas a su mismo origen (`url.origin === self.location.origin`). Ante un fallo inicial de caché (`caches.match` retorna `undefined`), realiza la petición de red con `fetch(event.request)` y guarda incondicionalmente la respuesta en `CACHE_NAME` con `cache.put(event.request, response.clone())`. Esto genera dos problemas de diseño:
+  1. Respuestas de error del servidor o recursos inexistentes (`!response.ok`, tales como HTTP 500 o HTTP 404) son guardadas en disco en la caché de la aplicación. En peticiones posteriores, el Service Worker sirve el error cacheado de forma permanente sin consultar nuevamente la red, impidiendo que la aplicación se recupere cuando el servidor o la red vuelven a funcionar.
+  2. Endpoints dinámicos de backend bajo `/api/*` (como `/api/client-config` o cualquier ruta API del mismo origen) son interceptados e insertados en la caché estática de assets sin comprobar la ruta ni cabeceras como `Cache-Control: no-store`, congelando la respuesta dinámica inicial.
+- **Archivo y línea**: `sw.js` (Líneas 134-142).
+- **Escenario**:
+  - Escenario 1: Un recurso falla transitoriamente con error 500. `sw.js` almacena el 500 en `CACHE_NAME`. Al reestablecerse el backend y responder 200, las siguientes solicitudes continúan recibiendo el código 500 cacheado.
+  - Escenario 2: La aplicación realiza un GET a `/api/client-config`. `sw.js` lo almacena en `CACHE_NAME`. Futuros cambios en la configuración del servidor no son percibidos por el cliente porque se sirve la copia estática.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: El Service Worker no debe almacenar en caché respuestas no exitosas (`!response.ok`), permitiendo reintentar la red cuando el servidor se recupere. Asimismo, las rutas dinámicas `/api/*` deben ser excluidas de la caché estática del shell o gestionadas con estrategia network-only/network-first sin almacenamiento ciego.
+  - *Real*: Guarda ciegamente cualquier respuesta en `CACHE_NAME` (`cache.put`) y la sirve indefinidamente en llamadas posteriores.
+- **Test**: `R8 · el Service Worker no debe almacenar respuestas no-OK (500) perpetuando el error tras recuperarse el servidor` en `tests/pwa/service-worker-fetch.test.mjs` (marcado `{ todo: 'BUG-F3b-01: decisión de producto pendiente - el SW cachea respuestas !response.ok y /api/* en CACHE_NAME perpetuando el fallo tras recuperarse la red' }`).
+- **Estado**: Pendiente de decisión humana (marcado como "decisión de producto pendiente").
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)
