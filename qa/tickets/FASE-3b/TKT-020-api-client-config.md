@@ -66,11 +66,11 @@ Test de integración de handlers serverless con `node:test` y `node:assert/stric
   - El mock de `res.setHeader()` y `res.json()` almacena valores en memoria pero no prueba el comportamiento de CDNs reales (como Vercel Edge Network) al interpretar la cabecera `Cache-Control`.
 
 ## Criterios de aceptación
-- [ ] Peticiones que no sean GET devuelven 405 y cabecera `Allow: GET`.
-- [ ] Se emiten siempre las cabeceras `Cache-Control: no-store, no-cache, must-revalidate` y `Pragma: no-cache`.
-- [ ] Sin variables de entorno configuradas, devuelve 200 con `{ supabaseUrl: '', supabaseKey: '' }`.
-- [ ] Con variables de entorno configuradas, la respuesta JSON contiene exclusivamente `supabaseUrl` y `supabaseKey`.
-- [ ] `api/telemetry.js` exporta por referencia exactamente el mismo handler y config que `api/report.js`.
+- [x] Peticiones que no sean GET devuelven 405 y cabecera `Allow: GET`.
+- [x] Se emiten siempre las cabeceras `Cache-Control: no-store, no-cache, must-revalidate` y `Pragma: no-cache`.
+- [x] Sin variables de entorno configuradas, devuelve 200 con `{ supabaseUrl: '', supabaseKey: '' }`.
+- [x] Con variables de entorno configuradas, la respuesta JSON contiene exclusivamente `supabaseUrl` y `supabaseKey`.
+- [x] `api/telemetry.js` exporta por referencia exactamente el mismo handler y config que `api/report.js`.
 
 ## Comando
 ```bash
@@ -78,4 +78,18 @@ node --test tests/api/client-config.test.mjs
 ```
 
 ## Estado
-Pendiente
+Hecho
+
+## Resultados de verificación
+
+- **Ejecución aislada (3 ejecuciones de estabilidad)**:
+  - Run 1: 11 tests, 7 suites, 11 pass, 0 fail, 0 todo (código 0).
+  - Run 2: 11 tests, 7 suites, 11 pass, 0 fail, 0 todo (código 0).
+  - Run 3: 11 tests, 7 suites, 11 pass, 0 fail, 0 todo (código 0).
+  - 0% flakiness observado.
+- **Verificación por mutación**:
+  - Mutación 1 (quitar `no-store` en `Cache-Control` de `api/client-config.js`): detectada inmediatamente por el test de prevención de caché (código 1, 1 fallo: `Debe emitir Cache-Control con no-store`). Revertido limpiamente.
+  - Mutación 2 (hacer que `api/client-config.js` filtre una clave extra `internalSecret`): detectada inmediatamente por el test de contrato de claves (código 1, 1 fallo: `El cuerpo debe contener únicamente las dos claves pactadas`). Revertido limpiamente.
+- **Impacto en suite completa (`npm test`)**:
+  - Salida baseline (Sesión 2): 151 tests, 25 suites, 131 pass, 0 fail, 20 todo.
+  - Salida tras F3b-3/4 (TKT-019 + TKT-020): 186 tests (+35 total), 40 suites (+15 total), 166 pass (+35 total), 0 fail, 20 todo. Suite en verde.
