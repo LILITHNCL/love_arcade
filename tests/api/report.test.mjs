@@ -233,6 +233,35 @@ describe('QA (F3b): api/report.js - Proxy Serverless de Telemetría (TKT-019)', 
             assert.ok(outgoingText.includes('🚨'));
         });
 
+        it('eventLabel en mayúsculas conserva las entidades HTML en minúsculas en el mensaje a Telegram', {
+            todo: 'BUG-F3b-02: decisión de producto pendiente - eventLabel pasa a mayúsculas texto ya escapado'
+        }, async () => {
+            const req = createFakeReq({
+                method: 'POST',
+                headers: { origin: 'https://love-arcade.vercel.app' },
+                body: {
+                    type: 'bug',
+                    user: 'A <b> & "c"',
+                    event: 'ev <x> > & "q"',
+                },
+            });
+            const res = createFakeRes();
+
+            await handler(req, res);
+
+            assert.strictEqual(res.statusCode, 200);
+            assert.strictEqual(fetchCalls.length, 1);
+
+            const outgoingPayload = JSON.parse(fetchCalls[0].options.body);
+            const outgoingText = outgoingPayload.text;
+
+            // Comportamiento DESEADO: el evento en el título conserva las entidades HTML estándar en minúsculas
+            assert.ok(
+                outgoingText.includes('&lt;') && !outgoingText.includes('&LT;'),
+                'Las entidades HTML del evento deben permanecer en minúsculas (&lt;) en lugar de transformarse a mayúsculas (&LT;)'
+            );
+        });
+
         it('trunca nickname a 50 caracteres y evento a 80 caracteres para prevenir saturación', async () => {
             const longUser = 'U'.repeat(120);
             const longEvent = 'E'.repeat(200);

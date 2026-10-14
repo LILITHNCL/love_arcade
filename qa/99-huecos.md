@@ -60,6 +60,13 @@
   - El fake en memoria no reproduce los límites de almacenamiento por origen ni los desalojos automáticos de caché por presión de disco que aplican los navegadores móviles bajo condiciones extremas.
 - **TKT-019 · Mock de Telegram vs Rate Limiting y límites de red de producción**:
   - `api/report.js` se prueba interceptando `globalThis.fetch`. Si bien se evalúan respuestas simuladas 200, 502, 504 y timeouts de red sin exponer tokens, no se prueba contra la API real de Telegram (`https://api.telegram.org/bot<token>/sendMessage`). Aspectos como el rate limiting upstream (código HTTP 429) o el límite de 4096 caracteres para mensajes con formato HTML en Telegram se asumen gestionados por el truncado preventivo de 50/80 caracteres y la degradación silenciosa con 500.
+- **TKT-019 · Sanitización de `event` y transformación a mayúsculas en `eventLabel` (BUG-F3b-02)**:
+  - *Ruta*: `api/report.js:314` (`const eventLabel = safeEvent.replace(/_/g, ' ').toUpperCase();`).
+  - *Escenario*: Envío de payload a `/api/report` con caracteres HTML especiales en el campo `event` (ej. `event = 'ev <x> > & "q"'`, `user = 'A <b> & "c"'`). El test de sanitización inicial (`report.test.mjs:185-230`) enviaba un `event` con `<` y `>`, pero solo asertaba las entidades presentes en `user` y `data`, constituyendo un hueco de aserción sobre `eventLabel`.
+  - *Comportamiento esperado vs real*:
+    - *Esperado*: El texto de `event` sanitizado conserva las entidades HTML estándar en minúsculas (`&lt;`, `&gt;`, `&amp;`, `&quot;`), pasando a mayúsculas únicamente el contenido textual del usuario.
+    - *Real*: `safeEvent.toUpperCase()` convierte también las entidades a mayúsculas, generando `EV &LT;X&GT; &GT; &AMP; &QUOT;Q&QUOT;` en el texto enviado a Telegram.
+  - *Impacto sobre Telegram*: "no verificado".
 - **TKT-019 / TKT-020 · Emulación de Vercel Serverless mediante `fake-http.cjs` vs Runtime de producción**:
   - Las funciones en `api/` se ejecutan en Vercel sobre Node Serverless / Edge Runtime. Los tests utilizan `tests/helpers/fake-http.cjs` para simular objetos `req` y `res`. No se reproducen en este entorno las cabeceras inyectadas por los balanceadores de Vercel (como `x-vercel-id`, `x-forwarded-for`), ni los límites de ejecución de serverless functions (máximo 10s en plan hobby).
 - **TKT-020 · Variables de entorno reales en Vercel Dashboard**:

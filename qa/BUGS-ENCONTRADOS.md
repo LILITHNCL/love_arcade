@@ -134,6 +134,17 @@
 - **Test**: `R8 · el Service Worker no debe almacenar respuestas no-OK (500) perpetuando el error tras recuperarse el servidor` en `tests/pwa/service-worker-fetch.test.mjs` (marcado `{ todo: 'BUG-F3b-01: decisión de producto pendiente - el SW cachea respuestas !response.ok y /api/* en CACHE_NAME perpetuando el fallo tras recuperarse la red' }`).
 - **Estado**: Pendiente de decisión humana (marcado como "decisión de producto pendiente").
 
+### Bug F3b-02: `eventLabel` pasa a mayúsculas texto ya escapado generando entidades HTML en mayúsculas
+- **Descripción**: En `api/report.js`, el campo `event` se sanitiza en L288 (`const safeEvent = sanitize(event).slice(0, 80)`), transformando `<`, `>`, `&`, `"`, `'` en entidades HTML (`&lt;`, `&gt;`, `&amp;`, `&quot;`, `&#39;`). En L314, para generar el título en negrita del mensaje en Telegram, se ejecuta `const eventLabel = safeEvent.replace(/_/g, ' ').toUpperCase()`. Como consecuencia de aplicar `.toUpperCase()` sobre texto ya escapado, las secuencias de escape HTML se convierten en mayúsculas (`&LT;`, `&GT;`, `&AMP;`, `&QUOT;`).
+- **Archivo y línea**: `api/report.js` (Línea 314).
+- **Escenario**: Petición POST a `/api/report` con `event = 'ev <x> > & "q"'` y `user = 'A <b> & "c"'`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: El texto escapado debe conservar las entidades HTML en minúsculas estándar (p. ej. `&lt;x&gt;` o `&lt;X&gt;` según capitalización de contenido, pero con delimitadores de entidad en minúsculas `&lt;`, `&gt;`, `&amp;`, `&quot;`).
+  - *Real*: `.toUpperCase()` convierte indiscriminadamente las entidades a mayúsculas: `EV &LT;X&GT; &GT; &AMP; &QUOT;Q&QUOT;` (mientras que `safeUser` conserva `A &lt;b&gt; &amp; &quot;c&quot;`).
+- **Impacto sobre Telegram**: "no verificado" (no se evalúa en producción si el parser HTML de Telegram acepta entidades en mayúsculas o las rechaza/desescapa erróneamente).
+- **Test**: `eventLabel en mayúsculas conserva las entidades HTML en minúsculas en el mensaje a Telegram` en `tests/api/report.test.mjs` (marcado `{ todo: 'BUG-F3b-02: decisión de producto pendiente - eventLabel pasa a mayúsculas texto ya escapado' }`).
+- **Estado**: Pendiente de decisión de producto (documentado con todo).
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)
