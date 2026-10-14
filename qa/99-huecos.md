@@ -58,6 +58,9 @@
   - Por el contrario, la atomicidad de la transacción `cache.addAll()` ante un fallo de red o servidor no se puede probar de forma fiel en un entorno sintético sin simular arbitrariamente el motor del navegador; por tanto, la atomicidad transaccional de `addAll` permanece como hueco de entorno para validación en navegadores reales en Fase F4 (E2E).
 - **TKT-018 · Límites de cuota de disco y streaming en Cache API**:
   - El fake en memoria no reproduce los límites de almacenamiento por origen ni los desalojos automáticos de caché por presión de disco que aplican los navegadores móviles bajo condiciones extremas.
+- **TKT-018 · R8: Alcance de pruebas ante respuestas no-OK y rutas `/api/*`**:
+  - No hay test del GET a `/api/*` ni del 404; el todo BUG-F3b-01 solo cubre el 500 sobre `/styles.css` (se añade prueba con todo en ⚠ para `/api/client-config` cacheado en `service-worker-fetch.test.mjs`, pero el 404 permanece como hueco sin test).
+  - Se confirmó mediante auditoría que ningún test del repositorio asierta el cacheo de respuestas no-OK en verde (`✔`).
 - **TKT-019 · Mock de Telegram vs Rate Limiting y límites de red de producción**:
   - `api/report.js` se prueba interceptando `globalThis.fetch`. Si bien se evalúan respuestas simuladas 200, 502, 504 y timeouts de red sin exponer tokens, no se prueba contra la API real de Telegram (`https://api.telegram.org/bot<token>/sendMessage`). Aspectos como el rate limiting upstream (código HTTP 429) o el límite de 4096 caracteres para mensajes con formato HTML en Telegram se asumen gestionados por el truncado preventivo de 50/80 caracteres y la degradación silenciosa con 500.
 - **TKT-019 · Sanitización de `event` y transformación a mayúsculas en `eventLabel` (BUG-F3b-02)**:

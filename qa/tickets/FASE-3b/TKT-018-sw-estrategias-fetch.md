@@ -74,6 +74,7 @@ Test de integración en sandbox `node:vm` con `node:test` y `node:assert/strict`
   - `fetch` de red (simulado para responder con objetos `Response` o rechazar por error de red).
 - **Problema que podría ocultar el mock**:
   - Un mock en memoria de Cache API no reproduce las cuotas de almacenamiento de disco de los navegadores móviles, ni el manejo de streaming de cuerpos grandes.
+  - **R8 (Alcance de pruebas en errores y API)**: no hay test del GET a `/api/*` ni del 404; el todo BUG-F3b-01 inicialmente solo cubre el 500 sobre `/styles.css`. Se añade prueba con `todo` en `⚠` para `/api/client-config` cacheado en `service-worker-fetch.test.mjs`; el 404 permanece como hueco sin test. Se confirma mediante grep que ningún test del repositorio asierta el cacheo de respuestas no-OK en verde (`✔`).
   - **R9 (Precache en disco vs atomicidad de addAll)**: La existencia de cada archivo de `PRECACHE_FILES` en disco sí se verifica y queda cubierta mediante el test `dado el precache, cuando se resuelve cada ruta, entonces existe en disco`. Por el contrario, un fake de `cache.addAll` en JS no puede simular fielmente la atomicidad del navegador real (donde si un solo archivo falla con 404, toda la transacción de instalación se cancela sin persistir nada). Por tanto, la atomicidad transaccional de `addAll` NO se prueba con un mock y queda documentada como hueco de entorno en `qa/99-huecos.md`.
 
 ## Criterios de aceptación

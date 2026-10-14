@@ -347,6 +347,40 @@ describe('QA (F3b): Service Worker - Estrategias de fetch y ciclo de vida (TKT-0
         );
     });
 
+    it('R8 · el Service Worker no debe almacenar en caché respuestas a rutas dinámicas /api/*', {
+        todo: 'BUG-F3b-01: decisión de producto pendiente - el SW cachea rutas /api/* en CACHE_NAME sirviendo datos obsoletos'
+    }, async () => {
+        const env = createSwEnvironment();
+        const apiUrl = 'https://love-arcade.test/api/client-config';
+
+        // 1. Primera llamada devuelve configuración v1
+        env.setFetchHandler(async () => new Response(JSON.stringify({ supabaseUrl: 'https://v1.supabase.co' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+        }));
+
+        const firstResult = await env.triggerFetch(apiUrl);
+        assert.equal(firstResult.response.status, 200);
+        const firstBody = await firstResult.response.json();
+        assert.equal(firstBody.supabaseUrl, 'https://v1.supabase.co');
+
+        // 2. Segunda llamada con configuración actualizada v2 en el servidor
+        env.setFetchHandler(async () => new Response(JSON.stringify({ supabaseUrl: 'https://v2.supabase.co' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+        }));
+
+        const secondResult = await env.triggerFetch(apiUrl);
+
+        // Comportamiento DESEADO: /api/* no debe servirse desde la caché estática CACHE_NAME, sino consultar la red
+        const secondBody = await secondResult.response.json();
+        assert.equal(
+            secondBody.supabaseUrl,
+            'https://v2.supabase.co',
+            'Las peticiones a /api/* no deben devolver una respuesta estática cacheada tras actualizarse la configuración'
+        );
+    });
+
     it('dado el precache, cuando se resuelve cada ruta, entonces existe en disco', async () => {
         const env = createSwEnvironment();
         await env.triggerInstall();
