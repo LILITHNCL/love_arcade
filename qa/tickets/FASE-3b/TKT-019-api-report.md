@@ -84,13 +84,13 @@ Test de integración del handler serverless con `node:test` y `node:assert/stric
   - El mock de `fetch` no comprueba si Telegram cambia sus límites de tamaño de mensaje (4096 caracteres) o si rechaza combinaciones específicas de etiquetas HTML.
 
 ## Criterios de aceptación
-- [ ] Peticiones no-POST devuelven 405 Method Not Allowed.
-- [ ] Dominios externos no autorizados reciben 403 Forbidden cuando `PRODUCTION_DOMAIN` está configurado.
-- [ ] Subdominios de `vercel.app`, `localhost` y el dominio de producción son permitidos.
-- [ ] Caracteres especiales de HTML en `user` son correctamente escapados en el payload enviado a Telegram.
-- [ ] Errores de Telegram devuelven código de error sin revelar `TELEGRAM_BOT_TOKEN` al cliente.
-- [ ] `req.body` como objeto, string, Buffer o stream crudo se parsea satisfactoriamente.
-- [ ] Las variables de entorno de prueba se restauran completamente sin dejar efectos secundarios en el proceso.
+- [x] Peticiones no-POST devuelven 405 Method Not Allowed.
+- [x] Dominios externos no autorizados reciben 403 Forbidden cuando `PRODUCTION_DOMAIN` está configurado.
+- [x] Subdominios de `vercel.app`, `localhost` y el dominio de producción son permitidos.
+- [x] Caracteres especiales de HTML en `user` son correctamente escapados en el payload enviado a Telegram.
+- [x] Errores de Telegram devuelven código de error sin revelar `TELEGRAM_BOT_TOKEN` al cliente ni en logs.
+- [x] `req.body` como objeto, string, Buffer o stream crudo se parsea satisfactoriamente.
+- [x] Las variables de entorno de prueba se restauran completamente sin dejar efectos secundarios en el proceso.
 
 ## Comando
 ```bash
@@ -98,4 +98,18 @@ node --test tests/api/report.test.mjs
 ```
 
 ## Estado
-Pendiente
+Hecho
+
+## Resultados de verificación
+
+- **Ejecución aislada (3 ejecuciones de estabilidad)**:
+  - Run 1: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
+  - Run 2: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
+  - Run 3: 24 tests, 8 suites, 24 pass, 0 fail, 0 todo (código 0).
+  - 0% flakiness observado.
+- **Verificación por mutación**:
+  - Mutación 1 (deshabilitar comprobación de origen en `api/report.js`): detectada inmediatamente por 3 tests de origen (código 1, 3 fallos). Revertido limpiamente.
+  - Mutación 2 (omitir reemplazo de caracteres HTML en `sanitize()`): detectada inmediatamente por el test de sanitización (código 1, 1 fallo: `No debe contener <tag> crudo`). Revertido limpiamente.
+- **Impacto en suite completa (`npm test`)**:
+  - Salida baseline (Sesión 2): 151 tests, 25 suites, 131 pass, 0 fail, 20 todo.
+  - Salida tras TKT-019: 175 tests (+24), 33 suites (+8), 155 pass (+24), 0 fail, 20 todo. Suite en verde.
