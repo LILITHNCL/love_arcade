@@ -19,7 +19,7 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | **F2c Tiempo y Racha** | día lógico, caché de tiempo, racha y reparación | 7-9 | Sí | hecho |
 | **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | hecho |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | hecho |
-| **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | pendiente |
+| **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | hecho, pendiente de revisión |
 | **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | pendiente |
 | **F6 Regresión** | contrato público de `GameCenter`; consolidar lista de `todo`; documentación de la suite | 28 | Sí | pendiente |
 | **F4 E2E críticos** | Playwright: ≤ 7 flujos (racha, compra, nivel, promo, export/import, navegación) | 21-25 | **No** (los ejecuta el usuario en su máquina) | pendiente |
@@ -41,11 +41,15 @@ Los siguientes comportamientos ya están cubiertos por tests existentes y no deb
 - **Matriz #16 (Bridge en cada juego)**: Cubierto en `tests/game-bridge.test.mjs`.
 - **Matriz #17 (SW: precache, sin duplicados)**: Cubierto en `tests/service-worker-precache.test.mjs`.
 - **Matriz #28 (Contrato público GameCenter)**: Cubierto en `tests/domain/game-center.test.mjs`.
-- **Ciclo de vida StreakHub (init/destroy/stateMachine)**: Cubierto en `tests/rive-streak-lifecycle.test.mjs`.
 - **Matriz #13 (Sentinel: interceptor de localStorage)**: Cubierto en `tests/integration/sentinel-interceptor.test.mjs` (TKT-013).
 - **Matriz #14 (Sentinel: LWW al iniciar sesión)**: Cubierto en `tests/integration/sentinel-lww-auth.test.mjs` (TKT-014).
 - **Matriz #15 (BackupEngine: exportación e importación .labak)**: Cubierto en `tests/integration/backup-engine.test.mjs` (TKT-015).
 - **Auditoría immediateCloudSync**: Cubierto en `tests/integration/immediate-cloud-sync.test.mjs` (TKT-016).
+- **Matriz #16 (Bridge en cada juego)**: Cubierto en `tests/integration/game-bridge-contract.test.mjs` (TKT-017).
+- **Matriz #17 (SW: precache en disco)**: Cubierto en `tests/pwa/service-worker-fetch.test.mjs` (TKT-018) y `tests/pwa/service-worker-precache.test.mjs`.
+- **Matriz #18 (SW: estrategias de fetch)**: Cubierto en `tests/pwa/service-worker-fetch.test.mjs` (TKT-018).
+- **Matriz #19 (`api/report.js`)**: Cubierto en `tests/api/report.test.mjs` (TKT-019).
+- **Matriz #20 (`api/client-config.js`)**: Cubierto en `tests/api/client-config.test.mjs` (TKT-020).
 
 ## Bugs y hallazgos reclasificados (tests de QA)
 - **Bug F1 (atribución CC BY)**: "aristote" solo aparece en archivos y tests. Pendiente de decisión del usuario. Añadido como `todo` en `tests/daily-streak-hub-qa.mjs`.

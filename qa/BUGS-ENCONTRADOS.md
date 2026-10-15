@@ -14,14 +14,14 @@
 - **Archivo y línea**: `tests/daily-streak-hub-qa.mjs` (Línea 12).
 - **Comportamiento esperado vs real**: Se esperaba que el HTML incluyera la atribución textualmente, pero no aparece ninguna en ninguna página.
 - **Test**: `assert.match(html,/Animación “Dynamic streak fire” por aristote · CC BY/);`
-- **Estado**: pendiente de decisión del usuario (decidir si el .txt basta como atribución o hay que mostrarla en la interfaz).
+- **Estado**: Decisión del usuario: la atribución queda solo en documentación, no en la app. El todo actual contradice la decisión y se resuelve en F6.
 
 ### 4. Opacidad hardcodeada rompe theming (glow)
 - **Descripción**: El estado "available" del glow tiene opacidad fijada en duro en lugar de usar el design token.
 - **Archivo y línea**: `styles.css` (líneas 1123 y 1130).
 - **Comportamiento esperado vs real**: Se esperaba que usara la variable `--streak-rive-glow-available-opacity` (.58), pero está fijado a `.78`.
 - **Test**: `assert.match(css,/\.player-hud__glow-layer\[data-state="available"\][\s\S]*?opacity:var\(--streak-rive-glow-available-opacity\)/);`
-- **Estado**: hallazgo de diseño, decisión del usuario: ¿.58 o .78?
+- **Estado**: Decisión del usuario: la opacidad correcta del estado available es .78. El todo actual contradice la decisión y se resuelve en F6.
 
 ### Bug F2a-01: Pérdida de historial en memoria tras doble fallo de cuota
 - **Descripción**: Si falla el reintento de guardado en `emergencyCleanup` (debido a cuota de disco exhausta), se borra el historial con `store.history = []` en memoria. Existe una notificación (toast) indicando que no se pudo guardar, pero el estado en memoria queda corrupto sin el historial. Esto se convierte en una pérdida de datos real cuando ocurre el siguiente guardado exitoso, que persistirá el vacío.
@@ -119,6 +119,31 @@
   - *Real*: Escribe sin restricción todas las claves presentes en `payload.keys`.
 - **Test**: `dado un archivo .labak con claves arbitrarias no vigiladas (R4), cuando se importa, entonces solo debería escribir claves autorizadas (lista blanca) y omitir claves arbitrarias` en `tests/integration/backup-engine.test.mjs` (marcado `{ todo: 'BUG-F3a-03: importBackupFromFile restaura cualquier clave sin lista blanca (R4)' }`).
 - **Estado**: Pendiente de decisión humana (documentado con todo).
+
+### Bug F3b-01: Almacenamiento indiscriminado en caché de respuestas no-OK (500/404) y endpoints `/api/*` en Service Worker (R8)
+- **Descripción**: El listener del evento `fetch` en `sw.js` (L134-142) aplica una estrategia cache-first a todas las solicitudes dirigidas a su mismo origen (`url.origin === self.location.origin`). Ante un fallo inicial de caché (`caches.match` retorna `undefined`), realiza la petición de red con `fetch(event.request)` y guarda incondicionalmente la respuesta en `CACHE_NAME` con `cache.put(event.request, response.clone())`. Esto genera dos problemas de diseño:
+  1. Respuestas de error del servidor o recursos inexistentes (`!response.ok`, tales como HTTP 500 o HTTP 404) son guardadas en disco en la caché de la aplicación. En peticiones posteriores, el Service Worker sirve el error cacheado de forma permanente sin consultar nuevamente la red, impidiendo que la aplicación se recupere cuando el servidor o la red vuelven a funcionar.
+  2. Endpoints dinámicos de backend bajo `/api/*` (como `/api/client-config` o cualquier ruta API del mismo origen) son interceptados e insertados en la caché estática de assets sin comprobar la ruta ni cabeceras como `Cache-Control: no-store`, congelando la respuesta dinámica inicial.
+- **Archivo y línea**: `sw.js` (Líneas 134-142).
+- **Escenario**:
+  - Escenario 1: Un recurso falla transitoriamente con error 500. `sw.js` almacena el 500 en `CACHE_NAME`. Al reestablecerse el backend y responder 200, las siguientes solicitudes continúan recibiendo el código 500 cacheado.
+  - Escenario 2: La aplicación realiza un GET a `/api/client-config`. `sw.js` lo almacena en `CACHE_NAME`. Futuros cambios en la configuración del servidor no son percibidos por el cliente porque se sirve la copia estática.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: El Service Worker no debe almacenar en caché respuestas no exitosas (`!response.ok`), permitiendo reintentar la red cuando el servidor se recupere. Asimismo, las rutas dinámicas `/api/*` deben ser excluidas de la caché estática del shell o gestionadas con estrategia network-only/network-first sin almacenamiento ciego.
+  - *Real*: Guarda ciegamente cualquier respuesta en `CACHE_NAME` (`cache.put`) y la sirve indefinidamente en llamadas posteriores.
+- **Test**: `R8 · el Service Worker no debe almacenar respuestas no-OK (500) perpetuando el error tras recuperarse el servidor` en `tests/pwa/service-worker-fetch.test.mjs` (marcado `{ todo: 'BUG-F3b-01: decisión de producto pendiente - el SW cachea respuestas !response.ok y /api/* en CACHE_NAME perpetuando el fallo tras recuperarse la red' }`).
+- **Estado**: Pendiente de decisión humana (marcado como "decisión de producto pendiente").
+
+### Bug F3b-02: `eventLabel` pasa a mayúsculas texto ya escapado generando entidades HTML en mayúsculas
+- **Descripción**: En `api/report.js`, el campo `event` se sanitiza en L288 (`const safeEvent = sanitize(event).slice(0, 80)`), transformando `<`, `>`, `&`, `"`, `'` en entidades HTML (`&lt;`, `&gt;`, `&amp;`, `&quot;`, `&#39;`). En L314, para generar el título en negrita del mensaje en Telegram, se ejecuta `const eventLabel = safeEvent.replace(/_/g, ' ').toUpperCase()`. Como consecuencia de aplicar `.toUpperCase()` sobre texto ya escapado, las secuencias de escape HTML se convierten en mayúsculas (`&LT;`, `&GT;`, `&AMP;`, `&QUOT;`).
+- **Archivo y línea**: `api/report.js` (Línea 314).
+- **Escenario**: Petición POST a `/api/report` con `event = 'ev <x> > & "q"'` y `user = 'A <b> & "c"'`.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: El texto escapado debe conservar las entidades HTML en minúsculas estándar (p. ej. `&lt;x&gt;` o `&lt;X&gt;` según capitalización de contenido, pero con delimitadores de entidad en minúsculas `&lt;`, `&gt;`, `&amp;`, `&quot;`).
+  - *Real*: `.toUpperCase()` convierte indiscriminadamente las entidades a mayúsculas: `EV &LT;X&GT; &GT; &AMP; &QUOT;Q&QUOT;` (mientras que `safeUser` conserva `A &lt;b&gt; &amp; &quot;c&quot;`).
+- **Impacto sobre Telegram**: "no verificado" (no se evalúa en producción si el parser HTML de Telegram acepta entidades en mayúsculas o las rechaza/desescapa erróneamente).
+- **Test**: `eventLabel en mayúsculas conserva las entidades HTML en minúsculas en el mensaje a Telegram` en `tests/api/report.test.mjs` (marcado `{ todo: 'BUG-F3b-02: decisión de producto pendiente - eventLabel pasa a mayúsculas texto ya escapado' }`).
+- **Estado**: Pendiente de decisión de producto (documentado con todo).
 
 ## Hallazgos de diseño y arquitectura
 
