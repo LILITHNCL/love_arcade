@@ -78,4 +78,17 @@
 - **TKT-020 · Variables de entorno reales en Vercel Dashboard**:
   - Se verificó mediante tests unitarios que `api/client-config.js` degrada elegantemente a `{ supabaseUrl: '', supabaseKey: '' }` con código 200 cuando faltan `NEXT_PUBLIC_LA_CLOUD_URL` o `NEXT_PUBLIC_LA_CLOUD_ANON_KEY`, y que emite `Cache-Control: no-store`. La configuración efectiva y validez de las credenciales de producción en Vercel Dashboard debe ser comprobada humanamente o mediante despliegues de preview.
 
+## F5 - Edge cases y robustez transversal
+
+- **TKT-021 · Cuota multiravegador (BUG-F5-01)**:
+  - En navegadores no-Chromium (como Firefox / motor Gecko), la cuota de disco en `localStorage` se manifiesta mediante excepciones con `name = 'NS_ERROR_DOM_QUOTA_REACHED'` y código numérico `1014` (o `DOMException` con `code: 1014`).
+  - `js/core/state-store.js:149` comprueba exclusivamente `error?.name !== 'QuotaExceededError'`, relanzando la excepción y provocando un crash no controlado sin invocar `emergencyCleanup()` ni emitir `showStorageToast`. Queda cubierto con tests asertando el comportamiento deseado bajo `{ todo }`.
+- **TKT-021 · Contaminación por raíz no-objeto en migración (BUG-F5-02)**:
+  - Si el contenido recuperado de `localStorage` es un array o cadena JSON válida (ej. `["progreso", 123]` o `"corrupto"`), `migrate(loadedStore)` ejecuta `{ ...defaults, ...loadedStore }`, lo que propaga índices numéricos (`'0'`, `'1'`, etc.) como propiedades del store que se serializan a disco. Queda cubierto con tests asertando ausencia de claves espurias bajo `{ todo }`.
+- **TKT-021 · Incoherencia transaccional en `buyItem` ante fallo de cuota irrecuperable (BUG-F5-03)**:
+  - `buyItem` muta el saldo y el inventario en memoria antes de persistir con `Store.save()`. Si `Store.save()` falla por cuota irrecuperable (o relanza error), `buyItem` no implementa reversión transaccional en memoria, retornando éxito con un saldo desfasado respecto al disco. Queda cubierto con tests bajo `{ todo }`.
+- **TKT-021 · Emulación sintética de límites de cuota vs Sistema Operativo / Navegador**:
+  - En el entorno de pruebas de Node (`tests/helpers/vm-sandbox.cjs`), `localStorage` es una estructura `Map` en memoria con inyección de errores sintéticos. La presión física de disco y las políticas dinámicas de desalojo aplicadas por navegadores reales en dispositivos con memoria flash llena quedan como verificación para Fase F4 (E2E).
+
+
 

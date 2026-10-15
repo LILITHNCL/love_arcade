@@ -145,6 +145,42 @@
 - **Test**: `eventLabel en mayúsculas conserva las entidades HTML en minúsculas en el mensaje a Telegram` en `tests/api/report.test.mjs` (marcado `{ todo: 'BUG-F3b-02: decisión de producto pendiente - eventLabel pasa a mayúsculas texto ya escapado' }`).
 - **Estado**: Pendiente de decisión de producto (documentado con todo).
 
+### Bug F5-01: `Store.save` solo captura `QuotaExceededError` e ignora excepciones de cuota no-Chromium (`NS_ERROR_DOM_QUOTA_REACHED` y `code: 1014`)
+- **Descripción**: La función `save()` en `js/core/state-store.js` evalúa exclusivamente `if (error?.name !== 'QuotaExceededError') throw error;`. En navegadores basados en Gecko/Firefox y conforme a especificaciones DOM históricas, el error lanzado al sobrepasar la cuota de disco posee `name: 'NS_ERROR_DOM_QUOTA_REACHED'` y `code: 1014` (o `DOMException` con `code: 1014`). Al no reconocer estos identificadores de cuota, `Store.save()` relanza la excepción directamente hacia el llamador, provocando un fallo no controlado (crash) y abortando la ejecución sin ejecutar `emergencyCleanup()` ni mostrar la notificación visual de almacenamiento al usuario (`showStorageToast`).
+- **Archivo y línea**: `js/core/state-store.js` (Línea 149).
+- **Escenario**: Un usuario en Firefox o navegador no-Chromium alcanza el límite de almacenamiento de `localStorage` al guardar el progreso del juego.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Capturar cualquier error que indique exceso de cuota (`name === 'QuotaExceededError'`, `name === 'NS_ERROR_DOM_QUOTA_REACHED'` o `code === 1014 / 22`), ejecutar `emergencyCleanup()` y reintentar la persistencia sin lanzar excepciones no controladas.
+  - *Real*: Lanza la excepción sin capturarla, interrumpe el flujo de la aplicación y omite el podado de emergencia.
+- **Tests**:
+  - `dado un error NS_ERROR_DOM_QUOTA_REACHED en setItem, cuando se guarda, entonces debería ejecutar emergencyCleanup y reintentar sin relanzar` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-01: Store.save solo captura QuotaExceededError e ignora NS_ERROR_DOM_QUOTA_REACHED (Firefox)' }`).
+  - `dado un error con code 1014 en setItem, cuando se guarda, entonces debería ejecutar emergencyCleanup y reintentar sin relanzar` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-01: Store.save solo captura QuotaExceededError e ignora excepciones de cuota con code 1014' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
+### Bug F5-02: `Store.migrate` propaga índices numéricos como propiedades espurias si la raíz recuperada es un Array o String
+- **Descripción**: En `js/core/state-store.js`, la función `migrate(loadedStore)` combina las opciones por defecto mediante el operador spread: `const merged = { ...defaults, ...loadedStore };`. Si el payload almacenado en `localStorage` o parseado contiene un JSON válido cuya raíz no es un objeto plano sino un `Array` (ej. `["progreso_invalido", 123]`) o un `String` (ej. `"guardado_corrupto"`), el spread copia las propiedades indexadas (`'0': 'progreso_invalido'`, `'1': 123`, o los caracteres de la cadena) dentro del objeto del store. Estas propiedades espurias numéricas contaminan el estado y se propagan persistentemente en serializaciones posteriores (`JSON.stringify`).
+- **Archivo y línea**: `js/core/state-store.js` (Línea 28).
+- **Escenario**: El valor en `localStorage` bajo `CONFIG.stateKey` fue manipulado o corrompido con una raíz no-objeto de tipo array o string.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Validar defensivamente que `loadedStore` sea un objeto plano no iterable como colección (`typeof loadedStore === 'object' && loadedStore !== null && !Array.isArray(loadedStore)`). Si no lo es, descartarlo y retornar únicamente la estructura limpia de `defaults`.
+  - *Real*: Inyecta claves `'0'`, `'1'`, etc., en el objeto devuelto por `migrate`.
+- **Tests**:
+  - `dado una raíz tipo array, cuando se ejecuta migrate, entonces debería retornar defaults sin propagar claves numéricas espurias` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-02: migrate propaga índices numéricos cuando la raíz es un Array' }`).
+  - `dado una raíz tipo string, cuando se ejecuta migrate, entonces debería retornar defaults sin propagar claves numéricas espurias` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-02: migrate propaga índices numéricos cuando la raíz es un String' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
+### Bug F5-03: `Economy.buyItem` carece de rollback transaccional ante fallo de cuota irrecuperable en `Store.save`
+- **Descripción**: En `js/domain/economy.js`, la función `buyItem(itemData)` descuenta monedas del saldo en memoria (`store.coins -= finalPrice; store.coins += cashback;`), añade el ítem a `store.inventory[itemData.id]` y registra transacciones en el historial antes de invocar `Store.save({ immediateCloudSync: true })`. Si `Store.save()` no logra persistir en disco debido a un fallo irrecuperable de cuota (o si relanza un error de almacenamiento), `buyItem` no implementa ningún bloque `try/catch` para revertir los cambios en memoria. Como resultado, `buyItem` devuelve `{ success: true, finalPrice, cashback }` a la interfaz de usuario mientras que en `localStorage` el saldo sigue intacto con las monedas originales. Además, si `Store.save` vacía el historial en memoria durante su reintento fallido (por `BUG-F2a-01`), la sesión queda en un estado corrupto e inconsistente entre memoria y almacenamiento.
+- **Archivo y línea**: `js/domain/economy.js` (Líneas 26-34) y `js/core/state-store.js` (Líneas 148-164).
+- **Escenario**: Un jugador realiza una compra en la tienda teniendo saldo suficiente en memoria, pero el almacenamiento `localStorage` está lleno al 100% y falla el reintento de guardado tras el cleanup de emergencia.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Ante fallo de persistencia en disco, la transacción de compra debe cancelarse o revertirse en memoria (restableciendo `store.coins` y removiendo el ítem del inventario), notificando un fallo controlado `{ success: false, reason: 'storage_error' }` para mantener paridad transaccional entre memoria y disco.
+  - *Real*: Devuelve `{ success: true }`, deduce las monedas en memoria y deja el disco desincronizado con respecto al estado local.
+- **Tests**:
+  - `dado un fallo de cuota irrecuperable en Store.save al comprar un ítem, cuando se procesa buyItem, entonces debería mantener la coherencia revirtiendo la deducción de monedas en memoria` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-03: buyItem no revierte la deducción de monedas en memoria si Store.save falla por cuota (incoherencia transaccional)' }`).
+  - `dado un fallo de cuota irrecuperable en Store.save al comprar un ítem, cuando se procesa buyItem, entonces debería devolver success false por fallo de persistencia` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-03: buyItem reporta success true aunque Store.save falle por cuota' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)

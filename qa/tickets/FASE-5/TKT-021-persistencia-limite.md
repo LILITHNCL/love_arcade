@@ -68,10 +68,10 @@ Test unitario y de frontera con `node:test` y `node:assert/strict`, utilizando s
 
 ## Criterios de aceptación verificables
 
-- [ ] Todos los escenarios de cuota estándar y no-Chromium son evaluados de forma determinista.
-- [ ] La migración de estados con tipos raíz incompatibles (`null`, array, número, booleano, string) no introduce claves ajenas a los defaults.
-- [ ] La condición de podado y advertencia en ~4 MB es verificada mediante aserciones sobre `store.progress` y la llamada a `showStorageToast`.
-- [ ] Discrepancias identificadas en código de producción quedan cubiertas con tests asertando el comportamiento seguro bajo `{ todo }`.
+- [x] Todos los escenarios de cuota estándar y no-Chromium son evaluados de forma determinista.
+- [x] La migración de estados con tipos raíz incompatibles (`null`, array, número, booleano, string) no introduce claves ajenas a los defaults (casos de array y string cubiertos bajo `{ todo }` por BUG-F5-02).
+- [x] La condición de podado y advertencia en ~4 MB es verificada mediante aserciones sobre `store.progress`, `GhostAnalytics.track` y la llamada a `showStorageToast`.
+- [x] Discrepancias identificadas en código de producción quedan cubiertas con tests asertando el comportamiento seguro bajo `{ todo }` (BUG-F5-01, BUG-F5-02, BUG-F5-03).
 
 ## Comando para ejecutarlo
 
@@ -79,6 +79,24 @@ Test unitario y de frontera con `node:test` y `node:assert/strict`, utilizando s
 node --test tests/core/storage-limits.test.mjs
 ```
 
+## Verificación por mutación
+
+1. **Mutación 1 (Quitar comprobación de QuotaExceededError en `js/core/state-store.js:149`)**:
+   - Cambio: Se reemplazó la guarda `if (error?.name !== 'QuotaExceededError') throw error;` por `throw error;`.
+   - Resultado: 4 tests fallaron (`✖ dado un error QuotaExceededError en setItem, cuando se guarda, entonces ejecuta emergencyCleanup eliminando el avatar pesado` y `✖ dado un error QuotaExceededError en setItem, cuando se reintenta exitosamente, entonces recorta el historial a 30 entradas`).
+   - Reversión: `git checkout -- js/core/state-store.js` restableció el árbol limpio (`git diff` vacío).
+
+2. **Mutación 2 (Cambiar el recorte del historial en `emergencyCleanup` de 30 a 20 en `js/core/state-store.js:106`)**:
+   - Cambio: Se alteró `store.history.slice(-30)` por `store.history.slice(-20)`.
+   - Resultado: 1 test falló (`✖ dado un error QuotaExceededError en setItem, cuando se reintenta exitosamente, entonces recorta el historial a 30 entradas` con `20 !== 30`).
+   - Reversión: `git checkout -- js/core/state-store.js` restableció el árbol limpio (`git diff` vacío).
+
+3. **Mutación 3 (Quitar el try/catch de `_writeTimeCache` en `js/core/time-sync.js:34-40`)**:
+   - Cambio: Se eliminó el bloque `try/catch` envolvente en `_writeTimeCache`, dejando que `localStorage.setItem` lance directamente.
+   - Resultado: 3 tests fallaron (`✖ dado localStorage agotado por cuota, cuando _writeTimeCache intenta persistir, entonces captura la excepción silenciosamente sin lanzar error`).
+   - Reversión: `git checkout -- js/core/time-sync.js` restableció el árbol limpio (`git diff` vacío).
+
 ## Estado
 
-pendiente
+hecho
+

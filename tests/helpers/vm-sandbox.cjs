@@ -16,9 +16,16 @@ function createSandbox() {
             getItem: (key) => storage.get(key) ?? null,
             setItem: (key, value) => {
                 if (simulateQuotaExceeded) {
-                    const err = new Error('QuotaExceededError');
-                    err.name = 'QuotaExceededError';
-                    throw err;
+                    if (typeof simulateQuotaExceeded === 'function') {
+                        simulateQuotaExceeded(key, value);
+                    } else if (typeof simulateQuotaExceeded === 'object' && simulateQuotaExceeded !== null) {
+                        throw simulateQuotaExceeded;
+                    } else {
+                        const err = new Error('QuotaExceededError');
+                        err.name = 'QuotaExceededError';
+                        err.code = 22;
+                        throw err;
+                    }
                 }
                 storage.set(key, String(value));
             },
@@ -48,9 +55,16 @@ function createSandbox() {
     };
 }
 
-function loadFiles(context, files) {
+function loadFiles(context, files, options = {}) {
     for (const file of files) {
-        vm.runInContext(read(file), context, { filename: file });
+        let code = read(file);
+        if (file === 'js/core/time-sync.js' && options && options.exposeTimeSyncInternals) {
+            code = code.replace(
+                'window.LoveArcadeTime = {',
+                'window.LoveArcadeTime = {\n        _writeTimeCache,\n'
+            );
+        }
+        vm.runInContext(code, context, { filename: file });
     }
 }
 
