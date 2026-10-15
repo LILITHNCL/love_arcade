@@ -140,7 +140,10 @@ Auditoría contra `index.html`, `js/pwa/sw-update-bridge.js` y `js/game-bridge-r
 Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handlers de backend en un entorno de desarrollo local.
 
 > [!WARNING]
-> **Seguridad y privacidad**: NUNCA crear un archivo `.env.local` con credenciales reales ni introducir tokens verdaderos en la línea de comandos. No se debe enviar tráfico de prueba a Telegram real bajo ninguna circunstancia. Todas las comprobaciones manuales deben realizarse exclusivamente con variables ficticias/falsas pasadas por línea de comandos.
+> **Seguridad, credenciales y tráfico externo**:
+> - **Credenciales**: NUNCA usar credenciales reales ni crear un archivo `.env.local`. Todas las comprobaciones manuales deben realizarse exclusivamente con variables ficticias o falsas pasadas por línea de comandos.
+> - **Petición real a Telegram**: Con `vercel dev` y el token falso, el handler SÍ hace una petición HTTP real a `api.telegram.org` (`api/report.js:349`); no se entrega ningún mensaje y Telegram responde error (`502 telegram_upstream_error`, `report.js:377`), o `504` si no hay red (`report.js:391-396`).
+> - **Omisión de tráfico externo**: Si no se quiere tráfico externo, omitir el paso 4.3.5 y quedarse con los pasos de 405 (pasos 4.3.3 y 4.3.4) y 403 (paso 4.3.6), que no contactan Telegram.
 
 1. **Iniciar el runtime local con variables de prueba ficticias**:
    ```bash
@@ -199,6 +202,7 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
      *(donde `trace_id` y `timestamp` son valores dinámicos generados en cada llamada).*
 
 5. **Probar `/api/report` con origen autorizado (POST)**:
+   *(Paso opcional: genera tráfico HTTP hacia `api.telegram.org`; omitir si se desea evitar tráfico externo según la advertencia).*
    ```bash
    curl -i -X POST http://localhost:3000/api/report \
      -H "Content-Type: application/json" \
@@ -206,8 +210,8 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
      -d '{"type":"analytics","user":"JugadorManual","event":"test_ping","data":{"dispositivo":"desktop"}}'
    ```
    *Resultado esperado con las variables de prueba ficticias (`TELEGRAM_BOT_TOKEN=fake`, `TELEGRAM_CHAT_ID=0`)*:
-   - Al usar un token ficticio, el intento de envío hacia Telegram upstream fallará de forma segura sin emitir ningún mensaje real:
-     - Si la petición alcanza Telegram, este responde con error upstream (p. ej. HTTP 401 Unauthorized o 404), y el handler devuelve HTTP `502 Bad Gateway` con estructura:
+   - Al usar un token ficticio, el handler SÍ hace una petición HTTP real a `api.telegram.org` (`api/report.js:349`), pero fallará de forma segura sin emitir ningún mensaje real:
+     - Si la petición alcanza Telegram, este responde con error upstream (p. ej. HTTP 401 Unauthorized o 404), y el handler devuelve HTTP `502 Bad Gateway` (`api/report.js:377`) con estructura:
        ```json
        {
          "ok": false,
@@ -219,7 +223,7 @@ Si se dispone del CLI de Vercel (`npm i -g vercel`), se pueden probar los handle
          }
        }
        ```
-     - Si la máquina no tiene acceso a internet o la conexión es rechazada/agota tiempo, devuelve HTTP `504 Gateway Timeout` con `code: "telegram_network_error"` o `"telegram_timeout"`.
+     - Si la máquina no tiene acceso a internet o la conexión es rechazada/agota tiempo, devuelve HTTP `504 Gateway Timeout` (`api/report.js:391-396`) con `code: "telegram_network_error"` o `"telegram_timeout"`.
      - Si se ejecutara sin definir `TELEGRAM_BOT_TOKEN` ni `TELEGRAM_CHAT_ID`, devuelve HTTP `500 Server misconfiguration` (`api/report.js:346`):
        ```json
        {
