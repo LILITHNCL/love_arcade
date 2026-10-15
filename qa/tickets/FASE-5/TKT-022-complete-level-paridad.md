@@ -60,9 +60,9 @@ Test unitario y de paridad funcional cruzada con `node:test` y `node:assert/stri
 
 ## Criterios de aceptación verificables
 
-- [ ] Las implementaciones de Hub y Bridge son sometidas a la misma batería de pruebas unitarias.
-- [ ] La tabla de paridad evalúa secuencialmente los casos extremos y comprueba la identidad total de estado mediante `assert.deepEqual`.
-- [ ] Cualquier fallo de validación de `Infinity` o decimales queda documentado como `todo` en ⚠ sin quebrar la ejecución de `npm test`.
+- [x] Las implementaciones de Hub y Bridge son sometidas a la misma batería de pruebas unitarias.
+- [x] La tabla de paridad evalúa secuencialmente los casos extremos y comprueba la identidad total de estado mediante `assert.deepEqual`.
+- [x] Cualquier fallo de validación de `Infinity` o decimales queda documentado como `todo` en ⚠ sin quebrar la ejecución de `npm test`.
 
 ## Comando para ejecutarlo
 
@@ -70,6 +70,35 @@ Test unitario y de paridad funcional cruzada con `node:test` y `node:assert/stri
 node --test tests/domain/complete-level.test.mjs
 ```
 
+## Resultados de ejecución
+
+```
+ℹ tests 21
+ℹ suites 3
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 12
+ℹ duration_ms 1163.367656
+```
+
+## Verificación por mutación
+
+1. **Mutación 1 (Inversión de guarda de idempotencia en Hub · `js/domain/game-center.js:18`)**:
+   - *Cambio*: `if (Store.getStore().progress[gameId].includes(levelId))` cambiado a `if (!Store.getStore().progress[gameId].includes(levelId))`
+   - *Resultado*: Fallaron los tests unitarios de Hub (`dado una primera llamada...`, `dado un monto cero...`, `dado un monto con decimales...`) y el test de paridad `✖ Paridad: ambas copias se comportan igual ante una tabla de casos extremos` (`ERR_ASSERTION`). Exit code: 1.
+   - *Reversión*: `git checkout js/domain/game-center.js`. `git diff js/domain/game-center.js` quedó limpio y vacío.
+
+2. **Mutación 2 (Inversión de guarda de idempotencia en Bridge · `js/game-bridge-runtime.js:15`)**:
+   - *Cambio*: `if (store.progress[gameId].includes(levelId))` cambiado a `if (!store.progress[gameId].includes(levelId))`
+   - *Resultado*: Fallaron los tests unitarios de Bridge (`dado una primera llamada...`, `dado una segunda llamada...`, `dado un monto cero...`, `dado un monto con decimales...`) y el test de paridad `✖ Paridad: ambas copias se comportan igual ante una tabla de casos extremos` (`ERR_ASSERTION`). Exit code: 1.
+   - *Reversión*: `git checkout js/game-bridge-runtime.js`. `git diff js/game-bridge-runtime.js` quedó limpio y vacío.
+
+3. **Comprobación `Math.floor`**:
+   - Ni `js/domain/game-center.js` ni `js/game-bridge-runtime.js` implementan `Math.floor` en `completeLevel` (ambas copias ejecutan directamente `coins += rewardAmount;`). La acumulación de decimales fue validada en verde (`✔`) observacionalmente para ambas implementaciones y documentada como hueco arquitectónico en `qa/99-huecos.md`.
+
 ## Estado
 
-pendiente
+hecho
+

@@ -89,6 +89,11 @@
   - `buyItem` muta el saldo y el inventario en memoria antes de persistir con `Store.save()`. Si `Store.save()` falla por cuota irrecuperable (o relanza error), `buyItem` no implementa reversión transaccional en memoria, retornando éxito con un saldo desfasado respecto al disco. Queda cubierto con tests bajo `{ todo }`.
 - **TKT-021 · Emulación sintética de límites de cuota vs Sistema Operativo / Navegador**:
   - En el entorno de pruebas de Node (`tests/helpers/vm-sandbox.cjs`), `localStorage` es una estructura `Map` en memoria con inyección de errores sintéticos. La presión física de disco y las políticas dinámicas de desalojo aplicadas por navegadores reales en dispositivos con memoria flash llena quedan como verificación para Fase F4 (E2E).
+- **TKT-022 · Discrepancia de redondeo y acumulación de decimales en `completeLevel`**:
+  - `Economy.addCoins` y `Economy.spendCoins` truncan explícitamente cualquier monto decimal utilizando `Math.floor(amount)`, garantizando que el saldo de la economía en `Store.getStore().coins` sea siempre un entero (`integer`).
+  - Por el contrario, `completeLevel` en `js/domain/game-center.js:20` y `js/game-bridge-runtime.js:17` realiza directamente `store.coins += rewardAmount;` sin aplicar `Math.floor()`. Si un minijuego otorga recompensas fraccionarias (ej. 15.5 o 2.75 monedas), el saldo pasa a contener números de coma flotante (`115.5`).
+  - No existe una especificación de producto ni decisión previa que defina si los minijuegos deben admitir recompensas fraccionarias o si todo incremento debe ser estrictamente entero. Por directriz de testing, no se inventa una especificación arbitraria: se fija el comportamiento observable actual en verde (`✔`) en los tests tanto para Hub como para Bridge, asegurando la paridad estricta entre ambos entornos, y se documenta como hueco de diseño arquitectónico pendiente de decisión de producto.
+
 
 
 

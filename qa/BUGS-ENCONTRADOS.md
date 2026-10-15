@@ -181,6 +181,29 @@
   - `dado un fallo de cuota irrecuperable en Store.save al comprar un ítem, cuando se procesa buyItem, entonces debería devolver success false por fallo de persistencia` en `tests/core/storage-limits.test.mjs` (marcado `{ todo: 'BUG-F5-03: buyItem reporta success true aunque Store.save falle por cuota' }`).
 - **Estado**: Pendiente. Marcado con `{ todo }` en test.
 
+### Bug F5-04: `completeLevel` acepta recompensas `Infinity` y `-Infinity` corrompiendo el saldo del store a `null` al persistir con JSON
+- **Descripción**: En `js/domain/game-center.js` (Hub) y `js/game-bridge-runtime.js` (Bridge), `completeLevel` realiza `store.coins += rewardAmount` sin verificar si `rewardAmount` es un número finito (`Number.isFinite(rewardAmount)`). Si un minijuego otorga `Infinity` o `-Infinity`, el saldo en memoria pasa a ser `Infinity` o `-Infinity`. Al persistir mediante `Store.save()`, la llamada interna a `JSON.stringify` convierte `Infinity` y `-Infinity` en `null` (`JSON.stringify({ coins: Infinity }) === '{"coins":null}'`), destruyendo de forma irreversible el saldo numérico del jugador en la siguiente recarga de la aplicación (R1).
+- **Archivo y línea**: `js/domain/game-center.js` (Línea 20) y `js/game-bridge-runtime.js` (Línea 17).
+- **Escenario**: Un minijuego envía una recompensa anómala `rewardAmount = Infinity` o `-Infinity` tras completar un nivel.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Rechazar cualquier monto no finito mediante `Number.isFinite(rewardAmount)`, devolviendo `{ paid: false, coins: store.coins }` sin mutar el saldo ni registrar transacción de ingreso.
+  - *Real*: Suma `Infinity` al saldo y lo persiste, convirtiéndolo en `null` en `localStorage`.
+- **Tests**:
+  - `dado un monto Infinity, cuando se completa, entonces corrompe el saldo a null en serialización (BUG R1)` en `tests/domain/complete-level.test.mjs` (marcado `{ todo: 'BUG-F5-04: completeLevel acepta Infinity corrompiendo el saldo a null en serialización' }`).
+  - `dado un monto -Infinity, cuando se completa, entonces corrompe el saldo a null en serialización (BUG R1)` en `tests/domain/complete-level.test.mjs` (marcado `{ todo: 'BUG-F5-04: completeLevel acepta -Infinity corrompiendo el saldo a null en serialización' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
+### Bug F5-05: `completeLevel` marca el nivel en `progress` antes de validar el monto, bloqueando permanentemente reintentos legítimos
+- **Descripción**: En `js/domain/game-center.js` (Hub) y `js/game-bridge-runtime.js` (Bridge), la función `completeLevel` ejecuta incondicionalmente `store.progress[gameId].push(levelId)` antes de procesar el pago o verificar la validez del monto. Si una llamada se produce con un monto inválido (`Infinity`, `NaN`, string o número negativo), el nivel queda registrado de inmediato como completado en la lista de progreso. Cualquier llamada posterior legítima para el mismo nivel (ej. reintento del jugador con recompensa válida de 50 monedas) es rechazada por la comprobación de idempotencia (`store.progress[gameId].includes(levelId)` retornando `{ paid: false }`), impidiendo de por vida que el usuario reciba la recompensa de ese nivel.
+- **Archivo y línea**: `js/domain/game-center.js` (Línea 19) y `js/game-bridge-runtime.js` (Línea 16).
+- **Escenario**: Una llamada inicial a `completeLevel` recibe un monto inválido (rechazado o defectuoso) y posteriormente el juego intenta otorgar la recompensa legítima al completar el nivel.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Un monto rechazado por invalidez no debe marcar el nivel como completado en `progress[gameId]`, permitiendo que el nivel pueda ser completado y recompensado en un intento posterior legítimo.
+  - *Real*: El nivel queda marcado inmediatamente en `progress`, impidiendo cualquier pago futuro por idempotencia.
+- **Tests**:
+  - `dado un monto inválido (Infinity), cuando se intenta completar, entonces no debe marcar el nivel en progress permitiendo reintento válido posterior (BUG R1)` en `tests/domain/complete-level.test.mjs` (marcado `{ todo: 'BUG-F5-05: completeLevel registra el nivel en progress aunque el monto sea inválido impidiendo reintentos legítimos' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)

@@ -20,7 +20,7 @@ Cada fase cabe en una sesión. Cada fase va en su propia branch `pruebas-fase-N-
 | **F2d Sistemas aislados P1** | Luna, promo, export/import | 10-12 | Sí | hecho |
 | **F3a Integración: cloud y backup** | interceptor y LWW de Sentinel con Supabase falso; backup `.labak` con gzip y crypto reales | 13-15 | Sí | hecho |
 | **F3b Integración: bridge, SW y API** | contrato del bridge; precache existente; estrategias de fetch; handlers de `api/` | 16-20 | Sí | hecho, pendiente de revisión |
-| **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | en curso (TKT-021 hecho) |
+| **F5 Edge cases** | corrupción, multipestaña, almacenamiento al límite, unicode, saltos de reloj transversales | 26 | Sí | en curso (TKT-021 y TKT-022 hechos) |
 | **F6 Regresión** | contrato público de `GameCenter`; consolidar lista de `todo`; documentación de la suite | 28 | Sí | pendiente |
 | **F4 E2E críticos** | Playwright: ≤ 7 flujos (racha, compra, nivel, promo, export/import, navegación) | 21-25 | **No** (los ejecuta el usuario en su máquina) | pendiente |
 | **F7 Accesibilidad (condicional)** | axe + foco en diálogos y formularios. Performance: descartada | 29 | **No** | por decidir |
