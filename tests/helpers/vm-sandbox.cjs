@@ -5,8 +5,8 @@ const vm = require('node:vm');
 const projectRoot = path.resolve(__dirname, '../..');
 const read = (file) => fs.readFileSync(path.join(projectRoot, file), 'utf8');
 
-function createSandbox() {
-    const storage = new Map();
+function createSandbox(options = {}) {
+    const storage = options.storage || new Map();
     let simulateQuotaExceeded = false;
     let mockedNow = null;
 

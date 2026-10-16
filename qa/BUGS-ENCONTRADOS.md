@@ -215,6 +215,26 @@
   - `dado un nickname con emoji de 4 bytes en el límite de 15 caracteres, cuando se asigna con setIdentity, no debe dejar sustitutos huérfanos UTF-16` en `tests/domain/unicode-edge-cases.test.mjs` (marcado `{ todo: 'BUG-F5-06: setIdentity parte pares sustitutos UTF-16 en emojis al cortar a 15 caracteres' }`).
 - **Estado**: Pendiente. Marcado con `{ todo }` en test.
 
+### Bug F5-07: `_markWatchedKeyDirty` descarta escrituras locales durante `_handleAuthChange` al estar `_isRestoringSession` activo
+- **Descripción**: Al procesar la autenticación en `_handleAuthChange`, se fija la bandera interna `_isRestoringSession = true`. Si el usuario o la aplicación realiza una mutación sobre una clave vigilada (`localStorage.setItem`) mientras `_handleAuthChange` está pausado esperando la respuesta de red de Supabase (consulta `select`), la función interceptora `_markWatchedKeyDirty` comprueba `if (!SENTINEL_WATCHED_KEYS.has(key) || !_sbSession || _isRestoringSession) return;`. Como consecuencia, la mutación se descarta silenciosamente sin marcar `_hasUnsyncedChanges = true` ni actualizar la marca de tiempo de Sentinel. Al finalizar la autenticación en el bloque `finally { _isRestoringSession = false; if (_sbSession && _hasUnsyncedChanges) ... }`, como `_hasUnsyncedChanges` permaneció en `false`, Sentinel no programa ninguna sincronización y los cambios realizados durante la espera se pierden de la nube de forma permanente hasta que ocurra otra escritura futura.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 360, 420-422, 434).
+- **Escenario**: El usuario interactúa con la aplicación (ej. avanza niveles, gana monedas o canjea código) en el breve intervalo en que `_handleAuthChange` espera la respuesta de Supabase.
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Las mutaciones locales a claves vigiladas ocurridas durante la resolución de `_handleAuthChange` deben ser registradas o encoladas para que, una vez finalizada la restauración de sesión (`_isRestoringSession = false`), sean sincronizadas hacia la nube.
+  - *Real*: Se descartan silenciosamente por la guarda temprana de `_isRestoringSession` en `_markWatchedKeyDirty` y nunca se suben.
+- **Test**: `dado Sentinel ejecutando _handleAuthChange pausado en la consulta de red, cuando se escribe una clave vigilada, entonces debería preservarse y programarse para sincronización` en `tests/integration/concurrency-multitab.test.mjs` (marcado `{ todo: 'BUG-F5-07: escrituras a claves vigiladas durante _handleAuthChange son descartadas por _markWatchedKeyDirty al estar _isRestoringSession activo' }`).
+- **Estado**: Pendiente de corrección de producto (marcado con todo).
+
+### Bug F5-08: `completeLevel` con `immediateCloudSync` concurrente con `_sentinelSync` no se encadena secuencialmente y se pierde de la nube
+- **Descripción**: Cuando un minijuego llama a `GameCenter.completeLevel(gameId, levelId, rewardAmount)` (que solicita `Store.save({ immediateCloudSync: true })`), Sentinel intenta disparar una subida inmediata a Supabase mediante `syncNow()` -> `_sentinelSync()`. Si en ese momento ya existe una petición de sincronización en vuelo (`_isSyncing === true`), `_sentinelSync()` ejecuta la guarda `if (_isSyncing) return;` y retorna de inmediato sin encolar ni encadenar la petición pendiente. Cuando la primera subida en vuelo finaliza, la línea 289 de `_sentinelSync()` limpia incondicionalmente la bandera de cambios pendientes con `_hasUnsyncedChanges = false;`. Como resultado, la petición de sincronización inmediata del nivel completado se descarta, no se despacha ninguna segunda subida secuencial y el snapshot final en la base de datos de Supabase queda desactualizado sin el nivel recién completado.
+- **Archivo y línea**: `js/cloud/sentinel.js` (Líneas 264-265, 289, 742-761).
+- **Escenario**: Un jugador completa un nivel en un minijuego mientras Sentinel ya está subiendo a Supabase una sincronización previa (debida a un debounce anterior, un evento del ciclo de vida o una compra previa).
+- **Comportamiento esperado vs real**:
+  - *Esperado*: Si llega una solicitud de subida inmediata mientras otra está en vuelo, la solicitud debe encadenarse o despacharse secuencialmente tan pronto termine la petición activa, garantizando que el snapshot final en Supabase contenga el nivel completado.
+  - *Real*: La subida concurrente se aborta silenciosamente (`return`), `_hasUnsyncedChanges` se resetea a `false` al completar el sync previo, y el nivel completado nunca se envía a la nube en esa ráfaga.
+- **Test**: `dado una sincronización en curso hacia Supabase, cuando completeLevel ocurre concurrentemente, entonces debe encadenarse secuencialmente para que la nube reciba el nivel` en `tests/integration/concurrency-multitab.test.mjs` (marcado `{ todo: 'BUG-F5-08: completeLevel con immediateCloudSync concurrente con _sentinelSync no se encadena secuencialmente y se pierde de la nube' }`).
+- **Estado**: Pendiente de corrección de producto (marcado con todo).
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)

@@ -8,5 +8,5 @@
 - [x] [TKT-021: Persistencia al límite](TKT-021-persistencia-limite.md) (hecho)
 - [x] [TKT-022: Paridad y valores extremos en completeLevel](TKT-022-complete-level-paridad.md) (hecho)
 - [x] [TKT-023: Soporte Unicode en identidad, códigos y serialización](TKT-023-unicode-sistemas.md) (hecho)
-- [ ] [TKT-024: Multipestaña, concurrencia y tolerancia a fallos en Sentinel](TKT-024-multipestana-concurrencia.md) (pendiente)
+- [x] [TKT-024: Multipestaña, concurrencia y tolerancia a fallos en Sentinel](TKT-024-multipestana-concurrencia.md) (hecho)
 - [ ] [TKT-025: Saltos de reloj transversales y fronteras horarias](TKT-025-saltos-reloj-transversales.md) (pendiente)

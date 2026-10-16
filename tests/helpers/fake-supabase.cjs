@@ -13,6 +13,16 @@ class FakeCustomEvent extends FakeEvent {
     }
 }
 
+class FakeStorageEvent extends FakeEvent {
+    constructor(type = 'storage', init = {}) {
+        super(type);
+        this.key = init.key !== undefined ? init.key : null;
+        this.oldValue = init.oldValue !== undefined ? init.oldValue : null;
+        this.newValue = init.newValue !== undefined ? init.newValue : null;
+        this.storageArea = init.storageArea || null;
+    }
+}
+
 function createFakeSupabase(options = {}) {
     const tableData = new Map();
     let currentSession = options.initialSession || null;
@@ -76,6 +86,31 @@ function createFakeSupabase(options = {}) {
         }
     }
 
+    const selectDeferredQueue = [];
+    const upsertDeferredQueue = [];
+
+    function deferNextSelect() {
+        let resolve, reject;
+        const promise = new Promise((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+        const deferred = { promise, resolve, reject };
+        selectDeferredQueue.push(deferred);
+        return deferred;
+    }
+
+    function deferNextUpsert() {
+        let resolve, reject;
+        const promise = new Promise((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+        const deferred = { promise, resolve, reject };
+        upsertDeferredQueue.push(deferred);
+        return deferred;
+    }
+
     function from(tableName) {
         return {
             select: () => {
@@ -86,6 +121,11 @@ function createFakeSupabase(options = {}) {
                         return builder;
                     },
                     maybeSingle: async () => {
+                        if (selectDeferredQueue.length > 0) {
+                            const def = selectDeferredQueue.shift();
+                            const val = await def.promise;
+                            if (val !== undefined) return val;
+                        }
                         if (customSelectError) {
                             return { data: null, error: customSelectError };
                         }
@@ -93,6 +133,11 @@ function createFakeSupabase(options = {}) {
                         return { data: record, error: null };
                     },
                     single: async () => {
+                        if (selectDeferredQueue.length > 0) {
+                            const def = selectDeferredQueue.shift();
+                            const val = await def.promise;
+                            if (val !== undefined) return val;
+                        }
                         if (customSelectError) {
                             return { data: null, error: customSelectError };
                         }
@@ -105,6 +150,11 @@ function createFakeSupabase(options = {}) {
             },
             upsert: async (record) => {
                 upsertLog.push(record);
+                if (upsertDeferredQueue.length > 0) {
+                    const def = upsertDeferredQueue.shift();
+                    const val = await def.promise;
+                    if (val !== undefined) return val;
+                }
                 if (customUpsertError) {
                     return { data: null, error: customUpsertError };
                 }
@@ -125,12 +175,14 @@ function createFakeSupabase(options = {}) {
         simulateSignOut,
         setUpsertError: (err) => { customUpsertError = err; },
         setSelectError: (err) => { customSelectError = err; },
+        deferNextSelect,
+        deferNextUpsert,
         getCurrentSession: () => currentSession
     };
 }
 
 function setupSentinelSandbox(options = {}) {
-    const sandbox = createSandbox();
+    const sandbox = createSandbox(options);
     const { context, storage } = sandbox;
 
     const docListeners = new Map();
@@ -154,8 +206,10 @@ function setupSentinelSandbox(options = {}) {
 
     context.CustomEvent = FakeCustomEvent;
     context.Event = FakeEvent;
+    context.StorageEvent = FakeStorageEvent;
     context.window.CustomEvent = FakeCustomEvent;
     context.window.Event = FakeEvent;
+    context.window.StorageEvent = FakeStorageEvent;
 
     context.document.addEventListener = (ev, fn) => addListener(docListeners, ev, fn);
     context.document.removeEventListener = (ev, fn) => removeListener(docListeners, ev, fn);
@@ -298,8 +352,14 @@ function setupSentinelSandbox(options = {}) {
         LoveArcadeMoonBlessing: context.LoveArcadeMoonBlessing,
         LoveArcadePromoCodes: context.LoveArcadePromoCodes,
         GameCenter: context.GameCenter,
+        Sentinel: context.Sentinel,
         dispatchDomLoaded,
         dispatchBeforeUnload,
+        dispatchStorageEvent: (init = {}) => {
+            const ev = new FakeStorageEvent('storage', init);
+            context.window.dispatchEvent(ev);
+            return ev;
+        },
         SENTINEL_TS_KEY: 'love_arcade_sentinel_ts'
     };
 }
@@ -308,5 +368,6 @@ module.exports = {
     createFakeSupabase,
     setupSentinelSandbox,
     FakeEvent,
-    FakeCustomEvent
+    FakeCustomEvent,
+    FakeStorageEvent
 };

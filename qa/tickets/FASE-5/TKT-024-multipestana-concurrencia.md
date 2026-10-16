@@ -68,9 +68,9 @@ Test de integración asíncrona determinista con `node:test` y `node:assert/stri
 
 ## Criterios de aceptación verificables
 
-- [ ] Tolerancia completa demostrada ante eventos `storage` malformados o de claves foráneas.
-- [ ] Concurrencia entre promesas y escrituras de almacenamiento probada de forma determinista sin `sleep` fijos.
-- [ ] Verificación de que la aplicación no sufre regresiones ante snapshots incompletos o con tipos erróneos desde la nube.
+- [x] Tolerancia completa demostrada ante eventos `storage` malformados o de claves foráneas.
+- [x] Concurrencia entre promesas y escrituras de almacenamiento probada de forma determinista sin `sleep` fijos.
+- [x] Verificación de que la aplicación no sufre regresiones ante snapshots incompletos o con tipos erróneos desde la nube.
 
 ## Comando para ejecutarlo
 
@@ -78,6 +78,13 @@ Test de integración asíncrona determinista con `node:test` y `node:assert/stri
 node --test tests/integration/concurrency-multitab.test.mjs
 ```
 
+## Verificación por mutación
+
+- **Mutación 1 (quitar try/catch en `_rehydrateHubStoreFromDisk()`, `js/cloud/sentinel.js:246`)**: Al despachar un evento `storage` con JSON corrupto (`'{"coins": 340, "inventory":'`), `JSON.parse` lanzó `SyntaxError: Unexpected end of JSON input` no capturado, provocando fallo de aserción (`AssertionError [ERR_ASSERTION]: Got unwanted exception: Debe capturar SyntaxError al rehidratar JSON corrupto sin propagar excepción`). 1 test falló. Revertido limpiamente (`git diff` vacío).
+- **Mutación 2 (quitar guarda de claves ausentes y null en `_applySnapshot()`, `js/cloud/sentinel.js:236`)**: Se eliminó `if (Object.prototype.hasOwnProperty.call(snap, key) && snap[key] !== null)`. Al aplicar snapshots incompletos o con claves null, las claves locales fueron pisadas con `'undefined'` y `null`. 2 tests fallaron (`AssertionError: 'undefined' !== '[1, 2]'` y `TypeError: Cannot read properties of null`). Revertido limpiamente (`git diff` vacío).
+- **Mutación 3 (alterar orden de aplicación en `_applySnapshot()`, `js/cloud/sentinel.js:233`)**: Se ejecutó `_rehydrateHubStoreFromDisk()` antes de persistir las claves del snapshot en `localStorage`. La rehidratación leyó el estado antiguo antes de aplicar los datos remotos. 2 tests fallaron (`AssertionError: 100 !== 650` y `AssertionError: 50 !== 500`). Revertido limpiamente (`git diff` vacío).
+
 ## Estado
 
-pendiente
+hecho
+
