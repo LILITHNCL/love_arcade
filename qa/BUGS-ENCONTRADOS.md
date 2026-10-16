@@ -250,3 +250,8 @@
 - **Ruta**: `js/domain/game-center.js` (L34-36) y `js/sync-worker.js` (L44-46).
 - **Detalle**: La especificación WHATWG de `btoa()` lanza `DOMException: InvalidCharacterError` ante cualquier cadena con caracteres cuyo punto de código supere `0xFF` (Latin-1). La implementación de producción evita este fallo envolviendo previamente el payload JSON mediante `TextEncoder` (obteniendo bytes UTF-8 en rango 0..255) y proyectándolos con `String.fromCharCode` antes de invocar `btoa()`. En la deserialización se aplica la inversa (`atob` -> `Uint8Array` -> `TextDecoder`). La interoperabilidad cruzada en ambas direcciones entre el Web Worker y el fallback cliente fue verificada al 100% de paridad canónica en TKT-023 sin fallos.
 
+### Regresión no monotónica en `love_arcade_sentinel_ts` ante retrocesos del reloj del sistema en Sentinel
+- **Ruta**: `js/cloud/sentinel.js` (L436).
+- **Detalle**: `_markWatchedKeyDirty` actualiza la clave `love_arcade_sentinel_ts` en `localStorage` ejecutando directamente `_originalSetItem(SENTINEL_TS_KEY, new Date().toISOString())`. La función no realiza comprobación de monotonía respecto al timestamp previamente persistido. Si el reloj local del dispositivo salta hacia el pasado, la marca de sincronización local retrocede a una fecha antigua. Al autenticarse o reconectar (`_handleAuthChange`), la condición LWW `cloudTime > localTime` se cumple ciegamente a favor del snapshot remoto, disparando `_applySnapshot` y destruyendo el progreso local más reciente (vector directo de `BUG-F3a-01`).
+
+

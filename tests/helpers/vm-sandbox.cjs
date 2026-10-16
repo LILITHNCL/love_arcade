@@ -39,6 +39,18 @@ function createSandbox(options = {}) {
                     return () => mockedNow;
                 }
                 return target[prop];
+            },
+            construct(target, args) {
+                if (args.length === 0 && mockedNow !== null) {
+                    return new target(mockedNow);
+                }
+                return new target(...args);
+            },
+            apply(target, thisArg, args) {
+                if (args.length === 0 && mockedNow !== null) {
+                    return new target(mockedNow).toString();
+                }
+                return Reflect.apply(target, thisArg, args);
             }
         }),
         setTimeout, clearTimeout,

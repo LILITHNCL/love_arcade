@@ -108,6 +108,19 @@
   - En un navegador real, la especificación WHATWG StorageEvent despacha el evento a través del bus del sistema operativo a todas las ventanas/pestañas del mismo origen excepto a la emisora, supeditado a políticas de renderizado y suspensiones en segundo plano del sistema operativo. En el entorno sintético de Node (`node:vm`), los eventos `storage` se emulan manualmente mediante despacho síncrono sobre contextos conectados al mismo Map en memoria. La concurrencia multi-proceso nativa del navegador bajo estrangulamiento de CPU (tab throttling) o hibernación móvil permanece como hueco reservado para Fase F4 (E2E con Playwright).
 - **TKT-024 · LWW en historial entre pestañas sin merge transaccional**:
   - Si dos pestañas realizan acciones económicas en simultáneo sin rehidratar el evento `storage` previamente, la última pestaña en invocar `Store.save()` sobrescribe el array completo de `history` en `localStorage`, provocando la pérdida de las transacciones registradas por la primera pestaña. Este comportamiento LWW fue documentado y validado en tests sin modificar la arquitectura actual.
+- **TKT-025 · Manipulación de reloj local y persistencia artificial de Bendición Lunar**:
+  - En `js/domain/moon-blessing.js:50-59`, `getMoonBlessingStatus()` calcula la vigencia evaluando directamente `store.buffs.moonBlessingExpiry > Date.now()` y `remainingMs = expiry - Date.now()`.
+  - A diferencia de `daily-streak.js` (que cuenta con salvaguardas explícitas ante `now < lastClaim`), `moon-blessing.js` no persiste la marca de adquisición original ni consulta el estado de verificación de `LoveArcadeTime.read()`.
+  - Si un usuario atrasa el reloj del sistema operativo hacia el pasado (ej. 30 días), la bendición continúa reportándose como activa y el tiempo restante se incrementa artificialmente.
+  - Siguiendo las directrices del proyecto y al no existir una decisión previa que defina el comportamiento deseado (¿debe congelarse el beneficio, revocarse o exigir sincronización obligatoria por red?), los tests validan estrictamente el comportamiento observable actual sin inventar aserciones arbitrarias, registrando este punto ciego como hueco de robustez offline.
+- **TKT-025 · Regresión no monotónica de marca de tiempo en Sentinel (`love_arcade_sentinel_ts`)**:
+  - En `js/cloud/sentinel.js:436`, el interceptor de almacenamiento `_markWatchedKeyDirty` actualiza la marca de sincronización local mediante `_originalSetItem(SENTINEL_TS_KEY, new Date().toISOString())` ante cualquier escritura sobre claves vigiladas.
+  - La función no comprueba si la fecha actual es anterior al timestamp previamente almacenado (`localRawTs`). Si el reloj del dispositivo sufre un salto abrupto hacia el pasado, la marca temporal en `localStorage` retrocede en el tiempo (pérdida de monotonía).
+  - Al iniciar sesión o reconectar (`_handleAuthChange`), la condición LWW `cloudTime > localTime` se cumple a favor de la nube debido al timestamp local degradado, disparando `_applySnapshot` y destruyendo el progreso local más avanzado (manifestación directa del vector de fallo de `BUG-F3a-01`).
+- **TKT-025 · Caducidad de TTL de 4 horas en caché de tiempo y reclamo no verificado (BUG-F2c-01)**:
+  - Al superar `TIME_CACHE_TTL = 4 * 3600 * 1000` (4 horas), `LoveArcadeTime.read()` conmuta deterministamente `verified: false`.
+  - No obstante, `Daily.claimDaily()` no valida la bandera `verified`, permitiendo el reclamo de racha y recompensas basadas en tiempo local no verificado. Este hallazgo transversal ratifica y complementa la cobertura de `BUG-F2c-01` en F5 bajo `{ todo }`.
+
 
 
 

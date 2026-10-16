@@ -73,10 +73,22 @@ Test unitario transversal con `node:test` y `node:assert/strict`, controlando el
 
 ## Criterios de aceptación verificables
 
-- [ ] Las salvaguardas ante reloj hacia atrás bloquean tanto `claimDaily` como `repairDailyStreak`.
-- [ ] La precisión del corte a las 03:00:00 AM se valida con resolución de un segundo.
-- [ ] El cambio de año calcula correctamente `diffDays === 1`.
-- [ ] La expiración del TTL de 4 horas conmuta `verified` a `false` de forma determinista.
+- [x] Las salvaguardas ante reloj hacia atrás bloquean tanto `claimDaily` como `repairDailyStreak`.
+- [x] La precisión del corte a las 03:00:00 AM se valida con resolución de un segundo.
+- [x] El cambio de año calcula correctamente `diffDays === 1`.
+- [x] La expiración del TTL de 4 horas conmuta `verified` a `false` de forma determinista.
+
+## Verificación por mutación
+
+1. **Mutación 1: Cambiar el desfase de 3 h (`js/core/time-sync.js:18`)**:
+   - *Cambio*: `const DAILY_DAY_OFFSET_MS = 4 * 60 * 60 * 1000;`.
+   - *Resultado*: Fallan 2 tests de frontera horaria en sección 3 (`0 !== 1` a las 03:00:01 y `1 !== 0` a las 02:59:59). Revertido a 3 h con `git diff` limpio.
+2. **Mutación 2: Invertir comparación del TTL de 4 h (`js/core/time-sync.js:77`)**:
+   - *Cambio*: `const verified = cacheAge > TIME_CACHE_TTL;`.
+   - *Resultado*: Fallan 3 tests en sección 4 (`false !== true` dentro de TTL, `true !== false` fuera de TTL y fallo en `claimDaily`). Revertido con `git diff` limpio.
+3. **Mutación 3: Quitar la guarda de diffDays (`js/domain/daily-streak.js:48`)**:
+   - *Cambio*: Eliminar `if (diffDays === 0) { ... }`.
+   - *Resultado*: Falla el test en borde 02:59:59 del día 16 (`true !== false`, permitiendo reclamos duplicados en el mismo día lógico). Revertido con `git diff` limpio.
 
 ## Comando para ejecutarlo
 
@@ -86,4 +98,4 @@ node --test tests/core/time-jumps.test.mjs
 
 ## Estado
 
-pendiente
+hecho
