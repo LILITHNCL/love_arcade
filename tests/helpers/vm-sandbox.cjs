@@ -64,6 +64,12 @@ function loadFiles(context, files, options = {}) {
                 'window.LoveArcadeTime = {\n        _writeTimeCache,\n'
             );
         }
+        if (file === 'js/domain/promo-codes.js' && options && options.promoCodesTable) {
+            code = code.replace(
+                /const PROMO_CODES_HASHED = \{[\s\S]*?\};/,
+                `const PROMO_CODES_HASHED = ${JSON.stringify(options.promoCodesTable)};`
+            );
+        }
         vm.runInContext(code, context, { filename: file });
     }
 }

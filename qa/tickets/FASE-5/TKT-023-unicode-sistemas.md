@@ -29,7 +29,7 @@ Test unitario y de integración con `node:test` y `node:assert/strict`, utilizan
 1. **Truncado de nickname con emojis y secuencias ZWJ**:
    - *Dado*: un nickname de entrada con emojis de 4 bytes en el borde de los 15 caracteres (ej. `'Jugador_12345🎮'`, `'🎮👾✨💖🔥'`).
    - *Cuando*: se ejecuta `Identity.setIdentity(nickname, '@')`.
-   - *Entonces*: el valor almacenado en `Store.getStore().nickname` no debe terminar en un sustituto huérfano (`\uD800`–`\uDBFF`) y debe ser serializable limpiamente mediante `JSON.stringify` y decodificable por `TextEncoder`. Si el corte actual produce sustitutos partidos, se documenta el comportamiento deseado bajo `{ todo: 'BUG-F5-03: setIdentity parte pares sustitutos UTF-16 en emojis al cortar a 15 caracteres' }`.
+   - *Entonces*: el valor almacenado en `Store.getStore().nickname` no debe terminar en un sustituto huérfano (`\uD800`–`\uDBFF`) y debe ser serializable limpiamente mediante `JSON.stringify` y decodificable por `TextEncoder`. Si el corte actual produce sustitutos partidos, se documenta el comportamiento deseado bajo `{ todo: 'BUG-F5-06: setIdentity parte pares sustitutos UTF-16 en emojis al cortar a 15 caracteres' }`.
 
 2. **Nickname con caracteres de ancho completo y acentos**:
    - *Dado*: un alias con caracteres japoneses o de ancho completo (`'ラブアーケード'`) y caracteres con tildes (`'Ángel'`).
@@ -62,10 +62,10 @@ Test unitario y de integración con `node:test` y `node:assert/strict`, utilizan
 
 ## Criterios de aceptación verificables
 
-- [ ] Identidad soporta secuencias complejas de Unicode sin romper la serialización JSON.
-- [ ] La exportación e importación de partidas tolera caracteres > 0xFF preservando la integridad del hash SHA-256.
-- [ ] La interoperabilidad cruzada entre el Web Worker y el fallback síncrono queda demostrada en ambas direcciones.
-- [ ] Ningún código promocional real ni término prohibido de documentación es emitido en el código o salida de tests.
+- [x] Identidad soporta secuencias complejas de Unicode sin romper la serialización JSON.
+- [x] La exportación e importación de partidas tolera caracteres > 0xFF preservando la integridad del hash SHA-256.
+- [x] La interoperabilidad cruzada entre el Web Worker y el fallback síncrono queda demostrada en ambas direcciones.
+- [x] Ningún código promocional real ni término prohibido de documentación es emitido en el código o salida de tests.
 
 ## Comando para ejecutarlo
 
@@ -73,6 +73,12 @@ Test unitario y de integración con `node:test` y `node:assert/strict`, utilizan
 node --test tests/domain/unicode-edge-cases.test.mjs
 ```
 
+## Verificación por mutación
+
+- **Mutación 1 (quitar trim en `promo-codes.js:48`)**: `const code = inputCode.toUpperCase();`. 4 tests fallaron (`AssertionError: Expected values to be strictly equal: false !== true`). Revertido con `git diff` limpio.
+- **Mutación 2 (quitar toUpperCase en `promo-codes.js:48`)**: `const code = inputCode.trim();`. 3 tests fallaron (`AssertionError: Expected values to be strictly equal: false !== true`). Revertido con `git diff` limpio.
+- **Mutación 3 (cambiar codificación Base64 en `game-center.js:34`)**: Directamente `btoa(payload)` sin `TextEncoder`. Lanzó `InvalidCharacterError` y `exportSave` devolvió `null`. 6 tests fallaron. Revertido con `git diff` limpio.
+
 ## Estado
 
-pendiente
+hecho

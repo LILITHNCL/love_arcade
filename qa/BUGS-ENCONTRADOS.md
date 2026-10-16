@@ -204,10 +204,29 @@
   - `dado un monto inválido (Infinity), cuando se intenta completar, entonces no debe marcar el nivel en progress permitiendo reintento válido posterior (BUG R1)` en `tests/domain/complete-level.test.mjs` (marcado `{ todo: 'BUG-F5-05: completeLevel registra el nivel en progress aunque el monto sea inválido impidiendo reintentos legítimos' }`).
 - **Estado**: Pendiente. Marcado con `{ todo }` en test.
 
+### Bug F5-06: `Identity.setIdentity` parte pares sustitutos UTF-16 en emojis al truncar con `.slice(0, 15)`
+- **Descripción**: En `js/domain/identity.js`, la función `setIdentity(nickname, gender)` aplica `store.nickname = String(nickname).trim().slice(0, 15);`. La propiedad `.length` y el método `.slice()` de JavaScript operan a nivel de unidades de código UTF-16 (16 bits) y no a nivel de puntos de código Unicode o grafemas compuestos. Los emojis modernos (p. ej. `'🎮'`, `\uD83C\uDDAE`) requieren 2 unidades de código UTF-16 (par sustituto: sustituto alto `\uD800`–`\uDBFF` y sustituto bajo `\uDC00`–`\uDFFF`). Si un alias contiene caracteres que suman 14 unidades seguidos de un emoji de 2 unidades (total 16), el corte en el índice 15 divide el par sustituto a la mitad, dejando un carácter sustituto alto huérfano (`\uD83C`). Al procesar con `TextEncoder`, este sustituto huérfano genera el carácter de reemplazo Unicode `U+FFFD` (``), corrompiendo la cadena y destruyendo el emoji original.
+- **Archivo y línea**: `js/domain/identity.js` (Línea 9).
+- **Escenario**: Un jugador introduce un alias de 14 caracteres ASCII más un emoji al final (ej. `'Jugador_123456🎮'`).
+- **Comportamiento esperado vs real**:
+  - *Esperado*: El truncado debe ser seguro para caracteres Unicode (p. ej. mediante iteración de puntos de código `Array.from(str).slice(0, 15).join('')` o descartando sustitutos huérfanos incompletos), garantizando que el alias almacenado no termine en un sustituto no emparejado (`\uD800`–`\uDBFF`).
+  - *Real*: Deja el sustituto huérfano `\uD83C` al final de la cadena de 15 caracteres.
+- **Tests**:
+  - `dado un nickname con emoji de 4 bytes en el límite de 15 caracteres, cuando se asigna con setIdentity, no debe dejar sustitutos huérfanos UTF-16` en `tests/domain/unicode-edge-cases.test.mjs` (marcado `{ todo: 'BUG-F5-06: setIdentity parte pares sustitutos UTF-16 en emojis al cortar a 15 caracteres' }`).
+- **Estado**: Pendiente. Marcado con `{ todo }` en test.
+
 ## Hallazgos de diseño y arquitectura
 
 ### Consideración de seguridad: Checksum SHA-256 en BackupEngine sin salt (solo detecta corrupción)
 - **Ruta**: `js/backup-engine.js` (L90-95, L200-211) y `js/sync-worker.js` (L115).
 - **Detalle**: El checksum generado y validado en los archivos `.labak` es un hash SHA-256 plano del string canónico del objeto de respaldo, sin incorporar ningún secreto o sal (`salt`). Por diseño, este mecanismo garantiza exclusivamente detección de corrupción accidental durante la transferencia o almacenamiento; no ofrece garantías contra manipulación maliciosa de datos (tampering), ya que cualquier usuario o herramienta externa puede alterar los datos y recalcular legítimamente el hash SHA-256 esperado sin requerir claves secretas.
 - **Nota**: Siguiendo las directrices del proyecto, no se inventa un test de regresión para esta condición por ser la especificación y diseño actual del formato `.labak`.
+
+### Decisión de diseño: Validación estricta sin NFKC ni descarte de caracteres invisibles en `promo-codes.js`
+- **Ruta**: `js/domain/promo-codes.js` (L48).
+- **Detalle**: `redeemPromoCode` ejecuta `const code = inputCode.trim().toUpperCase()`. `String.prototype.trim()` solo elimina caracteres pertenecientes a ECMAScript WhiteSpace (incluyendo `\u00A0`), pero no descarta caracteres de formato invisibles como el espacio de ancho cero (`\u200B`, categoría Unicode Cf). Asimismo, `toUpperCase()` no realiza normalización NFKC, por lo que caracteres de ancho completo (Full-Width, `\uFF21...`) o tildes en formato NFD generan un hash SHA-256 completamente diferente al del código canónico y son rechazados como `Código inválido`. Esta rigurosidad es consistente con la especificación de diseño actual (rechazo ante divergencia de hash), y ha quedado validada con códigos sintéticos aislados en sandbox en TKT-023.
+
+### Comportamiento de Base64 > 0xFF en `game-center.js` y `sync-worker.js`
+- **Ruta**: `js/domain/game-center.js` (L34-36) y `js/sync-worker.js` (L44-46).
+- **Detalle**: La especificación WHATWG de `btoa()` lanza `DOMException: InvalidCharacterError` ante cualquier cadena con caracteres cuyo punto de código supere `0xFF` (Latin-1). La implementación de producción evita este fallo envolviendo previamente el payload JSON mediante `TextEncoder` (obteniendo bytes UTF-8 en rango 0..255) y proyectándolos con `String.fromCharCode` antes de invocar `btoa()`. En la deserialización se aplica la inversa (`atob` -> `Uint8Array` -> `TextDecoder`). La interoperabilidad cruzada en ambas direcciones entre el Web Worker y el fallback cliente fue verificada al 100% de paridad canónica en TKT-023 sin fallos.
 
